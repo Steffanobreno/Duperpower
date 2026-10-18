@@ -18,8 +18,12 @@ O plano **Premium** da Hostinger não roda apps Node.js (só o Business e acima)
 fica no **Netlify (plano Free, permite uso comercial)**; a Hostinger continua com os seus sites.
 
 1. Crie uma conta em netlify.com com o GitHub (plano Free, sem cartão).
-2. **Add new site → Import from Git** → repositório `Duperpower`, branch `master`.
+2. **Add new site → Import from Git** → repositório `Duperpower`.
    O Netlify reconhece o Next.js sozinho (o arquivo `netlify.toml` já está no projeto).
+   **Importante:** em *Build & deploy → Branches*, coloque **Production branch = `production`** e
+   desligue *Branch deploys* e *Deploy previews*. Cada publicação gasta 15 dos 300 créditos do mês;
+   assim só publicamos quando juntamos as mudanças (umas 4 por mês), e as melhorias do dia a dia
+   não gastam créditos.
 3. **Site configuration → Environment variables**: `DATABASE_URL`, `APP_URL`
    (ex.: `https://app.woofersdogspa.com`), `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`.
 4. Domínio: **Domain management → Add a domain** → `app.woofersdogspa.com`. O Netlify mostra um
@@ -29,8 +33,16 @@ fica no **Netlify (plano Free, permite uso comercial)**; a Hostinger continua co
    (eu rodo daqui com a `DATABASE_URL`).
 6. Abra `https://app.woofersdogspa.com` → crie o seu login de dono.
 
-Limite do plano Free: 300 créditos por mês. Para um negócio do seu tamanho deve sobrar; se um
-dia acabar, o site pausa até o mês seguinte (o Netlify avisa por e-mail em 50%, 75% e 100%).
+Limite do plano Free: 300 créditos por mês, com corte: se acabar, o app pausa até o mês seguinte.
+Conta estimada para o seu volume (~75 visitas/mês): 4 publicações = 60, acessos e páginas ≈ 10–30,
+tráfego ≈ 10–20 → **~100 de 300**. O Netlify avisa por e-mail em 50%, 75% e 100%; se chegar perto,
+o plano Personal ($9/mês, 1.000 créditos) resolve na hora, sem mudar nada no app.
+
+Banco (Neon Free): 100 horas de processamento por mês e 1 GB. O banco "dorme" depois de 5 min sem
+uso; o primeiro acesso depois disso demora cerca de 1 segundo a mais. Uso estimado: ~15–25 horas.
+
+**Antes de cancelar o MoeGo:** use os dois juntos por 2 a 4 semanas (mensagens automáticas do app
+novo desligadas). Se algo falhar, o MoeGo ainda está lá. Só cancele depois de ver o uso real.
 
 No iPhone: abra o app no Safari → Compartilhar → **Adicionar à Tela de Início**.
 
