@@ -222,7 +222,7 @@ create table services (
   category text,                               -- 'Haircut + Bath', 'Bath', 'Add-on'
   size_class text check (size_class in ('small','medium','large','xlarge')),  -- null = qualquer tamanho
   description text,
-  duration_min int not null check (duration_min > 0),
+  duration_min int not null check (duration_min >= 0),  -- add-ons can take no extra time
   price_cents int not null check (price_cents >= 0),
   online_bookable boolean not null default true,
   sort_order int not null default 0,
@@ -313,7 +313,7 @@ create table appointment_services (
   service_id uuid not null references services(id) on delete restrict,
   name text not null,                          -- cópia do nome e preço do dia (histórico estável)
   price_cents int not null check (price_cents >= 0),
-  duration_min int not null check (duration_min > 0),
+  duration_min int not null check (duration_min >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -388,13 +388,14 @@ create table payments (
   id uuid primary key default gen_random_uuid(),
   invoice_id uuid not null references invoices(id) on delete restrict,
   method text not null check (method in ('cash','zelle','check','venmo','card','other')),
-  amount_cents int not null check (amount_cents > 0),
-  tip_cents int not null default 0 check (tip_cents >= 0),
+  amount_cents int not null check (amount_cents >= 0),  -- toward the bill
+  tip_cents int not null default 0 check (tip_cents >= 0), -- on top of the bill
   reference text,                              -- nº do cheque, id do Zelle/Venmo
   received_at timestamptz not null default now(),
   staff_id uuid references staff(id) on delete set null,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint payment_not_empty check (amount_cents + tip_cents > 0)
 );
 create index on payments (invoice_id);
 create index on payments (received_at);

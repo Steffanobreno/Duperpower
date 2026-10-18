@@ -1,0 +1,23 @@
+import "server-only";
+import postgres from "postgres";
+
+// One connection pool per server process. In dev, Next reloads modules, so the
+// pool is kept on globalThis to avoid opening a new one on every change.
+const globalForDb = globalThis as unknown as { sql?: postgres.Sql };
+
+export const sql =
+  globalForDb.sql ??
+  postgres(process.env.DATABASE_URL ?? "postgres://postgres@localhost:5499/woofers", {
+    max: 5,
+    transform: { undefined: null },
+  });
+
+if (process.env.NODE_ENV !== "production") globalForDb.sql = sql;
+
+// Postgres error codes we turn into friendly messages.
+export function isExclusionViolation(e: unknown) {
+  return (e as { code?: string })?.code === "23P01";
+}
+export function isUniqueViolation(e: unknown) {
+  return (e as { code?: string })?.code === "23505";
+}
