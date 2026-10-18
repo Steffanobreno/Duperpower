@@ -95,7 +95,8 @@ step("Luna's photo from the booking page shows on the client profile");
 
 await page.goto(`${BASE}/settings/messages`);
 const outboxUrl = await page.getByLabel("Link for the Shortcut").inputValue();
-const calendarUrl = await page.getByLabel("Calendar link").inputValue();
+await page.goto(`${BASE}/settings/calendar`);
+const calendarUrl = await page.getByLabel("Your calendar link (keep it private)").inputValue();
 await shot("S20-messages-settings");
 
 const first = await (await fetch(outboxUrl)).json();
@@ -161,6 +162,24 @@ for (const expected of ["1 clients and 2 pets imported, 1 upcoming visits.", "0 
 await page.goto(`${BASE}/clients?q=Test`);
 await page.getByText("Bo, Mo").waitFor();
 step("CSV import: client, 2 pets and the next visit; second import adds nothing");
+
+// Export: a CSV in the importer's own columns, with the clients and their pets.
+const exported = await (await page.request.get(`${BASE}/api/export/clients`)).text();
+if (!exported.includes("Primary contact") || !exported.includes("Luna(Maltese)") || !exported.includes("Bo(Poodle (h)),Mo(Pug)")) {
+  fail("export is missing columns or pets");
+}
+const exportPath = `${SHOTS}/export.csv`;
+writeFileSync(exportPath, exported);
+await page.goto(`${BASE}/settings/import`);
+await page.setInputFiles('input[type="file"]', exportPath);
+await page.getByRole("button", { name: "Import clients" }).click();
+await page.getByText("0 clients and 0 pets imported").waitFor();
+step("export downloads every client with pets, and importing it back adds nothing");
+
+// Breed suggestions on the pet form.
+const breeds = await page.goto(`${BASE}/book`).then(() => page.locator("#dog-breeds option").count());
+if (breeds < 300) fail(`expected the breed list, got ${breeds} options`);
+step(`breed suggestions loaded (${breeds} breeds)`);
 
 await browser.close();
 if (errors.length) {

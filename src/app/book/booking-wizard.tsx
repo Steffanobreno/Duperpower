@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition, type ReactNode } from "react";
 import { Button, Field, Input, Notice, Textarea } from "@/components/ui";
+import { BreedOptions } from "@/components/breed-options";
 import { minutesLabel, money, SIZES } from "@/lib/format";
 import { blobToDataUrl, resizeImage } from "@/lib/resize-image";
 import type { DaySlots } from "@/lib/booking";
@@ -144,6 +145,7 @@ export function BookingWizard({
 
   return (
     <div className="space-y-6">
+      <BreedOptions />
       {/* 1. Phone */}
       <section aria-labelledby="phone-h" className="space-y-3">
         <h2 id="phone-h" className="text-lg font-bold">1. Your mobile number</h2>
@@ -220,7 +222,7 @@ export function BookingWizard({
                     <Input value={pet.name} onChange={(e) => update({ name: e.target.value })} autoComplete="off" />
                   </Field>
                   <Field label="Breed">
-                    <Input value={pet.breed} onChange={(e) => update({ breed: e.target.value })} autoComplete="off" />
+                    <Input value={pet.breed} onChange={(e) => update({ breed: e.target.value })} autoComplete="off" list="dog-breeds" placeholder="Start typing…" />
                   </Field>
                 </div>
                 <PhotoPicker photo={pet.photo} onPhoto={(photo) => update({ photo })} />

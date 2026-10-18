@@ -3,6 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { useActionState } from "react";
 import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
 import { SIZES } from "@/lib/format";
+import { BreedOptions } from "@/components/breed-options";
 import type { FormState } from "./actions";
 
 type Action = (state: FormState, form: FormData) => Promise<FormState>;
@@ -100,7 +101,8 @@ export function PetForm({
           <Input name="name" defaultValue={initial?.name} required autoComplete="off" />
         </Field>
         <Field label="Breed">
-          <Input name="breed" defaultValue={initial?.breed ?? ""} />
+          <Input name="breed" defaultValue={initial?.breed ?? ""} list="dog-breeds" autoComplete="off" placeholder="Start typing…" />
+          <BreedOptions />
         </Field>
       </div>
       <Field label="Size (height at the shoulder)" hint="Picks the right price when booking.">

@@ -34,7 +34,6 @@ export default async function MessagesSettingsPage() {
   templates.sort((x, y) => ORDER.indexOf(x.trigger) - ORDER.indexOf(y.trigger));
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const outbox = `${appUrl}/api/device/outbox?key=${b.device_key}`;
-  const calendar = `${appUrl}/api/device/calendar?key=${b.device_key}`;
 
   return (
     <>
@@ -64,14 +63,9 @@ export default async function MessagesSettingsPage() {
             The setup steps are in the guide.
           </p>
           <CopyField label="Link for the Shortcut" value={outbox} />
-          <h2 className="pt-2 font-bold">Google Calendar</h2>
-          <p className="text-sm text-muted">
-            In Google Calendar on a computer: Other calendars → + → From URL → paste this link. Google refreshes it every few hours.
-          </p>
-          <CopyField label="Calendar link" value={calendar} />
           <form action={newDeviceKeyAction}>
             <Button type="submit" kind="ghost" className="w-full">
-              Make new links (the old ones stop working)
+              Make a new link (the Shortcut and calendar links change)
             </Button>
           </form>
         </Card>

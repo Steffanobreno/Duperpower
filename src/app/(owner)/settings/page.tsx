@@ -11,9 +11,10 @@ const LINKS = [
   { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
   { href: "/settings/business", title: "Business", text: "Name, phone and booking link" },
   { href: "/settings/booking", title: "Online booking", text: "Booking page link, distance and notice rules" },
-  { href: "/settings/messages", title: "Texts and email", text: "iPhone texts, email, Google Calendar, message texts" },
+  { href: "/settings/messages", title: "Texts and email", text: "iPhone texts, email and the message texts" },
+  { href: "/settings/calendar", title: "Google Calendar", text: "See every visit in your Google Calendar" },
   { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
-  { href: "/settings/import", title: "Import clients", text: "Bring your client list from the old app (CSV)" },
+  { href: "/settings/import", title: "Import and export clients", text: "Bring in your client list, or download a backup (CSV)" },
   { href: "/settings/agreement", title: "Service agreement", text: "The terms clients sign" },
 ];
 
