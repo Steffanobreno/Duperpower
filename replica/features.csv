@@ -90,3 +90,11 @@ Gestão avançada de equipe e permissões,team,skip,yes,skip,1 pessoa hoje
 Gerente de conta dedicado,support,skip,yes,skip,serviço humano do MoeGo
 Campanhas de marketing em massa,marketing,skip,yes,skip,pode virar could depois
 Dados dos clientes guardados no MoeGo,data,skip,yes,skip,exportar pelo próprio MoeGo e importar; não extrair por scraping
+Lembrete para reagendar pela frequência do pet,messaging,should,yes,no,print do dono; ex. 42 dias
+Pedido de avaliação por SMS após checkout com resposta por nota,marketing,should,yes,no,print do dono; nota 5 → links Yelp/Facebook/Google; <5 → desculpas
+Aviso de agendamento online abandonado,online booking,could,yes,no,print do dono (18 abandonados)
+Aviso de agendamentos não pagos,payments,should,yes,no,print do dono
+QR code do link de agendamento,online booking,could,yes,no,print do dono
+Sincronizar com Google Calendar,integrations,could,yes,no,print do dono
+Trava de segurança (PIN) no app,platform,could,yes,no,print do dono
+Serviços por tamanho do pet (altura),services,must,yes,no,Small ≤12 Medium 12-16 Large 16-20 XL 20+

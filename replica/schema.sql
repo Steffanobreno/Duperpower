@@ -9,6 +9,27 @@ create extension if not exists btree_gist;
 create or replace function set_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at = now(); return new; end $$;
 
+-- ============================================================ login (dono/equipe)
+
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  password_hash text not null,                 -- scrypt
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  token_hash text not null unique,             -- sha256 do token do cookie
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index on sessions (user_id);
+create index on sessions (expires_at);
+
 -- ============================================================ negócio e equipe
 
 create table businesses (
@@ -29,7 +50,7 @@ create table businesses (
 create table staff (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
-  user_id uuid unique,                         -- auth.users.id (Supabase Auth); null = sem login
+  user_id uuid unique references users(id) on delete set null,  -- null = sem login
   name text not null,
   role text not null default 'owner' check (role in ('owner','groomer')),
   color text not null default '#3b82f6',
@@ -88,6 +109,7 @@ create table service_areas (
   staff_id uuid references staff(id) on delete set null,
   name text not null,
   zip_codes text[] not null default '{}',
+  cities text[] not null default '{}',        -- o site lista cidades, não ZIPs
   weekdays smallint[] not null default '{0,1,2,3,4,5,6}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -143,6 +165,8 @@ create table pets (
   birth_date date,
   weight_lbs numeric(5,1),
   coat_type text,
+  size_class text check (size_class in ('small','medium','large','xlarge')),  -- altura: ≤12", 12–16", 16–20", 20"+
+  rebook_every_days int check (rebook_every_days between 7 and 365),            -- frequência de grooming
   sex text check (sex in ('male','female')),
   fixed boolean,
   behavior text,
@@ -195,6 +219,8 @@ create table services (
   business_id uuid not null references businesses(id) on delete cascade,
   name text not null,
   kind text not null default 'service' check (kind in ('service','addon')),
+  category text,                               -- 'Haircut + Bath', 'Bath', 'Add-on'
+  size_class text check (size_class in ('small','medium','large','xlarge')),  -- null = qualquer tamanho
   description text,
   duration_min int not null check (duration_min > 0),
   price_cents int not null check (price_cents >= 0),
@@ -206,7 +232,7 @@ create table services (
 );
 create index on services (business_id, active, sort_order);
 
--- Preço/duração por faixa de peso (o resto é guess, ver recon)
+-- Preço/duração por faixa de peso (não usado pelo negócio hoje: preço é por tamanho em altura)
 create table service_prices (
   id uuid primary key default gen_random_uuid(),
   service_id uuid not null references services(id) on delete cascade,
@@ -396,9 +422,12 @@ create table message_templates (
   business_id uuid not null references businesses(id) on delete cascade,
   trigger text not null check (trigger in
     ('booked','request_received','request_accepted','request_declined',
-     'reminder','confirmed','cancelled','on_my_way','thank_you','report')),
+     'reminder','confirmed','cancelled','on_my_way','thank_you','report',
+     'rebook','review_request','feedback_positive','feedback_negative')),
   body text not null,                          -- com variáveis {{client_first_name}} {{date}} {{time}} {{pet_names}}
-  offset_days int,                             -- só reminder: quantos dias antes
+  offset_days int,                             -- reminder: dias antes; rebook: dias depois da data esperada
+  offset_minutes int,                          -- review_request: minutos depois do checkout
+  only_if_unconfirmed boolean not null default false,
   send_at_time time,                           -- só reminder: horário local de envio
   enabled boolean not null default true,
   created_at timestamptz not null default now(),
@@ -447,7 +476,7 @@ do $$
 declare t text;
 begin
   for t in select unnest(array[
-    'businesses','staff','working_hours','time_off','route_rules','service_areas',
+    'users','sessions','businesses','staff','working_hours','time_off','route_rules','service_areas',
     'clients','client_notes','pets','pet_codes','vaccines','services','service_prices',
     'appointment_series','appointments','appointment_pets','appointment_services',
     'agreements','agreement_signatures','invoices','invoice_items','payments',
@@ -459,12 +488,11 @@ begin
 end $$;
 
 -- ============================================================ access rules
--- Escolha: checagem de autorização no data layer (server actions do Next.js com a
--- service role), UMA checagem por query: "o business_id pertence ao staff logado".
--- RLS fica LIGADO em todas as tabelas sem nenhuma policy para anon/authenticated,
--- então a chave pública do Supabase não lê nada direto do navegador (defesa extra).
--- O cliente (dono do pet) nunca vira usuário do Supabase: o portal usa sessão própria
--- assinada depois do código SMS (Twilio Verify) e só enxerga linhas com o seu client_id.
+-- Escolha: checagem de autorização no data layer. Só o servidor Next.js fala com o
+-- banco (conexão direta, nunca do navegador); toda query filtra pelo business_id do
+-- staff da sessão. RLS fica LIGADO sem policies: se alguém usar a API pública do
+-- Supabase/Neon por engano, não lê nada. O cliente (dono do pet) usa sessão própria
+-- depois do código SMS (Twilio Verify) e só enxerga linhas com o seu client_id.
 
 do $$
 declare t text;

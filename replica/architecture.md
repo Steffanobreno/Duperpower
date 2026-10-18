@@ -11,9 +11,9 @@ navegação pelo Google Maps. Objetivo nº 1: um MVP que permita **cancelar o Mo
 | web (dono + cliente) | Next.js 15 (App Router) + TypeScript | um só código para o painel do dono e a página de agendamento do cliente |
 | app do dono | **PWA** (instalável na tela inicial do iPhone/Android) | sem App Store, sem segunda base de código; app nativo (Expo) só se faltar algo |
 | styling | Tailwind + tokens do /replica-design | rápido, consistente, mobile-first |
-| database | Postgres no Supabase | gerenciado, backup diário, plano grátis cobre um negócio |
-| ORM | Drizzle | SQL explícito, tipos gerados, migrações em arquivo |
-| auth (dono) | Supabase Auth, e-mail + senha (magic link opcional) | pronto, seguro, sem custo |
+| database | Postgres gerenciado (Supabase ou Neon) | backup diário, plano grátis cobre um negócio; em dev, Postgres local |
+| acesso ao banco | postgres.js com SQL puro + tipos TypeScript à mão | o schema já é SQL; menos camadas; migrações são arquivos `.sql` |
+| auth (dono) | login próprio: e-mail + senha (scrypt), sessão em cookie httpOnly com token guardado como hash | um dono só; não prende o app a um fornecedor; roda com qualquer Postgres |
 | auth (cliente) | código SMS via **Twilio Verify** + cookie de sessão assinado | cliente não cria senha; mesmo fluxo do original |
 | SMS | **Twilio Programmable Messaging** com número local (A2P 10DLC) | único canal com o cliente; webhooks de entrada e status; STOP/HELP automático |
 | mapas | **Google Maps Platform**: Maps JavaScript, Places Autocomplete, Geocoding, Routes API (Compute Route Matrix + otimização de waypoints) | é o que o dono já usa; o botão Direções abre o próprio app Google Maps |
@@ -27,7 +27,7 @@ Uma base de dados, um app, sem microserviços.
 
 ## Schema
 
-Tables: 27 (`replica/schema.sql`, testado em Postgres 16).
+Tables: 29 (`replica/schema.sql`, testado em Postgres 16).
 Access rules: **checagem no data layer**. Toda leitura/escrita passa por server actions/route
 handlers do Next.js; cada query filtra por `business_id` do staff logado (helper único
 `requireStaff()`), e no portal por `client_id` da sessão (`requireClient()`). RLS ligado em todas
@@ -192,7 +192,7 @@ Cada marco termina usável no dia a dia.
 | --- | --- | --- |
 | Twilio + registro **A2P 10DLC** | SMS | **agora** (aprovação demora) |
 | Google Cloud + chave Maps Platform com faturamento | mapa, endereços, rota | antes do marco 1 |
-| Supabase | banco, login, arquivos | marco 1 |
+| Supabase ou Neon | banco (e arquivos no Supabase Storage) | marco 1 |
 | Vercel | hospedagem | marco 1 |
 | domínio (ex. `book.seunegocio.com`) | página de agendamento | marco 2e |
 | export do MoeGo (clientes, pets, agendamentos) | migração | antes de cancelar |

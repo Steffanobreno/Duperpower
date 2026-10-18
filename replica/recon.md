@@ -339,7 +339,7 @@ Appointment 1-n GroomingReport (um por pet); Client 1-n Message; Client 1-n Agre
 
 ## Feature matrix
 
-See `features.csv`. 91 linhas. Must: 43, should: 20, could: 14, skip: 14.
+See `features.csv`. 99 linhas. Must: 44, should: 23, could: 18, skip: 14. Dados do negócio em `business.md`.
 
 ## Out of scope (cannot or should not be cloned)
 
