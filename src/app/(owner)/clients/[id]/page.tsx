@@ -7,6 +7,7 @@ import { directionsUrl } from "@/lib/directions";
 import { dayLabel, money, phoneLabel, sizeLabel, timeLabel } from "@/lib/format";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { addNoteAction } from "../actions";
+import { activeAgreement, currentSignature } from "@/lib/agreement";
 
 export const metadata: Metadata = { title: "Client" };
 
@@ -20,6 +21,8 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
     listClientNotes(staff, id),
     clientHistory(staff, id),
   ]);
+  const agreement = await activeAgreement(staff.businessId);
+  const signature = agreement ? await currentSignature(agreement, id) : null;
   const address = fullAddress(client);
   const tz = staff.timezone;
   // Soonest upcoming first, then the past, most recent first.
@@ -63,6 +66,17 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
               </>
             )}
           </dl>
+          {agreement &&
+            (signature ? (
+              <p className="text-sm text-success">
+                Agreement signed {dayLabel(signature.signed_at, tz)} by &quot;{signature.signed_name}&quot;
+              </p>
+            ) : (
+              <p className="text-sm text-muted">Agreement not signed yet (they&apos;ll be asked on their confirm link).</p>
+            ))}
+          {client.imported_last_service_at && history.length === 0 && (
+            <p className="text-sm text-muted">Last visit in the old app: {dayLabel(client.imported_last_service_at, tz)}</p>
+          )}
           {!client.sms_consent_at && <Notice kind="warn">No text consent recorded. Automatic texts will not be sent.</Notice>}
           {client.sms_opted_out_at && <Notice kind="warn">This client replied STOP. Texts are blocked.</Notice>}
         </Card>

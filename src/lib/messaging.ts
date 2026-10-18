@@ -45,7 +45,7 @@ async function template(businessId: string, trigger: Trigger) {
 }
 
 type ApptContext = {
-  id: string;
+  id: string | null; // null for client-level messages (e.g. rebook for an imported client)
   business_id: string;
   start_at: Date;
   status: string;
@@ -62,6 +62,23 @@ type ApptContext = {
   sms_ok: boolean;
   pets: string | null;
 };
+
+/** Client-level context: their last visit date from the old app, all their pets. */
+async function clientContext(clientId: string, lastVisit: Date) {
+  const [row] = await sql<Omit<ApptContext, "id" | "start_at" | "status" | "public_token">[]>`
+    select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
+           c.id as client_id, c.first_name, c.phone, c.email,
+           (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
+           (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = c.id and p.deceased_at is null) as pets
+    from clients c join businesses b on b.id = c.business_id
+    where c.id = ${clientId}`;
+  return row ? ({ ...row, id: null, start_at: lastVisit, status: "completed", public_token: "" } as ApptContext) : null;
+}
+
+async function autoMessagesOn(businessId: string) {
+  const [b] = await sql<{ on: boolean }[]>`select auto_messages_enabled as on from businesses where id = ${businessId}`;
+  return !!b?.on;
+}
 
 async function appointmentContext(appointmentId: string) {
   const [row] = await sql<ApptContext[]>`
@@ -89,7 +106,7 @@ function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
     pet: c.pets ?? "your pet",
     date: formatInTimeZone(c.start_at, c.timezone, "EEE, MMM d"),
     time: formatInTimeZone(c.start_at, c.timezone, "h:mm a"),
-    link: appointmentLink(c.public_token),
+    link: c.public_token ? appointmentLink(c.public_token) : bookingUrl(c),
     booking_url: bookingUrl(c),
     review_url: c.review_url ?? "",
     ...extra,
@@ -125,7 +142,7 @@ async function enqueue(c: ApptContext, trigger: Trigger, t: Template, dedupe: st
  */
 export async function notifyAppointment(appointmentId: string, trigger: Trigger) {
   const c = await appointmentContext(appointmentId);
-  if (!c) return;
+  if (!c || !(await autoMessagesOn(c.business_id))) return;
   const t = await template(c.business_id, trigger);
   if (!t) return;
   // Keyed on the start time, so a rescheduled visit gets a fresh "booked" message.
@@ -143,8 +160,9 @@ export async function smsTextFor(appointmentId: string, trigger: Trigger) {
 
 /** Works out which scheduled messages are due now and queues them. Safe to run often. */
 export async function queueDueMessages(businessId: string) {
-  const [biz] = await sql<{ timezone: string }[]>`select timezone from businesses where id = ${businessId}`;
-  if (!biz) return;
+  const [biz] = await sql<{ timezone: string; on: boolean }[]>`
+    select timezone, auto_messages_enabled as on from businesses where id = ${businessId}`;
+  if (!biz?.on) return;
   const tz = biz.timezone;
   const today = todayYmd(tz);
   const nowLocal = hm(new Date(), tz);
@@ -185,6 +203,23 @@ export async function queueDueMessages(businessId: string) {
       if (dueDate > today || dueDate < addDaysYmd(today, -3)) continue;
       const c = await appointmentContext(r.id);
       if (c) await enqueue(c, "rebook", rebook, `rebook:${r.id}`, { days: r.days });
+    }
+
+    // Clients imported from the old app, until they have a visit here.
+    const imported = await sql<{ id: string; last_at: Date; days: number | null }[]>`
+      select c.id, c.imported_last_service_at as last_at,
+        (select min(p.rebook_every_days) from pets p where p.client_id = c.id and p.deceased_at is null) as days
+      from clients c
+      where c.business_id = ${businessId} and c.imported_last_service_at is not null and c.archived_at is null
+        and not exists (select 1 from appointments a where a.client_id = c.id
+                          and (a.status = 'completed' or (a.start_at > now() and a.status in ('requested', 'unconfirmed', 'confirmed'))))`;
+    for (const r of imported) {
+      if (!r.days) continue;
+      // Only clients due in the last 3 days, so switching apps never texts long-overdue clients all at once.
+      const dueDate = addDaysYmd(ymd(r.last_at, tz), r.days);
+      if (dueDate > today || dueDate < addDaysYmd(today, -3)) continue;
+      const c = await clientContext(r.id, r.last_at);
+      if (c) await enqueue(c, "rebook", rebook, `rebook:client:${r.id}:${dueDate}`, { days: r.days });
     }
   }
 

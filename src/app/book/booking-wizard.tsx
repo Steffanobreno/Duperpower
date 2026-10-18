@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { Button, Field, Input, Notice, Textarea } from "@/components/ui";
 import { minutesLabel, money, SIZES } from "@/lib/format";
 import type { DaySlots } from "@/lib/booking";
@@ -18,7 +18,15 @@ type Service = {
 
 const emptyPet = (): PetRequest => ({ name: "", breed: "", size: "", serviceIds: [] });
 
-export function BookingWizard({ services, businessPhone }: { services: Service[]; businessPhone: string }) {
+export function BookingWizard({
+  services,
+  businessPhone,
+  agreement,
+}: {
+  services: Service[];
+  businessPhone: string;
+  agreement: ReactNode | null;
+}) {
   const [pets, setPets] = useState<PetRequest[]>([emptyPet()]);
   const [address, setAddress] = useState({ address: "", city: "", zip: "" });
   const [days, setDays] = useState<DaySlots[] | null>(null);
@@ -26,6 +34,8 @@ export function BookingWizard({ services, businessPhone }: { services: Service[]
   const [start, setStart] = useState<string | null>(null);
   const [contact, setContact] = useState({ firstName: "", lastName: "", phone: "", email: "", notes: "", website: "" });
   const [consent, setConsent] = useState(true);
+  const [agreed, setAgreed] = useState(false);
+  const [signature, setSignature] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -67,7 +77,7 @@ export function BookingWizard({ services, businessPhone }: { services: Service[]
     if (!start) return;
     setError(null);
     startTransition(async () => {
-      const res = await requestBookingAction({ pets, start, ...address, ...contact, smsConsent: consent });
+      const res = await requestBookingAction({ pets, start, ...address, ...contact, smsConsent: consent, agreed, signature });
       if (res.error) setError(res.error);
       else setDone(res.when ?? "your chosen time");
     });
@@ -343,11 +353,30 @@ export function BookingWizard({ services, businessPhone }: { services: Service[]
               <span>Text me about my appointments (confirmations and reminders). Just tell us anytime if you’d rather not get texts.</span>
             </label>
           </div>
+          {agreement && (
+            <div className="space-y-3 rounded-[var(--radius-card)] border border-line bg-surface p-4">
+              <div className="max-h-72 overflow-y-auto rounded-xl border border-line bg-bg p-3" tabIndex={0} aria-label="Service agreement">
+                {agreement}
+              </div>
+              <label className="flex items-start gap-3 text-sm">
+                <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-1 h-4 w-4" />
+                <span>I have read and agree to the service agreement.</span>
+              </label>
+              <Field label="Type your full name to sign">
+                <Input value={signature} onChange={(e) => setSignature(e.target.value)} autoComplete="name" />
+              </Field>
+            </div>
+          )}
           <div className="flex items-center justify-between rounded-xl bg-brand-soft px-4 py-3 text-brand-strong">
             <span>Estimated total</span>
             <span className="text-lg font-bold">{money(total)}</span>
           </div>
-          <Button type="button" className="w-full" disabled={pending} onClick={submit}>
+          <Button
+            type="button"
+            className="w-full"
+            disabled={pending || (!!agreement && (!agreed || signature.trim().length < 3))}
+            onClick={submit}
+          >
             {pending ? "Sending…" : "Request this appointment"}
           </Button>
           <p className="text-center text-xs text-muted">

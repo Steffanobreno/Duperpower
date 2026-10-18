@@ -10,7 +10,8 @@
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "node tests/e2e/slice.mjs && node tests/e2e/booking.mjs"
+    "test:e2e": "node tests/e2e/slice.mjs && node tests/e2e/booking.mjs",
+    "db:import": "tsx --env-file-if-exists=.env.local scripts/import-clients.ts"
   },
   "dependencies": {
     "date-fns": "^4.4.0",

@@ -90,6 +90,7 @@ export type AppointmentDetail = {
     behavior: string | null;
     notes: string | null;
     rebook_every_days: number | null;
+    expired_vaccines: string | null;
     services: { id: string; service_id: string; name: string; price_cents: number; duration_min: number }[];
   }[];
 };
@@ -105,6 +106,8 @@ export async function getAppointment(staff: StaffContext, id: string) {
                  'appointment_pet_id', ap.id, 'pet_id', p.id, 'name', p.name, 'breed', p.breed,
                  'size_class', p.size_class, 'behavior', p.behavior, 'notes', p.notes,
                  'rebook_every_days', p.rebook_every_days,
+                 'expired_vaccines', (select string_agg(v.name, ', ') from vaccines v
+                                      where v.pet_id = p.id and v.expires_on < a.start_at::date),
                  'services', coalesce((select json_agg(json_build_object(
                                 'id', s.id, 'service_id', s.service_id, 'name', s.name,
                                 'price_cents', s.price_cents, 'duration_min', s.duration_min) order by s.created_at)

@@ -23,9 +23,9 @@ Perfil do cliente (contato endereço histórico),clients,must,yes,yes,S10
 Notas do cliente com data e autor,clients,should,yes,yes,fonte 29
 Perfil do pet (raça idade peso pelagem comportamento vet),pets,must,yes,yes,S11
 Códigos de pet (etiquetas ≤8 caracteres) nos cards,pets,should,yes,no,fonte 28
-Vacinas com validade e anexo,pets,must,yes,no,S12 fonte 27
-Alerta de vacina vencida no card do agendamento,pets,should,yes,no,fonte 27
-Importar clientes e pets de CSV,clients,must,no,no,não é do original; necessário para sair do MoeGo; clone: pendente: o dono ainda vai exportar do app antigo
+Vacinas com validade e anexo,pets,must,yes,partial,S12 fonte 27; clone: validade e alerta; sem anexo de foto/PDF
+Alerta de vacina vencida no card do agendamento,pets,should,yes,yes,fonte 27; clone: no agendamento
+Importar clientes e pets de CSV,clients,must,no,yes,"não é do original; necessário para sair do MoeGo; clone: pendente: o dono ainda vai exportar do app antigo; clone: Settings → Import; 389 de 390 do export real, sem duplicar"
 Mapa do dia com paradas numeradas,mobile grooming,must,yes,partial,S02 F06; clone: lista numerada + mapa embutido quando há chave do Google
 Tempo e distância entre paradas,mobile grooming,must,yes,no,fonte 12
 Botão Direções (abre o Google Maps),mobile grooming,must,yes,yes,fonte 10; o usuário usa Google Maps; clone: parada a parada e rota inteira
@@ -46,7 +46,7 @@ Limite de pets por slot/dia,online booking,should,yes,no,fonte 4
 Limite de peso para agendar online,online booking,could,yes,no,fonte 19
 Peso/pelagem só leitura para clientes existentes,online booking,could,yes,no,fonte 19
 Perguntas personalizadas no booking,online booking,should,yes,no,fonte 19
-Contrato com assinatura online,online booking,must,yes,no,S36
+Contrato com assinatura online,online booking,must,yes,yes,S36; clone: nome digitado; no booking e no link de confirmação; 1x por ano
 Pedido online precisa de aprovação do dono,online booking,must,yes,yes,S08 F03; clone: tela Requests
 Fila de espera,online booking,should,yes,no,S08 fonte 37
 Portal: ver/cancelar/remarcar agendamentos,client portal,must,yes,partial,"S39; clone: link do cliente: ver, confirmar, cancelar; remarcar = novo pedido"
@@ -63,7 +63,7 @@ Opt-out por cliente (STOP/HELP),messaging,must,yes,partial,fonte 23; obrigatóri
 Lembrete por ligação automática (1 confirma 2 cancela),messaging,skip,yes,skip,pouco usado no BR; caro
 Checkout com fatura (estimativa aberta fechada),payments,must,yes,yes,S13 fonte 32
 Gorjeta no checkout,payments,should,yes,yes,fonte 33; clone: atalhos 15/18/20/25%
-Registrar pagamento manual (Cash Zelle cheque Venmo),payments,must,yes,yes,S13; os métodos usados na Califórnia
+Registrar pagamento manual (Cash Zelle cheque Venmo),payments,must,yes,yes,"S13; os métodos usados na Califórnia; clone: inclui Bitcoin, conforme o contrato"
 Cobrança com cartão integrada,payments,could,yes,no,não usado hoje; Stripe se precisar
 Cartão salvo,payments,could,yes,no,fonte 20
 Sinal/pré-pagamento no booking (retido e capturado ao aceitar),payments,could,yes,no,fonte 21; exige cartão

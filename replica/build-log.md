@@ -24,3 +24,7 @@ Screenshots in `replica/clone-screens/`.
 Verified by `npm run test:e2e` + `node tests/e2e/booking.mjs`: request on /book → a ZIP 40 mi away
 is not offered that day → owner accepts → outbox returns the client's texts once → client confirms
 from the link → calendar feed lists the visit and refuses a wrong key.
+| Import clients (CSV) | 2026-10-18 | done | — | real export: 389/390 clients, 470 pets, 23/26 future visits (3 overlap, 1 bad phone); re-import adds nothing |
+| Service agreement + signing | 2026-10-18 | done | drawn signature (typed name instead) | owner's own text transcribed from screenshots; section 9 cut off |
+| Vaccines | 2026-10-18 | partial | certificate photo/PDF upload | — |
+| Automatic messages switch | 2026-10-18 | done | — | off by default so clients don't get doubles while the old app runs |

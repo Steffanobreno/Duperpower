@@ -2,6 +2,10 @@
 
 Ordem sugerida: 1 → 2 → 3 → 4 → 5. Cada passo funciona sozinho; o app já roda sem eles.
 
+> **Mensagens automáticas começam DESLIGADAS.** Enquanto você ainda usa o app antigo, deixe assim
+> (senão o cliente recebe tudo em dobro). No dia da troca: Settings → Texts and email →
+> **Turn automatic messages on**, e desligue os lembretes no app antigo.
+
 ## 1. Banco de dados grátis (Neon)
 
 1. Crie uma conta em neon.tech com o Gmail da Woofers (plano Free, sem cartão).
@@ -86,3 +90,16 @@ Se preferir a página dentro do site:
 Para os e-mails saírem mesmo com o celular desligado: no GitHub do projeto → Settings →
 Secrets and variables → Actions → crie `APP_URL` e `CRON_SECRET` (o mesmo do servidor).
 O arquivo `.github/workflows/messages.yml` já chama o app de hora em hora.
+
+## 8. Trazer os clientes do app antigo
+
+Settings → **Import clients** → escolha o arquivo `.csv` exportado → **Import clients**.
+Vêm os clientes, os pets (com raça e frequência) e a próxima visita de cada um.
+Pode importar de novo um export mais novo: quem já existe (mesmo telefone) não é duplicado.
+Depois confira: o tamanho de cada pet (para o preço certo) e os serviços das visitas importadas.
+
+## 9. Contrato de serviço
+
+Settings → **Service agreement**. O seu texto já está lá; complete a seção 9 (Latch-Key),
+que estava cortada no print. O cliente assina digitando o nome: ao agendar online e no link
+de confirmação (uma vez por ano). Mudança importante? Marque "ask every client to sign again".

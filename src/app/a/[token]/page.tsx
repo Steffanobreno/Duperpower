@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { bookingUrl } from "@/lib/messaging";
 import { longDayLabel, money, phoneLabel, timeLabel } from "@/lib/format";
-import { Button, ButtonLink, Card, Notice } from "@/components/ui";
+import { Button, ButtonLink, Card, Field, Input, Notice } from "@/components/ui";
+import { AgreementText } from "@/components/agreement-text";
+import { activeAgreement, currentSignature } from "@/lib/agreement";
 import { cancelByTokenAction, confirmByTokenAction } from "./actions";
 
 export const metadata: Metadata = { title: "Your appointment", robots: { index: false } };
@@ -12,10 +14,10 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
   const { token } = await params;
   if (!/^[0-9a-f]{24}$/.test(token)) notFound();
   const [a] = await sql<
-    { start_at: Date; status: string; first_name: string; pets: string | null; total_cents: number; can_cancel: boolean;
+    { business_id: string; client_id: string; start_at: Date; status: string; first_name: string; pets: string | null; total_cents: number; can_cancel: boolean;
       business: string; phone: string | null; timezone: string; website_url: string | null; cancellation_hours: number }[]
   >`
-    select a.start_at, a.status, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
+    select a.business_id, a.client_id, a.start_at, a.status, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
       (select string_agg(p.name, ' & ' order by p.name) from appointment_pets ap join pets p on p.id = ap.pet_id
         where ap.appointment_id = a.id) as pets,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
@@ -27,6 +29,8 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
   const tz = a.timezone;
   const phone = phoneLabel(a.phone);
   const open = ["requested", "unconfirmed", "confirmed"].includes(a.status);
+  const agreement = a.status === "unconfirmed" ? await activeAgreement(a.business_id) : null;
+  const mustSign = agreement ? !(await currentSignature(agreement, a.client_id)) : false;
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-8">
@@ -45,8 +49,23 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
       {a.status === "completed" && <Notice kind="success">All done. Thank you!</Notice>}
 
       {a.status === "unconfirmed" && (
-        <form action={confirmByTokenAction.bind(null, token)}>
-          <Button type="submit" className="w-full">Confirm my appointment</Button>
+        <form action={confirmByTokenAction.bind(null, token)} className="space-y-3">
+          {mustSign && agreement && (
+            <Card className="space-y-3">
+              <p className="text-sm font-medium">Please read and sign our service agreement (once a year).</p>
+              <div className="max-h-80 overflow-y-auto rounded-xl border border-line bg-bg p-3" tabIndex={0} aria-label="Service agreement">
+                <AgreementText title={agreement.title} body={agreement.body} />
+              </div>
+              <label className="flex items-start gap-3 text-sm">
+                <input type="checkbox" name="agree" required className="mt-1 h-4 w-4" />
+                <span>I have read and agree to the service agreement.</span>
+              </label>
+              <Field label="Type your full name to sign">
+                <Input name="signature" required minLength={3} autoComplete="name" />
+              </Field>
+            </Card>
+          )}
+          <Button type="submit" className="w-full">{mustSign ? "Sign and confirm" : "Confirm my appointment"}</Button>
         </form>
       )}
       {open &&

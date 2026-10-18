@@ -13,6 +13,8 @@ const LINKS = [
   { href: "/settings/booking", title: "Online booking", text: "Booking page link, distance and notice rules" },
   { href: "/settings/messages", title: "Texts and email", text: "iPhone texts, email, Google Calendar, message texts" },
   { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
+  { href: "/settings/import", title: "Import clients", text: "Bring your client list from the old app (CSV)" },
+  { href: "/settings/agreement", title: "Service agreement", text: "The terms clients sign" },
 ];
 
 export default async function SettingsPage() {

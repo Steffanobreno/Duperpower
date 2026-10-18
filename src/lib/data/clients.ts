@@ -16,6 +16,7 @@ export type ClientRow = {
   lng: number | null;
   access_notes: string | null;
   sms_consent_at: Date | null;
+  imported_last_service_at: Date | null;
   sms_opted_out_at: Date | null;
   archived_at: Date | null;
 };
@@ -104,4 +105,14 @@ export async function clientHistory(staff: StaffContext, clientId: string) {
     where a.client_id = ${clientId} and a.business_id = ${staff.businessId}
     order by a.start_at desc
     limit 50`;
+}
+
+export async function listVaccines(staff: StaffContext, petId: string) {
+  return sql<{ id: string; name: string; given_on: string | null; expires_on: string | null; expired: boolean; soon: boolean }[]>`
+    select v.id, v.name, v.given_on::text, v.expires_on::text,
+           (v.expires_on < current_date) as expired,
+           (v.expires_on >= current_date and v.expires_on < current_date + 30) as soon
+    from vaccines v join pets p on p.id = v.pet_id join clients c on c.id = p.client_id
+    where v.pet_id = ${petId} and c.business_id = ${staff.businessId}
+    order by v.expires_on nulls last, v.name`;
 }

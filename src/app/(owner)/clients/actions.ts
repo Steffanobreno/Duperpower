@@ -148,3 +148,28 @@ export async function savePetAction(clientId: string, petId: string | null, _: F
   revalidatePath(`/clients/${clientId}`);
   redirect(form.get("then") === "book" ? `/appointments/new?client=${clientId}` : `/clients/${clientId}`);
 }
+
+async function ownPet(staffBusinessId: string, petId: string) {
+  const [p] = await sql`select p.id, p.client_id from pets p join clients c on c.id = p.client_id
+                        where p.id = ${petId} and c.business_id = ${staffBusinessId}`;
+  return p ?? null;
+}
+
+export async function addVaccineAction(petId: string, form: FormData) {
+  const staff = await requireStaff();
+  const pet = await ownPet(staff.businessId, petId);
+  if (!pet) return;
+  const name = text(form, "name") === "Other" ? text(form, "other_name") : text(form, "name");
+  const date = (k: string) => (/^\d{4}-\d{2}-\d{2}$/.test(String(form.get(k) ?? "")) ? String(form.get(k)) : null);
+  if (!name) return;
+  await sql`insert into vaccines (pet_id, name, given_on, expires_on) values (${petId}, ${name}, ${date("given_on")}, ${date("expires_on")})`;
+  revalidatePath(`/clients/${pet.client_id}/pets/${petId}`);
+}
+
+export async function deleteVaccineAction(petId: string, vaccineId: string) {
+  const staff = await requireStaff();
+  const pet = await ownPet(staff.businessId, petId);
+  if (!pet) return;
+  await sql`delete from vaccines where id = ${vaccineId} and pet_id = ${petId}`;
+  revalidatePath(`/clients/${pet.client_id}/pets/${petId}`);
+}

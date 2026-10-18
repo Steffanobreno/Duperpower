@@ -3,6 +3,7 @@ import { isExclusionViolation, sql } from "@/lib/db";
 import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots } from "@/lib/booking";
 import { normalizePhone, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
+import { activeAgreement, recordSignature } from "@/lib/agreement";
 
 export type PetRequest = { name: string; breed: string; size: string; serviceIds: string[] };
 
@@ -52,6 +53,8 @@ export type BookingRequest = {
   zip: string;
   notes: string;
   smsConsent: boolean;
+  agreed: boolean;
+  signature: string; // full name typed to sign the service agreement
   website: string; // honeypot: people never see this field
 };
 
@@ -77,6 +80,11 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
 
   const checked = await priceAndLength(b.id, input.pets);
   if ("error" in checked) return { error: checked.error };
+  const agreement = await activeAgreement(b.id);
+  const signature = String(input.signature ?? "").trim();
+  if (agreement?.required_online && (!input.agreed || signature.length < 3)) {
+    return { error: "Please read the service agreement, tick the box and type your full name." };
+  }
   const start = new Date(input.start);
   if (Number.isNaN(start.getTime())) return { error: "Please pick a time." };
 
@@ -111,6 +119,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
           returning id`;
         clientId = c.id;
       }
+      if (agreement?.required_online) await recordSignature(tx, agreement, clientId, signature);
       const fullAddress = `${address}, ${city}, CA`;
       const typed = existing
         ? `Online request from ${firstName} ${lastName}${email ? `, ${email}` : ""}. Address given: ${fullAddress} ${zip}.`

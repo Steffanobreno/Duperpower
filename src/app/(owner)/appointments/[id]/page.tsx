@@ -144,6 +144,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <span className="font-semibold">{p.name}</span>
                 <span className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</span>
               </div>
+              {p.expired_vaccines && <Notice kind="error">Expired by this visit: {p.expired_vaccines}</Notice>}
               {p.behavior && <Notice kind="warn">{p.behavior}</Notice>}
               {p.notes && <p className="whitespace-pre-line text-sm text-muted">{p.notes}</p>}
               <ul className="text-sm">

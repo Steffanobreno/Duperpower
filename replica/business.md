@@ -90,3 +90,18 @@ dos que já estão marcados. A van sai de San Mateo (privado, não mostrar ao cl
 - Google Calendar: assinatura de calendário por link (ICS), grátis
 - Hospedagem: Hostinger do dono (se o plano rodar Node.js) + Postgres grátis (Neon)
 - Distância: centro do ZIP code (dados públicos), sem API paga
+
+## Configurações do app antigo (prints de 2026-10-18)
+
+- Preferências: EUA, America/Los_Angeles, USD, MM/DD/YYYY, 12 horas, libras, milhas (o app novo já usa isso)
+- Van: Ford Transit 2019. Regra de direção no app antigo: **20 milhas / 40 min**; o dono disse 25 mi / 45 min
+  → o app novo usa **25 milhas** (editável em Settings → Online booking)
+- Google Calendar do dono: conta Google da empresa (o endereço fica fora do repositório)
+- Redes: facebook.com/woofersdogspa, instagram.com/woofersdogspa (Yelp vazio)
+- Calendário do app antigo mostrava 7:00–21:00 e avisava o dono 60 min antes de cada visita
+  (o feed do Google Calendar não leva alarmes; use a notificação padrão do próprio Google Calendar)
+- **Contrato de serviço**: transcrito em `scripts/agreement.ts`. Pagamentos aceitos incluem **Bitcoin**;
+  cancelamento com menos de **48 h** = $50 por pet (o app usa 48 h para o cliente cancelar pelo link).
+  A seção 9 (Latch-Key) estava cortada no print: completar em Settings → Service agreement.
+- Lista de clientes: export de 390 clientes (não fica no repositório). 1 telefone inválido
+  ("65065656565") e 3 visitas futuras que se sobrepõem a outras precisam ser ajustados à mão.

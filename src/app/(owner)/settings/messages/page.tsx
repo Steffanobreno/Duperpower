@@ -4,7 +4,7 @@ import { sql } from "@/lib/db";
 import { emailConfigured } from "@/lib/email";
 import { Button, Card, Field, Input, Notice, Page, PageHeader, Textarea } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
-import { newDeviceKeyAction, saveMessagingSettingsAction, saveTemplateAction } from "../actions";
+import { newDeviceKeyAction, saveMessagingSettingsAction, saveTemplateAction, setAutoMessagesAction } from "../actions";
 import { SimpleForm } from "../forms";
 
 export const metadata: Metadata = { title: "Texts and email" };
@@ -24,7 +24,7 @@ const ORDER = Object.keys(TEMPLATE_INFO);
 
 export default async function MessagesSettingsPage() {
   const staff = await requireStaff();
-  const [b] = await sql`select email, review_url, website_url, device_key from businesses where id = ${staff.businessId}`;
+  const [b] = await sql`select email, review_url, website_url, device_key, auto_messages_enabled from businesses where id = ${staff.businessId}`;
   const templates = await sql<
     { id: string; trigger: string; body: string; email_subject: string | null; enabled: boolean;
       offset_days: number | null; offset_minutes: number | null; send_at_time: string | null }[]
@@ -40,6 +40,23 @@ export default async function MessagesSettingsPage() {
     <>
       <PageHeader title="Texts and email" back="/settings" />
       <Page>
+        <Card className="space-y-3">
+          <h2 className="font-bold">Automatic messages</h2>
+          {b.auto_messages_enabled ? (
+            <Notice kind="success">On. Confirmations, reminders and rebook messages go out by themselves.</Notice>
+          ) : (
+            <Notice kind="warn">
+              Off. Nothing is sent to clients automatically. Turn this on the day you stop using your old app, so clients
+              don&apos;t get every message twice.
+            </Notice>
+          )}
+          <form action={setAutoMessagesAction.bind(null, !b.auto_messages_enabled)}>
+            <Button type="submit" kind={b.auto_messages_enabled ? "secondary" : "primary"} className="w-full">
+              {b.auto_messages_enabled ? "Turn automatic messages off" : "Turn automatic messages on"}
+            </Button>
+          </form>
+        </Card>
+
         <Card className="space-y-3">
           <h2 className="font-bold">Texts from your iPhone</h2>
           <p className="text-sm text-muted">

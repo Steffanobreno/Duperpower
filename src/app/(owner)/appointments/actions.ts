@@ -251,7 +251,7 @@ export async function recordPaymentAction(appointmentId: string, _: FormState, f
   const invoiceId = await editableInvoice(staff, appointmentId);
   if (!invoiceId) return { error: "This checkout is already closed." };
   const method = String(form.get("method") ?? "");
-  if (!["cash", "zelle", "venmo", "check", "other"].includes(method)) return { error: "Choose how the client paid." };
+  if (!["cash", "zelle", "venmo", "check", "bitcoin", "other"].includes(method)) return { error: "Choose how the client paid." };
   const toCents = (v: FormDataEntryValue | null) => {
     const t = String(v ?? "").replace(/[$,\s]/g, "");
     return t === "" ? 0 : Math.round(Number(t) * 100);

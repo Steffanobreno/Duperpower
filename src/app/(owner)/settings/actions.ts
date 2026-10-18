@@ -171,3 +171,28 @@ export async function newDeviceKeyAction() {
   await sql`update businesses set device_key = encode(gen_random_bytes(24), 'hex') where id = ${staff.businessId}`;
   revalidatePath("/settings/messages");
 }
+
+export async function saveAgreementAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const title = String(form.get("title") ?? "").trim();
+  const body = String(form.get("body") ?? "").trim();
+  if (!title || body.length < 20) return { error: "The agreement needs a title and its text." };
+  const resign = form.get("resign") === "on";
+  const required = form.get("required_online") === "on";
+  const [current] = await sql`select id from agreements where business_id = ${staff.businessId} and active order by created_at desc limit 1`;
+  if (current) {
+    // A new version makes every client sign again on their next booking or confirm link.
+    await sql`update agreements set title = ${title}, body = ${body}, required_online = ${required},
+                version = version + ${resign ? 1 : 0} where id = ${current.id}`;
+  } else {
+    await sql`insert into agreements (business_id, title, body, required_online) values (${staff.businessId}, ${title}, ${body}, ${required})`;
+  }
+  revalidatePath("/settings/agreement");
+  return { saved: true };
+}
+
+export async function setAutoMessagesAction(on: boolean) {
+  const staff = await requireStaff();
+  await sql`update businesses set auto_messages_enabled = ${on} where id = ${staff.businessId}`;
+  revalidatePath("/settings/messages");
+}

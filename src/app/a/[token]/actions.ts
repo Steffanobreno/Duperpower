@@ -2,17 +2,25 @@
 import { revalidatePath } from "next/cache";
 import { sql } from "@/lib/db";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
+import { activeAgreement, currentSignature, recordSignature } from "@/lib/agreement";
 import { dayLabel, timeLabel } from "@/lib/format";
 
 // The client's own link. The token in the URL is the only key, so these actions only
 // ever touch the one appointment it belongs to.
 
-export async function confirmByTokenAction(token: string) {
-  const [a] = await sql`
-    update appointments set status = 'confirmed', confirmed_at = now()
-    where public_token = ${token} and status = 'unconfirmed' and start_at > now()
-    returning id`;
-  if (a) await notifyAppointment(a.id, "confirmed");
+export async function confirmByTokenAction(token: string, form: FormData) {
+  const [appt] = await sql`select id, business_id, client_id from appointments
+                           where public_token = ${token} and status = 'unconfirmed' and start_at > now()`;
+  if (!appt) return revalidatePath(`/a/${token}`);
+  // Sign the service agreement first when it has not been signed in the last year.
+  const agreement = await activeAgreement(appt.business_id);
+  if (agreement && !(await currentSignature(agreement, appt.client_id))) {
+    const name = String(form.get("signature") ?? "").trim();
+    if (form.get("agree") !== "on" || name.length < 3) return revalidatePath(`/a/${token}`);
+    await recordSignature(sql, agreement, appt.client_id, name);
+  }
+  await sql`update appointments set status = 'confirmed', confirmed_at = now() where id = ${appt.id} and status = 'unconfirmed'`;
+  await notifyAppointment(appt.id, "confirmed");
   revalidatePath(`/a/${token}`);
 }
 

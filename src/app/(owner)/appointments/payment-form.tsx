@@ -27,7 +27,7 @@ export function PaymentForm({
       {state?.error && <Notice kind="error">{state.error}</Notice>}
       <fieldset>
         <legend className="mb-1 text-sm font-medium">How did they pay?</legend>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {PAYMENT_METHODS.map((m) => (
             <label
               key={m.value}

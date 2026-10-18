@@ -4,6 +4,7 @@ export const PAYMENT_METHODS = [
   { value: "zelle", label: "Zelle" },
   { value: "venmo", label: "Venmo" },
   { value: "check", label: "Check" },
+  { value: "bitcoin", label: "Bitcoin" },
   { value: "other", label: "Other" },
 ] as const;
 

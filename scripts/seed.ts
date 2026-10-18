@@ -2,6 +2,7 @@
 // Safe to run more than once: it does nothing if a business already exists.
 // Usage: npm run db:seed
 import postgres from "postgres";
+import { AGREEMENT_BODY, AGREEMENT_TITLE } from "./agreement";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is not set");
@@ -95,16 +96,24 @@ const templates = [
 async function main() {
   const [existing] = await sql`select id from businesses limit 1`;
   if (existing) {
-    console.log("business already exists, nothing to seed");
+    // Added after the first seed: make sure the service agreement exists.
+    const added = await sql`
+      insert into agreements (business_id, title, body)
+      select ${existing.id}, ${AGREEMENT_TITLE}, ${AGREEMENT_BODY}
+      where not exists (select 1 from agreements where business_id = ${existing.id})
+      returning id`;
+    console.log(added.length ? "added the service agreement" : "business already exists, nothing to seed");
     return sql.end();
   }
 
   await sql.begin(async (tx) => {
     const [biz] = await tx`
-      insert into businesses (name, phone, booking_slug, start_zip, review_url, website_url)
+      insert into businesses (name, phone, booking_slug, start_zip, review_url, website_url, cancellation_hours)
       values ('Woofers Dog Spa', '+16504800599', 'woofers', '94401',
-              'https://g.page/r/CQs7lH-SjO5jEAE/review', 'https://woofersdogspa.com')
+              'https://g.page/r/CQs7lH-SjO5jEAE/review', 'https://woofersdogspa.com', 48)
       returning id`;
+    // 48 hours: the cancellation notice in the service agreement.
+    await tx`insert into agreements (business_id, title, body) values (${biz.id}, ${AGREEMENT_TITLE}, ${AGREEMENT_BODY})`;
     const [staff] = await tx`
       insert into staff (business_id, name, role, color)
       values (${biz.id}, 'Steffano', 'owner', '#1d6fb8')
