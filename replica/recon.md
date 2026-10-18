@@ -5,8 +5,15 @@ app do dono (agenda, mapa/rota, clientes e pets, checkout, mensagens, relatório
 e portal web do cliente (agendamento online, perfil, pets, vacinas, contrato, cartão).
 Ficam de fora os módulos de hotel/creche/adestramento, multi-unidade e varejo (ver "Fora do escopo").
 
-Para: o próprio negócio do usuário (grooming móvel, Brasil). Uso interno, não para revenda.
-Data: 2026-10-17
+Para: o próprio negócio do usuário (grooming móvel na **Califórnia, EUA**). Uso interno, não para revenda.
+Data: 2026-10-17 (atualizado 2026-10-18)
+
+Operação real (informada pelo usuário em 2026-10-18):
+- pagamentos: **Cash, Zelle, cheque, Venmo** — registrados manualmente, sem processar cartão
+- contato com o cliente: **só SMS**
+- navegação/rota: **Google Maps**
+- fuso America/Los_Angeles, moeda USD, inglês para o cliente
+- objetivo: um MVP básico o quanto antes para cancelar a assinatura do MoeGo
 
 > **Termos de uso.** Os Termos do MoeGo proíbem acessar os Serviços para
 > "(i) build a competitive product or service; or (ii) copy any ideas, features,
@@ -332,13 +339,13 @@ Appointment 1-n GroomingReport (um por pet); Client 1-n Message; Client 1-n Agre
 
 ## Feature matrix
 
-See `features.csv`. 91 linhas. Must: 39, should: 27, could: 12, skip: 13.
+See `features.csv`. 91 linhas. Must: 43, should: 20, could: 14, skip: 14.
 
 ## Out of scope (cannot or should not be cloned)
 
 - **Marca, textos, logos, ícones, ilustrações e telas do MoeGo** — o clone tem identidade própria (`/replica-brand`).
-- **Processamento de pagamento próprio (MoeGo Pay)** e terminais físicos — usar um provedor (Stripe, Mercado Pago, Pagar.me) com Pix e cartão.
-- **Número de telefone "branded" e infraestrutura de SMS/ligação** — usar provedor (Twilio/Zenvia) ou, no Brasil, WhatsApp Business API.
+- **Processamento de pagamento próprio (MoeGo Pay)** e terminais físicos — o negócio recebe em Cash/Zelle/cheque/Venmo; o clone só registra. Stripe fica como opção futura.
+- **Número de telefone "branded" e infraestrutura de SMS/ligação** — usar Twilio com número próprio (registro A2P 10DLC).
 - **App de cliente nas lojas (Pet Parent App)** — o cliente usa a versão web, como o usuário já faz.
 - **Módulos de hotel, creche, adestramento/turmas, multi-unidade, varejo e gerente de conta** — não fazem parte de um negócio de grooming móvel.
 - **Dados que ficam no MoeGo** — exportar clientes/pets/histórico pelo que o próprio MoeGo permitir (CSV/relatórios) e importar no clone; não extrair por scraping.
@@ -349,7 +356,7 @@ Telas 33, fluxos 14, entidades ~25.
 Partes difíceis:
 1. **Smart Scheduling** — calcular, para cada slot, o tempo de direção até a parada anterior e a próxima (API de rotas/matriz de distâncias), com áreas por dia e limites; e reordenar o dia.
 2. **Pagamentos** — sinal retido e capturado ao aceitar, cartão salvo, gorjeta, Pix; estados da fatura.
-3. **Mensageria bidirecional** — lembretes agendados, resposta S/N que muda o status, opt-out; no Brasil, WhatsApp (templates aprovados pela Meta) em vez de SMS.
+3. **SMS bidirecional** — lembretes agendados, resposta Y/N que muda o status, STOP/HELP; nos EUA o número precisa de registro A2P 10DLC antes de enviar.
 
 Outras: mapa com localização ao vivo (En Route/ETA), séries recorrentes com exceções,
 upload de fotos/PDF, app instalável (PWA) para o dono.

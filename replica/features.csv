@@ -28,8 +28,8 @@ Alerta de vacina vencida no card do agendamento,pets,should,yes,no,fonte 27
 Importar clientes e pets de CSV,clients,must,no,no,não é do original; necessário para sair do MoeGo
 Mapa do dia com paradas numeradas,mobile grooming,must,yes,no,S02 F06
 Tempo e distância entre paradas,mobile grooming,must,yes,no,fonte 12
-Botão Direções (Google Maps/Waze/Apple Maps),mobile grooming,must,yes,no,fonte 10; Waze é adição para o BR
-Enviar ETA ao cliente,mobile grooming,should,yes,no,fonte 10
+Botão Direções (abre o Google Maps),mobile grooming,must,yes,no,fonte 10; o usuário usa Google Maps
+Enviar SMS "a caminho" com ETA,mobile grooming,must,yes,no,fonte 10
 Compartilhar localização ao vivo (En Route),mobile grooming,could,yes,no,fonte 10; só útil com equipe
 Local inicial/final da van,mobile grooming,must,yes,no,S19 fonte 8
 Limite de tempo/distância de direção ao sugerir horários,mobile grooming,must,yes,no,Smart Scheduling fonte 8
@@ -38,7 +38,7 @@ Bloquear endereço fora da área no booking online,mobile grooming,must,yes,no,f
 Sugerir melhor ordem de rota do dia,mobile grooming,should,yes,no,fonte 40 (Growth)
 Regras separadas por van/funcionário,mobile grooming,could,yes,no,fonte 3; hoje há 1 van
 Página pública de agendamento do negócio,online booking,must,yes,no,S30
-Login do cliente por código no telefone,online booking,must,yes,no,S31 fonte 16; no BR pode ser via WhatsApp
+Login do cliente por código SMS,online booking,must,yes,no,S31 fonte 16
 Fluxo de cliente novo (dados + pet),online booking,must,yes,no,S32 S33
 Escolher serviço e add-ons online,online booking,must,yes,no,S34
 Slots disponíveis filtrados pela rota,online booking,must,yes,no,S35
@@ -52,21 +52,21 @@ Fila de espera,online booking,should,yes,no,S08 fonte 37
 Portal: ver/cancelar/remarcar agendamentos,client portal,must,yes,no,S39
 Portal: atualizar dados pets e vacinas,client portal,should,yes,no,S40
 Intake form público para leads,client portal,could,yes,no,S41 S21
-Consentimento de marketing,compliance,should,yes,no,fonte 18; LGPD
+Consentimento de SMS (TCPA) e marketing,compliance,must,yes,no,fonte 18; exigido nos EUA para SMS
 Lembrete automático (X dias antes às HH:MM),messaging,must,yes,no,F07 fonte 23
 Confirmar/cancelar respondendo S ou N,messaging,must,yes,no,fonte 24
-Mensagens automáticas (agendado confirmado cancelado agradecimento),messaging,should,yes,no,fonte 23
+Mensagens automáticas (agendado confirmado cancelado agradecimento),messaging,must,yes,no,fonte 23
 Editor de templates com variáveis,messaging,should,yes,no,S20
-Inbox de mensagens bidirecional,messaging,should,yes,no,S15
-Envio pelo WhatsApp,messaging,should,no,no,original usa SMS; no BR WhatsApp é o canal principal
-Opt-out por cliente,messaging,must,yes,no,fonte 23; LGPD
+Inbox de SMS bidirecional,messaging,must,yes,no,S15; SMS é o único canal
+Envio pelo WhatsApp,messaging,skip,no,skip,na Califórnia o contato é só por SMS
+Opt-out por cliente (STOP/HELP),messaging,must,yes,no,fonte 23; obrigatório por regra das operadoras dos EUA
 Lembrete por ligação automática (1 confirma 2 cancela),messaging,skip,yes,skip,pouco usado no BR; caro
 Checkout com fatura (estimativa aberta fechada),payments,must,yes,no,S13 fonte 32
 Gorjeta no checkout,payments,should,yes,no,fonte 33
-Pagamento em dinheiro / Pix / outro (registro manual),payments,must,yes,no,S13; Pix é adição BR
-Cobrança com cartão integrada,payments,should,yes,no,via provedor (Stripe/Mercado Pago)
+Registrar pagamento manual (Cash Zelle cheque Venmo),payments,must,yes,no,S13; os métodos usados na Califórnia
+Cobrança com cartão integrada,payments,could,yes,no,não usado hoje; Stripe se precisar
 Cartão salvo,payments,could,yes,no,fonte 20
-Sinal/pré-pagamento no booking (retido e capturado ao aceitar),payments,should,yes,no,fonte 21
+Sinal/pré-pagamento no booking (retido e capturado ao aceitar),payments,could,yes,no,fonte 21; exige cartão
 Pagamento parcial com saldo pendente,payments,could,yes,no,fonte 32
 Pacotes pré-pagos com créditos,payments,could,yes,no,fonte 34
 Descontos,payments,should,yes,no,fonte 35
