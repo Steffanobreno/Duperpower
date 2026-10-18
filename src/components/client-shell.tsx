@@ -25,7 +25,7 @@ export function ClientShell({
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
           <a href={website ?? "#"} aria-label="Woofers Dog Spa home" className="shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-            <img src="/logo-header.png" alt="Woofers Dog Spa" width={167} height={50} className="h-11 w-auto" />
+            <img src="/logo-light.png" alt="Woofers Dog Spa" width={594} height={160} className="h-11 w-auto" />
           </a>
           {phone && (
             <a
@@ -41,7 +41,7 @@ export function ClientShell({
       <footer className="bg-navy-deep text-white/75">
         <div className="mx-auto max-w-lg space-y-4 px-5 py-8 text-sm">
           {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-          <img src="/logo-header.png" alt="" width={167} height={50} className="h-11 w-auto" />
+          <img src="/logo-light.png" alt="" width={594} height={160} className="h-12 w-auto" />
           <p>Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.</p>
           {phone && (
             <a href={`tel:${phone}`} className="flex items-center gap-2 text-white">

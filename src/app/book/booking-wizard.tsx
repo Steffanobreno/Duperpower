@@ -220,12 +220,12 @@ export function BookingWizard({
   switch (step.name) {
     case "phone":
       return (
-        <StepCard>
-          <div className="mb-5 flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-            <img src="/apple-icon.png" alt="" width={64} height={64} className="h-16 w-16 rounded-2xl" />
-            <p className="font-semibold text-muted">{businessName}</p>
+        <StepCard flush>
+          <div className="px-4 pt-4">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
+            <img src="/van.jpg" alt="The Woofers Dog Spa grooming van" width={900} height={507} className="mx-auto w-full max-w-sm" />
           </div>
+          <div className="p-5 pt-2 sm:p-7 sm:pt-2">
           <h1 className="text-[32px] font-extrabold leading-tight tracking-tight">Welcome!</h1>
           <p className="mt-2 text-muted">
             Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we&apos;ll bring the spa to you. 🐾
@@ -249,6 +249,7 @@ export function BookingWizard({
           <BigButton disabled={pending || digits(phone).length < 10} onClick={lookup} className="mt-6">
             {pending ? "One moment…" : "Next"}
           </BigButton>
+          </div>
         </StepCard>
       );
 
@@ -704,7 +705,10 @@ function SizePicker({ value, onChange }: { value: string; onChange: (size: strin
   return (
     <div>
       <span className="block font-semibold">Size</span>
-      <span className="mb-2 block text-sm text-muted">Height from the floor to the top of the shoulders.</span>
+      <span className="block text-sm text-muted">Measured along the back, from the neck to the base of the tail.</span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- static chart */}
+      <img src="/size-chart.jpg" alt="Size chart: Small 12 inches or less, Medium 12 to 16, Large 16 to 20, X-Large 20 inches or up"
+        width={900} height={304} className="my-3 w-full" />
       <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Size">
         {SIZES.map((s) => {
           const [name, inches] = s.label.replace(")", "").split(" (");
@@ -945,9 +949,9 @@ function AgreementSheet({
 function Submitted({ when, pets, businessPhone, onAgain }: { when: string; pets: string[]; businessPhone: string; onAgain: () => void }) {
   return (
     <StepCard flush>
-      <div className="flex h-44 items-center justify-center bg-gradient-to-br from-sky/30 via-brand-soft to-surface" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-        <img src="/apple-icon.png" alt="" width={112} height={112} className="h-28 w-28 rotate-[-4deg] rounded-[28px] shadow-xl" />
+      <div className="px-4 pt-4" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
+        <img src="/van.jpg" alt="" width={900} height={507} className="mx-auto w-full max-w-sm" />
       </div>
       <div className="p-6 sm:p-8">
         <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">Yay! Your booking request was sent. 🎉</h1>
