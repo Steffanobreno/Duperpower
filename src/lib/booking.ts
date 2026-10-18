@@ -5,7 +5,7 @@ import { zipInfo, zipMiles } from "./geo/zip";
 
 // Online booking: which times a client may request. Rules, in order:
 // 1. the ZIP is in California and within the service radius of the van's start ZIP;
-// 2. inside working hours, with at least `min_notice_hours` notice;
+// 2. inside working hours, with at least `min_notice_hours` notice, back to back (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. on a day that already has visits, every one of them is within `max_cluster_miles`.
 // Requests hold their time slot until the owner accepts or declines them.
@@ -55,7 +55,6 @@ export function zipProblem(b: PublicBusiness, zip: string) {
   return null;
 }
 
-const STEP_MIN = 30;
 const ACTIVE = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
 
 export type DaySlots = { date: string; label: string; times: { value: string; label: string }[] };
@@ -98,18 +97,24 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
 
     const open = zonedToUtc(date, h.start, tz).getTime();
     const close = zonedToUtc(date, h.end, tz).getTime();
-    const times: DaySlots["times"] = [];
-    for (let t = open; t + length <= close; t += STEP_MIN * 60_000) {
-      if (t < earliest) continue;
-      const end = t + length;
-      const clash =
-        sameDay.some((a) => t < a.end_at.getTime() + buffer && end + buffer > a.start_at.getTime()) ||
-        timeOff.some((o) => t < o.end_at.getTime() && end > o.start_at.getTime());
-      if (!clash) {
-        const d = new Date(t);
-        times.push({ value: d.toISOString(), label: timeLabel(d, tz) });
+    // Visits go back to back: start times are the opening time and the end of every
+    // visit already booked, then one visit-length after another (7, 9, 11… for 2-hour
+    // visits; after a 3-hour dog from 7, it's 10, 12, 14…), until the next booking.
+    const clashes = (t: number) =>
+      sameDay.some((a) => t < a.end_at.getTime() + buffer && t + length + buffer > a.start_at.getTime()) ||
+      timeOff.some((o) => t < o.end_at.getTime() && t + length > o.start_at.getTime());
+    const anchors = [open, ...sameDay.map((a) => a.end_at.getTime() + buffer), ...timeOff.map((o) => o.end_at.getTime())]
+      .filter((t) => t >= open && t < close);
+    const starts = new Set<number>();
+    for (const anchor of anchors) {
+      for (let t = anchor; t + length <= close && !clashes(t); t += length) {
+        if (t >= earliest) starts.add(t);
       }
     }
+    const times: DaySlots["times"] = [...starts].sort((x, y) => x - y).map((t) => {
+      const d = new Date(t);
+      return { value: d.toISOString(), label: timeLabel(d, tz) };
+    });
     if (times.length) result.push({ date, label: dayLabel(zonedToUtc(date, "12:00", tz), tz), times });
   }
   return result;
