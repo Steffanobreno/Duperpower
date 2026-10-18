@@ -301,3 +301,70 @@ export async function reopenInvoiceAction(appointmentId: string) {
             where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
   revalidatePath(`/appointments/${appointmentId}/checkout`);
 }
+
+// ---------------------------------------------------------------- edit services
+
+export type ServiceLine = { id?: string; appointmentPetId: string; serviceId: string; priceCents: number; minutes: number };
+
+/**
+ * Replaces the services of a visit (after the client booked online, a dog may take less or
+ * more time, or need an extra). The visit's end moves with the total time. Not allowed once
+ * checkout started: prices are then changed on the bill.
+ */
+export async function saveServicesAction(appointmentId: string, lines: ServiceLine[]): Promise<{ error?: string; warning?: string } | undefined> {
+  const staff = await requireStaff();
+  const [appt] = await sql`select id, start_at, status from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  if (!appt) return { error: "Appointment not found." };
+  const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId}`;
+  if (inv) return { error: "Checkout already started. Change prices on the bill instead." };
+  if (!Array.isArray(lines) || lines.length === 0 || lines.length > 40) return { error: "Keep at least one service." };
+  for (const l of lines) {
+    if (!Number.isInteger(l.priceCents) || l.priceCents < 0 || l.priceCents > 1_000_000) return { error: "Check the prices." };
+    if (!Number.isInteger(l.minutes) || l.minutes < 0 || l.minutes > 720) return { error: "Each service takes 0 to 12 hours." };
+  }
+  const pets = await sql`select id from appointment_pets where appointment_id = ${appointmentId}`;
+  const petIds = new Set(pets.map((p) => p.id as string));
+  if (lines.some((l) => !petIds.has(l.appointmentPetId))) return { error: "Please reload the page and try again." };
+  for (const pid of petIds) {
+    if (!lines.some((l) => l.appointmentPetId === pid)) return { error: "Each pet needs at least one service." };
+  }
+  const existing = await sql`
+    select s.id from appointment_services s join appointment_pets ap on ap.id = s.appointment_pet_id
+    where ap.appointment_id = ${appointmentId}`;
+  const existingIds = new Set(existing.map((e) => e.id as string));
+  if (lines.some((l) => l.id && !existingIds.has(l.id))) return { error: "Please reload the page and try again." };
+  const serviceIds = [...new Set(lines.map((l) => l.serviceId))];
+  const services = await sql<{ id: string; name: string }[]>`
+    select id, name from services where business_id = ${staff.businessId} and id = any(${serviceIds})`;
+  const names = new Map(services.map((s) => [s.id, s.name]));
+  if (serviceIds.some((id) => !names.has(id))) return { error: "One of the services no longer exists." };
+
+  const totalMin = lines.reduce((s, l) => s + l.minutes, 0);
+  const endAt = new Date(appt.start_at.getTime() + Math.max(totalMin, 15) * 60_000);
+  try {
+    await sql.begin(async (tx) => {
+      const keep = lines.map((l) => l.id).filter((x): x is string => !!x);
+      await tx`delete from appointment_services s using appointment_pets ap
+               where ap.id = s.appointment_pet_id and ap.appointment_id = ${appointmentId}
+                 and not (s.id = any(${keep}::uuid[]))`;
+      for (const l of lines) {
+        if (l.id) {
+          await tx`update appointment_services set price_cents = ${l.priceCents}, duration_min = ${l.minutes}
+                   where id = ${l.id}`;
+        } else {
+          await tx`insert into appointment_services (appointment_pet_id, service_id, name, price_cents, duration_min)
+                   values (${l.appointmentPetId}, ${l.serviceId}, ${names.get(l.serviceId)!}, ${l.priceCents}, ${l.minutes})`;
+        }
+      }
+      await tx`update appointments set end_at = ${endAt} where id = ${appointmentId}`;
+    });
+  } catch (e) {
+    if (isExclusionViolation(e)) return { error: "With that length it runs into another online booking. Shorten it or move one visit." };
+    throw e;
+  }
+  revalidatePath(`/appointments/${appointmentId}`);
+  revalidatePath("/today");
+  revalidatePath("/calendar");
+  const warning = await overlapWarning(staff, appt.start_at, endAt, appointmentId);
+  return warning ? { warning: `Saved. Heads up: ${warning.charAt(0).toLowerCase()}${warning.slice(1)}` } : undefined;
+}

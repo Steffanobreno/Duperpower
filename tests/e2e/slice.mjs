@@ -70,6 +70,23 @@ await page.getByText("$194.00").first().waitFor();
 await shot("S06-appointment");
 step("booked Full Haircut Medium + De-shedding = $194");
 
+// The groomer can change a service's time and price after booking; the visit's end moves.
+const bookedUrl = page.url().split("?")[0];
+await page.getByRole("link", { name: "Edit services" }).first().click();
+await page.getByRole("heading", { name: "Edit services" }).waitFor();
+for (let i = 0; i < 4; i++) await page.getByRole("button", { name: /^More time for Full Haircut/ }).click();
+await page.getByText("10:00 AM – 1:00 PM").waitFor();
+await shot("S07-edit-services");
+await page.getByRole("button", { name: "Save changes" }).click();
+await page.waitForURL(bookedUrl);
+await page.getByText("10:00 AM – 1:00 PM · 3h").waitFor();
+await page.getByRole("link", { name: "Edit services" }).first().click();
+for (let i = 0; i < 4; i++) await page.getByRole("button", { name: /^Less time for Full Haircut/ }).click();
+await page.getByRole("button", { name: "Save changes" }).click();
+await page.waitForURL(bookedUrl);
+await page.getByText("10:00 AM – 12:00 PM · 2h").waitFor();
+step("edited the haircut to 3h and back: the visit end moves with it");
+
 // Double booking must be refused by the database.
 const apptUrl = page.url().split("?")[0];
 const clientId = (await page.getByRole("link", { name: "Client profile" }).getAttribute("href")).split("/")[2];
@@ -88,7 +105,7 @@ await shot("S02-today-route");
 step("Today shows the stop and the Google Maps route link");
 
 await page.goto(apptUrl);
-for (const label of ["Mark as confirmed", "I'm on the way", "Arrived, start grooming", "Finish and check out"]) {
+for (const label of ["Mark as confirmed", "I'm on the way", "Check in", "Finish and check out"]) {
   await page.getByRole("button", { name: label }).click();
   await page.waitForLoadState("networkidle");
 }

@@ -38,6 +38,25 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
         action={<ButtonLink kind="secondary" href={`/clients/${id}/edit`}>Edit</ButtonLink>}
       />
       <Page>
+        <div className="card px-4 pb-4 pt-5 text-center">
+          <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-navy text-2xl font-bold text-white">
+            {(client.first_name[0] ?? "") + (client.last_name?.[0] ?? "")}
+          </span>
+          <p className="mt-2 text-xl font-bold">{fullName(client)}</p>
+          <dl className="mt-4 grid grid-cols-4 gap-1">
+            {[
+              ["Upcoming", upcoming.length],
+              ["Finished", history.filter((a) => a.status === "completed").length],
+              ["Cancelled", history.filter((a) => a.status === "cancelled").length],
+              ["No-show", history.filter((a) => a.status === "no_show").length],
+            ].map(([label, n]) => (
+              <div key={label as string}>
+                <dd className={`text-xl font-bold ${label === "No-show" && Number(n) > 0 ? "text-danger" : ""}`}>{n}</dd>
+                <dt className="text-xs text-muted">{label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
         <Card className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <ButtonLink kind="secondary" href={`tel:${client.phone}`}>Call</ButtonLink>
@@ -90,7 +109,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold">Pets</h2>
+            <h2 className="section-label">Pets</h2>
             <ButtonLink kind="ghost" href={`/clients/${id}/pets/new`}>Add pet</ButtonLink>
           </div>
           {pets.length === 0 ? (
@@ -99,7 +118,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
             <ul className="grid gap-2 sm:grid-cols-2">
               {pets.map((p) => (
                 <li key={p.id}>
-                  <Link href={`/clients/${id}/pets/${p.id}`} className="flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3 hover:bg-bg">
+                  <Link href={`/clients/${id}/pets/${p.id}`} className="card flex items-center gap-3 p-3 hover:bg-bg">
                     <PetPhoto petId={p.id} version={p.photo_version} name={p.name} />
                     <div className="min-w-0">
                       <div className="font-semibold">{p.name}</div>
@@ -114,11 +133,11 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
         </section>
 
         <section className="space-y-2">
-          <h2 className="font-bold">Appointments</h2>
+          <h2 className="section-label">Appointments</h2>
           {history.length === 0 ? (
             <Empty title="No appointments yet" />
           ) : (
-            <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+            <ul className="card divide-y divide-line overflow-hidden">
               {[...upcoming, ...past].map((a) => (
                 <li key={a.id}>
                   <Link href={`/appointments/${a.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-bg">
@@ -140,7 +159,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
         </section>
 
         <section className="space-y-2">
-          <h2 className="font-bold">Notes</h2>
+          <h2 className="section-label">Notes</h2>
           <form action={addNoteAction.bind(null, id)} className="space-y-2">
             <label className="sr-only" htmlFor="note">New note</label>
             <Textarea id="note" name="body" placeholder="Add a note about this client" required />

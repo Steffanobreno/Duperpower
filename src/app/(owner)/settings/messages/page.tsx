@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emailConfigured } from "@/lib/email";
+import { TestEmailButton } from "./test-email";
 import { Button, Card, Field, Input, Notice, Page, PageHeader, Textarea } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { newDeviceKeyAction, saveMessagingSettingsAction, saveTemplateAction, setAutoMessagesAction } from "../actions";
@@ -73,7 +74,10 @@ export default async function MessagesSettingsPage() {
         <Card className="space-y-3">
           <h2 className="font-bold">Email</h2>
           {emailConfigured() ? (
-            <Notice kind="success">Email is on. Messages go out from {process.env.GMAIL_USER}.</Notice>
+            <>
+              <Notice kind="success">Email is on. Messages go out from {process.env.GMAIL_USER}.</Notice>
+              <TestEmailButton />
+            </>
           ) : (
             <Notice kind="warn">Email is off. Add the Gmail address and app password to the server settings.</Notice>
           )}

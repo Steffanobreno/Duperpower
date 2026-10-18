@@ -9,7 +9,8 @@ import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
 import { directionsUrl } from "@/lib/directions";
 import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd } from "@/lib/format";
-import { Button, ButtonLink, Card, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
+import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@/components/ui";
+import { Calendar, Chat, Check, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { RescheduleForm } from "../reschedule-form";
 import { PetPhoto } from "@/components/pet-photo";
@@ -21,7 +22,7 @@ const PRIMARY: Record<string, { to: string; label: string } | undefined> = {
   requested: { to: "unconfirmed", label: "Accept request" },
   unconfirmed: { to: "confirmed", label: "Mark as confirmed" },
   confirmed: { to: "en_route", label: "I'm on the way" },
-  en_route: { to: "in_progress", label: "Arrived, start grooming" },
+  en_route: { to: "in_progress", label: "Check in" },
   in_progress: { to: "completed", label: "Finish and check out" },
 };
 
@@ -67,117 +68,142 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const rebookDays = frequencies.length ? Math.min(...frequencies) : 42;
   const nextDate = addDaysYmd(ymd(appt.start_at, tz), rebookDays);
 
-  const statusButton = (to: string, label: string, kind: "primary" | "secondary" | "danger" = "secondary") => (
-    <form action={setStatusAction.bind(null, id, to)}>
-      <Button type="submit" kind={kind} className="w-full">
-        {label}
-      </Button>
-    </form>
-  );
+  const rebookWeeks = Math.round(rebookDays / 7);
+  const canChange = !closed && appt.status !== "completed";
+  const pillar = "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 text-xs font-semibold text-brand hover:bg-brand-soft";
 
   return (
     <>
-      <PageHeader title={fullName(c)} back={`/today?date=${ymd(appt.start_at, tz)}`} />
+      <PageHeader title="Appointment" back={`/today?date=${ymd(appt.start_at, tz)}`} />
       <Page>
         {sp.booked === "1" && <Notice kind="success">Appointment booked.</Notice>}
         {sp.conflict === "1" && <Notice kind="error">Another appointment already uses that time.</Notice>}
 
-        <Card className="space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
-              <p className="text-muted">
-                {timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}
-              </p>
-            </div>
-            <StatusBadge status={checkout?.invoice.status === "closed" ? "paid" : appt.status} />
-          </div>
-          {primary && statusButton(primary.to, primary.label, "primary")}
-          {appt.status === "requested" && statusButton("declined", "Decline request", "danger")}
-          {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
-            <ButtonLink kind="secondary" href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className="w-full">
-              Text &quot;on my way&quot;
-            </ButtonLink>
-          )}
-          {checkout && appt.status === "completed" && (
-            <ButtonLink href={`/appointments/${id}/checkout`} className="w-full">
-              {checkout.invoice.status === "closed" ? "See receipt" : "Continue checkout"}
-            </ButtonLink>
-          )}
-          {!checkout && appt.status === "completed" && (
-            <form action={startCheckoutAction.bind(null, id)}>
-              <Button type="submit" className="w-full">Check out</Button>
+        <div className="card flex items-center gap-3 px-4 py-3">
+          <span aria-hidden className={`h-3 w-3 rounded-full ${STATUS_DOT[checkout?.invoice.status === "closed" ? "paid" : appt.status] ?? "bg-muted"}`} />
+          <span className="flex-1 font-bold uppercase tracking-wide">{statusLabel(checkout?.invoice.status === "closed" ? "paid" : appt.status)}</span>
+          {appt.status === "requested" && (
+            <form action={setStatusAction.bind(null, id, "declined")}>
+              <button type="submit" className="text-sm font-semibold text-danger">Decline</button>
             </form>
           )}
-        </Card>
+        </div>
 
-        <Card className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <ButtonLink kind="secondary" href={`tel:${c.phone}`}>Call</ButtonLink>
-            <ButtonLink kind="secondary" href={`sms:${c.phone}`}>Text</ButtonLink>
-            {appt.address_line && (
-              <ButtonLink
-                kind="secondary"
-                href={directionsUrl({ address: appt.address_line, lat: appt.lat, lng: appt.lng })}
-                target="_blank"
-              >
-                Directions
-              </ButtonLink>
-            )}
-            <ButtonLink kind="ghost" href={`/clients/${c.id}`}>Client profile</ButtonLink>
-          </div>
-          <p className="text-sm">
-            <span className="text-muted">Phone </span>
-            {phoneLabel(c.phone)}
-          </p>
-          <p className="text-sm">
-            <span className="text-muted">Address </span>
-            {appt.address_line ?? "No address on file"}
-          </p>
-          {c.access_notes && <Notice kind="info">{c.access_notes}</Notice>}
-        </Card>
+        <nav aria-label="Actions" className="card grid grid-cols-3 gap-1 p-2">
+          <a href={`sms:${c.phone}`} className={pillar}><Chat size={22} />Message</a>
+          <a href={`tel:${c.phone}`} className={pillar}><Phone size={22} />Call</a>
+          {appt.address_line ? (
+            <a href={directionsUrl({ address: appt.address_line, lat: appt.lat, lng: appt.lng })} target="_blank" rel="noreferrer" className={pillar}>
+              <Pin size={22} />Directions
+            </a>
+          ) : (
+            <span className={`${pillar} opacity-40`}><Pin size={22} />No address</span>
+          )}
+          {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
+            <a href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className={pillar}><Van size={22} />On my way</a>
+          )}
+          {canChange && <a href="#reschedule" className={pillar}><Calendar size={22} />Reschedule</a>}
+          {canChange && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
+          <Link href={`/appointments/new?client=${c.id}&date=${nextDate}&time=${hm(appt.start_at, tz)}`} className={pillar}>
+            <Plus size={22} />Book again
+          </Link>
+          {canChange && (
+            <form action={setStatusAction.bind(null, id, "cancelled")} className="contents">
+              <button type="submit" className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />Cancel</button>
+            </form>
+          )}
+          {canChange && appt.status !== "requested" && (
+            <form action={setStatusAction.bind(null, id, "no_show")} className="contents">
+              <button type="submit" className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />No-show</button>
+            </form>
+          )}
+          {closed && (
+            <form action={setStatusAction.bind(null, id, "unconfirmed")} className="contents">
+              <button type="submit" className={pillar}><Check size={22} />Restore</button>
+            </form>
+          )}
+        </nav>
 
         <section className="space-y-2">
-          <h2 className="font-bold">Pets and services</h2>
+          <h2 className="section-label">When</h2>
+          <div className="card flex items-center gap-3 px-4 py-4">
+            <div className="flex-1">
+              <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
+              <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}</p>
+            </div>
+            {canChange && <a href="#reschedule" aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></a>}
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="section-label">Pets and services</h2>
+            {canChange && <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">Edit</Link>}
+          </div>
           {appt.pets.map((p) => (
-            <Card key={p.appointment_pet_id} className="space-y-2">
-              <div className="flex items-center gap-3">
+            <div key={p.appointment_pet_id} className="card divide-y divide-line">
+              <div className="flex items-center gap-3 px-4 py-3">
                 <PetPhoto petId={p.pet_id} version={p.photo_version} name={p.name} />
                 <div className="min-w-0">
-                  <div className="font-semibold">{p.name}</div>
+                  <div className="text-lg font-bold">{p.name}</div>
                   <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
                 </div>
               </div>
-              {p.behavior && <Notice kind="warn">{p.behavior}</Notice>}
-              {p.notes && <p className="whitespace-pre-line text-sm text-muted">{p.notes}</p>}
-              <ul className="text-sm">
-                {p.services.map((s) => (
-                  <li key={s.id} className="flex justify-between gap-3 py-0.5">
-                    <span>{s.name}</span>
-                    <span>{money(s.price_cents)}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+              {(p.behavior || p.notes) && (
+                <div className="space-y-2 px-4 py-3">
+                  {p.behavior && <Notice kind="warn">{p.behavior}</Notice>}
+                  {p.notes && <p className="whitespace-pre-line text-sm text-muted">{p.notes}</p>}
+                </div>
+              )}
+              {p.services.map((s) => (
+                <div key={s.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{s.name}</span>
+                    <span className="flex items-center gap-1 text-sm text-muted"><Clock size={14} />{minutesLabel(s.duration_min)}</span>
+                  </span>
+                  <span className="font-semibold">{money(s.price_cents)}</span>
+                </div>
+              ))}
+            </div>
           ))}
-          <div className="flex justify-between px-1 font-semibold">
+          <div className="flex justify-between px-1 text-lg font-bold">
             <span>Total</span>
             <span>{money(total)}</span>
           </div>
         </section>
 
         <section className="space-y-2">
-          <h2 className="font-bold">Visit notes</h2>
+          <h2 className="section-label">Customer</h2>
+          <div className="card divide-y divide-line">
+            <Link href={`/clients/${c.id}`} className="flex items-center gap-3 px-4 py-3" aria-label="Client profile">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
+                {(c.first_name[0] ?? "") + (c.last_name[0] ?? "")}
+              </span>
+              <span className="flex-1 font-semibold">{fullName(c)}</span>
+              <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand-strong">every {rebookWeeks} weeks</span>
+            </Link>
+            <a href={`tel:${c.phone}`} className="flex items-center gap-3 px-4 py-3 text-brand">
+              <Phone size={18} /> {phoneLabel(c.phone)}
+            </a>
+            <div className="flex items-center gap-3 px-4 py-3">
+              <Pin size={18} className="shrink-0 text-muted" /> {appt.address_line ?? "No address on file"}
+            </div>
+            {c.access_notes && <div className="px-4 py-3"><Notice kind="info">{c.access_notes}</Notice></div>}
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="section-label">Visit notes</h2>
           <form action={updateNotesAction.bind(null, id)} className="space-y-2">
             <label className="sr-only" htmlFor="notes">Visit notes</label>
-            <Textarea id="notes" name="notes" defaultValue={appt.notes ?? ""} />
+            <Textarea id="notes" name="notes" defaultValue={appt.notes ?? ""} placeholder="Private notes for this visit" />
             <Button type="submit" kind="secondary">Save notes</Button>
           </form>
         </section>
 
-        {!closed && appt.status !== "completed" && (
-          <section className="space-y-2">
-            <h2 className="font-bold">Reschedule</h2>
+        {canChange && (
+          <section className="scroll-mt-20 space-y-2" id="reschedule">
+            <h2 className="section-label">Reschedule</h2>
             <Card>
               <RescheduleForm
                 action={rescheduleAction.bind(null, id)}
@@ -190,10 +216,10 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
         {messages.length > 0 && (
           <section className="space-y-2">
-            <h2 className="font-bold">Messages to the client</h2>
-            <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface text-sm">
+            <h2 className="section-label">Messages to the client</h2>
+            <ul className="card divide-y divide-line overflow-hidden text-sm">
               {messages.map((m) => (
-                <li key={m.id} className="flex justify-between gap-3 px-4 py-2">
+                <li key={m.id} className="flex justify-between gap-3 px-4 py-2.5">
                   <span>
                     {TRIGGER_LABEL[m.template_trigger ?? ""] ?? m.template_trigger} · {m.channel === "sms" ? "Text" : "Email"}
                   </span>
@@ -203,26 +229,44 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             </ul>
           </section>
         )}
-
-        <section className="grid gap-2 sm:grid-cols-2">
-          <ButtonLink
-            kind="secondary"
-            href={`/appointments/new?client=${c.id}&date=${nextDate}&time=${hm(appt.start_at, tz)}`}
-          >
-            Book again in {rebookDays} days
-          </ButtonLink>
-          {!closed && appt.status !== "completed" && (
-            <>
-              {statusButton("cancelled", "Cancel appointment", "danger")}
-              {statusButton("no_show", "Mark as no-show", "danger")}
-            </>
-          )}
-          {closed && statusButton("unconfirmed", "Restore appointment")}
-        </section>
         <p className="text-center text-xs text-muted">
           <Link href={`/calendar?date=${ymd(appt.start_at, tz)}`} className="underline">See this day in the calendar</Link>
         </p>
+        {/* Room for the button fixed at the bottom. */}
+        {(primary || appt.status === "completed") && <div aria-hidden className="h-16" />}
       </Page>
+
+      {(primary || appt.status === "completed") && (
+        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto max-w-3xl">
+            {primary ? (
+              <form action={setStatusAction.bind(null, id, primary.to)}>
+                <button type="submit" className={`w-full rounded-2xl py-3.5 text-base font-bold text-white ${primary.to === "in_progress" ? "bg-success" : "bg-brand"}`}>
+                  {primary.label}
+                </button>
+              </form>
+            ) : checkout ? (
+              <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-brand py-3.5 text-center text-base font-bold text-white">
+                {checkout.invoice.status === "closed" ? "See receipt" : "Continue checkout"}
+              </Link>
+            ) : (
+              <form action={startCheckoutAction.bind(null, id)}>
+                <button type="submit" className="w-full rounded-2xl bg-brand py-3.5 text-base font-bold text-white">Check out</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
+const STATUS_DOT: Record<string, string> = {
+  requested: "bg-warn",
+  unconfirmed: "bg-danger",
+  confirmed: "bg-brand",
+  en_route: "bg-sky",
+  in_progress: "bg-success",
+  completed: "bg-success",
+  paid: "bg-success",
+};

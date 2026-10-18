@@ -5,7 +5,7 @@ import { zipInfo, zipMiles } from "./geo/zip";
 
 // Online booking: which times a client may request. Rules, in order:
 // 1. the ZIP is in California and within the service radius of the van's start ZIP;
-// 2. inside working hours, with at least `min_notice_hours` notice, back to back (see below);
+// 2. inside working hours, with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. on a day that already has visits, every one of them is within `max_cluster_miles`.
 // Requests hold their time slot until the owner accepts or declines them.
@@ -21,6 +21,7 @@ export type PublicBusiness = {
   max_cluster_miles: number;
   booking_days_ahead: number;
   min_notice_hours: number;
+  slot_minutes: number;
   start_zip: string | null;
   service_radius_miles: number;
   online_booking_enabled: boolean;
@@ -30,7 +31,7 @@ export type PublicBusiness = {
 export async function getPublicBusiness() {
   const [b] = await sql<PublicBusiness[]>`
     select b.id, b.name, b.phone, b.timezone, b.website_url, b.email, b.buffer_minutes,
-           b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours,
+           b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles, b.online_booking_enabled,
            (select s.id from staff s where s.business_id = b.id and s.active order by (s.role = 'owner') desc, s.created_at limit 1) as staff_id
     from businesses b order by b.created_at limit 1`;
@@ -83,6 +84,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
   const buffer = b.buffer_minutes * 60_000;
   const length = Math.max(durationMin, 15) * 60_000;
+  const step = b.slot_minutes * 60_000;
   const result: DaySlots[] = [];
 
   for (let i = 0; i < days; i++) {
@@ -97,9 +99,10 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
 
     const open = zonedToUtc(date, h.start, tz).getTime();
     const close = zonedToUtc(date, h.end, tz).getTime();
-    // Visits go back to back: start times are the opening time and the end of every
-    // visit already booked, then one visit-length after another (7, 9, 11… for 2-hour
-    // visits; after a 3-hour dog from 7, it's 10, 12, 14…), until the next booking.
+    // Start times are the opening time and the end of every visit already booked, then
+    // every `slot_minutes` (2 hours: 7, 9, 11…; after a 3-hour dog from 7, it's 10, 12, 14…),
+    // as long as the whole visit fits before the next booking and closing time. Long visits
+    // use the same grid: 6 hours can start at 7, 9, 11 or 1 when the day closes at 7.
     const clashes = (t: number) =>
       sameDay.some((a) => t < a.end_at.getTime() + buffer && t + length + buffer > a.start_at.getTime()) ||
       timeOff.some((o) => t < o.end_at.getTime() && t + length > o.start_at.getTime());
@@ -107,7 +110,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
       .filter((t) => t >= open && t < close);
     const starts = new Set<number>();
     for (const anchor of anchors) {
-      for (let t = anchor; t + length <= close && !clashes(t); t += length) {
+      for (let t = anchor; t + length <= close && !clashes(t); t += step) {
         if (t >= earliest) starts.add(t);
       }
     }

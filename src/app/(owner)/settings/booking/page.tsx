@@ -13,7 +13,7 @@ export default async function BookingSettingsPage() {
   const [b] = await sql`
     select online_booking_enabled, buffer_minutes, max_cluster_miles::float8 as max_cluster_miles,
            service_radius_miles::float8 as service_radius_miles, min_notice_hours, booking_days_ahead,
-           cancellation_hours, start_zip
+           cancellation_hours, start_zip, slot_minutes
     from businesses where id = ${staff.businessId}`;
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const bookUrl = `${appUrl}/book`;
@@ -45,6 +45,9 @@ export default async function BookingSettingsPage() {
               </Field>
               <Field label="Service area (miles from home)">
                 <Input name="service_radius_miles" inputMode="decimal" defaultValue={b.service_radius_miles} />
+              </Field>
+              <Field label="Start times every (min)" hint="120 = 7, 9, 11… After a visit ends, times restart from there.">
+                <Input name="slot_minutes" inputMode="numeric" defaultValue={b.slot_minutes} />
               </Field>
               <Field label="Minimum notice (hours)">
                 <Input name="min_notice_hours" inputMode="numeric" defaultValue={b.min_notice_hours} />

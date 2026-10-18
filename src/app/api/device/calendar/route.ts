@@ -1,8 +1,11 @@
 import { sql } from "@/lib/db";
 import { businessForDeviceKey } from "@/lib/device";
 
-// iCalendar feed. In Google Calendar: Other calendars → From URL → paste this link.
-// Google refreshes subscribed calendars on its own schedule (usually every few hours).
+// Calendar feed of the visits. Two formats:
+// - iCalendar (default): Google Calendar → Other calendars → From URL. Google refreshes it on
+//   its own schedule (usually every few hours).
+// - JSON (?format=json): read every 15 minutes by the Google Apps Script shown in
+//   Settings → Google Calendar, which copies the visits into a real Google calendar.
 
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -22,7 +25,8 @@ function fold(line: string) {
 }
 
 export async function GET(request: Request) {
-  const business = await businessForDeviceKey(new URL(request.url).searchParams.get("key"));
+  const url = new URL(request.url);
+  const business = await businessForDeviceKey(url.searchParams.get("key"));
   if (!business) return new Response("Unknown key", { status: 401 });
 
   const rows = await sql<
@@ -42,6 +46,29 @@ export async function GET(request: Request) {
     order by a.start_at`;
 
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
+  const titleOf = (r: (typeof rows)[number]) => `${r.status === "requested" ? "[Request] " : ""}${r.pets ?? "Grooming"} · ${r.client}`;
+  const descriptionOf = (r: (typeof rows)[number]) =>
+    [r.services, r.phone, r.notes, appUrl && `${appUrl}/appointments/${r.id}`].filter(Boolean).join("\n");
+
+  if (url.searchParams.get("format") === "json") {
+    return Response.json(
+      {
+        from: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+        to: new Date(Date.now() + 180 * 86_400_000).toISOString(),
+        events: rows.map((r) => ({
+          id: r.id,
+          version: `${r.updated_at.toISOString()}|${r.status}`,
+          title: titleOf(r),
+          start: r.start_at.toISOString(),
+          end: r.end_at.toISOString(),
+          location: r.address_line ?? "",
+          description: descriptionOf(r),
+        })),
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -51,8 +78,8 @@ export async function GET(request: Request) {
     `X-WR-TIMEZONE:${business.timezone}`,
   ];
   for (const r of rows) {
-    const title = `${r.status === "requested" ? "[Request] " : ""}${r.pets ?? "Grooming"} · ${r.client}`;
-    const description = [r.services, r.phone, r.notes, appUrl && `${appUrl}/appointments/${r.id}`].filter(Boolean).join("\n");
+    const title = titleOf(r);
+    const description = descriptionOf(r);
     lines.push(
       "BEGIN:VEVENT",
       `UID:${r.id}@woofers`,

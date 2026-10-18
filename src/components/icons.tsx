@@ -60,6 +60,11 @@ export const Sparkle = (p: IconProps) => (
   <Icon {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5" /></Icon>
 );
 
+export const Van = (p: IconProps) => (
+  <Icon {...p}><path d="M3 6h11v10H3zM14 9h4l3 3.5V16h-7" /><circle cx="7" cy="17.5" r="1.8" /><circle cx="17" cy="17.5" r="1.8" /></Icon>
+);
+export const User = (p: IconProps) => <Icon {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></Icon>;
+
 /** A dog face, used where a pet has no photo yet. */
 export const Dog = (p: IconProps) => (
   <Icon {...p}>

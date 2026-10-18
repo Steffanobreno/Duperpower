@@ -5,8 +5,9 @@ import { sql } from "@/lib/db";
 import { listDay } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
 import { addDaysYmd, isYmd, longDayLabel, money, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
-import { ButtonLink, Card, Empty, Page, PageHeader, StatusBadge } from "@/components/ui";
+import { ButtonLink, Empty, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
+import { Chat, Phone, Pin } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -75,49 +76,47 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               />
             )}
 
-            <ol className="space-y-2">
+            <ol className="space-y-3">
               {stops.map((s, i) => (
-                <li key={s.id}>
-                  <Card className="space-y-2">
-                    <div className="flex items-start gap-3">
-                      <span
-                        aria-hidden
-                        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-on-brand"
-                      >
+                <li key={s.id} className="card overflow-hidden">
+                  <Link href={`/appointments/${s.id}`} className="flex gap-3 p-4">
+                    <div className="w-16 shrink-0">
+                      <span aria-hidden className="mb-1 flex h-6 w-6 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
                         {i + 1}
                       </span>
-                      <Link href={`/appointments/${s.id}`} className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="font-semibold">
-                            {timeLabel(s.start_at, tz)} · {s.client_name}
-                          </span>
-                          <StatusBadge status={s.paid ? "paid" : s.status} />
-                        </div>
-                        <div className="truncate text-sm text-muted">
-                          {s.pets.map((p) => `${p.name} (${p.services.join(", ")})`).join(" · ")}
-                        </div>
-                        <div className="truncate text-sm">{s.address_line ?? "No address"}</div>
-                      </Link>
+                      <div className="font-bold leading-tight">{timeLabel(s.start_at, tz)}</div>
+                      <div className="text-xs text-muted">{timeLabel(s.end_at, tz)}</div>
                     </div>
-                    <div className="flex gap-2 pl-10">
-                      {s.address_line && (
-                        <ButtonLink
-                          kind="secondary"
-                          href={directionsUrl({ address: s.address_line, lat: s.lat, lng: s.lng })}
-                          target="_blank"
-                          className="flex-1"
-                        >
-                          Directions
-                        </ButtonLink>
-                      )}
-                      <ButtonLink kind="secondary" href={`sms:${s.client_phone}`} className="flex-1">
-                        Text
-                      </ButtonLink>
-                      <ButtonLink kind="secondary" href={`/appointments/${s.id}`} className="flex-1">
-                        Open
-                      </ButtonLink>
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-lg font-bold leading-tight">{s.client_name}</span>
+                        <StatusBadge status={s.paid ? "paid" : s.status} />
+                      </div>
+                      {s.pets.map((p) => (
+                        <div key={p.name} className="truncate text-sm">
+                          <span className="font-semibold">{p.name}</span>
+                          <span className="text-muted"> · {p.services.join(", ")}</span>
+                        </div>
+                      ))}
+                      <div className="truncate text-sm text-muted">{s.address_line ?? "No address"}</div>
                     </div>
-                  </Card>
+                  </Link>
+                  <div className="grid grid-cols-3 divide-x divide-line border-t border-line text-sm font-semibold text-brand">
+                    {s.address_line ? (
+                      <a href={directionsUrl({ address: s.address_line, lat: s.lat, lng: s.lng })} target="_blank" rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 py-3 hover:bg-brand-soft">
+                        <Pin size={16} /> Directions
+                      </a>
+                    ) : (
+                      <span className="flex items-center justify-center gap-1.5 py-3 text-muted">No address</span>
+                    )}
+                    <a href={`sms:${s.client_phone}`} className="flex items-center justify-center gap-1.5 py-3 hover:bg-brand-soft">
+                      <Chat size={16} /> Text
+                    </a>
+                    <a href={`tel:${s.client_phone}`} className="flex items-center justify-center gap-1.5 py-3 hover:bg-brand-soft">
+                      <Phone size={16} /> Call
+                    </a>
+                  </div>
                 </li>
               ))}
             </ol>
@@ -135,7 +134,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-line bg-surface px-2 py-3">
+    <div className="card px-2 py-3">
       <div className="text-lg font-bold">{value}</div>
       <div className="text-xs text-muted">{label}</div>
     </div>

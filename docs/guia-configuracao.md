@@ -48,13 +48,19 @@ No iPhone: abra o app no Safari → Compartilhar → **Adicionar à Tela de Iní
 
 ## 3. E-mail automático (Gmail da Woofers)
 
-1. myaccount.google.com → Segurança → ative a **Verificação em duas etapas**.
+1. myaccount.google.com (conta Gmail da Woofers) → Segurança → ative a **Verificação em duas etapas**.
 2. Na busca da conta, procure **Senhas de app** → crie uma chamada "Woofers app".
-3. O Google mostra 16 letras: essa é a `GMAIL_APP_PASSWORD`. `GMAIL_USER` é o seu Gmail.
-4. No app: Settings → Texts and email → coloque o seu e-mail (para avisos de pedidos e
-   cancelamentos) e confira o link de review do Google.
+3. O Google mostra 16 letras: essa é a senha de app (anote, ele só mostra uma vez).
+4. No Netlify: **Site configuration → Environment variables → Add a variable**, duas vezes:
+   - `GMAIL_USER` = o Gmail da Woofers (ex.: woofersdogspa@gmail.com)
+   - `GMAIL_APP_PASSWORD` = as 16 letras, sem espaços
+5. **Deploys → Trigger deploy → Deploy project** (a variável só vale depois do deploy).
+6. No app: Settings → Texts and email → coloque o seu e-mail → **Send me a test email**.
+   Chegou? Está pronto. (Na primeira vez, olhe também o spam.)
 
-Limite do Gmail: ~500 e-mails por dia. Você usa poucos por dia.
+Os e-mails saem com o logo da Woofers e um botão "See my appointment" para o cliente ver,
+confirmar ou cancelar. Eles só saem sozinhos depois de ligar **Turn automatic messages on**.
+Limite do Gmail: ~500 e-mails por dia.
 
 ## 4. SMS automático pelo seu iPhone (linha AT&T)
 
@@ -83,11 +89,21 @@ leva um link: o cliente toca e o app muda o status sozinho.
 Se um cliente pedir para não receber textos: abra o cliente → Edit → desmarque
 "Client agreed to receive text messages".
 
-## 5. Google Calendar
+## 5. Google Calendar (atualiza a cada 15 minutos)
 
-No computador, Google Calendar → **Outras agendas** → **+** → **Do URL** → cole o
-"Calendar link" de Settings → Texts and email. O Google atualiza a cada poucas horas
-(não é instantâneo; a agenda certa e na hora é sempre a do app).
+Uma vez só, num computador, com a conta Google da Woofers:
+
+1. No app: Settings → **Google Calendar** → **Copy** no script.
+2. Abra **script.google.com** → **New project** → apague o que estiver lá → cole.
+3. **Save** (disquete). Na barra de cima escolha **setup** → **Run**.
+4. O Google pede permissão: **Review permissions** → conta da Woofers → **Advanced** →
+   **Go to Untitled project** → **Allow** (é um script seu, por isso o aviso de "não verificado").
+5. Pronto: aparece a agenda "Woofers Dog Spa" no Google Calendar, com todas as visitas.
+   Visita nova, mudada ou cancelada aparece em até 15 minutos, das 6h às 21h
+   (à noite ele para, para o banco de dados grátis poder "dormir").
+
+Se usar isso, não use também o link de assinatura (as visitas apareceriam duas vezes), e
+desligue a sincronização do MoeGo com o Google quando parar de usar o MoeGo.
 
 ## 6. Botão "Book Now" no site (Lovable)
 

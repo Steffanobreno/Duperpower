@@ -8,6 +8,7 @@ const [c] = await sql`insert into clients (business_id, first_name, phone, zip) 
 const day = "2026-10-21";
 const show = async (label: string, min: number) => console.log(label, (await findSlots(b, "94401", min, day)).flatMap((d) => d.times.map((t) => t.label)).join(", "));
 await show("empty day, 2h visit:", 120);
+await show("empty day, two X-Large dogs (6h):", 360);
 await sql`insert into appointments (business_id, client_id, staff_id, start_at, end_at, zip) values (${b.id}, ${c.id}, ${b.staff_id}, ${new Date('2026-10-21T14:00:00Z')}, ${new Date('2026-10-21T17:00:00Z')}, '94401')`;
 await show("after a 3h dog 7-10, 2h visit:", 120);
 await show("after a 3h dog 7-10, 3h visit:", 180);
