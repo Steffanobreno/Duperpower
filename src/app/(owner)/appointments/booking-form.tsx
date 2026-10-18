@@ -163,6 +163,11 @@ export function BookingForm({
         <span className="text-lg font-bold">{money(cents)}</span>
       </div>
 
+      <label className="flex items-center gap-3 text-sm">
+        <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" />
+        Send the confirmation to the client (text and email)
+      </label>
+
       {state?.warning && (
         <div className="space-y-2">
           <Notice kind="warn">{state.warning}</Notice>

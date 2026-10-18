@@ -107,3 +107,67 @@ export async function saveBusinessAction(_: FormState, form: FormData): Promise<
   revalidatePath("/settings");
   return { saved: true };
 }
+
+export async function saveBookingSettingsAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const num = (k: string) => Number(String(form.get(k) ?? "").trim());
+  const buffer = num("buffer_minutes");
+  const miles = num("max_cluster_miles");
+  const radius = num("service_radius_miles");
+  const notice = num("min_notice_hours");
+  const ahead = num("booking_days_ahead");
+  const cancelHours = num("cancellation_hours");
+  const startZip = String(form.get("start_zip") ?? "").trim();
+  if (![buffer, miles, radius, notice, ahead, cancelHours].every(Number.isFinite)) return { error: "Use numbers only." };
+  if (buffer < 0 || buffer > 180) return { error: "Driving time between visits: 0 to 180 minutes." };
+  if (miles < 1 || miles > 200 || radius < 1 || radius > 300) return { error: "Distances must be between 1 and 200 miles." };
+  if (notice < 0 || notice > 336) return { error: "Notice: 0 to 336 hours." };
+  if (ahead < 1 || ahead > 180) return { error: "Clients can book 1 to 180 days ahead." };
+  if (cancelHours < 0 || cancelHours > 168) return { error: "Cancellation window: 0 to 168 hours." };
+  if (startZip && !/^\d{5}$/.test(startZip)) return { error: "The van's ZIP code has 5 digits." };
+  await sql`
+    update businesses set online_booking_enabled = ${form.get("online_booking_enabled") === "on"},
+      buffer_minutes = ${buffer}, max_cluster_miles = ${miles}, service_radius_miles = ${radius},
+      min_notice_hours = ${notice}, booking_days_ahead = ${ahead}, cancellation_hours = ${cancelHours},
+      start_zip = ${startZip || null}
+    where id = ${staff.businessId}`;
+  revalidatePath("/settings/booking");
+  return { saved: true };
+}
+
+export async function saveMessagingSettingsAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const text = (k: string) => String(form.get(k) ?? "").trim() || null;
+  const email = text("email");
+  const review = text("review_url");
+  const website = text("website_url");
+  if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: "Check the email address." };
+  for (const url of [review, website]) if (url && !/^https:\/\/\S+$/.test(url)) return { error: "Links must start with https://" };
+  await sql`update businesses set email = ${email}, review_url = ${review}, website_url = ${website} where id = ${staff.businessId}`;
+  revalidatePath("/settings/messages");
+  return { saved: true };
+}
+
+export async function saveTemplateAction(templateId: string, _: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const body = String(form.get("body") ?? "").trim();
+  const subject = String(form.get("email_subject") ?? "").trim() || null;
+  if (!body) return { error: "The message can't be empty." };
+  const days = form.get("offset_days");
+  const minutes = form.get("offset_minutes");
+  const time = String(form.get("send_at_time") ?? "");
+  await sql`
+    update message_templates set body = ${body}, email_subject = ${subject}, enabled = ${form.get("enabled") === "on"},
+      offset_days = coalesce(${days === null ? null : Number(days)}::int, offset_days),
+      offset_minutes = coalesce(${minutes === null ? null : Number(minutes)}::int, offset_minutes),
+      send_at_time = coalesce(${/^\d{2}:\d{2}$/.test(time) ? time : null}::time, send_at_time)
+    where id = ${templateId} and business_id = ${staff.businessId}`;
+  revalidatePath("/settings/messages");
+  return { saved: true };
+}
+
+export async function newDeviceKeyAction() {
+  const staff = await requireStaff();
+  await sql`update businesses set device_key = encode(gen_random_bytes(24), 'hex') where id = ${staff.businessId}`;
+  revalidatePath("/settings/messages");
+}

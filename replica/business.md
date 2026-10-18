@@ -7,7 +7,7 @@ Sem dados de clientes aqui. Prints do app antigo não ficam no repositório.
 
 - Nome: Woofers Dog Spa — grooming móvel, San Francisco Bay Area, desde 2017
 - Site: https://woofersdogspa.com · e-mail: contact@woofersdogspa.com
-- Telefone nos SMS: (650) 627-6745 · telefone no site: (650) 480-0599 → **confirmar qual usar**
+- Telefone do negócio: **(650) 480-0599** (linha AT&T no iPhone do dono; os SMS saem dele)
 - Link de review do Google: https://g.page/r/CQs7lH-SjO5jEAE/review
 - Fuso: America/Los_Angeles · moeda: USD
 - Pagamentos: Cash, Zelle, cheque, Venmo · contato: só SMS · navegação: Google Maps
@@ -29,7 +29,7 @@ Tamanho = altura do pet: Small ≤ 12", Medium 12"–16", Large 16"–20", X-Lar
 | Bath | Bath - Small (12" or less) | small | 120 min | $99 |
 | Bath | Bath - Medium (12"-16") | medium | 120 min | $109 |
 | Bath | Bath - Large (16"-20") | large | 120 min | $129 |
-| Bath | Bath - X-Large (20" or up) | xlarge | 120 min (?) | $149 |
+| Bath | Bath - X-Large (20" or up) | xlarge | 120 min | $149 |
 
 Add-ons:
 
@@ -44,8 +44,7 @@ Add-ons:
 | Hypoallergenic Fragrance Free Shampoo | 0 | $15 |
 | Skunk Off | 180 min | $280 |
 
-A confirmar: duração do Bath X-Large (cortada no print); se há mais add-ons abaixo do
-Skunk Off; o que fica na aba "Service Charges".
+Confirmado pelo dono: não há mais add-ons nem "Service Charges".
 
 ## Mensagens SMS (textos do dono)
 
@@ -70,7 +69,9 @@ Skunk Off; o que fica na aba "Service Charges".
 - Contra Costa: El Cerrito, Richmond, Albany, Kensington
 - Marin: Mill Valley, San Rafael, Ross
 
-O site diz 59–62 cidades; esta lista é parcial. A confirmar: quais cidades em quais dias da semana.
+O site diz 59–62 cidades; esta lista é parcial. O dono atende a área toda, todos os dias.
+Regra de rota do dono: num dia que já tem clientes, os próximos ficam a no máximo **25 milhas / 45 min**
+dos que já estão marcados. A van sai de San Mateo (privado, não mostrar ao cliente).
 
 ## O que os prints mostraram que o app antigo faz (funções a ter)
 
@@ -81,3 +82,11 @@ O site diz 59–62 cidades; esta lista é parcial. A confirmar: quais cidades em
   top clientes por gasto, clientes recorrentes
 - Google Calendar sync, trava de segurança (PIN)
 - volume atual: ~74 agendamentos e ~67 clientes por mês
+
+## Decisões de custo (2026-10-18): nada pago
+
+- SMS: sai do iPhone do dono (linha AT&T) por automação do app Atalhos; sem Twilio
+- E-mail: Gmail da empresa (senha de app), grátis
+- Google Calendar: assinatura de calendário por link (ICS), grátis
+- Hospedagem: Hostinger do dono (se o plano rodar Node.js) + Postgres grátis (Neon)
+- Distância: centro do ZIP code (dados públicos), sem API paga

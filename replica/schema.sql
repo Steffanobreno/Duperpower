@@ -1,4 +1,5 @@
 -- Schema do clone (Postgres 15+ / Supabase). Primeira migração.
+-- Original design (first migration). Later changes live in db/migrations/0002+.
 -- Convenções: uuid em tudo, timestamptz em UTC, dinheiro em centavos (integer) + currency,
 -- business_id em tudo que o negócio possui. Acesso: ver "Access rules" no fim do arquivo.
 

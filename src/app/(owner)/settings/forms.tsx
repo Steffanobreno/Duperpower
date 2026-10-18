@@ -150,3 +150,28 @@ export function BusinessForm({
     </ActionForm>
   );
 }
+
+/** A settings form whose fields are passed as children; shows "Saved" or the error. */
+export function SimpleForm({
+  action,
+  children,
+  submitLabel = "Save",
+  savedLabel = "Saved.",
+}: {
+  action: Action;
+  children: React.ReactNode;
+  submitLabel?: string;
+  savedLabel?: string;
+}) {
+  const [state, formAction, pending] = useActionState(action, undefined);
+  return (
+    <ActionForm action={formAction} className="space-y-4">
+      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      {state?.saved && <Notice kind="success">{savedLabel}</Notice>}
+      {children}
+      <Button type="submit" className="w-full" disabled={pending}>
+        {pending ? "Saving…" : submitLabel}
+      </Button>
+    </ActionForm>
+  );
+}

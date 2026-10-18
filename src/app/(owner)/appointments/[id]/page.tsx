@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getAppointment } from "@/lib/data/appointments";
 import { getInvoiceForAppointment } from "@/lib/data/invoices";
+import { smsTextFor } from "@/lib/messaging";
+import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
 import { directionsUrl } from "@/lib/directions";
 import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd } from "@/lib/format";
@@ -22,13 +24,37 @@ const PRIMARY: Record<string, { to: string; label: string } | undefined> = {
   in_progress: { to: "completed", label: "Finish and check out" },
 };
 
+const TRIGGER_LABEL: Record<string, string> = {
+  booked: "Booking confirmation",
+  request_received: "Request received",
+  request_declined: "Request declined",
+  reminder: "Reminder",
+  confirmed: "Confirmed",
+  cancelled: "Cancelled",
+  rebook: "Time to rebook",
+  review_request: "Review request",
+};
+const MESSAGE_STATUS: Record<string, string> = {
+  queued: "Waiting for your iPhone",
+  handed_off: "Sent from iPhone",
+  sent: "Sent",
+  failed: "Failed",
+  skipped: "Not sent (too late)",
+};
+
 export default async function AppointmentPage({ params, searchParams }: PageProps<"/appointments/[id]">) {
   const staff = await requireStaff();
   const { id } = await params;
   const sp = await searchParams;
   const appt = await getAppointment(staff, id);
   if (!appt) notFound();
-  const checkout = await getInvoiceForAppointment(staff, id);
+  const [checkout, onMyWay, messages] = await Promise.all([
+    getInvoiceForAppointment(staff, id),
+    smsTextFor(id, "on_my_way"),
+    sql<{ id: string; channel: string; status: string; template_trigger: string | null; created_at: Date }[]>`
+      select id, channel, status, template_trigger, created_at from messages
+      where appointment_id = ${id} and business_id = ${staff.businessId} order by created_at desc limit 20`,
+  ]);
   const tz = staff.timezone;
   const c = appt.client;
   const minutes = Math.round((appt.end_at.getTime() - appt.start_at.getTime()) / 60000);
@@ -66,6 +92,12 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             <StatusBadge status={checkout?.invoice.status === "closed" ? "paid" : appt.status} />
           </div>
           {primary && statusButton(primary.to, primary.label, "primary")}
+          {appt.status === "requested" && statusButton("declined", "Decline request", "danger")}
+          {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
+            <ButtonLink kind="secondary" href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className="w-full">
+              Text &quot;on my way&quot;
+            </ButtonLink>
+          )}
           {checkout && appt.status === "completed" && (
             <ButtonLink href={`/appointments/${id}/checkout`} className="w-full">
               {checkout.invoice.status === "closed" ? "See receipt" : "Continue checkout"}
@@ -149,6 +181,22 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 time={hm(appt.start_at, tz)}
               />
             </Card>
+          </section>
+        )}
+
+        {messages.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="font-bold">Messages to the client</h2>
+            <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface text-sm">
+              {messages.map((m) => (
+                <li key={m.id} className="flex justify-between gap-3 px-4 py-2">
+                  <span>
+                    {TRIGGER_LABEL[m.template_trigger ?? ""] ?? m.template_trigger} · {m.channel === "sms" ? "Text" : "Email"}
+                  </span>
+                  <span className="text-muted">{MESSAGE_STATUS[m.status] ?? m.status}</span>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

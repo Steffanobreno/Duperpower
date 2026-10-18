@@ -10,6 +10,9 @@ const LINKS = [
   { href: "/settings/services", title: "Services and prices", text: "Packages, add-ons, prices and times" },
   { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
   { href: "/settings/business", title: "Business", text: "Name, phone and booking link" },
+  { href: "/settings/booking", title: "Online booking", text: "Booking page link, distance and notice rules" },
+  { href: "/settings/messages", title: "Texts and email", text: "iPhone texts, email, Google Calendar, message texts" },
+  { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
 ];
 
 export default async function SettingsPage() {

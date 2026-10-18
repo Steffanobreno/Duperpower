@@ -25,6 +25,10 @@ export function RescheduleForm({
           <Input type="time" name="time" defaultValue={time} step={900} required />
         </Field>
       </div>
+      <label className="flex items-center gap-3 text-sm">
+        <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" />
+        Tell the client about the new time
+      </label>
       {state?.warning && (
         <div className="space-y-2">
           <Notice kind="warn">{state.warning}</Notice>

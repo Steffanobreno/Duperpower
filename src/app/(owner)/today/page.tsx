@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
+import { sql } from "@/lib/db";
 import { listDay } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
 import { addDaysYmd, isYmd, longDayLabel, money, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
@@ -22,6 +23,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
   const embedKey = process.env.GOOGLE_MAPS_API_KEY;
+  const [{ requests }] = await sql<{ requests: number }[]>`
+    select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`;
 
   return (
     <>
@@ -30,6 +33,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         action={<ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>}
       />
       <Page>
+        {requests > 0 && (
+          <ButtonLink href="/requests" kind="secondary" className="w-full border-warn bg-warn-soft text-warn">
+            {requests} booking request{requests > 1 ? "s" : ""} waiting
+          </ButtonLink>
+        )}
         <DayNav
           base="/today?"
           prev={addDaysYmd(date, -1)}

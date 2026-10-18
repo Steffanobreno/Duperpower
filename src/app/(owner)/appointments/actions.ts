@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext } from "@/lib/auth";
 import { isExclusionViolation, sql } from "@/lib/db";
 import { hm, isYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
-import { workingHoursFor } from "@/lib/data/appointments";
+import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
+import { notifyAppointment } from "@/lib/messaging";
 
 export type FormState = { error?: string; warning?: string } | undefined;
 
@@ -31,6 +32,13 @@ async function outsideHours(staff: StaffContext, date: string, start: string, en
   if (start < hours.start_time.slice(0, 5) || endsNextDay || endLocal > hours.end_time.slice(0, 5))
     return `That time is outside working hours (${hours.start_time.slice(0, 5)}–${hours.end_time.slice(0, 5)}).`;
   return null;
+}
+
+async function distanceWarning(staff: StaffContext, date: string, zip: string | null, excludeId?: string) {
+  const far = await tooFarFromDay(staff, date, zip, excludeId);
+  return far
+    ? `This address is about ${Math.round(far.miles)} miles from ${far.client}'s stop that day (your limit is ${far.limit}).`
+    : null;
 }
 
 export async function createAppointmentAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {
@@ -67,7 +75,7 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
   const endAt = new Date(startAt.getTime() + Math.max(totalMin, 15) * 60_000);
 
   if (!override) {
-    const warning = await outsideHours(staff, date, time, endAt);
+    const warning = (await outsideHours(staff, date, time, endAt)) ?? (await distanceWarning(staff, date, client.zip));
     if (warning) return { warning };
   }
 
@@ -95,13 +103,14 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
     if (isExclusionViolation(e)) return { error: "You already have an appointment at that time. Pick another time." };
     throw e;
   }
+  if (form.get("notify") === "on") await notifyAppointment(id, "booked");
   revalidatePath("/today");
   revalidatePath("/calendar");
   redirect(`/appointments/${id}?booked=1`);
 }
 
 const NEXT_STATUS: Record<string, string[]> = {
-  requested: ["unconfirmed", "confirmed", "declined"],
+  requested: ["unconfirmed", "declined"],
   unconfirmed: ["confirmed", "en_route", "in_progress", "cancelled", "no_show"],
   confirmed: ["unconfirmed", "en_route", "in_progress", "cancelled", "no_show"],
   en_route: ["in_progress", "confirmed", "cancelled", "no_show"],
@@ -126,9 +135,15 @@ export async function setStatusAction(appointmentId: string, status: string) {
     if (isExclusionViolation(e)) redirect(`/appointments/${appointmentId}?conflict=1`);
     throw e;
   }
+  // Tell the client when it affects them. An accepted online request gets the "booked"
+  // message with the link to confirm; the reminder follows as for any visit.
+  if (status === "cancelled") await notifyAppointment(appointmentId, "cancelled");
+  if (status === "declined") await notifyAppointment(appointmentId, "request_declined");
+  if (appt.status === "requested" && status === "unconfirmed") await notifyAppointment(appointmentId, "booked");
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath("/today");
   revalidatePath("/calendar");
+  revalidatePath("/requests");
   if (status === "completed") {
     await openInvoice(staff, appointmentId);
     redirect(`/appointments/${appointmentId}/checkout`);
@@ -140,12 +155,13 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
   const date = String(form.get("date") ?? "");
   const time = String(form.get("time") ?? "");
   if (!isYmd(date) || !/^\d{2}:\d{2}$/.test(time)) return { error: "Pick a date and a start time." };
-  const [appt] = await sql`select start_at, end_at from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  const [appt] = await sql`select start_at, end_at, zip from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
   if (!appt) return { error: "Appointment not found." };
   const startAt = zonedToUtc(date, time, staff.timezone);
   const endAt = new Date(startAt.getTime() + (appt.end_at.getTime() - appt.start_at.getTime()));
   if (form.get("override") !== "on") {
-    const warning = await outsideHours(staff, date, time, endAt);
+    const warning =
+      (await outsideHours(staff, date, time, endAt)) ?? (await distanceWarning(staff, date, appt.zip, appointmentId));
     if (warning) return { warning };
   }
   try {
@@ -155,6 +171,7 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
     if (isExclusionViolation(e)) return { error: "You already have an appointment at that time. Pick another time." };
     throw e;
   }
+  if (form.get("notify") === "on") await notifyAppointment(appointmentId, "booked");
   revalidatePath("/today");
   revalidatePath("/calendar");
   redirect(`/appointments/${appointmentId}`);

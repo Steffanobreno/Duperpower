@@ -39,36 +39,56 @@ const addons: [string, number, number][] = [
 ];
 
 // The owner's own message texts. Variables in {braces} are filled in when sending.
+// {link} is the client's page to see, confirm or cancel the visit (no login needed).
 const templates = [
-  { trigger: "booked", body: "From {business}, {client}, your appointment is booked for {date} {time}." },
+  {
+    trigger: "booked",
+    email_subject: "Your appointment with {business}",
+    body: "From {business}, {client}, your appointment is booked for {date} at {time}. See or change it here: {link}",
+  },
+  {
+    trigger: "request_received",
+    email_subject: "We got your booking request",
+    body: "Hi {client}! {business} received your request for {date} at {time}. We'll text you as soon as it's confirmed.",
+  },
+  {
+    trigger: "request_declined",
+    email_subject: "About your booking request",
+    body: "Hi {client}, sorry, we can't make {date} at {time} work. Please pick another time at {booking_url} or text us at {business_phone}.",
+  },
   {
     trigger: "reminder",
     offset_days: 2,
     send_at_time: "10:00",
     only_if_unconfirmed: true,
-    body: "From {business}, {client}, your next appointment is coming up on {date} {time}. Reply Y to confirm or N to cancel.",
+    email_subject: "Reminder: your appointment on {date}",
+    body: "From {business}, {client}, your next appointment is coming up on {date} at {time}. Please confirm or cancel here: {link}",
   },
-  { trigger: "confirmed", body: "Thank you, {client}! Your appointment on {date} {time} is confirmed." },
-  { trigger: "cancelled", body: "{client}, your appointment on {date} {time} has been cancelled. Text us anytime to book again." },
-  { trigger: "on_my_way", body: "Hi {client}! {business} is on the way, arriving around {eta}." },
+  {
+    trigger: "confirmed",
+    email_subject: "Appointment confirmed",
+    body: "Thank you, {client}! Your appointment on {date} at {time} is confirmed. See you then! 🐾",
+  },
+  {
+    trigger: "cancelled",
+    email_subject: "Appointment cancelled",
+    body: "{client}, your appointment on {date} at {time} has been cancelled. Book again anytime at {booking_url} or text us at {business_phone}.",
+  },
+  {
+    trigger: "on_my_way",
+    body: "Hi {client}! {business} is on the way to you now 🚐",
+  },
   {
     trigger: "rebook",
-    offset_days: 0,
     send_at_time: "10:00",
-    body: "From {business}, Hello {client}, it has been almost {days} days since {pet} last service. Would you like to book a new appointment? Book online: {booking_url} or text us {business_phone}",
+    email_subject: "Time for {pet}'s next groom?",
+    body: "From {business}, Hello {client}, it has been almost {days} days since {pet}'s last service. Would you like to book a new appointment? Book online: {booking_url} or text us {business_phone}",
   },
   {
     trigger: "review_request",
     offset_minutes: 30,
-    body: "Hi! 😊🐾 It was a pleasure taking care of your pet today! We hope you loved your experience with {business}. If you have a moment, your review truly means a lot to us 💙 👉 Leave your review here: https://g.page/r/CQs7lH-SjO5jEAE/review Thank you so much for your trust, and we hope to see you again soon! 🚐✨",
-  },
-  {
-    trigger: "feedback_positive",
-    body: "We are so excited that you liked our service! It would be great if you could share your experience on Yelp, Facebook or Google.",
-  },
-  {
-    trigger: "feedback_negative",
-    body: "We are sorry that you are not 100% happy with us! Please let us know anything we could improve so we can do much better next time. Thank you!",
+    email_subject: "How did we do?",
+    body: "Hi! 😊🐾 It was a pleasure taking care of your pet today! We hope you loved your experience with {business}. If you have a moment, your review truly means a lot to us 💙 👉 Leave your review here: {review_url} Thank you so much for your trust, and we hope to see you again soon! 🚐✨",
   },
 ];
 
@@ -81,8 +101,9 @@ async function main() {
 
   await sql.begin(async (tx) => {
     const [biz] = await tx`
-      insert into businesses (name, phone, booking_slug)
-      values ('Woofers Dog Spa', '+16506276745', 'woofers')
+      insert into businesses (name, phone, booking_slug, start_zip, review_url, website_url)
+      values ('Woofers Dog Spa', '+16504800599', 'woofers', '94401',
+              'https://g.page/r/CQs7lH-SjO5jEAE/review', 'https://woofersdogspa.com')
       returning id`;
     const [staff] = await tx`
       insert into staff (business_id, name, role, color)
@@ -110,9 +131,10 @@ async function main() {
     }
 
     for (const t of templates) {
-      await tx`insert into message_templates (business_id, trigger, body, offset_days, offset_minutes, send_at_time, only_if_unconfirmed)
-               values (${biz.id}, ${t.trigger}, ${t.body}, ${t.offset_days ?? null}, ${t.offset_minutes ?? null},
-                       ${t.send_at_time ?? null}, ${t.only_if_unconfirmed ?? false})`;
+      await tx`insert into message_templates (business_id, trigger, body, email_subject, offset_days, offset_minutes,
+                                             send_at_time, only_if_unconfirmed)
+               values (${biz.id}, ${t.trigger}, ${t.body}, ${t.email_subject ?? null}, ${t.offset_days ?? null},
+                       ${t.offset_minutes ?? null}, ${t.send_at_time ?? null}, ${t.only_if_unconfirmed ?? false})`;
     }
   });
   console.log("seeded Woofers Dog Spa");

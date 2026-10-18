@@ -14,3 +14,13 @@
 Verified by `npm run test:e2e` on a fresh database at 390px: setup → client → pet → book
 ($194) → double booking refused → Today + Google Maps route → status flow → Venmo + 20% tip → paid.
 Screenshots in `replica/clone-screens/`.
+| S30–S38 online booking (/book) | 2026-10-18 | done | login for returning clients (they're matched by phone instead) | ZIP data: census.gov blocked, used the BSD `zipcodes` package |
+| S08 booking requests | 2026-10-18 | done | — | — |
+| /a/[token] client confirm/cancel page | 2026-10-18 | done | reschedule from the link | replaces "reply Y/N", since texts come from the owner's iPhone |
+| messaging (email + iPhone outbox) | 2026-10-18 | done | review rating flow | no paid SMS: the iPhone Shortcut sends from the owner's AT&T line |
+| S20 texts and email settings, booking settings | 2026-10-18 | done | — | — |
+| Google Calendar feed (ICS) | 2026-10-18 | done | instant sync (Google refreshes subscriptions every few hours) | — |
+
+Verified by `npm run test:e2e` + `node tests/e2e/booking.mjs`: request on /book → a ZIP 40 mi away
+is not offered that day → owner accepts → outbox returns the client's texts once → client confirms
+from the link → calendar feed lists the visit and refuses a wrong key.

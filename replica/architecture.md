@@ -196,3 +196,19 @@ Cada marco termina usável no dia a dia.
 | Vercel | hospedagem | marco 1 |
 | domínio (ex. `book.seunegocio.com`) | página de agendamento | marco 2e |
 | export do MoeGo (clientes, pets, agendamentos) | migração | antes de cancelar |
+
+
+## Mudança de 2026-10-18: custo zero
+
+Pedido do dono: não gastar nada. Substituições feitas:
+
+| antes | agora | por quê |
+| --- | --- | --- |
+| Twilio SMS + Verify | SMS enviados pelo iPhone do dono (Atalhos busca `/api/device/outbox`) | a linha AT&T já existe; Twilio custaria ~$5–15/mês |
+| resposta Y/N por SMS | link `/a/<token>` com Confirmar / Cancelar | o app não lê as mensagens do iPhone |
+| login do cliente por SMS | pedido sem login, casado pelo telefone, aprovado pelo dono | sem SMS pago; a aprovação segura abuso |
+| Google Routes API | distância em linha reta entre centros de ZIP (dados públicos) | grátis, previsível, poucas falhas |
+| Resend | Gmail da empresa com senha de app | grátis |
+| Vercel Cron | GitHub Actions de hora em hora (ou cron da Hostinger) | grátis |
+| Vercel | Hostinger (plano Business roda Node.js) + Neon Free | Vercel grátis não permite uso comercial |
+| sincronizar Google Calendar | feed ICS assinado no Google Calendar | grátis, sem OAuth; atualiza em poucas horas |

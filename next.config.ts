@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   // classic rendering model instead of Cache Components.
   cacheComponents: false,
   serverExternalPackages: ["postgres"],
+  // The booking page may be shown inside the business website (iframe); nothing else may.
+  async headers() {
+    const site = "https://woofersdogspa.com https://*.woofersdogspa.com https://*.lovable.app https://*.lovableproject.com";
+    return [
+      { source: "/:path*", headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'self'" }] },
+      { source: "/book", headers: [{ key: "Content-Security-Policy", value: `frame-ancestors 'self' ${site}` }] },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {
