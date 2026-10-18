@@ -23,37 +23,63 @@ const fail = (msg) => {
   throw new Error(msg);
 };
 
+const button = (name) => page.getByRole("button", { name, exact: true });
+
+// The booking page asks one thing per screen; this walks a new client through it.
 async function requestVisit({ pet, size, zip, city, phone, pickDay, photo }) {
   await page.goto(`${BASE}/book`);
   await page.getByLabel("Mobile phone").fill(phone);
-  await page.getByRole("button", { name: "Continue" }).click();
+  await button("Next").click();
   await page.getByText("It looks like your first visit with us.").waitFor();
+  await page.getByLabel("First name").fill("Ana");
+  await page.getByLabel("Last name").fill("Silva");
+  await page.getByLabel("Email").fill("ana@example.com");
+  await button("Continue").click();
+  await page.getByLabel("Street address").fill("1 Main St");
+  await page.getByLabel("City").fill(city);
+  await page.getByLabel("ZIP code").fill(zip);
+  await button("Continue").click();
+  await page.getByLabel("Breed").fill("malt");
+  await button("Maltese").click();
   await page.getByLabel("Pet's name").fill(pet);
-  await page.getByLabel("Breed").fill("Maltese");
+  await page.getByRole("radio", { name: new RegExp(`^${size}`) }).click();
+  await button(`Save ${pet}`).click();
+  await button("Continue to service").click();
+  await page.getByRole("radiogroup", { name: "Category" }).getByRole("radio", { name: "Bath", exact: true }).click();
+  await page.getByRole("radiogroup", { name: "Service" }).getByRole("radio").first().click();
+  await button("Continue").click();
+  await page.getByRole("radio", { name: "No", exact: true }).click();
   if (photo) {
     await page.setInputFiles('input[type="file"]', photo);
     await page.getByAltText("Your pet").waitFor();
   }
-  await page.locator("label", { hasText: size }).first().click();
-  await page.locator("label", { hasText: "Bath" }).filter({ hasText: "$" }).first().click();
-  await page.getByLabel("Street address").fill("1 Main St");
-  await page.getByLabel("City").fill(city);
-  await page.getByLabel("ZIP code").fill(zip);
-  await page.getByRole("button", { name: "See available times" }).click();
-  await page.getByRole("tablist", { name: "Day" }).waitFor();
-  const days = await page.getByRole("tab").allTextContents();
+  await button(`Confirm info for ${pet}`).click();
+  await page.getByRole("heading", { name: "Select a time" }).waitFor();
+  const days = await page.locator("button[aria-label*='open time']:not([disabled])").evaluateAll((els) => els.map((e) => e.getAttribute("aria-label").split(",").slice(0, 2).join(",")));
   if (pickDay === null) return days;
-  const chosenDay = await page.locator('[role="tab"][aria-selected="true"]').textContent();
-  await page.locator("button[aria-pressed]").first().click();
-  await page.getByLabel("First name").fill("Ana");
-  await page.getByLabel("Last name").fill("Silva");
-  await page.getByLabel("Email").fill("ana@example.com");
+  const chosenDay = (await page.locator("button[aria-pressed='true'][aria-label*='open time']").getAttribute("aria-label")).split(",").slice(0, 2).join(",");
+  await page.getByRole("group", { name: "Open times" }).locator("button").first().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: /Read and sign/ }).click();
   await page.getByLabel("I have read and agree to the service agreement.").check();
   await page.getByLabel("Type your full name to sign").fill("Ana Silva");
-  await shot("S35-book-times");
-  await page.getByRole("button", { name: "Request this appointment" }).click();
-  await page.getByText("Request sent!").waitFor();
+  await sign();
+  await button("Sign agreement").click();
+  await page.getByText("Signed by Ana Silva").waitFor();
+  await shot("S35-book-review");
+  await button("Submit booking request").click();
+  await page.getByText("Waiting for confirmation").waitFor();
   return chosenDay;
+}
+
+async function sign() {
+  const pad = page.getByLabel("Draw your signature here");
+  await pad.scrollIntoViewIfNeeded();
+  const box = await pad.boundingBox();
+  await page.mouse.move(box.x + 30, box.y + 60);
+  await page.mouse.down();
+  for (let i = 1; i <= 12; i++) await page.mouse.move(box.x + 30 + i * 18, box.y + 60 + (i % 2 ? 25 : -25));
+  await page.mouse.up();
 }
 
 // A small picture to use as the pet photo.
@@ -128,21 +154,28 @@ step("calendar feed lists the visit and refuses a wrong key");
 // A returning client only types the phone: pets and address come from the file.
 await page.goto(`${BASE}/book`);
 await page.getByLabel("Mobile phone").fill("650-555-0177");
-await page.getByRole("button", { name: "Continue" }).click();
+await button("Next").click();
 await page.getByText("Welcome back, Ana!").waitFor();
-await page.getByRole("checkbox", { name: "Luna" }).check();
-await page.getByText('Size: Small (12" or less)').waitFor();
-await page.locator("label", { hasText: "Bath" }).filter({ hasText: "$" }).first().click();
-await page.getByText("Same address as last time in San Mateo").waitFor();
+await page.getByText("in San Mateo").waitFor();
 if (await page.getByLabel("Street address").count()) fail("returning client was asked for the address again");
-await page.getByRole("button", { name: "See available times" }).click();
-await page.getByRole("tab").nth(2).click();
-await page.locator("button[aria-pressed]").first().click();
+await button("Continue").click();
+// Luna is her only pet, so she is already picked.
+if ((await page.getByRole("checkbox", { name: "Luna" }).getAttribute("aria-checked")) !== "true") fail("Luna was not preselected");
+await button("Continue to service").click();
+if (await page.getByRole("radiogroup", { name: "Size" }).count()) fail("returning client was asked Luna's size again");
+await page.getByRole("radiogroup", { name: "Service" }).getByRole("radio").first().click();
+await button("Continue").click();
+await page.getByRole("radio", { name: "No", exact: true }).click();
+await button("Confirm info for Luna").click();
+await page.getByRole("heading", { name: "Select a time" }).waitFor();
+await page.locator("button[aria-label*='open time']:not([disabled])").nth(2).click();
+await page.getByRole("group", { name: "Open times" }).locator("button").first().click();
+await page.getByRole("dialog").getByRole("button", { name: "Continue" }).click();
 if (await page.getByLabel("First name").count()) fail("returning client was asked for their name again");
-if (await page.getByLabel("Type your full name to sign").count()) fail("returning client was asked to sign again");
+if (await page.getByRole("button", { name: /Read and sign/ }).count()) fail("returning client was asked to sign again");
 await shot("S31-book-returning");
-await page.getByRole("button", { name: "Request this appointment" }).click();
-await page.getByText("Request sent!").waitFor();
+await button("Submit booking request").click();
+await page.getByText("Waiting for confirmation").waitFor();
 step("returning client booked with just the phone: no address, name or signature asked again");
 
 // Import a made-up export (same columns as the old app) twice: no duplicates the second time.
@@ -176,8 +209,12 @@ await page.getByRole("button", { name: "Import clients" }).click();
 await page.getByText("0 clients and 0 pets imported").waitFor();
 step("export downloads every client with pets, and importing it back adds nothing");
 
-// Breed suggestions on the pet form.
-const breeds = await page.goto(`${BASE}/book`).then(() => page.locator("#dog-breeds option").count());
+// Breed suggestions on the owner's pet form.
+await page.goto(`${BASE}/clients?q=Ana`);
+await page.getByText("Ana Silva").click();
+await page.getByRole("link", { name: "Add pet" }).click();
+await page.waitForURL(/\/pets\/new/);
+const breeds = await page.locator("#dog-breeds option").count();
 if (breeds < 300) fail(`expected the breed list, got ${breeds} options`);
 step(`breed suggestions loaded (${breeds} breeds)`);
 

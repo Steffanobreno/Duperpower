@@ -2,35 +2,37 @@ import type { Metadata } from "next";
 import { getPublicBusiness, onlineServices } from "@/lib/booking";
 import { activeAgreement } from "@/lib/agreement";
 import { AgreementText } from "@/components/agreement-text";
-import { phoneLabel } from "@/lib/format";
-import { Notice } from "@/components/ui";
+import { ClientShell, StepCard } from "@/components/client-shell";
+import { phoneLabel, todayYmd } from "@/lib/format";
 import { BookingWizard } from "./booking-wizard";
 
 export const metadata: Metadata = { title: "Book a visit", robots: { index: true } };
 export const dynamic = "force-dynamic";
 
-export default async function BookPage() {
+// ?embed=1 hides the header and footer, for showing this page inside the website.
+export default async function BookPage({ searchParams }: PageProps<"/book">) {
   const b = await getPublicBusiness();
   if (!b) return null;
+  const { embed } = await searchParams;
   const [services, agreement] = await Promise.all([onlineServices(b.id), activeAgreement(b.id)]);
   const phone = phoneLabel(b.phone);
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 space-y-4 px-4 py-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold">Book {b.name}</h1>
-        <p className="text-muted">Mobile grooming at your door. Pick your pet&apos;s service and a time that works for you.</p>
-      </header>
+    <ClientShell phone={b.phone} phoneLabel={phone} website={b.website_url} bare={embed === "1"}>
       {b.online_booking_enabled ? (
         <BookingWizard
           services={services}
+          businessName={b.name}
           businessPhone={phone}
-          agreement={
-            agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null
-          }
+          today={todayYmd(b.timezone)}
+          agreementTitle={agreement?.title ?? null}
+          agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null}
         />
       ) : (
-        <Notice kind="info">Online booking is paused right now. Please text us at {phone} to book.</Notice>
+        <StepCard>
+          <h1 className="text-2xl font-extrabold">Online booking is paused</h1>
+          <p className="mt-2 text-muted">Please text us at {phone} and we&apos;ll find you a time.</p>
+        </StepCard>
       )}
-    </main>
+    </ClientShell>
   );
 }

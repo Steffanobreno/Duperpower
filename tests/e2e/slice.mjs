@@ -26,6 +26,8 @@ const date = d.toISOString().slice(0, 10);
 
 await page.goto(`${BASE}/login`);
 await page.waitForURL(/\/setup/);
+// A production build asks for the server's SETUP_CODE (start it with SETUP_CODE=e2e-code).
+if (await page.locator('input[name="setup_code"]').count()) await page.fill('input[name="setup_code"]', process.env.SETUP_CODE ?? "e2e-code");
 await page.fill('input[name="email"]', "owner@example.com");
 await page.fill('input[name="password"]', "correct horse battery");
 await page.fill('input[name="confirm"]', "correct horse battery");

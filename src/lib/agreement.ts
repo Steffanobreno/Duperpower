@@ -14,17 +14,28 @@ export async function activeAgreement(businessId: string) {
 
 /** The client's latest signature of the current version within the last year, if any. */
 export async function currentSignature(agreement: Agreement, clientId: string) {
-  const [s] = await sql<{ signed_at: Date; signed_name: string }[]>`
-    select signed_at, signed_name from agreement_signatures
+  const [s] = await sql<{ signed_at: Date; signed_name: string; signature_url: string | null }[]>`
+    select signed_at, signed_name, signature_url from agreement_signatures
     where agreement_id = ${agreement.id} and agreement_version = ${agreement.version} and client_id = ${clientId}
       and signed_at > now() - interval '365 days'
     order by signed_at desc limit 1`;
   return s ?? null;
 }
 
-export async function recordSignature(tx: TransactionSql | typeof sql, agreement: Agreement, clientId: string, name: string) {
+/** A drawn signature from the booking page: a small PNG as a data URL, or null if it isn't one. */
+export function signatureImage(dataUrl: unknown) {
+  return typeof dataUrl === "string" && dataUrl.startsWith("data:image/png;base64,") && dataUrl.length < 300_000 ? dataUrl : null;
+}
+
+export async function recordSignature(
+  tx: TransactionSql | typeof sql,
+  agreement: Agreement,
+  clientId: string,
+  name: string,
+  drawn: string | null = null,
+) {
   const h = await headers();
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || null;
-  await tx`insert into agreement_signatures (agreement_id, agreement_version, client_id, signed_name, ip)
-           values (${agreement.id}, ${agreement.version}, ${clientId}, ${name.slice(0, 120)}, ${ip})`;
+  await tx`insert into agreement_signatures (agreement_id, agreement_version, client_id, signed_name, signature_url, ip)
+           values (${agreement.id}, ${agreement.version}, ${clientId}, ${name.slice(0, 120)}, ${drawn}, ${ip})`;
 }

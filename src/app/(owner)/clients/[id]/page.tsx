@@ -69,9 +69,15 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
           </dl>
           {agreement &&
             (signature ? (
-              <p className="text-sm text-success">
-                Agreement signed {dayLabel(signature.signed_at, tz)} by &quot;{signature.signed_name}&quot;
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-success">
+                  Agreement signed {dayLabel(signature.signed_at, tz)} by &quot;{signature.signed_name}&quot;
+                </p>
+                {signature.signature_url && (
+                  // eslint-disable-next-line @next/next/no-img-element -- the signature is a data URL
+                  <img src={signature.signature_url} alt={`Signature of ${signature.signed_name}`} className="h-16 rounded-lg border border-line bg-white" />
+                )}
+              </div>
             ) : (
               <p className="text-sm text-muted">Agreement not signed yet (they&apos;ll be asked on their confirm link).</p>
             ))}

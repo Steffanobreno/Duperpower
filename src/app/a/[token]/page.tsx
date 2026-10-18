@@ -5,6 +5,8 @@ import { bookingUrl } from "@/lib/messaging";
 import { longDayLabel, money, phoneLabel, timeLabel } from "@/lib/format";
 import { Button, ButtonLink, Card, Field, Input, Notice } from "@/components/ui";
 import { AgreementText } from "@/components/agreement-text";
+import { ClientShell, StepCard } from "@/components/client-shell";
+import { Calendar, Dog } from "@/components/icons";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 import { cancelByTokenAction, confirmByTokenAction } from "./actions";
 
@@ -14,8 +16,22 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
   const { token } = await params;
   if (!/^[0-9a-f]{24}$/.test(token)) notFound();
   const [a] = await sql<
-    { business_id: string; client_id: string; start_at: Date; status: string; first_name: string; pets: string | null; total_cents: number; can_cancel: boolean; upcoming: boolean;
-      business: string; phone: string | null; timezone: string; website_url: string | null; cancellation_hours: number }[]
+    {
+      business_id: string;
+      client_id: string;
+      start_at: Date;
+      status: string;
+      first_name: string;
+      pets: string | null;
+      total_cents: number;
+      can_cancel: boolean;
+      upcoming: boolean;
+      business: string;
+      phone: string | null;
+      timezone: string;
+      website_url: string | null;
+      cancellation_hours: number;
+    }[]
   >`
     select a.business_id, a.client_id, a.start_at, a.status, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
       (select string_agg(p.name, ' & ' order by p.name) from appointment_pets ap join pets p on p.id = ap.pet_id
@@ -34,63 +50,95 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
   const mustSign = agreement ? !(await currentSignature(agreement, a.client_id)) : false;
 
   return (
-    <main className="mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-8">
-      <h1 className="text-2xl font-bold">Hi {a.first_name}!</h1>
-      <Card className="space-y-1">
-        <p className="text-sm text-muted">{a.business}</p>
-        <p className="text-lg font-bold">{longDayLabel(a.start_at, tz)}</p>
-        <p>Arriving around {timeLabel(a.start_at, tz)}</p>
-        {a.pets && <p className="text-muted">{a.pets}</p>}
-        <p className="text-sm text-muted">Estimated {money(a.total_cents)}</p>
-      </Card>
-
-      {a.status === "requested" && <Notice kind="info">We received your request and will text you once it&apos;s confirmed.</Notice>}
-      {a.status === "confirmed" && <Notice kind="success">Confirmed. See you then! 🐾</Notice>}
-      {a.status === "cancelled" && <Notice kind="warn">This appointment is cancelled.</Notice>}
-      {a.status === "completed" && <Notice kind="success">All done. Thank you!</Notice>}
-
-      {a.status === "unconfirmed" && (
-        <form action={confirmByTokenAction.bind(null, token)} className="space-y-3">
-          {mustSign && agreement && (
-            <Card className="space-y-3">
-              <p className="text-sm font-medium">Please read and sign our service agreement (once a year).</p>
-              <div className="max-h-80 overflow-y-auto rounded-xl border border-line bg-bg p-3" tabIndex={0} aria-label="Service agreement">
-                <AgreementText title={agreement.title} body={agreement.body} />
-              </div>
-              <label className="flex items-start gap-3 text-sm">
-                <input type="checkbox" name="agree" required className="mt-1 h-4 w-4" />
-                <span>I have read and agree to the service agreement.</span>
-              </label>
-              <Field label="Type your full name to sign">
-                <Input name="signature" required minLength={3} autoComplete="name" />
-              </Field>
-            </Card>
+    <ClientShell phone={a.phone} phoneLabel={phone} website={a.website_url}>
+      <StepCard className="space-y-4">
+        <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">Hi {a.first_name}!</h1>
+        <div className="space-y-3 rounded-2xl border border-line p-4">
+          <p className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
+              <Calendar />
+            </span>
+            <span>
+              <span className="block text-lg font-bold">{longDayLabel(a.start_at, tz)}</span>
+              <span className="block text-muted">Arriving around {timeLabel(a.start_at, tz)}</span>
+            </span>
+          </p>
+          {a.pets && (
+            <p className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-bg">
+                <Dog size={22} />
+              </span>
+              <span>
+                <span className="block font-bold">{a.pets}</span>
+                <span className="block text-sm text-muted">Estimated {money(a.total_cents)}</span>
+              </span>
+            </p>
           )}
-          <Button type="submit" className="w-full">{mustSign ? "Sign and confirm" : "Confirm my appointment"}</Button>
-        </form>
-      )}
-      {open && a.upcoming && (
-        <details className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
-          <summary className="cursor-pointer text-center font-semibold text-danger">I need to cancel</summary>
-          <form action={cancelByTokenAction.bind(null, token)} className="mt-3 space-y-2">
-            {a.can_cancel ? (
-              <p className="text-sm text-muted">Cancelling now is free. Your time will be given to someone else.</p>
-            ) : (
-              <Notice kind="warn">
-                Your visit is less than {a.cancellation_hours} hours away, so a late cancellation fee of 50% of the service
-                price applies (about {money(Math.round(a.total_cents / 2))}).
-              </Notice>
+        </div>
+
+        {a.status === "requested" && (
+          <Notice kind="info">We received your request and will text you once it&apos;s confirmed.</Notice>
+        )}
+        {a.status === "confirmed" && <Notice kind="success">Confirmed. See you then! 🐾</Notice>}
+        {a.status === "cancelled" && <Notice kind="warn">This appointment is cancelled.</Notice>}
+        {a.status === "completed" && <Notice kind="success">All done. Thank you!</Notice>}
+
+        {a.status === "unconfirmed" && (
+          <form action={confirmByTokenAction.bind(null, token)} className="space-y-3">
+            {mustSign && agreement && (
+              <Card className="space-y-3">
+                <p className="text-sm font-medium">Please read and sign our service agreement (once a year).</p>
+                <div
+                  className="max-h-80 overflow-y-auto rounded-xl border border-line bg-bg p-3"
+                  tabIndex={0}
+                  aria-label="Service agreement"
+                >
+                  <AgreementText title={agreement.title} body={agreement.body} />
+                </div>
+                <label className="flex items-start gap-3 text-sm">
+                  <input type="checkbox" name="agree" required className="mt-1 h-4 w-4" />
+                  <span>I have read and agree to the service agreement.</span>
+                </label>
+                <Field label="Type your full name to sign">
+                  <Input name="signature" required minLength={3} autoComplete="name" />
+                </Field>
+              </Card>
             )}
-            <Button type="submit" kind="danger" className="w-full">Yes, cancel it</Button>
+            <Button type="submit" className="w-full rounded-full py-4 text-lg">
+              {mustSign ? "Sign and confirm" : "Confirm my appointment"}
+            </Button>
           </form>
-        </details>
-      )}
-      {a.status === "cancelled" && (
-        <ButtonLink href={bookingUrl(a)} className="w-full">Book a new time</ButtonLink>
-      )}
-      <p className="text-center text-sm text-muted">
-        Questions? Text <a className="underline" href={`sms:${a.phone}`}>{phone}</a>
-      </p>
-    </main>
+        )}
+        {open && a.upcoming && (
+          <details className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+            <summary className="cursor-pointer text-center font-semibold text-danger">I need to cancel</summary>
+            <form action={cancelByTokenAction.bind(null, token)} className="mt-3 space-y-2">
+              {a.can_cancel ? (
+                <p className="text-sm text-muted">Cancelling now is free. Your time will be given to someone else.</p>
+              ) : (
+                <Notice kind="warn">
+                  Your visit is less than {a.cancellation_hours} hours away, so a late cancellation fee of 50% of the service
+                  price applies (about {money(Math.round(a.total_cents / 2))}).
+                </Notice>
+              )}
+              <Button type="submit" kind="danger" className="w-full">
+                Yes, cancel it
+              </Button>
+            </form>
+          </details>
+        )}
+        {a.status === "cancelled" && (
+          <ButtonLink href={bookingUrl(a)} className="w-full rounded-full py-4 text-lg">
+            Book a new time
+          </ButtonLink>
+        )}
+        <p className="text-center text-sm text-muted">
+          Questions? Text{" "}
+          <a className="underline" href={`sms:${a.phone}`}>
+            {phone}
+          </a>
+        </p>
+      </StepCard>
+    </ClientShell>
   );
 }

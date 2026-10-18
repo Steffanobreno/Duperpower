@@ -26,15 +26,15 @@ export function ButtonLink({
 }
 
 export function Card({ className = "", ...props }: ComponentProps<"div">) {
-  return <div className={`rounded-[var(--radius-card)] border border-line bg-surface p-4 ${className}`} {...props} />;
+  return <div className={`rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-card)] ${className}`} {...props} />;
 }
 
 export function PageHeader({ title, back, action }: { title: string; back?: string; action?: ReactNode }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-line bg-surface/95 backdrop-blur">
+    <header className="sticky top-0 z-10 bg-navy text-white shadow-sm">
       <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
         {back && (
-          <Link href={back} className="-ml-2 rounded-lg p-2 text-brand hover:bg-brand-soft" aria-label="Back">
+          <Link href={back} className="-ml-2 rounded-lg p-2 text-white hover:bg-white/10" aria-label="Back">
             <span aria-hidden>←</span>
           </Link>
         )}

@@ -99,8 +99,10 @@ Cole isto no Lovable (troque o endereço pelo do seu app):
 Se preferir a página dentro do site:
 
 > Create a page at /book that shows only this, full width, no extra padding:
-> `<iframe src="https://app.woofersdogspa.com/book" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`
+> `<iframe src="https://app.woofersdogspa.com/book?embed=1" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`
 > and make every "Book Now" button link to /book.
+
+(O `?embed=1` esconde o cabeçalho e o rodapé da página de agendamento, porque o site já tem os dele.)
 
 ## 7. Lembretes de hora em hora (opcional, grátis)
 
@@ -118,5 +120,5 @@ Depois confira: o tamanho de cada pet (para o preço certo) e os serviços das v
 ## 9. Contrato de serviço
 
 Settings → **Service agreement**. O seu texto já está lá (sem a seção 9, e com o
-cancelamento: grátis até 48 h antes, depois 50% do serviço). O cliente assina digitando o nome: ao agendar online e no link
-de confirmação (uma vez por ano). Mudança importante? Marque "ask every client to sign again".
+cancelamento: grátis até 48 h antes, depois 50% do serviço). Ao agendar online, o cliente digita o nome e assina com o dedo
+(a assinatura aparece na ficha do cliente). No link de confirmação ele assina digitando o nome. Vale por um ano. Mudança importante? Marque "ask every client to sign again".
