@@ -101,7 +101,18 @@ dos que já estão marcados. A van sai de San Mateo (privado, não mostrar ao cl
 - Calendário do app antigo mostrava 7:00–21:00 e avisava o dono 60 min antes de cada visita
   (o feed do Google Calendar não leva alarmes; use a notificação padrão do próprio Google Calendar)
 - **Contrato de serviço**: transcrito em `scripts/agreement.ts`. Pagamentos aceitos incluem **Bitcoin**;
-  cancelamento com menos de **48 h** = $50 por pet (o app usa 48 h para o cliente cancelar pelo link).
-  A seção 9 (Latch-Key) estava cortada no print: completar em Settings → Service agreement.
+  cancelamento: o cliente pode cancelar a qualquer momento; grátis com 48 h ou mais, depois **50% do serviço**.
+  Seção 9 (Latch-Key) removida a pedido do dono.
 - Lista de clientes: export de 390 clientes (não fica no repositório). 1 telefone inválido
   ("65065656565") e 3 visitas futuras que se sobrepõem a outras precisam ser ajustados à mão.
+
+## Decisões do dono (2026-10-18, depois do import)
+
+- Hostinger é **Premium** (sem Node.js) → app no **Netlify Free** + banco no **Neon Free**
+- Visitas sobrepostas são de propósito (o dono ajusta quando termina antes) → o app só avisa; o site não deixa o cliente marcar por cima
+- O cliente entra pelo **telefone**: o app reconhece, mostra os pets e usa o endereço salvo; não pede os dados de novo
+- Histórico de serviços antigos não precisa vir; só clientes, telefone, endereço, pets e raça
+- Sem tempo de direção entre visitas: o tempo do serviço já inclui o deslocamento (visitas uma atrás da outra)
+- Vacinas: dispensável (tirado das telas)
+- Foto do pet: o cliente coloca ao cadastrar; o dono também pode trocar
+- Lembrete de reagendar vai por SMS pelo iPhone (Atalhos) e por e-mail

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext } from "@/lib/auth";
 import { isExclusionViolation, sql } from "@/lib/db";
-import { hm, isYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
+import { hm, isYmd, timeLabel, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
 import { notifyAppointment } from "@/lib/messaging";
@@ -32,6 +32,18 @@ async function outsideHours(staff: StaffContext, date: string, start: string, en
   if (start < hours.start_time.slice(0, 5) || endsNextDay || endLocal > hours.end_time.slice(0, 5))
     return `That time is outside working hours (${hours.start_time.slice(0, 5)}–${hours.end_time.slice(0, 5)}).`;
   return null;
+}
+
+// The owner may overlap visits on purpose (a dog finishing early), so this only warns.
+async function overlapWarning(staff: StaffContext, start: Date, end: Date, excludeId?: string) {
+  const [other] = await sql`
+    select c.first_name, a.start_at from appointments a join clients c on c.id = a.client_id
+    where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId}
+      and a.status in ('requested', 'unconfirmed', 'confirmed', 'en_route', 'in_progress', 'completed')
+      and a.start_at < ${end} and a.end_at > ${start}
+      and (${excludeId ?? null}::uuid is null or a.id <> ${excludeId ?? null})
+    order by a.start_at limit 1`;
+  return other ? `This overlaps ${other.first_name}'s visit at ${timeLabel(other.start_at, staff.timezone)}.` : null;
 }
 
 async function distanceWarning(staff: StaffContext, date: string, zip: string | null, excludeId?: string) {
@@ -75,7 +87,10 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
   const endAt = new Date(startAt.getTime() + Math.max(totalMin, 15) * 60_000);
 
   if (!override) {
-    const warning = (await outsideHours(staff, date, time, endAt)) ?? (await distanceWarning(staff, date, client.zip));
+    const warning =
+      (await outsideHours(staff, date, time, endAt)) ??
+      (await overlapWarning(staff, startAt, endAt)) ??
+      (await distanceWarning(staff, date, client.zip));
     if (warning) return { warning };
   }
 
@@ -161,7 +176,9 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
   const endAt = new Date(startAt.getTime() + (appt.end_at.getTime() - appt.start_at.getTime()));
   if (form.get("override") !== "on") {
     const warning =
-      (await outsideHours(staff, date, time, endAt)) ?? (await distanceWarning(staff, date, appt.zip, appointmentId));
+      (await outsideHours(staff, date, time, endAt)) ??
+      (await overlapWarning(staff, startAt, endAt, appointmentId)) ??
+      (await distanceWarning(staff, date, appt.zip, appointmentId));
     if (warning) return { warning };
   }
   try {

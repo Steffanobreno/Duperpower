@@ -12,6 +12,7 @@ import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabe
 import { Button, ButtonLink, Card, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { RescheduleForm } from "../reschedule-form";
+import { PetPhoto } from "@/components/pet-photo";
 
 export const metadata: Metadata = { title: "Appointment" };
 
@@ -140,11 +141,13 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           <h2 className="font-bold">Pets and services</h2>
           {appt.pets.map((p) => (
             <Card key={p.appointment_pet_id} className="space-y-2">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="font-semibold">{p.name}</span>
-                <span className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</span>
+              <div className="flex items-center gap-3">
+                <PetPhoto petId={p.pet_id} version={p.photo_version} name={p.name} />
+                <div className="min-w-0">
+                  <div className="font-semibold">{p.name}</div>
+                  <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                </div>
               </div>
-              {p.expired_vaccines && <Notice kind="error">Expired by this visit: {p.expired_vaccines}</Notice>}
               {p.behavior && <Notice kind="warn">{p.behavior}</Notice>}
               {p.notes && <p className="whitespace-pre-line text-sm text-muted">{p.notes}</p>}
               <ul className="text-sm">

@@ -210,5 +210,5 @@ Pedido do dono: não gastar nada. Substituições feitas:
 | Google Routes API | distância em linha reta entre centros de ZIP (dados públicos) | grátis, previsível, poucas falhas |
 | Resend | Gmail da empresa com senha de app | grátis |
 | Vercel Cron | GitHub Actions de hora em hora (ou cron da Hostinger) | grátis |
-| Vercel | Hostinger (plano Business roda Node.js) + Neon Free | Vercel grátis não permite uso comercial |
+| Vercel | Netlify Free + Neon Free | Vercel grátis não permite uso comercial; o plano Premium da Hostinger não roda Node.js |
 | sincronizar Google Calendar | feed ICS assinado no Google Calendar | grátis, sem OAuth; atualiza em poucas horas |

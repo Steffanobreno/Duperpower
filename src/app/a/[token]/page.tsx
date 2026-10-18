@@ -14,7 +14,7 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
   const { token } = await params;
   if (!/^[0-9a-f]{24}$/.test(token)) notFound();
   const [a] = await sql<
-    { business_id: string; client_id: string; start_at: Date; status: string; first_name: string; pets: string | null; total_cents: number; can_cancel: boolean;
+    { business_id: string; client_id: string; start_at: Date; status: string; first_name: string; pets: string | null; total_cents: number; can_cancel: boolean; upcoming: boolean;
       business: string; phone: string | null; timezone: string; website_url: string | null; cancellation_hours: number }[]
   >`
     select a.business_id, a.client_id, a.start_at, a.status, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
@@ -22,7 +22,8 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
         where ap.appointment_id = a.id) as pets,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
         where ap.appointment_id = a.id), 0)::int as total_cents,
-      (a.start_at > now() + make_interval(hours => b.cancellation_hours)) as can_cancel
+      (a.start_at > now() + make_interval(hours => b.cancellation_hours)) as can_cancel,
+      (a.start_at > now()) as upcoming
     from appointments a join clients c on c.id = a.client_id join businesses b on b.id = a.business_id
     where a.public_token = ${token}`;
   if (!a) notFound();
@@ -68,20 +69,22 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
           <Button type="submit" className="w-full">{mustSign ? "Sign and confirm" : "Confirm my appointment"}</Button>
         </form>
       )}
-      {open &&
-        (a.can_cancel ? (
-          <details className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
-            <summary className="cursor-pointer text-center font-semibold text-danger">I need to cancel</summary>
-            <form action={cancelByTokenAction.bind(null, token)} className="mt-3 space-y-2">
-              <p className="text-sm text-muted">Are you sure? Your time will be given to someone else.</p>
-              <Button type="submit" kind="danger" className="w-full">Yes, cancel it</Button>
-            </form>
-          </details>
-        ) : (
-          <p className="text-center text-sm text-muted">
-            Need to change it? It&apos;s less than {a.cancellation_hours} hours away, so please text us at {phone}.
-          </p>
-        ))}
+      {open && a.upcoming && (
+        <details className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+          <summary className="cursor-pointer text-center font-semibold text-danger">I need to cancel</summary>
+          <form action={cancelByTokenAction.bind(null, token)} className="mt-3 space-y-2">
+            {a.can_cancel ? (
+              <p className="text-sm text-muted">Cancelling now is free. Your time will be given to someone else.</p>
+            ) : (
+              <Notice kind="warn">
+                Your visit is less than {a.cancellation_hours} hours away, so a late cancellation fee of 50% of the service
+                price applies (about {money(Math.round(a.total_cents / 2))}).
+              </Notice>
+            )}
+            <Button type="submit" kind="danger" className="w-full">Yes, cancel it</Button>
+          </form>
+        </details>
+      )}
       {a.status === "cancelled" && (
         <ButtonLink href={bookingUrl(a)} className="w-full">Book a new time</ButtonLink>
       )}

@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // classic rendering model instead of Cache Components.
   cacheComponents: false,
   serverExternalPackages: ["postgres"],
+  // Booking requests can carry up to 4 pet photos (already shrunk), and client CSV imports.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   // The booking page may be shown inside the business website (iframe); nothing else may.
   async headers() {
     const site = "https://woofersdogspa.com https://*.woofersdogspa.com https://*.lovable.app https://*.lovableproject.com";

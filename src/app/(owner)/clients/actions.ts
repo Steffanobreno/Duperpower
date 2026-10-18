@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
 import { normalizePhone, SIZES } from "@/lib/format";
 import { geocode } from "@/lib/maps";
+import { savePetPhoto } from "@/lib/pet-photos";
 
 export type FormState = { error?: string } | undefined;
 
@@ -149,27 +150,17 @@ export async function savePetAction(clientId: string, petId: string | null, _: F
   redirect(form.get("then") === "book" ? `/appointments/new?client=${clientId}` : `/clients/${clientId}`);
 }
 
-async function ownPet(staffBusinessId: string, petId: string) {
-  const [p] = await sql`select p.id, p.client_id from pets p join clients c on c.id = p.client_id
-                        where p.id = ${petId} and c.business_id = ${staffBusinessId}`;
-  return p ?? null;
-}
 
-export async function addVaccineAction(petId: string, form: FormData) {
+export async function savePetPhotoAction(petId: string, form: FormData): Promise<{ error?: string }> {
   const staff = await requireStaff();
-  const pet = await ownPet(staff.businessId, petId);
-  if (!pet) return;
-  const name = text(form, "name") === "Other" ? text(form, "other_name") : text(form, "name");
-  const date = (k: string) => (/^\d{4}-\d{2}-\d{2}$/.test(String(form.get(k) ?? "")) ? String(form.get(k)) : null);
-  if (!name) return;
-  await sql`insert into vaccines (pet_id, name, given_on, expires_on) values (${petId}, ${name}, ${date("given_on")}, ${date("expires_on")})`;
+  const [pet] = await sql`select p.client_id from pets p join clients c on c.id = p.client_id
+                          where p.id = ${petId} and c.business_id = ${staff.businessId}`;
+  if (!pet) return { error: "Pet not found." };
+  const file = form.get("photo");
+  if (!(file instanceof Blob)) return { error: "Choose a photo." };
+  const error = await savePetPhoto(petId, new Uint8Array(await file.arrayBuffer()));
+  if (error) return { error };
+  revalidatePath(`/clients/${pet.client_id}`);
   revalidatePath(`/clients/${pet.client_id}/pets/${petId}`);
-}
-
-export async function deleteVaccineAction(petId: string, vaccineId: string) {
-  const staff = await requireStaff();
-  const pet = await ownPet(staff.businessId, petId);
-  if (!pet) return;
-  await sql`delete from vaccines where id = ${vaccineId} and pet_id = ${petId}`;
-  revalidatePath(`/clients/${pet.client_id}/pets/${petId}`);
+  return {};
 }

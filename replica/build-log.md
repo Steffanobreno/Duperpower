@@ -28,3 +28,6 @@ from the link → calendar feed lists the visit and refuses a wrong key.
 | Service agreement + signing | 2026-10-18 | done | drawn signature (typed name instead) | owner's own text transcribed from screenshots; section 9 cut off |
 | Vaccines | 2026-10-18 | partial | certificate photo/PDF upload | — |
 | Automatic messages switch | 2026-10-18 | done | — | off by default so clients don't get doubles while the old app runs |
+| Booking page: phone login | 2026-10-18 | done | verification code (no paid SMS); page reveals only first name, pets, city | — |
+| Pet photos | 2026-10-18 | done | — | stored in Postgres (resized in the browser) to avoid a file service |
+| Owner feedback round | 2026-10-18 | done | — | overlaps warn instead of block; 50% late-cancel fee; vaccines hidden; no driving buffer; real import now brings 26/26 future visits |

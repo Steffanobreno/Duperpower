@@ -1,15 +1,85 @@
 "use server";
+import { headers } from "next/headers";
 import { isExclusionViolation, sql } from "@/lib/db";
-import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots } from "@/lib/booking";
+import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
 import { normalizePhone, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
-import { activeAgreement, recordSignature } from "@/lib/agreement";
+import { activeAgreement, currentSignature, recordSignature } from "@/lib/agreement";
+import { bytesFromDataUrl, savePetPhoto } from "@/lib/pet-photos";
 
-export type PetRequest = { name: string; breed: string; size: string; serviceIds: string[] };
+// The public booking page. Clients identify themselves with their mobile number: a known
+// number brings up their pets and the address on file, so they don't type anything again.
+// What this page reveals about a known number is kept small on purpose: first name, pet
+// names and breeds, and the city (never the street). Every request still needs the owner's OK.
+
+export type PetRequest = {
+  petId?: string; // an existing pet of this client
+  name: string;
+  breed: string;
+  size: string;
+  serviceIds: string[];
+  photo?: string; // data URL, already shrunk in the browser (new pets only)
+};
+
+export type KnownClient = {
+  known: true;
+  firstName: string;
+  city: string | null;
+  hasAddress: boolean;
+  pets: { id: string; name: string; breed: string | null; size: string | null }[];
+  mustSign: boolean;
+};
+export type LookupResult = { error?: string } & (KnownClient | { known: false; mustSign: boolean } | { known?: undefined });
+
+// Best effort, per server instance: slows down anyone trying many numbers.
+const lookups = new Map<string, number[]>();
+async function tooManyLookups() {
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "local";
+  const now = Date.now();
+  const recent = (lookups.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
+  recent.push(now);
+  lookups.set(ip, recent);
+  return recent.length > 20;
+}
+
+async function findClient(b: PublicBusiness, phone: string) {
+  const [c] = await sql<{ id: string; first_name: string; city: string | null; zip: string | null; address_line: string | null; state: string | null }[]>`
+    select id, first_name, city, zip, address_line, state from clients
+    where business_id = ${b.id} and phone = ${phone} and archived_at is null`;
+  return c ?? null;
+}
+
+async function mustSignFor(b: PublicBusiness, clientId: string | null) {
+  const agreement = await activeAgreement(b.id);
+  if (!agreement?.required_online) return { agreement: null, mustSign: false };
+  const signed = clientId ? await currentSignature(agreement, clientId) : null;
+  return { agreement, mustSign: !signed };
+}
+
+export async function lookupClientAction(rawPhone: string): Promise<LookupResult> {
+  const b = await getPublicBusiness();
+  if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
+  const phone = normalizePhone(rawPhone);
+  if (!phone) return { error: "Please enter your 10-digit mobile number." };
+  if (await tooManyLookups()) return { error: "Too many tries. Please wait a few minutes or text us." };
+  const c = await findClient(b, phone);
+  if (!c) return { known: false, mustSign: (await mustSignFor(b, null)).mustSign };
+  const pets = await sql<{ id: string; name: string; breed: string | null; size: string | null }[]>`
+    select id, name, breed, size_class as size from pets where client_id = ${c.id} and deceased_at is null order by name`;
+  return {
+    known: true,
+    firstName: c.first_name,
+    city: c.city,
+    hasAddress: !!(c.address_line && c.zip),
+    pets,
+    mustSign: (await mustSignFor(b, c.id)).mustSign,
+  };
+}
 
 /** Validates the pets and services picked on the page and returns their total length. */
 async function priceAndLength(businessId: string, pets: PetRequest[]) {
-  if (!Array.isArray(pets) || pets.length === 0 || pets.length > 4) return { error: "Add between 1 and 4 pets." } as const;
+  if (!Array.isArray(pets) || pets.length === 0 || pets.length > 4) return { error: "Choose between 1 and 4 pets." } as const;
   const services = await onlineServices(businessId);
   const byId = new Map(services.map((s) => [s.id, s]));
   let minutes = 0;
@@ -28,10 +98,24 @@ async function priceAndLength(businessId: string, pets: PetRequest[]) {
   return { minutes, byId } as const;
 }
 
-export async function availabilityAction(input: { zip: string; pets: PetRequest[] }): Promise<{ error?: string; days?: DaySlots[] }> {
+/** The ZIP to plan around: the address on file for a known client, or the one typed in. */
+async function zipFor(b: PublicBusiness, phone: string | null, useFileAddress: boolean, typedZip: string) {
+  if (useFileAddress && phone) {
+    const c = await findClient(b, phone);
+    if (c?.zip) return c.zip;
+  }
+  return String(typedZip ?? "").trim();
+}
+
+export async function availabilityAction(input: {
+  phone: string;
+  useFileAddress: boolean;
+  zip: string;
+  pets: PetRequest[];
+}): Promise<{ error?: string; days?: DaySlots[] }> {
   const b = await getPublicBusiness();
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
-  const zip = String(input.zip ?? "").trim();
+  const zip = await zipFor(b, normalizePhone(input.phone), input.useFileAddress, input.zip);
   const problem = zipProblem(b, zip);
   if (problem) return { error: problem };
   const checked = await priceAndLength(b.id, input.pets);
@@ -42,15 +126,16 @@ export async function availabilityAction(input: { zip: string; pets: PetRequest[
 }
 
 export type BookingRequest = {
+  phone: string;
   pets: PetRequest[];
   start: string; // ISO time picked from the list
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string;
+  useFileAddress: boolean;
   address: string;
   city: string;
   zip: string;
+  firstName: string; // new clients only
+  lastName: string;
+  email: string;
   notes: string;
   smsConsent: boolean;
   agreed: boolean;
@@ -63,34 +148,44 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
 
+  const phone = normalizePhone(input.phone);
+  if (!phone) return { error: "Please enter a 10-digit mobile number." };
+  const existing = await findClient(b, phone);
+  const useFile = !!existing && input.useFileAddress && !!existing.zip && !!existing.address_line;
+
   const firstName = String(input.firstName ?? "").trim();
   const lastName = String(input.lastName ?? "").trim();
-  const phone = normalizePhone(input.phone);
   const email = String(input.email ?? "").trim().toLowerCase();
   const address = String(input.address ?? "").trim();
   const city = String(input.city ?? "").trim();
-  const zip = String(input.zip ?? "").trim();
   const notes = String(input.notes ?? "").trim().slice(0, 1000) || null;
-  if (!firstName) return { error: "Please enter your first name." };
-  if (!phone) return { error: "Please enter a 10-digit mobile number." };
+  if (!existing && !firstName) return { error: "Please enter your first name." };
   if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: "Please check your email address." };
-  if (!address || !city) return { error: "Please enter your street address and city." };
+  if (!useFile && (!address || !city)) return { error: "Please enter your street address and city." };
+  const zip = useFile ? existing!.zip! : String(input.zip ?? "").trim();
   const problem = zipProblem(b, zip);
   if (problem) return { error: problem };
 
   const checked = await priceAndLength(b.id, input.pets);
   if ("error" in checked) return { error: checked.error };
-  const agreement = await activeAgreement(b.id);
+  if (existing) {
+    const ids = input.pets.map((p) => p.petId).filter((x): x is string => !!x);
+    const own = ids.length ? await sql`select id from pets where client_id = ${existing.id} and id = any(${ids})` : [];
+    if (own.length !== new Set(ids).size) return { error: "Please refresh the page and pick your pets again." };
+  } else if (input.pets.some((p) => p.petId)) {
+    return { error: "Please refresh the page and pick your pets again." };
+  }
+
+  const { agreement, mustSign } = await mustSignFor(b, existing?.id ?? null);
   const signature = String(input.signature ?? "").trim();
-  if (agreement?.required_online && (!input.agreed || signature.length < 3)) {
+  if (mustSign && (!input.agreed || signature.length < 3)) {
     return { error: "Please read the service agreement, tick the box and type your full name." };
   }
+
   const start = new Date(input.start);
   if (Number.isNaN(start.getTime())) return { error: "Please pick a time." };
-
   // The time must still be open under the same rules the page used.
-  const day = ymd(start, b.timezone);
-  const open = (await findSlots(b, zip, checked.minutes, day)).flatMap((d) => d.times.map((t) => t.value));
+  const open = (await findSlots(b, zip, checked.minutes, ymd(start, b.timezone))).flatMap((d) => d.times.map((t) => t.value));
   if (!open.includes(start.toISOString())) return { error: "Sorry, that time was just taken. Please pick another one." };
   const end = new Date(start.getTime() + Math.max(checked.minutes, 15) * 60_000);
 
@@ -100,17 +195,17 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
     where a.business_id = ${b.id} and a.source = 'online' and c.phone = ${phone} and a.created_at > now() - interval '1 day'`;
   if (recent >= 3) return { error: "You already sent a few requests today. We'll be in touch soon!" };
 
+  const newPetPhotos: { petId: string; photo: string }[] = [];
   let appointmentId: string;
   try {
     appointmentId = await sql.begin(async (tx) => {
-      // Existing clients are matched by phone. Their saved details are never shown or
-      // overwritten from this public page; what they typed goes into the visit notes.
-      const [existing] = await tx`select id from clients where business_id = ${b.id} and phone = ${phone}`;
-      let clientId: string = existing?.id;
-      if (clientId && input.smsConsent) {
-        await tx`update clients set sms_consent_at = coalesce(sms_consent_at, now()) where id = ${clientId} and sms_opted_out_at is null`;
-      }
-      if (!clientId) {
+      let clientId: string;
+      if (existing) {
+        clientId = existing.id;
+        if (input.smsConsent) {
+          await tx`update clients set sms_consent_at = coalesce(sms_consent_at, now()) where id = ${clientId} and sms_opted_out_at is null`;
+        }
+      } else {
         const [c] = await tx`
           insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip,
                                sms_consent_at, source)
@@ -119,22 +214,33 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
           returning id`;
         clientId = c.id;
       }
-      if (agreement?.required_online) await recordSignature(tx, agreement, clientId, signature);
-      const fullAddress = `${address}, ${city}, CA`;
-      const typed = existing
-        ? `Online request from ${firstName} ${lastName}${email ? `, ${email}` : ""}. Address given: ${fullAddress} ${zip}.`
-        : null;
+      if (mustSign && agreement) await recordSignature(tx, agreement, clientId, signature);
+
+      // A known client who typed a different address: keep the file as is, tell the owner.
+      const visitAddress = useFile
+        ? [existing!.address_line, existing!.city, existing!.state].filter(Boolean).join(", ")
+        : `${address}, ${city}, CA`;
+      const moved = existing && !useFile ? `New address given online: ${address}, ${city}, CA ${zip}.` : null;
       const [appt] = await tx`
         insert into appointments (business_id, client_id, staff_id, start_at, end_at, status, source, address_line, zip, notes)
-        values (${b.id}, ${clientId}, ${b.staff_id}, ${start}, ${end}, 'requested', 'online', ${fullAddress}, ${zip},
-                ${[typed, notes].filter(Boolean).join("\n") || null})
+        values (${b.id}, ${clientId}, ${b.staff_id}, ${start}, ${end}, 'requested', 'online', ${visitAddress}, ${zip},
+                ${[moved, notes].filter(Boolean).join("\n") || null})
         returning id`;
+
       for (const p of input.pets) {
-        const name = p.name.trim();
-        const [found] = await tx`select id from pets where client_id = ${clientId} and lower(name) = lower(${name}) limit 1`;
-        const petId: string =
-          found?.id ??
-          (await tx`insert into pets (client_id, name, breed, size_class) values (${clientId}, ${name}, ${p.breed.trim() || null}, ${p.size}) returning id`)[0].id;
+        let petId: string;
+        if (p.petId) {
+          petId = p.petId;
+          // The client told us the size; remember it if we didn't know it yet.
+          await tx`update pets set size_class = coalesce(size_class, ${p.size}) where id = ${petId}`;
+        } else {
+          const [pet] = await tx`
+            insert into pets (client_id, name, breed, size_class)
+            values (${clientId}, ${p.name.trim().slice(0, 80)}, ${p.breed.trim().slice(0, 120) || null}, ${p.size})
+            returning id`;
+          petId = pet.id;
+          if (p.photo) newPetPhotos.push({ petId, photo: p.photo });
+        }
         const [ap] = await tx`insert into appointment_pets (appointment_id, pet_id) values (${appt.id}, ${petId}) returning id`;
         for (const sid of p.serviceIds) {
           const s = checked.byId.get(sid)!;
@@ -149,13 +255,20 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
     throw e;
   }
 
+  // Photos are optional: a bad one never blocks the booking.
+  for (const { petId, photo } of newPetPhotos) {
+    const bytes = bytesFromDataUrl(photo);
+    if (bytes) await savePetPhoto(petId, bytes).catch(() => null);
+  }
+
   await notifyAppointment(appointmentId, "request_received");
   const when = `${dayLabel(start, b.timezone)} ${timeLabel(start, b.timezone)}`;
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
+  const who = existing ? `${existing.first_name} (existing client)` : `${firstName} ${lastName} (new client)`;
   await notifyOwner(
     b.id,
     `New booking request: ${input.pets.map((p) => p.name).join(" & ")}, ${when}`,
-    `${firstName} ${lastName} (${input.phone}) asked for ${when} in ${city}.\nAccept or decline: ${appUrl}/requests`,
+    `${who}, ${input.phone}, asked for ${when}.\nAccept or decline: ${appUrl}/requests`,
   );
   return { ok: true, when: `${dayLabel(start, b.timezone)} at ${timeLabel(start, b.timezone)}` };
 }

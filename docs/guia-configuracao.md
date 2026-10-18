@@ -12,20 +12,25 @@ Ordem sugerida: 1 → 2 → 3 → 4 → 5. Cada passo funciona sozinho; o app j�
 2. Crie um projeto (região **US West**). Copie a "connection string" (começa com `postgres://`).
 3. Essa string vira `DATABASE_URL` no servidor (passo 2).
 
-## 2. Hospedagem (Hostinger)
+## 2. Hospedagem grátis (Netlify)
 
-O app é Node.js (Next.js). O plano **Business** da Hostinger roda apps Node.js; os planos
-mais baratos não. Se o seu for Business:
+O plano **Premium** da Hostinger não roda apps Node.js (só o Business e acima). Por isso o app
+fica no **Netlify (plano Free, permite uso comercial)**; a Hostinger continua com os seus sites.
 
-1. hPanel → Websites → Add website → **Node.js app** → conecte o GitHub e escolha o
-   repositório `Duperpower`, branch `master`.
-2. Comandos: build `npm run build`, start `npm start`.
-3. Variáveis de ambiente (copie de `.env.example`): `DATABASE_URL`, `APP_URL`
+1. Crie uma conta em netlify.com com o GitHub (plano Free, sem cartão).
+2. **Add new site → Import from Git** → repositório `Duperpower`, branch `master`.
+   O Netlify reconhece o Next.js sozinho (o arquivo `netlify.toml` já está no projeto).
+3. **Site configuration → Environment variables**: `DATABASE_URL`, `APP_URL`
    (ex.: `https://app.woofersdogspa.com`), `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`.
-4. Domínio: use um subdomínio, ex. **app.woofersdogspa.com**, apontando para esse app.
+4. Domínio: **Domain management → Add a domain** → `app.woofersdogspa.com`. O Netlify mostra um
+   registro **CNAME**; crie esse registro onde o domínio `woofersdogspa.com` é gerenciado
+   (Hostinger → Domínios → DNS, ou no Lovable, se o domínio estiver lá).
 5. Uma vez só, crie as tabelas e os seus dados: `npm run db:migrate` e `npm run db:seed`
-   (pelo terminal da Hostinger, ou eu rodo daqui com a `DATABASE_URL`).
+   (eu rodo daqui com a `DATABASE_URL`).
 6. Abra `https://app.woofersdogspa.com` → crie o seu login de dono.
+
+Limite do plano Free: 300 créditos por mês. Para um negócio do seu tamanho deve sobrar; se um
+dia acabar, o site pausa até o mês seguinte (o Netlify avisa por e-mail em 50%, 75% e 100%).
 
 No iPhone: abra o app no Safari → Compartilhar → **Adicionar à Tela de Início**.
 
@@ -100,6 +105,6 @@ Depois confira: o tamanho de cada pet (para o preço certo) e os serviços das v
 
 ## 9. Contrato de serviço
 
-Settings → **Service agreement**. O seu texto já está lá; complete a seção 9 (Latch-Key),
-que estava cortada no print. O cliente assina digitando o nome: ao agendar online e no link
+Settings → **Service agreement**. O seu texto já está lá (sem a seção 9, e com o
+cancelamento: grátis até 48 h antes, depois 50% do serviço). O cliente assina digitando o nome: ao agendar online e no link
 de confirmação (uma vez por ano). Mudança importante? Marque "ask every client to sign again".

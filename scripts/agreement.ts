@@ -1,6 +1,6 @@
 // The owner's service agreement, transcribed from their current settings (2026-10-18).
 // Editable later in Settings → Service agreement. "## " = heading, "- " = bullet, **bold**.
-// Section 9 was cut off in the screenshot after "Pet Access"; the owner should complete it.
+// Section 9 (Latch-Key) removed and the cancellation fee changed at the owner's request (2026-10-18).
 
 export const AGREEMENT_TITLE = "Service Agreement - Woofers Dog Spa";
 
@@ -14,7 +14,7 @@ export const AGREEMENT_BODY = `## 1. General Service Conditions
 - **Price Increases:** Prices are reviewed annually in February, and clients will be notified in advance whenever possible.
 
 ## 3. Cancellation and No-Show Policy
-- **Cancellations:** A minimum of **48 hours' notice** is required to cancel an appointment without incurring a fee. Cancellations with less than 48 hours' notice will incur a **$50 fee per pet**.
+- **Cancellations:** Appointments can be cancelled at any time. Cancellations with at least **48 hours' notice** are free. Cancellations with less than 48 hours' notice will incur a fee of **50% of the service price**.
 - **No-Show:** Failure to be present at the scheduled time without prior notice will be considered a "no-show." In this case, the **full cost of the scheduled service** will be charged. Repeat no-shows (2 or more instances) may result in removal from the **Woofers Dog Spa** client list.
 - **Rescheduling:** Rescheduling will depend on availability in your area. If a delay between services results in complications (e.g., matting or tangling), additional fees may apply.
 
@@ -36,7 +36,4 @@ export const AGREEMENT_BODY = `## 1. General Service Conditions
 
 ## 8. Fleas and Ticks
 - **Fleas:** If fleas are found, the grooming service will be stopped, and the client will be charged the full grooming fee plus a $75 cleaning fee. After two flea incidents, the client may be removed from the **Woofers Dog Spa** client list.
-- **Ticks:** If ticks are found, their location will be noted, and the client will be advised to consult a veterinarian.
-
-## 9. Latch-Key Service
-- **Pet Access:** Pets must be in an easily accessible and safe area.`;
+- **Ticks:** If ticks are found, their location will be noted, and the client will be advised to consult a veterinarian.`;

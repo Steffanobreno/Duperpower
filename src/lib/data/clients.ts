@@ -37,6 +37,7 @@ export type PetRow = {
   vet_phone: string | null;
   notes: string | null;
   rebook_every_days: number | null;
+  photo_version: string | null;
 };
 
 export const fullName = (c: { first_name: string; last_name: string }) =>
@@ -70,14 +71,18 @@ export async function getClient(staff: StaffContext, id: string) {
 
 export async function listPets(staff: StaffContext, clientId: string) {
   return sql<PetRow[]>`
-    select p.*, p.birth_date::text as birth_date from pets p join clients c on c.id = p.client_id
+    select p.*, p.birth_date::text as birth_date,
+      (select ph.updated_at::text from pet_photos ph where ph.pet_id = p.id) as photo_version
+    from pets p join clients c on c.id = p.client_id
     where p.client_id = ${clientId} and c.business_id = ${staff.businessId} and p.deceased_at is null
     order by p.name`;
 }
 
 export async function getPet(staff: StaffContext, petId: string) {
   const [pet] = await sql<PetRow[]>`
-    select p.*, p.birth_date::text as birth_date from pets p join clients c on c.id = p.client_id
+    select p.*, p.birth_date::text as birth_date,
+      (select ph.updated_at::text from pet_photos ph where ph.pet_id = p.id) as photo_version
+    from pets p join clients c on c.id = p.client_id
     where p.id = ${petId} and c.business_id = ${staff.businessId}`;
   return pet ?? null;
 }
@@ -107,12 +112,3 @@ export async function clientHistory(staff: StaffContext, clientId: string) {
     limit 50`;
 }
 
-export async function listVaccines(staff: StaffContext, petId: string) {
-  return sql<{ id: string; name: string; given_on: string | null; expires_on: string | null; expired: boolean; soon: boolean }[]>`
-    select v.id, v.name, v.given_on::text, v.expires_on::text,
-           (v.expires_on < current_date) as expired,
-           (v.expires_on >= current_date and v.expires_on < current_date + 30) as soon
-    from vaccines v join pets p on p.id = v.pet_id join clients c on c.id = p.client_id
-    where v.pet_id = ${petId} and c.business_id = ${staff.businessId}
-    order by v.expires_on nulls last, v.name`;
-}

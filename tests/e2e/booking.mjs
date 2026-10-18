@@ -23,10 +23,17 @@ const fail = (msg) => {
   throw new Error(msg);
 };
 
-async function requestVisit({ pet, size, zip, city, phone, pickDay }) {
+async function requestVisit({ pet, size, zip, city, phone, pickDay, photo }) {
   await page.goto(`${BASE}/book`);
+  await page.getByLabel("Mobile phone").fill(phone);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByText("It looks like your first visit with us.").waitFor();
   await page.getByLabel("Pet's name").fill(pet);
   await page.getByLabel("Breed").fill("Maltese");
+  if (photo) {
+    await page.setInputFiles('input[type="file"]', photo);
+    await page.getByAltText("Your pet").waitFor();
+  }
   await page.locator("label", { hasText: size }).first().click();
   await page.locator("label", { hasText: "Bath" }).filter({ hasText: "$" }).first().click();
   await page.getByLabel("Street address").fill("1 Main St");
@@ -36,12 +43,10 @@ async function requestVisit({ pet, size, zip, city, phone, pickDay }) {
   await page.getByRole("tablist", { name: "Day" }).waitFor();
   const days = await page.getByRole("tab").allTextContents();
   if (pickDay === null) return days;
-  if (pickDay) await page.getByRole("tab", { name: pickDay }).click();
   const chosenDay = await page.locator('[role="tab"][aria-selected="true"]').textContent();
-  await page.locator('button[aria-pressed]').first().click();
+  await page.locator("button[aria-pressed]").first().click();
   await page.getByLabel("First name").fill("Ana");
   await page.getByLabel("Last name").fill("Silva");
-  await page.getByLabel("Mobile phone").fill(phone);
   await page.getByLabel("Email").fill("ana@example.com");
   await page.getByLabel("I have read and agree to the service agreement.").check();
   await page.getByLabel("Type your full name to sign").fill("Ana Silva");
@@ -50,6 +55,11 @@ async function requestVisit({ pet, size, zip, city, phone, pickDay }) {
   await page.getByText("Request sent!").waitFor();
   return chosenDay;
 }
+
+// A small picture to use as the pet photo.
+const photoPath = `${SHOTS}/fake-pet.png`;
+await page.setContent('<div style="width:300px;height:300px;background:#c90"></div>');
+await page.locator("div").screenshot({ path: photoPath });
 
 // Automatic messages start switched off (so clients don't get doubles while the old app runs).
 await page.goto(`${BASE}/login`);
@@ -62,7 +72,7 @@ await page.getByRole("button", { name: "Turn automatic messages on" }).click();
 await page.getByRole("button", { name: "Turn automatic messages off" }).waitFor();
 step("owner switched automatic messages on");
 
-const day = await requestVisit({ pet: "Luna", size: "Small", zip: "94401", city: "San Mateo", phone: "(650) 555-0177" });
+const day = await requestVisit({ pet: "Luna", size: "Small", zip: "94401", city: "San Mateo", phone: "(650) 555-0177", photo: photoPath });
 await shot("S38-book-sent");
 step(`client requested a Small bath on ${day}`);
 
@@ -78,6 +88,10 @@ await shot("S08-requests");
 await page.getByRole("button", { name: "Accept" }).click();
 await page.getByText("No requests waiting").waitFor();
 step("owner accepted the request");
+await page.goto(`${BASE}/clients?q=Ana`);
+await page.getByText("Ana Silva").click();
+await page.getByAltText("Photo of Luna").waitFor();
+step("Luna's photo from the booking page shows on the client profile");
 
 await page.goto(`${BASE}/settings/messages`);
 const outboxUrl = await page.getByLabel("Link for the Shortcut").inputValue();
@@ -109,6 +123,26 @@ if (!ics.includes("BEGIN:VEVENT") || !ics.includes("Luna")) fail("calendar feed 
 const bad = await fetch(calendarUrl.replace(/key=\w+/, "key=" + "0".repeat(48)));
 if (bad.status !== 401) fail("calendar feed answered a wrong key");
 step("calendar feed lists the visit and refuses a wrong key");
+
+// A returning client only types the phone: pets and address come from the file.
+await page.goto(`${BASE}/book`);
+await page.getByLabel("Mobile phone").fill("650-555-0177");
+await page.getByRole("button", { name: "Continue" }).click();
+await page.getByText("Welcome back, Ana!").waitFor();
+await page.getByRole("checkbox", { name: "Luna" }).check();
+await page.getByText('Size: Small (12" or less)').waitFor();
+await page.locator("label", { hasText: "Bath" }).filter({ hasText: "$" }).first().click();
+await page.getByText("Same address as last time in San Mateo").waitFor();
+if (await page.getByLabel("Street address").count()) fail("returning client was asked for the address again");
+await page.getByRole("button", { name: "See available times" }).click();
+await page.getByRole("tab").nth(2).click();
+await page.locator("button[aria-pressed]").first().click();
+if (await page.getByLabel("First name").count()) fail("returning client was asked for their name again");
+if (await page.getByLabel("Type your full name to sign").count()) fail("returning client was asked to sign again");
+await shot("S31-book-returning");
+await page.getByRole("button", { name: "Request this appointment" }).click();
+await page.getByText("Request sent!").waitFor();
+step("returning client booked with just the phone: no address, name or signature asked again");
 
 // Import a made-up export (same columns as the old app) twice: no duplicates the second time.
 const { writeFileSync } = await import("node:fs");

@@ -1,0 +1,6 @@
+# Netlify (free plan) builds and runs the Next.js app; it detects Next.js on its own.
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"

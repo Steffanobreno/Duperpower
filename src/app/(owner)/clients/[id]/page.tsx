@@ -7,6 +7,7 @@ import { directionsUrl } from "@/lib/directions";
 import { dayLabel, money, phoneLabel, sizeLabel, timeLabel } from "@/lib/format";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { addNoteAction } from "../actions";
+import { PetPhoto } from "@/components/pet-photo";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 
 export const metadata: Metadata = { title: "Client" };
@@ -92,10 +93,13 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
             <ul className="grid gap-2 sm:grid-cols-2">
               {pets.map((p) => (
                 <li key={p.id}>
-                  <Link href={`/clients/${id}/pets/${p.id}`} className="block rounded-[var(--radius-card)] border border-line bg-surface p-3 hover:bg-bg">
-                    <div className="font-semibold">{p.name}</div>
-                    <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
-                    {p.behavior && <div className="mt-1 text-sm text-warn">{p.behavior}</div>}
+                  <Link href={`/clients/${id}/pets/${p.id}`} className="flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3 hover:bg-bg">
+                    <PetPhoto petId={p.id} version={p.photo_version} name={p.name} />
+                    <div className="min-w-0">
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                      {p.behavior && <div className="mt-1 text-sm text-warn">{p.behavior}</div>}
+                    </div>
                   </Link>
                 </li>
               ))}
