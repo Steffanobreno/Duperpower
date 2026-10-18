@@ -2,6 +2,7 @@
 // Usage: npm run db:import -- /path/to/export.csv [--appointments]
 import { readFileSync } from "node:fs";
 import postgres from "postgres";
+import { dbConfig } from "../src/lib/db-config";
 import { parseClientsCsv } from "../src/lib/import/clients-csv";
 import { writeClients } from "../src/lib/import/write-clients";
 
@@ -9,7 +10,8 @@ const file = process.argv[2];
 if (!file) throw new Error("Pass the CSV file path.");
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is not set");
-const sql = postgres(url, { max: 1, onnotice: () => {} });
+const db = dbConfig(url);
+const sql = postgres(db.url, { max: 1, prepare: db.prepare, onnotice: () => {} });
 
 async function main() {
   const [b] = await sql`

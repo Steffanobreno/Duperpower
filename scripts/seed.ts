@@ -2,11 +2,13 @@
 // Safe to run more than once: it does nothing if a business already exists.
 // Usage: npm run db:seed
 import postgres from "postgres";
+import { dbConfig } from "../src/lib/db-config";
 import { AGREEMENT_BODY, AGREEMENT_TITLE } from "./agreement";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is not set");
-const sql = postgres(url, { max: 1, onnotice: () => {} });
+const db = dbConfig(url);
+const sql = postgres(db.url, { max: 1, prepare: db.prepare, onnotice: () => {} });
 
 type Size = "small" | "medium" | "large" | "xlarge";
 const SIZE_LABEL: Record<Size, string> = {

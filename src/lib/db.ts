@@ -1,5 +1,6 @@
 import "server-only";
 import postgres from "postgres";
+import { dbConfig } from "./db-config";
 
 // One connection pool per server process. In dev, Next reloads modules, so the
 // pool is kept on globalThis to avoid opening a new one on every change.
@@ -7,8 +8,9 @@ const globalForDb = globalThis as unknown as { sql?: postgres.Sql };
 
 export const sql =
   globalForDb.sql ??
-  postgres(process.env.DATABASE_URL ?? "postgres://postgres@localhost:5499/woofers", {
+  postgres(dbConfig().url, {
     max: 5,
+    prepare: dbConfig().prepare,
     transform: { undefined: null },
   });
 

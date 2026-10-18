@@ -13,6 +13,11 @@ export async function loginAction(_: FormState, form: FormData): Promise<FormSta
 
 export async function setupAction(_: FormState, form: FormData): Promise<FormState> {
   if (await hasAnyUser()) redirect("/login");
+  // Only someone holding SETUP_CODE (set on the server) can create the owner login,
+  // so a stranger opening the new site first can't claim it.
+  const code = process.env.SETUP_CODE;
+  if (process.env.NODE_ENV === "production" && !code) return { error: "Setup is locked. Set SETUP_CODE on the server first." };
+  if (code && form.get("setup_code") !== code) return { error: "That setup code is not right." };
   const email = String(form.get("email") ?? "").trim();
   const password = String(form.get("password") ?? "");
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email." };

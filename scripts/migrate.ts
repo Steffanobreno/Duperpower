@@ -2,10 +2,12 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import postgres from "postgres";
+import { dbConfig } from "../src/lib/db-config";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is not set");
-const sql = postgres(url, { max: 1, onnotice: () => {} });
+const db = dbConfig(url);
+const sql = postgres(db.url, { max: 1, prepare: db.prepare, onnotice: () => {} });
 const dir = join(process.cwd(), "db", "migrations");
 
 async function main() {

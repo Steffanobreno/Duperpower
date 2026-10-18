@@ -21,6 +21,11 @@ export function LoginForm({ mode }: { mode: "login" | "setup" }) {
         />
       </Field>
       {mode === "setup" && (
+        <Field label="Setup code" hint="The code you put in the server settings (SETUP_CODE).">
+          <Input name="setup_code" autoComplete="off" />
+        </Field>
+      )}
+      {mode === "setup" && (
         <Field label="Repeat password">
           <Input name="confirm" type="password" autoComplete="new-password" required />
         </Field>
