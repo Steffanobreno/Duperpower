@@ -1,5 +1,7 @@
 // Writes parsed clients into the database. Takes the connection as a parameter so the
 // import page (app pool) and the command-line script (own connection) can both use it.
+// Everything is written with a few bulk inserts inside one transaction: the hosted app has
+// about 10 seconds per request, and one round trip per row would not fit.
 import type { Sql } from "postgres";
 import { fromZonedTime } from "date-fns-tz";
 import type { ImportedClient } from "./clients-csv";
@@ -13,6 +15,8 @@ export type ImportReport = {
   moreUpcoming: string[]; // clients with more than one upcoming visit: only the next one comes over
 };
 
+const IMPORTED_NOTE = "Imported from the old app. Check the pets and add the services before checkout.";
+
 export async function writeClients(
   sql: Sql,
   target: { businessId: string; staffId: string; timezone: string },
@@ -23,72 +27,92 @@ export async function writeClients(
   const local = (date: string, time: string) => fromZonedTime(`${date}T${time}:00`, target.timezone);
   const now = Date.now();
 
-  for (const c of clients) {
-    const label = `${c.firstName} ${c.lastName}`.trim();
-    try {
-      await sql.begin(async (tx) => {
-        const [found] = await tx`select id from clients where business_id = ${target.businessId} and phone = ${c.phone}`;
-        if (found) {
-          report.existing++;
-          return;
-        }
-        // They already received texts from the business in the old app, so text consent carries over.
-        const [client] = await tx`
-          insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip, lat, lng,
-                               marketing_opt_in, sms_consent_at, source, imported_last_service_at, imported_total_sales_cents)
-          values (${target.businessId}, ${c.firstName}, ${c.lastName}, ${c.phone}, ${c.email}, ${c.addressLine}, ${c.city},
-                  ${c.state}, ${c.zip}, ${c.lat}, ${c.lng}, ${c.marketing}, now(), 'import',
-                  ${c.lastService ? local(c.lastService.date, c.lastService.start) : null}, ${c.totalSalesCents})
-          returning id`;
-        report.created++;
-        for (const note of c.notes) {
-          await tx`insert into client_notes (client_id, staff_id, body) values (${client.id}, ${target.staffId}, ${note})`;
-        }
-        const petIds: string[] = [];
-        for (const p of c.pets) {
-          const [pet] = await tx`
-            insert into pets (client_id, name, breed, rebook_every_days)
-            values (${client.id}, ${p.name.slice(0, 80)}, ${p.breed?.slice(0, 120) ?? null}, ${c.frequencyDays})
-            returning id`;
-          petIds.push(pet.id);
-          report.pets++;
-        }
+  await sql.begin(async (tx) => {
+    const phones = clients.map((c) => c.phone);
+    const existing = new Set(
+      (await tx`select phone from clients where business_id = ${target.businessId} and phone = any(${phones})`).map((r) => r.phone),
+    );
+    const fresh = clients.filter((c) => !existing.has(c.phone));
+    report.existing = clients.length - fresh.length;
+    if (fresh.length === 0) return;
 
-        if (options.appointments && c.next) {
-          const start = local(c.next.date, c.next.start);
-          let end = local(c.next.date, c.next.end);
-          if (end <= start) end = new Date(start.getTime() + 120 * 60_000);
-          if (start.getTime() > now) {
-            // Savepoint: a clash with another imported visit must not undo the client.
-            try {
-              await tx.savepoint(async (sp) => {
-                const [appt] = await sp`
-                  insert into appointments (business_id, client_id, staff_id, start_at, end_at, status, source,
-                                            address_line, zip, lat, lng, notes)
-                  values (${target.businessId}, ${client.id}, ${target.staffId}, ${start}, ${end}, 'unconfirmed', 'manual',
-                          ${[c.addressLine, c.city, c.state].filter(Boolean).join(", ") || null}, ${c.zip}, ${c.lat}, ${c.lng},
-                          'Imported from the old app. Check the pets and add the services before checkout.')
-                  returning id`;
-                for (const petId of petIds) {
-                  await sp`insert into appointment_pets (appointment_id, pet_id) values (${appt.id}, ${petId})`;
-                }
-              });
-              report.appointments++;
-              if (c.upcomingCount > 1) report.moreUpcoming.push(`${label} (${c.upcomingCount} upcoming)`);
-            } catch (e) {
-              const code = (e as { code?: string }).code;
-              report.problems.push(
-                code === "23P01"
-                  ? `${label}: the visit on ${c.next.date} ${c.next.start} overlaps another one; add it by hand.`
-                  : `${label}: could not import the visit on ${c.next.date}.`,
-              );
-            }
-          }
-        }
-      });
-    } catch (e) {
-      report.problems.push(`Row ${c.row} (${label}): not imported (${(e as Error).message.slice(0, 120)}).`);
-    }
-  }
+    // 1. Clients. They already received texts from the business in the old app, so text consent carries over.
+    const inserted = await tx`
+      insert into clients ${tx(
+        fresh.map((c) => ({
+          business_id: target.businessId,
+          first_name: c.firstName,
+          last_name: c.lastName,
+          phone: c.phone,
+          email: c.email,
+          address_line: c.addressLine,
+          city: c.city,
+          state: c.state,
+          zip: c.zip,
+          lat: c.lat,
+          lng: c.lng,
+          marketing_opt_in: c.marketing,
+          sms_consent_at: new Date(),
+          source: "import",
+          imported_last_service_at: c.lastService ? local(c.lastService.date, c.lastService.start) : null,
+          imported_total_sales_cents: c.totalSalesCents,
+        })),
+      )}
+      returning id, phone`;
+    const idByPhone = new Map(inserted.map((r) => [r.phone as string, r.id as string]));
+    report.created = inserted.length;
+
+    // 2. Notes.
+    const notes = fresh.flatMap((c) =>
+      c.notes.map((body) => ({ client_id: idByPhone.get(c.phone)!, staff_id: target.staffId, body })),
+    );
+    if (notes.length) await tx`insert into client_notes ${tx(notes)}`;
+
+    // 3. Pets.
+    const petRows = fresh.flatMap((c) =>
+      c.pets.map((p) => ({
+        client_id: idByPhone.get(c.phone)!,
+        name: p.name.slice(0, 80),
+        breed: p.breed?.slice(0, 120) ?? null,
+        rebook_every_days: c.frequencyDays,
+      })),
+    );
+    const pets = petRows.length ? await tx`insert into pets ${tx(petRows)} returning id, client_id` : [];
+    report.pets = pets.length;
+    const petsByClient = new Map<string, string[]>();
+    for (const p of pets) petsByClient.set(p.client_id, [...(petsByClient.get(p.client_id) ?? []), p.id]);
+
+    // 4. Each client's next visit (only future ones), with all their pets on it.
+    if (!options.appointments) return;
+    const visits = fresh.flatMap((c) => {
+      if (!c.next) return [];
+      const start = local(c.next.date, c.next.start);
+      let end = local(c.next.date, c.next.end);
+      if (end <= start) end = new Date(start.getTime() + 120 * 60_000);
+      if (start.getTime() <= now) return [];
+      if (c.upcomingCount > 1) report.moreUpcoming.push(`${`${c.firstName} ${c.lastName}`.trim()} (${c.upcomingCount} upcoming)`);
+      return [
+        {
+          business_id: target.businessId,
+          client_id: idByPhone.get(c.phone)!,
+          staff_id: target.staffId,
+          start_at: start,
+          end_at: end,
+          status: "unconfirmed",
+          source: "manual",
+          address_line: [c.addressLine, c.city, c.state].filter(Boolean).join(", ") || null,
+          zip: c.zip,
+          lat: c.lat,
+          lng: c.lng,
+          notes: IMPORTED_NOTE,
+        },
+      ];
+    });
+    if (visits.length === 0) return;
+    const appts = await tx`insert into appointments ${tx(visits)} returning id, client_id`;
+    report.appointments = appts.length;
+    const links = appts.flatMap((a) => (petsByClient.get(a.client_id) ?? []).map((pet_id) => ({ appointment_id: a.id, pet_id })));
+    if (links.length) await tx`insert into appointment_pets ${tx(links)}`;
+  });
   return report;
 }
