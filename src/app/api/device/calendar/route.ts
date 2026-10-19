@@ -31,14 +31,16 @@ export async function GET(request: Request) {
 
   const rows = await sql<
     { id: string; start_at: Date; end_at: Date; status: string; address_line: string | null; notes: string | null;
-      client: string; phone: string; pets: string | null; services: string | null; updated_at: Date }[]
+      client: string; phone: string; dogs: number; zip: string | null; detail: string | null; updated_at: Date }[]
   >`
-    select a.id, a.start_at, a.end_at, a.status, a.address_line, a.notes, a.updated_at,
+    select a.id, a.start_at, a.end_at, a.status, a.address_line, a.zip, a.notes, a.updated_at,
            trim(c.first_name || ' ' || c.last_name) as client, c.phone,
-           (select string_agg(p.name, ' & ' order by p.name) from appointment_pets ap join pets p on p.id = ap.pet_id
-             where ap.appointment_id = a.id) as pets,
-           (select string_agg(s.name, ', ') from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
-             where ap.appointment_id = a.id) as services
+           (select count(*) from appointment_pets ap where ap.appointment_id = a.id)::int as dogs,
+           -- One line per dog: "Loki (Cavapoo): Full Haircut - Medium, De-shedding"
+           (select string_agg(p.name || coalesce(' (' || p.breed || ')', '') || ': ' ||
+                     coalesce((select string_agg(s.name, ', ' order by s.created_at) from appointment_services s
+                               where s.appointment_pet_id = ap.id), ''), E'\n' order by p.name)
+            from appointment_pets ap join pets p on p.id = ap.pet_id where ap.appointment_id = a.id) as detail
     from appointments a join clients c on c.id = a.client_id
     where a.business_id = ${business.id}
       and a.start_at > now() - interval '30 days' and a.start_at < now() + interval '180 days'
@@ -46,9 +48,13 @@ export async function GET(request: Request) {
     order by a.start_at`;
 
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
-  const titleOf = (r: (typeof rows)[number]) => `${r.status === "requested" ? "[Request] " : ""}${r.pets ?? "Grooming"} · ${r.client}`;
+  // "Grace Bresnahan 1Dog", like the old app, so the week reads the same at a glance.
+  const titleOf = (r: (typeof rows)[number]) =>
+    `${r.status === "requested" ? "[Request] " : ""}${r.client} ${r.dogs}Dog${r.dogs === 1 ? "" : "s"}`;
   const descriptionOf = (r: (typeof rows)[number]) =>
-    [r.services, r.phone, r.notes, appUrl && `${appUrl}/appointments/${r.id}`].filter(Boolean).join("\n");
+    [r.detail, r.phone, r.notes, appUrl && `Open in the app: ${appUrl}/appointments/${r.id}`,
+     "Make changes in the Woofers app: changes made here are overwritten at the next sync."]
+      .filter(Boolean).join("\n\n");
 
   if (url.searchParams.get("format") === "json") {
     await sql`update businesses set calendar_synced_at = now() where id = ${business.id}`;
@@ -62,7 +68,7 @@ export async function GET(request: Request) {
           title: titleOf(r),
           start: r.start_at.toISOString(),
           end: r.end_at.toISOString(),
-          location: r.address_line ?? "",
+          location: [r.address_line, r.zip].filter(Boolean).join(" "),
           description: descriptionOf(r),
         })),
       },
@@ -88,7 +94,7 @@ export async function GET(request: Request) {
       `DTSTART:${stamp(r.start_at)}`,
       `DTEND:${stamp(r.end_at)}`,
       `SUMMARY:${esc(title)}`,
-      ...(r.address_line ? [`LOCATION:${esc(r.address_line)}`] : []),
+      ...(r.address_line ? [`LOCATION:${esc([r.address_line, r.zip].filter(Boolean).join(" "))}`] : []),
       `DESCRIPTION:${esc(description)}`,
       "END:VEVENT",
     );

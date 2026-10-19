@@ -7,13 +7,13 @@ import { getInvoiceForAppointment } from "@/lib/data/invoices";
 import { smsTextFor } from "@/lib/messaging";
 import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
-import { directionsUrl } from "@/lib/directions";
 import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd } from "@/lib/format";
 import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@/components/ui";
 import { Calendar, Chat, Check, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { RescheduleForm } from "../reschedule-form";
 import { PetPhoto } from "@/components/pet-photo";
+import { AddressLink, PhoneLink } from "@/components/contact-sheet";
 
 export const metadata: Metadata = { title: "Appointment" };
 
@@ -93,9 +93,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           <a href={`sms:${c.phone}`} className={pillar}><Chat size={22} />Message</a>
           <a href={`tel:${c.phone}`} className={pillar}><Phone size={22} />Call</a>
           {appt.address_line ? (
-            <a href={directionsUrl({ address: appt.address_line, lat: appt.lat, lng: appt.lng })} target="_blank" rel="noreferrer" className={pillar}>
+            <AddressLink address={[appt.address_line, appt.zip].filter(Boolean).join(" ")} lat={appt.lat} lng={appt.lng} className={`${pillar} !text-center`}>
               <Pin size={22} />Directions
-            </a>
+            </AddressLink>
           ) : (
             <span className={`${pillar} opacity-40`}><Pin size={22} />No address</span>
           )}
@@ -182,12 +182,17 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               <span className="flex-1 font-semibold">{fullName(c)}</span>
               <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand-strong">every {rebookWeeks} weeks</span>
             </Link>
-            <a href={`tel:${c.phone}`} className="flex items-center gap-3 px-4 py-3 text-brand">
+            <PhoneLink phone={c.phone} label={phoneLabel(c.phone)} className="flex w-full items-center gap-3 px-4 py-3 text-brand">
               <Phone size={18} /> {phoneLabel(c.phone)}
-            </a>
-            <div className="flex items-center gap-3 px-4 py-3">
-              <Pin size={18} className="shrink-0 text-muted" /> {appt.address_line ?? "No address on file"}
-            </div>
+            </PhoneLink>
+            {appt.address_line ? (
+              <AddressLink address={[appt.address_line, appt.zip].filter(Boolean).join(" ")} lat={appt.lat} lng={appt.lng}
+                className="flex w-full items-center gap-3 px-4 py-3 text-brand">
+                <Pin size={18} className="shrink-0" /> {appt.address_line}{appt.zip ? ` ${appt.zip}` : ""}
+              </AddressLink>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-3 text-muted"><Pin size={18} /> No address on file</div>
+            )}
             {c.access_notes && <div className="px-4 py-3"><Notice kind="info">{c.access_notes}</Notice></div>}
           </div>
         </section>

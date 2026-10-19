@@ -19,6 +19,9 @@ export type ClientRow = {
   imported_last_service_at: Date | null;
   sms_opted_out_at: Date | null;
   archived_at: Date | null;
+  online_booking_blocked: boolean;
+  created_at: Date;
+  imported_total_sales_cents: number | null;
 };
 
 export type PetRow = {
@@ -126,3 +129,32 @@ export async function clientHistory(staff: StaffContext, clientId: string) {
     limit 50`;
 }
 
+
+/** Money and habits for the client profile: what they paid here, what's open, how often they come. */
+export async function clientSummary(staff: StaffContext, clientId: string) {
+  const [[money], payments, gaps] = await Promise.all([
+    sql<{ paid: number; tips: number; unpaid: number }[]>`
+      select coalesce((select sum(p.amount_cents) from payments p join invoices i on i.id = p.invoice_id
+                       where i.client_id = ${clientId} and i.business_id = ${staff.businessId}), 0)::int as paid,
+             coalesce((select sum(p.tip_cents) from payments p join invoices i on i.id = p.invoice_id
+                       where i.client_id = ${clientId} and i.business_id = ${staff.businessId}), 0)::int as tips,
+             coalesce((select sum(greatest(i.total_cents - i.paid_cents, 0)) from invoices i
+                       where i.client_id = ${clientId} and i.business_id = ${staff.businessId} and i.status = 'open'), 0)::int
+             + coalesce((select sum(s.price_cents) from appointments a join appointment_pets ap on ap.appointment_id = a.id
+                         join appointment_services s on s.appointment_pet_id = ap.id
+                         where a.client_id = ${clientId} and a.business_id = ${staff.businessId} and a.status = 'completed'
+                           and not exists (select 1 from invoices i where i.appointment_id = a.id)), 0)::int as unpaid`,
+    sql<{ id: string; received_at: Date; method: string; amount_cents: number; tip_cents: number; appointment_id: string | null }[]>`
+      select p.id, p.received_at, p.method, p.amount_cents, p.tip_cents, i.appointment_id
+      from payments p join invoices i on i.id = p.invoice_id
+      where i.client_id = ${clientId} and i.business_id = ${staff.businessId}
+      order by p.received_at desc limit 20`,
+    // Days between finished visits, for the "actual frequency".
+    sql<{ avg_days: number | null }[]>`
+      select round(avg(gap))::int as avg_days from (
+        select extract(epoch from start_at - lag(start_at) over (order by start_at)) / 86400 as gap
+        from appointments where client_id = ${clientId} and business_id = ${staff.businessId} and status = 'completed') g
+      where gap is not null`,
+  ]);
+  return { ...money, payments, actualDays: gaps[0]?.avg_days ?? null };
+}

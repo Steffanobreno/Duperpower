@@ -164,3 +164,17 @@ export async function savePetPhotoAction(petId: string, form: FormData): Promise
   revalidatePath(`/clients/${pet.client_id}/pets/${petId}`);
   return {};
 }
+
+/** The switches under "Business control" on the client profile. */
+export async function setClientControlAction(clientId: string, control: "inactive" | "block_messages" | "block_online", on: boolean) {
+  const staff = await requireStaff();
+  if (control === "inactive") {
+    await sql`update clients set archived_at = ${on ? new Date() : null} where id = ${clientId} and business_id = ${staff.businessId}`;
+  } else if (control === "block_messages") {
+    await sql`update clients set sms_opted_out_at = ${on ? new Date() : null} where id = ${clientId} and business_id = ${staff.businessId}`;
+  } else {
+    await sql`update clients set online_booking_blocked = ${on} where id = ${clientId} and business_id = ${staff.businessId}`;
+  }
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
+}

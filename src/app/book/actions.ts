@@ -2,7 +2,7 @@
 import { headers } from "next/headers";
 import { isExclusionViolation, sql } from "@/lib/db";
 import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
-import { normalizePhone, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
+import { normalizePhone, phoneLabel, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
 import { activeAgreement, currentSignature, recordSignature, signatureImage } from "@/lib/agreement";
 import { bytesFromDataUrl, savePetPhoto } from "@/lib/pet-photos";
@@ -44,8 +44,9 @@ async function tooManyLookups() {
 }
 
 async function findClient(b: PublicBusiness, phone: string) {
-  const [c] = await sql<{ id: string; first_name: string; city: string | null; zip: string | null; address_line: string | null; state: string | null }[]>`
-    select id, first_name, city, zip, address_line, state from clients
+  const [c] = await sql<{ id: string; first_name: string; city: string | null; zip: string | null; address_line: string | null; state: string | null;
+                         online_booking_blocked: boolean }[]>`
+    select id, first_name, city, zip, address_line, state, online_booking_blocked from clients
     where business_id = ${b.id} and phone = ${phone} and archived_at is null`;
   return c ?? null;
 }
@@ -64,6 +65,7 @@ export async function lookupClientAction(rawPhone: string): Promise<LookupResult
   if (!phone) return { error: "Please enter your 10-digit mobile number." };
   if (await tooManyLookups()) return { error: "Too many tries. Please wait a few minutes or text us." };
   const c = await findClient(b, phone);
+  if (c?.online_booking_blocked) return { error: `Please text us at ${phoneLabel(b.phone)} to book your next visit.` };
   if (!c) return { known: false, mustSign: (await mustSignFor(b, null)).mustSign };
   const pets = await sql<{ id: string; name: string; breed: string | null; size: string | null }[]>`
     select id, name, breed, size_class as size from pets where client_id = ${c.id} and deceased_at is null order by name`;
@@ -152,6 +154,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   const phone = normalizePhone(input.phone);
   if (!phone) return { error: "Please enter a 10-digit mobile number." };
   const existing = await findClient(b, phone);
+  if (existing?.online_booking_blocked) return { error: `Please text us at ${phoneLabel(b.phone)} to book your next visit.` };
   const useFile = !!existing && input.useFileAddress && !!existing.zip && !!existing.address_line;
 
   const firstName = String(input.firstName ?? "").trim();
