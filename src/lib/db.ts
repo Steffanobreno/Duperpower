@@ -10,6 +10,8 @@ export const sql =
   globalForDb.sql ??
   postgres(dbConfig().url, {
     max: 5,
+    // The free database sleeps after a few idle minutes; give it time to wake up.
+    connect_timeout: 15,
     prepare: dbConfig().prepare,
     transform: { undefined: null },
   });
