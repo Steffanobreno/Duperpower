@@ -34,10 +34,15 @@ export type EmailDetails = {
   link: string | null;
   businessPhone: string | null;
   policy: string | null;
+  // "Add to my calendar" buttons, and the .ics file attached to the email.
+  calendar?: { apple: string; google: string; ics: string } | null;
 };
 
 const row = (label: string, value: string) =>
   `<tr><td style="padding:10px 0;border-top:1px solid #e1e6ee;color:#5d6b80;font-size:13px;width:90px;vertical-align:top">${label}</td><td style="padding:10px 0;border-top:1px solid #e1e6ee;font-size:15px">${value}</td></tr>`;
+
+const calButton = (href: string, label: string) =>
+  `<a href="${href}" style="display:inline-block;margin:4px;border:2px solid #0a84cc;color:#0a84cc;text-decoration:none;font-weight:700;font-size:14px;padding:10px 16px;border-radius:999px">📅 ${label}</a>`;
 
 function detailsHtml(d: EmailDetails) {
   const pets = d.pets
@@ -54,6 +59,8 @@ ${pets ? row("Pets", pets) : ""}
 ${d.total ? row("Estimated", `<strong>${escape(d.total)}</strong>`) : ""}
 </table></div>
 ${d.link ? `<p style="margin:24px 0 0;text-align:center"><a href="${d.link}" style="display:inline-block;background:#0a84cc;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:999px">${d.badge === "Waiting for confirmation" ? "See my request" : "See, confirm or cancel"}</a></p>` : ""}
+${d.calendar ? `<p style="margin:16px 0 0;text-align:center;font-size:14px;color:#5d6b80">Add it to your calendar so you don't forget:</p>
+<p style="margin:8px 0 0;text-align:center">${calButton(d.calendar.apple, "Apple / iPhone")} ${calButton(d.calendar.google, "Google Calendar")}</p>` : ""}
 ${d.policy ? `<p style="margin:18px 0 0;color:#5d6b80;font-size:13px">${escape(d.policy)}</p>` : ""}
 ${d.businessPhone ? `<p style="margin:8px 0 0;color:#5d6b80;font-size:13px">Questions? Text us at <a href="sms:${escape(d.businessPhone)}" style="color:#0a84cc">${escape(d.businessPhone)}</a>.</p>` : ""}`;
 }
@@ -88,5 +95,11 @@ export async function sendEmail({
 }: { to: string; subject: string; text: string; fromName: string; details?: EmailDetails | null }) {
   const t = getTransport();
   if (!t) throw new Error("Email is not set up (GMAIL_USER / GMAIL_APP_PASSWORD).");
-  await t.sendMail({ from: { name: fromName, address: process.env.GMAIL_USER!.trim() }, to, subject, text, html: emailHtml(text, fromName, details) });
+  await t.sendMail({
+    from: { name: fromName, address: process.env.GMAIL_USER!.trim() }, to, subject, text, html: emailHtml(text, fromName, details),
+    // Gmail and Apple Mail show the attached visit with an "Add to calendar" option.
+    attachments: details?.calendar
+      ? [{ filename: "woofers-visit.ics", content: details.calendar.ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }]
+      : undefined,
+  });
 }

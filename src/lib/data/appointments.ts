@@ -22,10 +22,11 @@ export type AppointmentListItem = {
   pets: { name: string; size_class: string | null; services: string[] }[];
   total_cents: number;
   paid: boolean;
+  series_id: string | null;
 };
 
 const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<AppointmentListItem[]>`
-  select a.id, a.start_at, a.end_at, a.status, a.notes, a.address_line, a.zip, a.lat, a.lng,
+  select a.id, a.start_at, a.end_at, a.status, a.notes, a.address_line, a.zip, a.lat, a.lng, a.series_id,
          c.id as client_id, trim(c.first_name || ' ' || c.last_name) as client_name,
          c.phone as client_phone, c.city, c.access_notes,
          coalesce((

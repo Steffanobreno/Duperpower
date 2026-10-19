@@ -8,6 +8,7 @@ import { AgreementText } from "@/components/agreement-text";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { Calendar, Dog } from "@/components/icons";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
+import { clientEvent } from "@/lib/client-calendar";
 import { cancelByTokenAction, confirmByTokenAction, requestRescheduleByTokenAction } from "./actions";
 
 export const metadata: Metadata = { title: "Your appointment", robots: { index: false } };
@@ -47,7 +48,10 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
   const tz = a.timezone;
   const phone = phoneLabel(a.phone);
   const open = ["requested", "unconfirmed", "confirmed"].includes(a.status);
-  const agreement = a.status === "unconfirmed" ? await activeAgreement(a.business_id) : null;
+  const [agreement, calendar] = await Promise.all([
+    a.status === "unconfirmed" ? activeAgreement(a.business_id) : null,
+    clientEvent({ token }),
+  ]);
   const mustSign = agreement ? !(await currentSignature(agreement, a.client_id)) : false;
 
   return (
@@ -83,6 +87,17 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
         {a.status === "confirmed" && <Notice kind="success">Confirmed. See you then! 🐾</Notice>}
         {a.status === "cancelled" && <Notice kind="warn">This appointment is cancelled.</Notice>}
         {a.status === "completed" && <Notice kind="success">All done. Thank you!</Notice>}
+
+        {calendar && (
+          <div className="grid grid-cols-2 gap-2">
+            <a href={calendar.apple} className="rounded-full border-2 border-brand py-2.5 text-center text-sm font-bold text-brand">
+              📅 Add to iPhone
+            </a>
+            <a href={calendar.google} target="_blank" rel="noreferrer" className="rounded-full border-2 border-brand py-2.5 text-center text-sm font-bold text-brand">
+              📅 Google Calendar
+            </a>
+          </div>
+        )}
 
         {a.status === "unconfirmed" && (
           <form action={confirmByTokenAction.bind(null, token)} className="space-y-3">

@@ -3,6 +3,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { sql } from "./db";
 import { emailConfigured, sendEmail, type EmailDetails } from "./email";
 import { sendPush } from "./push";
+import { clientEvent } from "./client-calendar";
 import { addDaysYmd, dayRangeUtc, hm, money, phoneLabel, todayYmd, ymd } from "./format";
 
 // Every client message goes through here. A message is a row in `messages`:
@@ -276,6 +277,7 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
   if (!a) return null;
   const price = (c: number) => (c === 0 ? "Included" : money(c).replace(/\.00$/, ""));
   const live = !["cancelled", "declined", "no_show"].includes(a.status);
+  const calendar = ["booked", "confirmed", "reminder"].includes(trigger) ? await clientEvent({ id: appointmentId }) : null;
   return {
     heading,
     badge:
@@ -293,6 +295,7 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
     policy: live
       ? `Free cancellation up to ${a.cancellation_hours} hours before the visit. After that, 50% of the service price applies. The final price can change for matting or behavior.`
       : null,
+    calendar: calendar && { apple: calendar.apple, google: calendar.google, ics: calendar.ics },
   };
 }
 

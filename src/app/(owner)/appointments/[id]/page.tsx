@@ -9,8 +9,9 @@ import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
 import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd } from "@/lib/format";
 import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@/components/ui";
-import { Calendar, Card as Card2, Chat, Check, ChevronDown, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
+import { Calendar, Card as Card2, Chat, Check, ChevronDown, ChevronRight, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { NEXT_STATUS } from "@/lib/appointment-status";
+import { ruleLabel, type RepeatRule } from "@/lib/repeat";
 import { setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { RescheduleForm } from "../reschedule-form";
 import { PetPhoto } from "@/components/pet-photo";
@@ -51,12 +52,18 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const appt = await getAppointment(staff, id);
   if (!appt) notFound();
-  const [checkout, onMyWay, messages] = await Promise.all([
+  const [checkout, onMyWay, messages, [series]] = await Promise.all([
     getInvoiceForAppointment(staff, id),
     smsTextFor(id, "on_my_way"),
     sql<{ id: string; channel: string; status: string; template_trigger: string | null; created_at: Date }[]>`
       select id, channel, status, template_trigger, created_at from messages
       where appointment_id = ${id} and business_id = ${staff.businessId} order by created_at desc limit 20`,
+    sql<{ freq: RepeatRule["freq"]; interval_n: number; occurrences: number | null; ends_on: string | null; first: Date; upcoming: number }[]>`
+      select s.freq, s.interval_n, s.occurrences, to_char(s.ends_on, 'YYYY-MM-DD') as ends_on,
+        (select min(x.start_at) from appointments x where x.series_id = s.id) as first,
+        (select count(*)::int from appointments x where x.series_id = s.id and x.start_at > ${appt.start_at}
+           and x.status in ('unconfirmed', 'confirmed')) as upcoming
+      from appointment_series s where s.id = ${appt.series_id ?? null}::uuid`,
   ]);
   const tz = staff.timezone;
   const c = appt.client;
@@ -154,6 +161,20 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             </div>
             {canChange && <a href="#reschedule" aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></a>}
           </div>
+          {appt.status !== "requested" && !["cancelled", "no_show", "declined"].includes(appt.status) && (
+            <Link href={`/appointments/${id}/repeat`} className="card flex items-center gap-3 px-4 py-3.5">
+              <span aria-hidden className="text-xl text-success">↻</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">{series ? "Repeat appointment" : "Repeat this appointment"}</span>
+                <span className="block truncate text-sm text-muted">
+                  {series
+                    ? `${ruleLabel(ymd(series.first, tz), { freq: series.freq, every: series.interval_n, count: series.occurrences, until: series.ends_on })} · ${series.upcoming} more after this one`
+                    : "Every week, every 2 weeks, every month…"}
+                </span>
+              </span>
+              <ChevronRight size={20} className="text-muted" />
+            </Link>
+          )}
         </section>
 
         <section className="space-y-2">

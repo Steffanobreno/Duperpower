@@ -1,28 +1,12 @@
 import { sql } from "@/lib/db";
 import { businessForDeviceKey } from "@/lib/device";
+import { icsCalendar, icsEventLines } from "@/lib/ics";
 
 // Calendar feed of the visits. Two formats:
 // - iCalendar (default): Google Calendar → Other calendars → From URL. Google refreshes it on
 //   its own schedule (usually every few hours).
 // - JSON (?format=json): read every 15 minutes by the Google Apps Script shown in
 //   Settings → Google Calendar, which copies the visits into a real Google calendar.
-
-const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
-const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-
-// Lines longer than 75 octets must be folded (RFC 5545).
-function fold(line: string) {
-  const out: string[] = [];
-  let rest = line;
-  while (Buffer.byteLength(rest) > 75) {
-    let cut = 74;
-    while (Buffer.byteLength(rest.slice(0, cut)) > 74) cut--;
-    out.push(rest.slice(0, cut));
-    rest = " " + rest.slice(cut);
-  }
-  out.push(rest);
-  return out.join("\r\n");
-}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -92,42 +76,16 @@ export async function GET(request: Request) {
     );
   }
 
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Woofers//Appointments//EN",
-    "CALSCALE:GREGORIAN",
-    `X-WR-CALNAME:${esc(business.name)}`,
-    `X-WR-TIMEZONE:${business.timezone}`,
-  ];
-  for (const r of rows) {
-    const title = titleOf(r);
-    const description = descriptionOf(r);
-    lines.push(
-      "BEGIN:VEVENT",
-      `UID:${r.id}@woofers`,
-      `DTSTAMP:${stamp(r.updated_at)}`,
-      `DTSTART:${stamp(r.start_at)}`,
-      `DTEND:${stamp(r.end_at)}`,
-      `SUMMARY:${esc(title)}`,
-      ...(r.address_line ? [`LOCATION:${esc([r.address_line, r.zip].filter(Boolean).join(" "))}`] : []),
-      `DESCRIPTION:${esc(description)}`,
-      "END:VEVENT",
-    );
-  }
-  for (const t of blocks) {
-    lines.push(
-      "BEGIN:VEVENT",
-      `UID:block-${t.id}@woofers`,
-      `DTSTAMP:${stamp(t.updated_at)}`,
-      `DTSTART:${stamp(t.start_at)}`,
-      `DTEND:${stamp(t.end_at)}`,
-      `SUMMARY:${esc(blockTitle(t))}`,
-      "END:VEVENT",
-    );
-  }
-  lines.push("END:VCALENDAR");
-  return new Response(lines.map(fold).join("\r\n") + "\r\n", {
+  const body = icsCalendar(business.name, business.timezone, [
+    ...rows.map((r) => icsEventLines({
+      uid: `${r.id}@woofers`, start: r.start_at, end: r.end_at, updated: r.updated_at, title: titleOf(r),
+      location: r.address_line ? [r.address_line, r.zip].filter(Boolean).join(" ") : null, description: descriptionOf(r),
+    })),
+    ...blocks.map((t) => icsEventLines({
+      uid: `block-${t.id}@woofers`, start: t.start_at, end: t.end_at, updated: t.updated_at, title: blockTitle(t),
+    })),
+  ]);
+  return new Response(body, {
     headers: { "Content-Type": "text/calendar; charset=utf-8", "Cache-Control": "no-store" },
   });
 }

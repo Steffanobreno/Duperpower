@@ -56,8 +56,11 @@ export default async function EmailPreviewPage({ searchParams }: PageProps<"/set
     address: "1 Main St, San Mateo, CA", pets: [{ name: "Luna", services: [{ name: "Bath - Small (12\" or less)", price: "$99" }] }],
     total: "$99", link: vars.link, businessPhone: vars.business_phone || null,
     policy: "Free cancellation up to 48 hours before the visit. After that, 50% of the service price applies.",
+    calendar: ["booked", "confirmed", "reminder"].includes(trigger) ? { apple: "#", google: "#", ics: "" } : null,
   };
   const details = latest ? await emailDetails(latest.id, trigger) : ["rebook", "review_request"].includes(trigger) ? null : sample;
+  // The calendar buttons only go with a booked visit; show them on the preview anyway.
+  if (details && !details.calendar && sample.calendar) details.calendar = sample.calendar;
   const text = render(t?.body ?? "", vars);
   const subject = render(t?.email_subject ?? b.name, vars);
 

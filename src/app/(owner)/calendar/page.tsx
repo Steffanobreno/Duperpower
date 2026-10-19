@@ -256,7 +256,7 @@ function DayTimeline({ date, appts, blocks, hours, tz }: {
                 <span className="truncate font-bold">{timeLabel(a.start_at, tz)} – {timeLabel(a.end_at, tz)}</span>
                 {a.paid && <span className="shrink-0 font-bold text-success">Paid</span>}
               </div>
-              <div className="truncate text-sm font-bold">{a.client_name}</div>
+              <div className="truncate text-sm font-bold">{a.series_id && <span aria-label="Repeats" className="text-success">↻ </span>}{a.client_name}</div>
               <div className="truncate text-muted">{a.pets.map((p) => `${p.name} · ${p.services.join(", ")}`).join(" | ")}</div>
               <div className="truncate text-muted">{a.address_line}</div>
             </Link>
