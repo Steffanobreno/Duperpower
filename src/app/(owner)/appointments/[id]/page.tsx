@@ -9,7 +9,8 @@ import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
 import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd } from "@/lib/format";
 import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@/components/ui";
-import { Calendar, Chat, Check, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
+import { Calendar, Card as Card2, Chat, Check, ChevronDown, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
+import { NEXT_STATUS } from "@/lib/appointment-status";
 import { setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { RescheduleForm } from "../reschedule-form";
 import { PetPhoto } from "@/components/pet-photo";
@@ -62,6 +63,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const minutes = Math.round((appt.end_at.getTime() - appt.start_at.getTime()) / 60000);
   const total = appt.pets.flatMap((p) => p.services).reduce((s, x) => s + x.price_cents, 0);
   const primary = PRIMARY[appt.status];
+  const paid = checkout?.invoice.status === "closed";
   const closed = ["cancelled", "no_show", "declined"].includes(appt.status);
   // Next visit: the shortest grooming frequency among the pets, or 6 weeks.
   const frequencies = appt.pets.map((p) => p.rebook_every_days).filter((d): d is number => d != null);
@@ -79,19 +81,31 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         {sp.booked === "1" && <Notice kind="success">Appointment booked.</Notice>}
         {sp.conflict === "1" && <Notice kind="error">Another appointment already uses that time.</Notice>}
 
-        <div className="card flex items-center gap-3 px-4 py-3">
-          <span aria-hidden className={`h-3 w-3 rounded-full ${STATUS_DOT[checkout?.invoice.status === "closed" ? "paid" : appt.status] ?? "bg-muted"}`} />
-          <span className="flex-1 font-bold uppercase tracking-wide">{statusLabel(checkout?.invoice.status === "closed" ? "paid" : appt.status)}</span>
-          {appt.status === "requested" && (
-            <form action={setStatusAction.bind(null, id, "declined")}>
-              <button type="submit" className="text-sm font-semibold text-danger">Decline</button>
-            </form>
-          )}
-        </div>
+        <details className="card group">
+          <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
+            <span aria-hidden className={`h-3 w-3 rounded-full ${STATUS_DOT[appt.status] ?? "bg-muted"}`} />
+            <span className="flex-1 font-bold uppercase tracking-wide">{STATUS_NAME[appt.status] ?? statusLabel(appt.status)}</span>
+            {paid ? <span className="text-sm font-bold text-success">PAID</span>
+              : appt.status === "completed" ? <span className="text-sm font-bold text-danger">UNPAID</span> : null}
+            {(NEXT_STATUS[appt.status]?.length ?? 0) > 0 && <ChevronDown size={18} className="text-muted transition group-open:rotate-180" />}
+          </summary>
+          <div className="grid gap-2 border-t border-line p-3">
+            {(NEXT_STATUS[appt.status] ?? []).map((to) => (
+              <form key={to} action={setStatusAction.bind(null, id, to)}>
+                <button type="submit" className={`w-full rounded-full py-3 font-semibold ${["cancelled", "no_show", "declined"].includes(to) ? "bg-danger-soft text-danger" : "bg-bg"}`}>
+                  {STATUS_NAME[to] ?? statusLabel(to)}
+                </button>
+              </form>
+            ))}
+          </div>
+        </details>
 
         <nav aria-label="Actions" className="card grid grid-cols-3 gap-1 p-2">
           <a href={`sms:${c.phone}`} className={pillar}><Chat size={22} />Message</a>
           <a href={`tel:${c.phone}`} className={pillar}><Phone size={22} />Call</a>
+          {!paid && ["in_progress", "completed", "en_route", "confirmed", "unconfirmed"].includes(appt.status) && (
+            <Link href={`/appointments/${id}/checkout`} className={pillar}><Card2 size={22} />Take payment</Link>
+          )}
           {appt.address_line ? (
             <AddressLink address={[appt.address_line, appt.zip].filter(Boolean).join(" ")} lat={appt.lat} lng={appt.lng} className={`${pillar} !text-center`}>
               <Pin size={22} />Directions
@@ -250,13 +264,17 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                   {primary.label}
                 </button>
               </form>
+            ) : paid ? (
+              <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-success py-3.5 text-center text-base font-bold text-white">
+                See receipt
+              </Link>
             ) : checkout ? (
-              <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-brand py-3.5 text-center text-base font-bold text-white">
-                {checkout.invoice.status === "closed" ? "See receipt" : "Continue checkout"}
+              <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-danger py-3.5 text-center text-base font-bold text-white">
+                Charge now {money(Math.max(checkout.invoice.total_cents - checkout.invoice.paid_cents, 0))}
               </Link>
             ) : (
               <form action={startCheckoutAction.bind(null, id)}>
-                <button type="submit" className="w-full rounded-2xl bg-brand py-3.5 text-base font-bold text-white">Check out</button>
+                <button type="submit" className="w-full rounded-2xl bg-danger py-3.5 text-base font-bold text-white">Charge now {money(total)}</button>
               </form>
             )}
           </div>
@@ -266,12 +284,25 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   );
 }
 
+// Names in the status menu, as the groomer says them.
+const STATUS_NAME: Record<string, string> = {
+  requested: "Requested",
+  unconfirmed: "Unconfirmed",
+  confirmed: "Confirmed",
+  en_route: "On the way",
+  in_progress: "Checked in",
+  completed: "Finished",
+  cancelled: "Cancelled",
+  no_show: "No-show",
+  declined: "Declined",
+};
+
 const STATUS_DOT: Record<string, string> = {
   requested: "bg-warn",
   unconfirmed: "bg-danger",
   confirmed: "bg-brand",
   en_route: "bg-sky",
   in_progress: "bg-success",
-  completed: "bg-success",
+  completed: "bg-navy",
   paid: "bg-success",
 };

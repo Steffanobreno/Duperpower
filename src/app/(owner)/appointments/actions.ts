@@ -7,6 +7,7 @@ import { hm, isYmd, timeLabel, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
 import { notifyAppointment } from "@/lib/messaging";
+import { NEXT_STATUS } from "@/lib/appointment-status";
 
 export type FormState = { error?: string; warning?: string } | undefined;
 
@@ -131,16 +132,6 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
   redirect(`/appointments/${id}?booked=1`);
 }
 
-const NEXT_STATUS: Record<string, string[]> = {
-  requested: ["unconfirmed", "declined"],
-  unconfirmed: ["confirmed", "en_route", "in_progress", "cancelled", "no_show"],
-  confirmed: ["unconfirmed", "en_route", "in_progress", "cancelled", "no_show"],
-  en_route: ["in_progress", "confirmed", "cancelled", "no_show"],
-  in_progress: ["completed", "en_route"],
-  completed: ["in_progress"],
-  cancelled: ["unconfirmed"],
-  no_show: ["unconfirmed"],
-};
 
 export async function setStatusAction(appointmentId: string, status: string) {
   const staff = await requireStaff();
@@ -150,7 +141,10 @@ export async function setStatusAction(appointmentId: string, status: string) {
     await sql`
       update appointments set status = ${status},
         confirmed_at = case when ${status} = 'confirmed' then now() else confirmed_at end,
-        cancelled_at = case when ${status} in ('cancelled', 'no_show') then now() else null end
+        cancelled_at = case when ${status} in ('cancelled', 'no_show') then now() else null end,
+        checked_in_at = case when ${status} = 'in_progress' then coalesce(checked_in_at, now()) else checked_in_at end,
+        checked_out_at = case when ${status} = 'completed' then coalesce(checked_out_at, now())
+                              when ${status} = 'in_progress' then null else checked_out_at end
       where id = ${appointmentId} and business_id = ${staff.businessId}`;
   } catch (e) {
     // Re-opening a cancelled visit can collide with a booking made in its place.
@@ -243,20 +237,54 @@ async function editableInvoice(staff: StaffContext, appointmentId: string) {
   return inv && inv.status === "open" ? (inv.id as string) : null;
 }
 
+/**
+ * Adds a discount, a service charge or a tax to an open bill. The amount is in dollars, or a
+ * percent of the services when it ends with "%" (worked out now and saved as dollars).
+ */
 export async function addInvoiceItemAction(appointmentId: string, form: FormData) {
   const staff = await requireStaff();
   const invoiceId = await editableInvoice(staff, appointmentId);
   if (!invoiceId) return;
-  const kind = form.get("kind") === "discount" ? "discount" : "fee";
-  const description = String(form.get("description") ?? "").trim() || (kind === "discount" ? "Discount" : "Extra charge");
-  const cents = Math.round(Number(String(form.get("amount") ?? "").replace(/[$,]/g, "")) * 100);
-  if (!Number.isFinite(cents) || cents <= 0) return;
+  const kind = ["discount", "fee", "tax"].includes(String(form.get("kind"))) ? String(form.get("kind")) : "fee";
+  const raw = String(form.get("amount") ?? "").replace(/[$,\s]/g, "");
+  const percent = raw.endsWith("%") || form.get("unit") === "percent";
+  const value = Number(raw.replace("%", ""));
+  if (!Number.isFinite(value) || value <= 0) return;
+  let cents = Math.round(value * 100);
+  let label = "";
+  if (percent) {
+    if (value > 100) return;
+    const [{ services }] = await sql`
+      select coalesce(sum(amount_cents), 0)::int as services from invoice_items
+      where invoice_id = ${invoiceId} and kind in ('service', 'addon', 'product')`;
+    cents = Math.round((services * value) / 100);
+    label = ` (${value}%)`;
+  }
+  if (cents <= 0) return;
+  const fallback = kind === "discount" ? "Discount" : kind === "tax" ? "Tax" : "Service charge";
+  const description = (String(form.get("description") ?? "").trim() || fallback) + label;
   await sql.begin(async (tx) => {
     await tx`insert into invoice_items (invoice_id, kind, description, amount_cents)
              values (${invoiceId}, ${kind}, ${description}, ${kind === "discount" ? -cents : cents})`;
     await recalcInvoice(tx, invoiceId);
   });
   revalidatePath(`/appointments/${appointmentId}/checkout`);
+}
+
+/** Corrects the check-in and check-out times (local date and time from the form). */
+export async function saveVisitTimesAction(appointmentId: string, form: FormData) {
+  const staff = await requireStaff();
+  const parse = (k: string) => {
+    const v = String(form.get(k) ?? "");
+    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) ? zonedToUtc(v.slice(0, 10), v.slice(11, 16), staff.timezone) : null;
+  };
+  const inAt = parse("checked_in_at");
+  const outAt = parse("checked_out_at");
+  if (inAt && outAt && outAt < inAt) return;
+  await sql`update appointments set checked_in_at = ${inAt}, checked_out_at = ${outAt}
+            where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  revalidatePath(`/appointments/${appointmentId}/checkout`);
+  revalidatePath(`/appointments/${appointmentId}`);
 }
 
 export async function removeInvoiceItemAction(appointmentId: string, itemId: string) {
@@ -284,16 +312,19 @@ export async function recordPaymentAction(appointmentId: string, _: FormState, f
   const tip = toCents(form.get("tip"));
   if (!Number.isFinite(amount) || !Number.isFinite(tip) || amount < 0 || tip < 0) return { error: "Check the amounts." };
   if (amount === 0 && tip === 0) return { error: "Enter the amount received." };
-  const reference = String(form.get("reference") ?? "").trim() || null;
+  const reference = String(form.get("reference") ?? "").trim().slice(0, 120) || null;
+  const paidBy = String(form.get("paid_by") ?? "").trim().slice(0, 120) || null;
+  const note = String(form.get("note") ?? "").trim().slice(0, 500) || null;
 
   await sql.begin(async (tx) => {
-    await tx`insert into payments (invoice_id, method, amount_cents, tip_cents, reference, staff_id)
-             values (${invoiceId}, ${method}, ${amount}, ${tip}, ${reference}, ${staff.staffId})`;
+    await tx`insert into payments (invoice_id, method, amount_cents, tip_cents, reference, paid_by, note, staff_id)
+             values (${invoiceId}, ${method}, ${amount}, ${tip}, ${reference}, ${paidBy}, ${note}, ${staff.staffId})`;
     await recalcInvoice(tx, invoiceId);
     // Close the invoice once the bill is covered.
     await tx`update invoices set status = 'closed', closed_at = now()
              where id = ${invoiceId} and paid_cents >= total_cents`;
-    await tx`update appointments set status = 'completed'
+    await tx`update appointments set status = 'completed', checked_out_at = coalesce(checked_out_at, now()),
+               checked_in_at = coalesce(checked_in_at, start_at)
              where id = ${appointmentId} and business_id = ${staff.businessId} and status <> 'completed'`;
   });
   revalidatePath(`/appointments/${appointmentId}`);

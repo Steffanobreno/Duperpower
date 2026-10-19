@@ -112,11 +112,22 @@ for (const label of ["Mark as confirmed", "I'm on the way", "Check in", "Finish 
 await page.waitForURL(/\/checkout/);
 step("status moved confirmed → on the way → grooming → done");
 
-await page.getByText("Venmo", { exact: true }).click();
-await page.getByRole("button", { name: /^20%/ }).click();
+// A one-time 10% discount and a $5 service charge, then removed, so the bill stays $194.
+await page.getByText("+ Add a discount").click();
+await page.getByLabel("+ Add a discount amount").fill("10");
+await page.locator("details[open] select[name=unit]").selectOption("percent");
+await page.locator("details[open]").getByRole("button", { name: "Add" }).click();
+await page.getByText("Discount (10%)").waitFor();
+await page.getByText("−$19.40").waitFor();
+await page.getByRole("button", { name: "Remove Discount (10%)" }).click();
+await page.getByText("Discount (10%)").waitFor({ state: "detached" });
+await page.locator("summary", { hasText: "Checked in" }).waitFor();
+// Tip 20% → Venmo → charge.
+await page.getByRole("button", { name: "$38.80 (20%)" }).click();
+await page.getByRole("button", { name: "Venmo" }).click();
 await page.fill('input[name="reference"]', "@maria-lopez");
 await shot("S13-checkout");
-await page.getByRole("button", { name: /^Record/ }).click();
+await page.getByRole("button", { name: "Charge $232.80" }).click();
 await page.getByText("Paid in full").waitFor();
 await page.getByText("incl. $38.80 tip").waitFor();
 await shot("S13-checkout-paid");

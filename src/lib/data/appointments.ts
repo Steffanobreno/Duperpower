@@ -71,6 +71,8 @@ export type AppointmentDetail = {
   lat: number | null;
   lng: number | null;
   series_id: string | null;
+  checked_in_at: Date | null;
+  checked_out_at: Date | null;
   client: {
     id: string;
     first_name: string;
@@ -98,6 +100,7 @@ export type AppointmentDetail = {
 export async function getAppointment(staff: StaffContext, id: string) {
   const [row] = await sql<AppointmentDetail[]>`
     select a.id, a.start_at, a.end_at, a.status, a.notes, a.address_line, a.zip, a.lat, a.lng, a.series_id,
+      a.checked_in_at, a.checked_out_at,
       json_build_object('id', c.id, 'first_name', c.first_name, 'last_name', c.last_name, 'phone', c.phone,
                         'city', c.city, 'state', c.state, 'access_notes', c.access_notes,
                         'sms_opted_out_at', c.sms_opted_out_at) as client,
