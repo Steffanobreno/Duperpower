@@ -78,9 +78,15 @@ No iPhone, app **Atalhos** (Shortcuts):
    - **Obter Valor do Dicionário** → Chave `phone` → do **Item Repetido**;
    - **Enviar Mensagem** → Mensagem = o `body`, Destinatário = o `phone`.
      Toque na setinha da ação e **desligue "Mostrar ao Executar"** (senão ele pede para tocar em Enviar).
-6. Salve. Faça outra automação igual às **18:00** (pedidos de avaliação e o que entrou à tarde).
+6. Salve. Repita a mesma automação em outros horários do dia (por exemplo **8:00, 10:00, 12:00,
+   14:00, 16:00 e 18:00**): o texto ao cliente sai na próxima rodada depois que ele agenda.
+   Dica: em vez de montar tudo de novo, abra a automação pronta e use **Duplicar** (segure o dedo nela).
 
-Teste: na automação, toque em ▶︎. Se não houver nada para enviar, ele termina sem mandar nada.
+**Teste:** no app, Settings → Texts and email → **Send test** (vem com o seu número preenchido).
+Depois, no Atalhos, abra a automação e toque em ▶︎. Em alguns segundos chega no seu iPhone a
+mensagem "Test from Woofers Dog Spa…". A tela do app mostra também quantos textos estão
+esperando e quando o iPhone buscou pela última vez.
+Se não houver nada para enviar, o atalho termina sem mandar nada.
 Cada texto sai **uma vez só**; o app marca como "Sent from iPhone".
 
 Respostas dos clientes chegam no seu Mensagens normal. Para confirmar ou cancelar, o texto

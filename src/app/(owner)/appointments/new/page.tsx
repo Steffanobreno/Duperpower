@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
-import { fullName, getClient, listClients, listPets } from "@/lib/data/clients";
+import { clientHistory, fullName, getClient, listClients, listPets } from "@/lib/data/clients";
 import { listServices } from "@/lib/data/services";
 import { isYmd, phoneLabel, todayYmd } from "@/lib/format";
 import { ButtonLink, Empty, Input, Page, PageHeader } from "@/components/ui";
@@ -9,6 +9,8 @@ import { createAppointmentAction } from "../actions";
 import { BookingForm } from "../booking-form";
 
 export const metadata: Metadata = { title: "New appointment" };
+
+const initials = (c: { first_name: string; last_name: string | null }) => (c.first_name[0] ?? "") + (c.last_name?.[0] ?? "");
 
 export default async function NewAppointmentPage({ searchParams }: PageProps<"/appointments/new">) {
   const staff = await requireStaff();
@@ -37,14 +39,19 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
           {clients.length === 0 ? (
             <Empty title="No client found" />
           ) : (
-            <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+            <ul className="card divide-y divide-line overflow-hidden">
               {clients.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/appointments/new?client=${c.id}${keep}`} className="block px-4 py-3 hover:bg-bg">
-                    <div className="font-semibold">{fullName(c)}</div>
-                    <div className="text-sm text-muted">
-                      {[c.pet_names, phoneLabel(c.phone)].filter(Boolean).join(" · ")}
-                    </div>
+                  <Link href={`/appointments/new?client=${c.id}${keep}`} className="flex items-center gap-3 px-4 py-3 hover:bg-bg">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
+                      {initials(c)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-semibold">{fullName(c)}</span>
+                      <span className="block truncate text-sm text-muted">
+                        {[c.pet_names, phoneLabel(c.phone)].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -56,11 +63,35 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
   }
 
   // Step 2: pets, services and time.
-  const [pets, services] = await Promise.all([listPets(staff, client.id), listServices(staff)]);
+  const [pets, services, history] = await Promise.all([
+    listPets(staff, client.id),
+    listServices(staff),
+    clientHistory(staff, client.id),
+  ]);
+  const count = (status: string) => history.filter((a) => a.status === status).length;
   return (
     <>
       <PageHeader title={`Book ${fullName(client)}`} back={`/clients/${client.id}`} />
       <Page>
+        <div className="card px-4 pb-4 pt-5 text-center">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-navy text-xl font-bold text-white">
+            {initials(client)}
+          </span>
+          <p className="mt-2 text-lg font-bold">{fullName(client)}</p>
+          <dl className="mt-3 grid grid-cols-4 gap-1">
+            {([
+              ["Upcoming", history.filter((a) => a.upcoming).length],
+              ["Finished", count("completed")],
+              ["Cancelled", count("cancelled")],
+              ["No-show", count("no_show")],
+            ] as const).map(([label, n]) => (
+              <div key={label}>
+                <dd className={`text-lg font-bold ${label === "No-show" && n > 0 ? "text-danger" : ""}`}>{n}</dd>
+                <dt className="text-xs text-muted">{label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
         {pets.length === 0 ? (
           <Empty title="This client has no pets yet">
             <ButtonLink href={`/clients/${client.id}/pets/new`} className="mt-2">Add a pet</ButtonLink>

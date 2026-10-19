@@ -82,7 +82,10 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
   if (serviceIds.some((id) => !byId.has(id))) return { error: "One of the services is no longer available." };
 
   // Pets are groomed one after the other, so the visit lasts the sum of all services.
-  const totalMin = picks.flatMap((p) => p.serviceIds).reduce((sum, id) => sum + byId.get(id)!.duration_min, 0);
+  // The groomer may adjust the estimate on the form ("duration"); otherwise it's the services' total.
+  const servicesMin = picks.flatMap((p) => p.serviceIds).reduce((sum, id) => sum + byId.get(id)!.duration_min, 0);
+  const typed = Number(form.get("duration"));
+  const totalMin = Number.isInteger(typed) && typed >= 15 && typed <= 720 ? typed : servicesMin;
   const startAt = zonedToUtc(date, time, staff.timezone);
   const endAt = new Date(startAt.getTime() + Math.max(totalMin, 15) * 60_000);
 
@@ -104,12 +107,16 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
         values (${staff.businessId}, ${clientId}, ${staff.staffId}, ${startAt}, ${endAt}, 'unconfirmed', 'manual',
                 ${address}, ${client.zip}, ${client.lat}, ${client.lng}, ${notes})
         returning id`;
+      // An adjusted estimate goes on the first service, so the visit's services still add up to its length.
+      let delta = totalMin - servicesMin;
       for (const pick of picks) {
         const [ap] = await tx`insert into appointment_pets (appointment_id, pet_id) values (${appt.id}, ${pick.petId}) returning id`;
         for (const sid of pick.serviceIds) {
           const s = byId.get(sid)!;
+          const minutes = Math.max(s.duration_min + delta, 0);
+          delta -= minutes - s.duration_min;
           await tx`insert into appointment_services (appointment_pet_id, service_id, name, price_cents, duration_min)
-                   values (${ap.id}, ${s.id}, ${s.name}, ${s.price_cents}, ${s.duration_min})`;
+                   values (${ap.id}, ${s.id}, ${s.name}, ${s.price_cents}, ${minutes})`;
         }
       }
       return appt.id as string;

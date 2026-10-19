@@ -3,6 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
 import { minutesLabel, money, sizeLabel } from "@/lib/format";
+import { Dog } from "@/components/icons";
 import type { FormState } from "./actions";
 
 type Pet = { id: string; name: string; breed: string | null; size_class: string | null };
@@ -53,32 +54,39 @@ export function BookingForm({
     }
   }
 
+  const [extraMin, setExtraMin] = useState(0); // the groomer's adjustment to the estimate
+  const visitMin = Math.max(minutes + extraMin, 15);
+
   return (
     <ActionForm action={formAction} className="space-y-4">
       {state?.error && <Notice kind="error">{state.error}</Notice>}
 
+      <h2 className="section-label">Select pet</h2>
       {pets.map((pet) => {
         const on = !!chosen[pet.id];
         // Services for this pet's size first, then the rest.
         const fits = mains.filter((s) => !s.size_class || s.size_class === pet.size_class);
         const others = mains.filter((s) => s.size_class && s.size_class !== pet.size_class);
         return (
-          <fieldset key={pet.id} className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+          <fieldset key={pet.id} className={`card overflow-hidden ${on ? "border-2 border-brand" : ""}`}>
             <legend className="sr-only">{pet.name}</legend>
-            <label className="flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-4 px-4 py-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-bg"><Dog size={26} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-bold">{pet.name}</span>
+                <span className="block truncate text-sm text-muted">{[pet.breed, sizeLabel(pet.size_class)].filter(Boolean).join(" · ")}</span>
+              </span>
               <input
                 type="checkbox"
                 name="pet"
                 value={pet.id}
                 checked={on}
                 onChange={(e) => setChosen({ ...chosen, [pet.id]: e.target.checked })}
-                className="h-5 w-5"
+                className="h-6 w-6 accent-[var(--color-brand)]"
               />
-              <span className="font-semibold">{pet.name}</span>
-              <span className="text-sm text-muted">{[pet.breed, sizeLabel(pet.size_class)].filter(Boolean).join(" · ")}</span>
             </label>
             {on && (
-              <div className="mt-3 space-y-3">
+              <div className="space-y-3 border-t border-line px-4 py-4">
                 <Field label="Service">
                   <Select
                     name={`svc:${pet.id}`}
@@ -109,7 +117,7 @@ export function BookingForm({
                 </Field>
                 {addons.length > 0 && (
                   <details className="rounded-xl border border-line px-3 py-2" open={(extras[pet.id]?.length ?? 0) > 0}>
-                    <summary className="cursor-pointer text-sm font-medium">
+                    <summary className="cursor-pointer text-sm font-semibold text-brand">
                       Add-ons{extras[pet.id]?.length ? ` (${extras[pet.id].length})` : ""}
                     </summary>
                     <ul className="mt-2 space-y-1">
@@ -117,7 +125,7 @@ export function BookingForm({
                         const list = extras[pet.id] ?? [];
                         return (
                           <li key={a.id}>
-                            <label className="flex items-center gap-3 py-1 text-sm">
+                            <label className="flex items-center gap-3 py-1.5 text-sm">
                               <input
                                 type="checkbox"
                                 name={`svc:${pet.id}`}
@@ -129,7 +137,7 @@ export function BookingForm({
                                     [pet.id]: e.target.checked ? [...list, a.id] : list.filter((x) => x !== a.id),
                                   })
                                 }
-                                className="h-4 w-4"
+                                className="h-5 w-5 accent-[var(--color-brand)]"
                               />
                               <span className="flex-1">{a.name}</span>
                               <span className="text-muted">{money(a.price_cents)}</span>
@@ -146,25 +154,40 @@ export function BookingForm({
         );
       })}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Date">
-          <Input type="date" name="date" defaultValue={defaultDate} required />
-        </Field>
-        <Field label="Start time">
-          <Input type="time" name="time" defaultValue={defaultTime} step={900} required />
-        </Field>
+      <h2 className="section-label pt-2">When</h2>
+      <div className="card divide-y divide-line">
+        <div className="grid grid-cols-2 gap-3 px-4 py-4">
+          <Field label="Date">
+            <Input type="date" name="date" defaultValue={defaultDate} required />
+          </Field>
+          <Field label="Start time">
+            <Input type="time" name="time" defaultValue={defaultTime} step={900} required />
+          </Field>
+        </div>
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <span>
+            <span className="block font-medium">Time estimate</span>
+            <span className="block text-xs text-muted">From the services{extraMin ? `, ${extraMin > 0 ? "+" : ""}${extraMin} min` : ""}</span>
+          </span>
+          <span className="flex items-center gap-3">
+            <button type="button" className="stepper" aria-label="Less time" onClick={() => setExtraMin(Math.max(extraMin - 15, 15 - minutes))}>−</button>
+            <span className="w-16 text-center font-semibold tabular-nums" aria-live="polite">{minutes > 0 ? `${visitMin} min` : "—"}</span>
+            <button type="button" className="stepper" aria-label="More time" onClick={() => setExtraMin(extraMin + 15)}>+</button>
+          </span>
+          <input type="hidden" name="duration" value={minutes > 0 ? visitMin : ""} />
+        </div>
       </div>
       <Field label="Notes for this visit (optional)">
-        <Textarea name="notes" />
+        <Textarea name="notes" placeholder="Private notes for this visit" />
       </Field>
 
-      <div className="flex items-center justify-between rounded-xl bg-brand-soft px-4 py-3 text-brand-strong">
-        <span>{minutes > 0 ? minutesLabel(minutes) : "No services yet"}</span>
-        <span className="text-lg font-bold">{money(cents)}</span>
+      <div className="card flex items-center justify-between px-4 py-3">
+        <span className="text-muted">{minutes > 0 ? minutesLabel(visitMin) : "No services yet"}</span>
+        <span className="text-xl font-bold">{money(cents)}</span>
       </div>
 
       <label className="flex items-center gap-3 text-sm">
-        <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" />
+        <input type="checkbox" name="notify" defaultChecked className="h-5 w-5 accent-[var(--color-brand)]" />
         Send the confirmation to the client (text and email)
       </label>
 
@@ -172,13 +195,13 @@ export function BookingForm({
         <div className="space-y-2">
           <Notice kind="warn">{state.warning}</Notice>
           <label className="flex items-center gap-3 text-sm">
-            <input type="checkbox" name="override" className="h-4 w-4" />
+            <input type="checkbox" name="override" className="h-5 w-5" />
             Book anyway
           </label>
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" className="w-full rounded-2xl py-3.5 text-base" disabled={pending}>
         {pending ? "Booking…" : "Book appointment"}
       </Button>
     </ActionForm>

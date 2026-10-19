@@ -1,13 +1,17 @@
 import "server-only";
 import { formatInTimeZone } from "date-fns-tz";
 import { sql } from "./db";
-import { emailConfigured, sendEmail } from "./email";
-import { addDaysYmd, dayRangeUtc, hm, phoneLabel, todayYmd, ymd } from "./format";
+import { emailConfigured, sendEmail, type EmailDetails } from "./email";
+import { addDaysYmd, dayRangeUtc, hm, money, phoneLabel, todayYmd, ymd } from "./format";
 
 // Every client message goes through here. A message is a row in `messages`:
 // - email rows are sent right away from the business Gmail;
 // - SMS rows wait in the outbox until the owner's iPhone Shortcut collects and sends them.
 // `dedupe_key` is unique, so running the same step twice never sends twice.
+//
+// "Automatic messages" (auto_messages_enabled) starts off, so clients don't get doubles while
+// the old app still sends its own. Visits booked on the online booking page are the
+// exception: the old app doesn't know them, so their messages always go out.
 
 export type Trigger =
   | "booked"
@@ -61,18 +65,19 @@ type ApptContext = {
   email: string | null;
   sms_ok: boolean;
   pets: string | null;
+  source: string;
 };
 
 /** Client-level context: their last visit date from the old app, all their pets. */
 async function clientContext(clientId: string, lastVisit: Date) {
-  const [row] = await sql<Omit<ApptContext, "id" | "start_at" | "status" | "public_token">[]>`
+  const [row] = await sql<Omit<ApptContext, "id" | "start_at" | "status" | "public_token" | "source">[]>`
     select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
            c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
            (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = c.id and p.deceased_at is null) as pets
     from clients c join businesses b on b.id = c.business_id
     where c.id = ${clientId}`;
-  return row ? ({ ...row, id: null, start_at: lastVisit, status: "completed", public_token: "" } as ApptContext) : null;
+  return row ? ({ ...row, id: null, start_at: lastVisit, status: "completed", public_token: "", source: "import" } as ApptContext) : null;
 }
 
 async function autoMessagesOn(businessId: string) {
@@ -82,7 +87,7 @@ async function autoMessagesOn(businessId: string) {
 
 async function appointmentContext(appointmentId: string) {
   const [row] = await sql<ApptContext[]>`
-    select a.id, a.business_id, a.start_at, a.status, a.public_token,
+    select a.id, a.business_id, a.start_at, a.status, a.public_token, a.source,
            b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
            c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
@@ -142,7 +147,7 @@ async function enqueue(c: ApptContext, trigger: Trigger, t: Template, dedupe: st
  */
 export async function notifyAppointment(appointmentId: string, trigger: Trigger) {
   const c = await appointmentContext(appointmentId);
-  if (!c || !(await autoMessagesOn(c.business_id))) return;
+  if (!c || (c.source !== "online" && !(await autoMessagesOn(c.business_id)))) return;
   const t = await template(c.business_id, trigger);
   if (!t) return;
   // Keyed on the start time, so a rescheduled visit gets a fresh "booked" message.
@@ -162,7 +167,8 @@ export async function smsTextFor(appointmentId: string, trigger: Trigger) {
 export async function queueDueMessages(businessId: string) {
   const [biz] = await sql<{ timezone: string; on: boolean }[]>`
     select timezone, auto_messages_enabled as on from businesses where id = ${businessId}`;
-  if (!biz?.on) return;
+  if (!biz) return;
+  const on = biz.on; // when off, only visits booked online get scheduled messages
   const tz = biz.timezone;
   const today = todayYmd(tz);
   const nowLocal = hm(new Date(), tz);
@@ -174,7 +180,8 @@ export async function queueDueMessages(businessId: string) {
     const statuses = reminder.only_if_unconfirmed ? ["unconfirmed"] : ["unconfirmed", "confirmed"];
     const due = await sql<{ id: string }[]>`
       select id from appointments
-      where business_id = ${businessId} and start_at >= ${start} and start_at < ${end} and status = any(${statuses})`;
+      where business_id = ${businessId} and start_at >= ${start} and start_at < ${end} and status = any(${statuses})
+        and (${on} or source = 'online')`;
     for (const a of due) {
       const c = await appointmentContext(a.id);
       if (c) await enqueue(c, "reminder", reminder, `reminder:${c.id}:${c.start_at.getTime()}`);
@@ -183,7 +190,7 @@ export async function queueDueMessages(businessId: string) {
 
   // 2. Rebook reminders: the pet's grooming frequency has passed since the last visit
   //    and nothing is booked yet. Sent on the due date (or up to 3 days late if missed).
-  const rebook = await template(businessId, "rebook");
+  const rebook = on ? await template(businessId, "rebook") : null;
   if (rebook && nowLocal >= (rebook.send_at_time ?? "00:00")) {
     const rows = await sql<{ id: string; start_at: Date; days: number | null }[]>`
       with last as (
@@ -231,7 +238,7 @@ export async function queueDueMessages(businessId: string) {
       select a.id from appointments a
       join invoices i on i.appointment_id = a.id and i.status = 'closed'
       join businesses b on b.id = a.business_id
-      where a.business_id = ${businessId} and b.review_url is not null
+      where a.business_id = ${businessId} and b.review_url is not null and (${on} or a.source = 'online')
         and i.closed_at <= now() - make_interval(mins => ${minutes})
         and i.closed_at > now() - interval '2 days'`;
     for (const r of rows) {
@@ -241,22 +248,71 @@ export async function queueDueMessages(businessId: string) {
   }
 }
 
+const HEADINGS: Partial<Record<Trigger, string>> = {
+  request_received: "Your request",
+  booked: "You're booked!",
+  reminder: "Your next visit",
+  confirmed: "Confirmed",
+  cancelled: "Cancelled visit",
+  request_declined: "Your request",
+};
+
+/** The appointment card for an email about a visit, or null for messages without one. */
+export async function emailDetails(appointmentId: string, trigger: Trigger): Promise<EmailDetails | null> {
+  const heading = HEADINGS[trigger];
+  if (!heading) return null;
+  const [a] = await sql<{ start_at: Date; end_at: Date; status: string; address_line: string | null; public_token: string;
+                         timezone: string; phone: string | null; cancellation_hours: number; total: number;
+                         pets: { name: string; services: { name: string; price_cents: number }[] }[] }[]>`
+    select a.start_at, a.end_at, a.status, a.address_line, a.public_token, b.timezone, b.phone, b.cancellation_hours,
+      coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
+                where ap.appointment_id = a.id), 0)::int as total,
+      coalesce((select json_agg(json_build_object('name', p.name, 'services',
+                  coalesce((select json_agg(json_build_object('name', s.name, 'price_cents', s.price_cents) order by s.created_at)
+                            from appointment_services s where s.appointment_pet_id = ap.id), '[]'::json)) order by p.name)
+                from appointment_pets ap join pets p on p.id = ap.pet_id where ap.appointment_id = a.id), '[]'::json) as pets
+    from appointments a join businesses b on b.id = a.business_id where a.id = ${appointmentId}`;
+  if (!a) return null;
+  const price = (c: number) => (c === 0 ? "Included" : money(c).replace(/\.00$/, ""));
+  const live = !["cancelled", "declined", "no_show"].includes(a.status);
+  return {
+    heading,
+    badge:
+      trigger === "request_received" || a.status === "requested"
+        ? "Waiting for confirmation"
+        : ["booked", "reminder"].includes(trigger) && a.status === "unconfirmed"
+          ? "Please confirm"
+          : null,
+    when: `${formatInTimeZone(a.start_at, a.timezone, "EEEE, MMMM d")} · ${formatInTimeZone(a.start_at, a.timezone, "h:mm a")}`,
+    address: a.address_line,
+    pets: a.pets.map((p) => ({ name: p.name, services: p.services.map((s) => ({ name: s.name, price: price(s.price_cents) })) })),
+    total: a.total ? price(a.total) : "",
+    link: live ? appointmentLink(a.public_token) : null,
+    businessPhone: phoneLabel(a.phone) || null,
+    policy: live
+      ? `Free cancellation up to ${a.cancellation_hours} hours before the visit. After that, 50% of the service price applies. The final price can change for matting or behavior.`
+      : null,
+  };
+}
+
 /** Sends waiting emails. Each row is claimed first, so two runs never send the same email. */
 export async function sendQueuedEmails(businessId: string) {
   if (!emailConfigured()) return;
   await sql`update messages set status = 'skipped', error = 'too old to send'
             where business_id = ${businessId} and channel = 'email' and status = 'queued'
               and created_at < now() - interval '2 days'`;
-  const rows = await sql<{ id: string; to_email: string; subject: string; body: string; name: string }[]>`
+  const rows = await sql<{ id: string; to_email: string; subject: string; body: string; name: string;
+                          appointment_id: string | null; template_trigger: Trigger | null }[]>`
     update messages m set status = 'handed_off'
     from businesses b
     where b.id = m.business_id and m.id in (
       select id from messages where business_id = ${businessId} and channel = 'email' and status = 'queued'
       order by created_at limit 50 for update skip locked)
-    returning m.id, m.to_email, m.subject, m.body, b.name`;
+    returning m.id, m.to_email, m.subject, m.body, b.name, m.appointment_id, m.template_trigger`;
   for (const r of rows) {
     try {
-      await sendEmail({ to: r.to_email, subject: r.subject, text: r.body, fromName: r.name });
+      const details = r.appointment_id && r.template_trigger ? await emailDetails(r.appointment_id, r.template_trigger) : null;
+      await sendEmail({ to: r.to_email, subject: r.subject, text: r.body, fromName: r.name, details });
       await sql`update messages set status = 'sent', sent_at = now() where id = ${r.id}`;
     } catch (e) {
       await sql`update messages set status = 'failed', error = ${String((e as Error).message).slice(0, 500)} where id = ${r.id}`;

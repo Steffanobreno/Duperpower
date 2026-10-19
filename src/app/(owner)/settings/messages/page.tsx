@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emailConfigured } from "@/lib/email";
 import { TestEmailButton } from "./test-email";
+import { TestTextForm } from "./test-text";
+import { phoneLabel } from "@/lib/format";
 import { Button, Card, Field, Input, Notice, Page, PageHeader, Textarea } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { newDeviceKeyAction, saveMessagingSettingsAction, saveTemplateAction, setAutoMessagesAction } from "../actions";
@@ -25,7 +28,11 @@ const ORDER = Object.keys(TEMPLATE_INFO);
 
 export default async function MessagesSettingsPage() {
   const staff = await requireStaff();
-  const [b] = await sql`select email, review_url, website_url, device_key, auto_messages_enabled from businesses where id = ${staff.businessId}`;
+  const [b] = await sql`select email, phone, review_url, website_url, device_key, auto_messages_enabled from businesses where id = ${staff.businessId}`;
+  const [[waiting], [lastPickup]] = await Promise.all([
+    sql<{ n: number }[]>`select count(*)::int as n from messages where business_id = ${staff.businessId} and channel = 'sms' and status = 'queued'`,
+    sql<{ at: Date | null }[]>`select max(sent_at) as at from messages where business_id = ${staff.businessId} and channel = 'sms' and status = 'handed_off'`,
+  ]);
   const templates = await sql<
     { id: string; trigger: string; body: string; email_subject: string | null; enabled: boolean;
       offset_days: number | null; offset_minutes: number | null; send_at_time: string | null }[]
@@ -46,8 +53,9 @@ export default async function MessagesSettingsPage() {
             <Notice kind="success">On. Confirmations, reminders and rebook messages go out by themselves.</Notice>
           ) : (
             <Notice kind="warn">
-              Off. Nothing is sent to clients automatically. Turn this on the day you stop using your old app, so clients
-              don&apos;t get every message twice.
+              Off for visits you book in the app or imported: your old app still sends those, so clients don&apos;t get
+              doubles. Turn this on the day you stop using the old app. Visits booked on your online booking page always get
+              their messages (the old app doesn&apos;t know them).
             </Notice>
           )}
           <form action={setAutoMessagesAction.bind(null, !b.auto_messages_enabled)}>
@@ -64,6 +72,11 @@ export default async function MessagesSettingsPage() {
             The setup steps are in the guide.
           </p>
           <CopyField label="Link for the Shortcut" value={outbox} />
+          <p className="text-sm">
+            {waiting.n > 0 ? `${waiting.n} text${waiting.n > 1 ? "s" : ""} waiting for the iPhone.` : "No texts waiting."}
+            {lastPickup.at && ` Last pickup by the iPhone: ${lastPickup.at.toLocaleString("en-US", { timeZone: staff.timezone, dateStyle: "medium", timeStyle: "short" })}.`}
+          </p>
+          <TestTextForm defaultPhone={phoneLabel(b.phone)} />
           <form action={newDeviceKeyAction}>
             <Button type="submit" kind="ghost" className="w-full">
               Make a new link (the Shortcut and calendar links change)
@@ -95,7 +108,10 @@ export default async function MessagesSettingsPage() {
         </Card>
 
         <section className="space-y-2">
-          <h2 className="px-1 font-bold">Message texts</h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-bold">Message texts</h2>
+            <Link href="/settings/messages/preview" className="text-sm font-semibold text-brand">Preview emails</Link>
+          </div>
           <p className="px-1 text-xs text-muted">
             You can use {"{client}"}, {"{pet}"}, {"{date}"}, {"{time}"}, {"{link}"} (confirm or cancel page), {"{booking_url}"},{" "}
             {"{business}"}, {"{business_phone}"}, {"{days}"} and {"{review_url}"}.
