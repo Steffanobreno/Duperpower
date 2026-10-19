@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Google Calendar" };
 
 export default async function CalendarSettingsPage() {
   const staff = await requireStaff();
-  const [b] = await sql`select device_key, name from businesses where id = ${staff.businessId}`;
+  const [b] = await sql`select device_key, name, calendar_synced_at from businesses where id = ${staff.businessId}`;
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const feed = `${appUrl}/api/device/calendar?key=${b.device_key}`;
   const script = googleCalendarScript(`${feed}&format=json`, b.name, staff.timezone);
@@ -19,6 +19,14 @@ export default async function CalendarSettingsPage() {
       <Page>
         <Card className="space-y-3">
           <h2 className="font-bold">Automatic, every 15 minutes (recommended)</h2>
+          {b.calendar_synced_at ? (
+            <Notice kind="success">
+              Connected. Last sync:{" "}
+              {b.calendar_synced_at.toLocaleString("en-US", { timeZone: staff.timezone, dateStyle: "medium", timeStyle: "short" })}.
+            </Notice>
+          ) : (
+            <Notice kind="warn">Not connected yet. Follow the steps below once.</Notice>
+          )}
           <p className="text-sm text-muted">
             A small free script in the Woofers Google account copies every visit (and every online request) into a
             &quot;{b.name}&quot; calendar: pets, services, phone and address. New, moved and cancelled visits show up within

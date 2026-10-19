@@ -50,9 +50,14 @@ export async function listClients(staff: StaffContext, q: string) {
   const term = q.trim();
   const like = `%${term}%`;
   const digits = term.replace(/\D/g, "");
-  return sql<(ClientRow & { pet_names: string | null })[]>`
+  return sql<(ClientRow & { pet_names: string | null; pet_breeds: string | null; is_new: boolean })[]>`
     select c.*, (select string_agg(p.name, ', ' order by p.name) from pets p
-                 where p.client_id = c.id and p.deceased_at is null) as pet_names
+                 where p.client_id = c.id and p.deceased_at is null) as pet_names,
+      (select string_agg(distinct p.breed, ', ') from pets p
+       where p.client_id = c.id and p.deceased_at is null and p.breed is not null) as pet_breeds,
+      -- "New": no finished visit yet, here or in the old app.
+      (c.imported_last_service_at is null and not exists (
+         select 1 from appointments a where a.client_id = c.id and a.status = 'completed')) as is_new
     from clients c
     where c.business_id = ${staff.businessId} and c.archived_at is null
       and (${term} = ''
@@ -60,7 +65,16 @@ export async function listClients(staff: StaffContext, q: string) {
            or (${digits} <> '' and c.phone like ${"%" + digits + "%"})
            or exists (select 1 from pets p where p.client_id = c.id and p.name ilike ${like}))
     order by c.first_name, c.last_name
-    limit 200`;
+    limit 1000`;
+}
+
+/** How many clients and pets the business has (the counts on top of the client list). */
+export async function clientCounts(staff: StaffContext) {
+  const [row] = await sql<{ clients: number; pets: number }[]>`
+    select (select count(*) from clients where business_id = ${staff.businessId} and archived_at is null)::int as clients,
+           (select count(*) from pets p join clients c on c.id = p.client_id
+             where c.business_id = ${staff.businessId} and c.archived_at is null and p.deceased_at is null)::int as pets`;
+  return row;
 }
 
 export async function getClient(staff: StaffContext, id: string) {

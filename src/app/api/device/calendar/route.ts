@@ -51,6 +51,7 @@ export async function GET(request: Request) {
     [r.services, r.phone, r.notes, appUrl && `${appUrl}/appointments/${r.id}`].filter(Boolean).join("\n");
 
   if (url.searchParams.get("format") === "json") {
+    await sql`update businesses set calendar_synced_at = now() where id = ${business.id}`;
     return Response.json(
       {
         from: new Date(Date.now() - 30 * 86_400_000).toISOString(),

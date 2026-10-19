@@ -122,9 +122,21 @@ await page.getByText("incl. $38.80 tip").waitFor();
 await shot("S13-checkout-paid");
 step("paid by Venmo with a 20% tip ($38.80)");
 
-await page.goto(`${BASE}/calendar?date=${date}`);
-await page.getByText("Maria Lopez").waitFor();
-await shot("S04-calendar");
+for (const view of ["day", "week", "month", "agenda"]) {
+  await page.goto(`${BASE}/calendar?view=${view}&date=${date}`);
+  await page.getByRole("link", { name: /Maria/ }).first().waitFor();
+  await shot(`S04-calendar-${view}`);
+}
+step("calendar day, week, month and agenda views show the visit");
+
+// Reports: the Venmo payment ($194 + $38.80 tip) was received today.
+await page.goto(`${BASE}/reports?period=today`);
+await page.getByText("$232.80").first().waitFor();
+await page.getByText("incl. $38.80 tips").waitFor();
+await shot("S40-reports");
+await page.goto(`${BASE}/reports?from=${date}&to=${date}`);
+await page.getByText("Dogs groomed").waitFor();
+step("reports show today's collected money and tips");
 await page.goto(`${BASE}/settings/services`);
 await shot("S18-services");
 await page.goto(`${BASE}/settings/hours`);
