@@ -17,14 +17,16 @@ export const metadata: Metadata = { title: "Client" };
 export default async function ClientPage({ params }: PageProps<"/clients/[id]">) {
   const staff = await requireStaff();
   const { id } = await params;
-  const client = await getClient(staff, id);
-  if (!client) notFound();
-  const [pets, notes, history] = await Promise.all([
+  // Everything at once: each round trip to the database adds a little wait.
+  const [client, pets, notes, history, agreement, summary] = await Promise.all([
+    getClient(staff, id),
     listPets(staff, id),
     listClientNotes(staff, id),
     clientHistory(staff, id),
+    activeAgreement(staff.businessId),
+    clientSummary(staff, id),
   ]);
-  const [agreement, summary] = await Promise.all([activeAgreement(staff.businessId), clientSummary(staff, id)]);
+  if (!client) notFound();
   const signature = agreement ? await currentSignature(agreement, id) : null;
   const address = fullAddress(client);
   const tz = staff.timezone;

@@ -17,15 +17,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const tz = staff.timezone;
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
-  const all = await listDay(staff, date);
+  const [all, [{ requests }]] = await Promise.all([
+    listDay(staff, date),
+    sql<{ requests: number }[]>`
+      select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`,
+  ]);
   const stops = all.filter((a) => !["cancelled", "no_show"].includes(a.status));
   const dropped = all.length - stops.length;
   const route = routeUrl(stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })));
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
   const embedKey = process.env.GOOGLE_MAPS_API_KEY;
-  const [{ requests }] = await sql<{ requests: number }[]>`
-    select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`;
 
   return (
     <>

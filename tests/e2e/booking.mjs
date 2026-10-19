@@ -214,6 +214,7 @@ await page.goto(`${BASE}/clients?q=Ana`);
 await page.getByText("Ana Silva").click();
 await page.getByRole("link", { name: "Add pet" }).click();
 await page.waitForURL(/\/pets\/new/);
+await page.locator("#dog-breeds option").first().waitFor({ state: "attached" });
 const breeds = await page.locator("#dog-breeds option").count();
 if (breeds < 300) fail(`expected the breed list, got ${breeds} options`);
 step(`breed suggestions loaded (${breeds} breeds)`);
