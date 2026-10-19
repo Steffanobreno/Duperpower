@@ -44,7 +44,7 @@ uso; o primeiro acesso depois disso demora cerca de 1 segundo a mais. Uso estima
 **Antes de cancelar o MoeGo:** use os dois juntos por 2 a 4 semanas (mensagens automáticas do app
 novo desligadas). Se algo falhar, o MoeGo ainda está lá. Só cancele depois de ver o uso real.
 
-No iPhone: abra o app no Safari → Compartilhar → **Adicionar à Tela de Início**.
+No iPhone: abra o app no Safari → Compartilhar → **Adicionar à Tela de Início** (passo a passo na seção 10).
 
 ## 3. E-mail automático (Gmail da Woofers)
 
@@ -144,3 +144,21 @@ Depois confira: o tamanho de cada pet (para o preço certo) e os serviços das v
 Settings → **Service agreement**. O seu texto já está lá (sem a seção 9, e com o
 cancelamento: grátis até 48 h antes, depois 50% do serviço). Ao agendar online, o cliente digita o nome e assina com o dedo
 (a assinatura aparece na ficha do cliente). No link de confirmação ele assina digitando o nome. Vale por um ano. Mudança importante? Marque "ask every client to sign again".
+
+## 10. App na Tela de Início do iPhone + notificações
+
+**Ícone na Tela de Início**
+1. Abra o **Safari** (bússola azul) e entre em `https://woofersdogspa.netlify.app/today`. Faça login.
+2. Toque no botão **Compartilhar** (quadrado com seta para cima, embaixo no meio).
+3. Role e toque em **Adicionar à Tela de Início**. Se não aparecer: **Editar Ações…** → adicione.
+4. Nome: `Woofers` → se aparecer **Abrir como App Web**, deixe ligado → **Adicionar**.
+5. O ícone com o cachorrinho aparece na Tela de Início. Sempre abra por ele (tela cheia, sem barra do Safari).
+   Se tinha um ícone antigo (endereço celebrated-stroopwafel…), apague: segure → Remover App → Remover da Tela de Início.
+
+**Notificações** (iPhone com iOS 16.4 ou mais novo; só funciona pelo ícone da Tela de Início)
+1. Abra o Woofers pelo ícone → ☰ ou aba Settings → **Notifications**.
+2. **Turn on notifications on this device** → o iPhone pergunta → **Permitir**.
+3. **Send a test**: em segundos aparece "Notifications are on…".
+4. Se não aparecer: Ajustes do iPhone → **Notificações** → **Woofers** → Permitir Notificações ligado,
+   Tela Bloqueada / Central / Faixas marcados, Sons ligado. Confira também se um **Foco** (Não Perturbe,
+   Sono, Trabalho) não está silenciando: Ajustes → Foco → (o foco) → Apps → adicionar Woofers.
