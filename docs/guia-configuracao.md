@@ -25,13 +25,13 @@ fica no **Netlify (plano Free, permite uso comercial)**; a Hostinger continua co
    assim só publicamos quando juntamos as mudanças (umas 4 por mês), e as melhorias do dia a dia
    não gastam créditos.
 3. **Site configuration → Environment variables**: `DATABASE_URL`, `APP_URL`
-   (ex.: `https://app.woofersdogspa.com`), `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`.
+   (ex.: `https://woofersdogspa.netlify.app`), `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`.
 4. Domínio: **Domain management → Add a domain** → `app.woofersdogspa.com`. O Netlify mostra um
    registro **CNAME**; crie esse registro onde o domínio `woofersdogspa.com` é gerenciado
    (Hostinger → Domínios → DNS, ou no Lovable, se o domínio estiver lá).
 5. Uma vez só, crie as tabelas e os seus dados: `npm run db:migrate` e `npm run db:seed`
    (eu rodo daqui com a `DATABASE_URL`).
-6. Abra `https://app.woofersdogspa.com` → crie o seu login de dono.
+6. Abra `https://woofersdogspa.netlify.app` → crie o seu login de dono.
 
 Limite do plano Free: 300 créditos por mês, com corte: se acabar, o app pausa até o mês seguinte.
 Conta estimada para o seu volume (~75 visitas/mês): 4 publicações = 60, acessos e páginas ≈ 10–30,
@@ -116,12 +116,12 @@ desligue a sincronização do MoeGo com o Google quando parar de usar o MoeGo.
 Cole isto no Lovable (troque o endereço pelo do seu app):
 
 > Change every "Book Now" / "Book" button on the site so it opens
-> https://app.woofersdogspa.com/book in the same tab. Keep the current button styles.
+> https://woofersdogspa.netlify.app/book in the same tab. Keep the current button styles.
 
 Se preferir a página dentro do site:
 
 > Create a page at /book that shows only this, full width, no extra padding:
-> `<iframe src="https://app.woofersdogspa.com/book?embed=1" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`
+> `<iframe src="https://woofersdogspa.netlify.app/book?embed=1" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`
 > and make every "Book Now" button link to /book.
 
 (O `?embed=1` esconde o cabeçalho e o rodapé da página de agendamento, porque o site já tem os dele.)
