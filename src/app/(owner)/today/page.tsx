@@ -8,6 +8,8 @@ import { addDaysYmd, isYmd, longDayLabel, money, timeLabel, todayYmd, zonedToUtc
 import { ButtonLink, Empty, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
+import { RouteMap } from "@/components/route-map";
+import { locateStops } from "@/lib/geocode";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -23,11 +25,18 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`,
   ]);
   const stops = all.filter((a) => !["cancelled", "no_show"].includes(a.status));
+  await locateStops(stops);
+  const pins = stops
+    .map((s, i) => ({ s, n: i + 1 }))
+    .filter(({ s }) => s.lat != null && s.lng != null)
+    .map(({ s, n }) => ({
+      id: s.id, n, lat: s.lat!, lng: s.lng!, name: s.client_name,
+      time: `${timeLabel(s.start_at, tz)} – ${timeLabel(s.end_at, tz)}`, done: s.status === "completed",
+    }));
   const dropped = all.length - stops.length;
   const route = routeUrl(stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })));
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
-  const embedKey = process.env.GOOGLE_MAPS_API_KEY;
 
   return (
     <>
@@ -62,20 +71,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               <Stat label="Expected" value={money(expected)} />
             </div>
 
+            {pins.length > 0 && <RouteMap stops={pins} />}
+            {pins.length < stops.length && (
+              <p className="-mt-2 text-center text-xs text-muted">
+                {stops.length - pins.length} stop{stops.length - pins.length > 1 ? "s" : ""} not on the map (address not found).
+              </p>
+            )}
+
             {route && (
               <ButtonLink href={route} target="_blank" className="w-full">
                 Open the whole route in Google Maps
               </ButtonLink>
-            )}
-
-            {embedKey && route && stops.some((s) => s.address_line) && (
-              <iframe
-                title="Route map"
-                className="h-64 w-full rounded-[var(--radius-card)] border border-line"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={embedUrl(embedKey, stops)}
-              />
             )}
 
             <ol className="space-y-3">
@@ -141,21 +147,4 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-xs text-muted">{label}</div>
     </div>
   );
-}
-
-// Google Maps Embed API (free, iframe). The key must be restricted to this site's domain.
-function embedUrl(key: string, stops: { address_line: string | null; lat: number | null; lng: number | null }[]) {
-  const points = stops
-    .map((s) => (s.lat != null && s.lng != null ? `${s.lat},${s.lng}` : s.address_line))
-    .filter((p): p is string => !!p);
-  const u = new URL("https://www.google.com/maps/embed/v1/" + (points.length > 1 ? "directions" : "place"));
-  u.searchParams.set("key", key);
-  if (points.length > 1) {
-    u.searchParams.set("origin", points[0]);
-    u.searchParams.set("destination", points[points.length - 1]);
-    if (points.length > 2) u.searchParams.set("waypoints", points.slice(1, -1).slice(0, 20).join("|"));
-  } else {
-    u.searchParams.set("q", points[0]);
-  }
-  return u.toString();
 }

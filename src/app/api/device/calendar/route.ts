@@ -47,6 +47,14 @@ export async function GET(request: Request) {
       and a.status in ('requested', 'unconfirmed', 'confirmed', 'en_route', 'in_progress', 'completed')
     order by a.start_at`;
 
+  // Blocked time shows up too, so the Google calendar shows when the van is busy.
+  const blocks = await sql<{ id: string; start_at: Date; end_at: Date; reason: string | null; updated_at: Date }[]>`
+    select t.id, t.start_at, t.end_at, t.reason, t.updated_at
+    from time_off t join staff s on s.id = t.staff_id
+    where s.business_id = ${business.id} and t.end_at > now() - interval '30 days' and t.start_at < now() + interval '180 days'
+    order by t.start_at`;
+  const blockTitle = (t: (typeof blocks)[number]) => `Blocked${t.reason ? `: ${t.reason}` : ""}`;
+
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   // "Grace Bresnahan 1Dog", like the old app, so the week reads the same at a glance.
   const titleOf = (r: (typeof rows)[number]) =>
@@ -70,7 +78,15 @@ export async function GET(request: Request) {
           end: r.end_at.toISOString(),
           location: [r.address_line, r.zip].filter(Boolean).join(" "),
           description: descriptionOf(r),
-        })),
+        })).concat(blocks.map((t) => ({
+          id: `block-${t.id}`,
+          version: t.updated_at.toISOString(),
+          title: blockTitle(t),
+          start: t.start_at.toISOString(),
+          end: t.end_at.toISOString(),
+          location: "",
+          description: "Blocked time in the Woofers app.",
+        }))),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -96,6 +112,17 @@ export async function GET(request: Request) {
       `SUMMARY:${esc(title)}`,
       ...(r.address_line ? [`LOCATION:${esc([r.address_line, r.zip].filter(Boolean).join(" "))}`] : []),
       `DESCRIPTION:${esc(description)}`,
+      "END:VEVENT",
+    );
+  }
+  for (const t of blocks) {
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:block-${t.id}@woofers`,
+      `DTSTAMP:${stamp(t.updated_at)}`,
+      `DTSTART:${stamp(t.start_at)}`,
+      `DTEND:${stamp(t.end_at)}`,
+      `SUMMARY:${esc(blockTitle(t))}`,
       "END:VEVENT",
     );
   }

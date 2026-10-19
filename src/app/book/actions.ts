@@ -164,6 +164,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   const city = String(input.city ?? "").trim();
   const notes = String(input.notes ?? "").trim().slice(0, 1000) || null;
   if (!existing && !firstName) return { error: "Please enter your first name." };
+  if (!existing && !email) return { error: "Please enter your email address." };
   if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: "Please check your email address." };
   if (!useFile && (!address || !city)) return { error: "Please enter your street address and city." };
   const zip = useFile ? existing!.zip! : String(input.zip ?? "").trim();

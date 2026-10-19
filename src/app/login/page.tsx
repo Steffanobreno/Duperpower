@@ -6,6 +6,9 @@ import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Log in" };
 
+// Must check the database on every visit, never at build time.
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   if (!(await hasAnyUser())) redirect("/setup");
   if (await getStaff()) redirect("/today");

@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { listRange, type AppointmentListItem } from "@/lib/data/appointments";
+import { listTimeOff, type TimeOff } from "@/lib/data/time-off";
 import { sql } from "@/lib/db";
-import { addDaysYmd, dayLabel, hm, isYmd, money, timeLabel, todayYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
+import { addDaysYmd, dayLabel, dayRangeUtc, hm, isYmd, money, timeLabel, todayYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
+import { SlotButton } from "./slot-button";
 
 export const metadata: Metadata = { title: "Calendar" };
 
@@ -26,6 +28,20 @@ const utcNoon = (d: string) => new Date(`${d}T12:00:00Z`);
 const fmt = (d: string, o: Intl.DateTimeFormatOptions) => utcNoon(d).toLocaleDateString("en-US", { timeZone: "UTC", ...o });
 
 // Card colors by status (left bar), so the day reads at a glance.
+// Blocked time is grey with stripes, so it never reads as a visit.
+const BLOCK_STYLE = "bg-[repeating-linear-gradient(135deg,var(--color-bg)_0_6px,var(--color-line)_6px_8px)] text-muted";
+
+/** The minutes of day `d` a block covers (0–1440), or null when it doesn't touch that day. */
+function clip(t: TimeOff, d: string, tz: string) {
+  const { start, end } = dayRangeUtc(d, tz);
+  if (t.start_at >= end || t.end_at <= start) return null;
+  return {
+    s: t.start_at <= start ? 0 : toMin(hm(t.start_at, tz)),
+    e: t.end_at >= end ? 1440 : toMin(hm(t.end_at, tz)),
+  };
+}
+const blockTitle = (t: TimeOff) => t.reason || "Blocked";
+
 const STATUS_BAR: Record<string, string> = {
   requested: "border-l-warn",
   unconfirmed: "border-l-danger",
@@ -52,14 +68,16 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const [from, count] =
     view === "day" ? [date, 1] : view === "month" ? [gridStart, gridDays] : [monday(date), 7];
 
-  const [appts, hours] = await Promise.all([
+  const [appts, blocks, hours] = await Promise.all([
     listRange(staff, from, count),
+    listTimeOff(staff, from, count),
     sql<{ weekday: number; start: string; end: string }[]>`
       select weekday, to_char(start_time, 'HH24:MI') as start, to_char(end_time, 'HH24:MI') as end
       from working_hours where staff_id = ${staff.staffId}`,
   ]);
   const hoursOf = (d: string) => hours.find((h) => h.weekday === weekdayOf(d)) ?? null;
   const onDay = (d: string) => appts.filter((a) => ymd(a.start_at, tz) === d);
+  const blocksOn = (d: string) => blocks.filter((t) => clip(t, d, tz));
 
   const step = view === "day" ? 1 : view === "month" ? null : 7;
   const shift = (n: number) => {
@@ -90,12 +108,12 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
         {(view === "day" || view === "agenda") && <WeekStrip date={date} today={today} view={view} />}
 
-        {view === "day" && <DayTimeline date={date} appts={onDay(date)} hours={hoursOf(date)} tz={tz} />}
-        {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} hoursOf={hoursOf} tz={tz} />}
+        {view === "day" && <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} />}
+        {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} />}
         {view === "month" && (
-          <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} working={(d) => !!hoursOf(d)} />
+          <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d)} />
         )}
-        {view === "agenda" && <Agenda start={monday(date)} today={today} onDay={onDay} working={(d) => !!hoursOf(d)} tz={tz} />}
+        {view === "agenda" && <Agenda start={monday(date)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d)} tz={tz} />}
       </Page>
     </>
   );
@@ -144,18 +162,23 @@ function lanes(list: { id: string; s: number; e: number }[]) {
   return out;
 }
 
-function span(appts: AppointmentListItem[], tz: string, hours: { start: string; end: string } | null) {
-  const mins = appts.flatMap((a) => [toMin(hm(a.start_at, tz)), Math.min(toMin(hm(a.end_at, tz)) || 1440, 1440)]);
+function span(appts: AppointmentListItem[], tz: string, hours: { start: string; end: string } | null, extra: { s: number; e: number }[] = []) {
+  const mins = appts.flatMap((a) => [toMin(hm(a.start_at, tz)), Math.min(toMin(hm(a.end_at, tz)) || 1440, 1440)])
+    .concat(extra.filter((x) => x.e - x.s < 1440).flatMap((x) => [x.s, x.e]));
   const first = Math.min(hours ? toMin(hours.start) : 7 * 60, ...mins);
   const last = Math.max(hours ? toMin(hours.end) : 19 * 60, ...mins);
   return { first: Math.floor(first / 60) * 60, last: Math.ceil(last / 60) * 60 };
 }
 
-function DayTimeline({ date, appts, hours, tz }: {
-  date: string; appts: AppointmentListItem[]; hours: { start: string; end: string } | null; tz: string;
+function DayTimeline({ date, appts, blocks, hours, tz }: {
+  date: string; appts: AppointmentListItem[]; blocks: TimeOff[]; hours: { start: string; end: string } | null; tz: string;
 }) {
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
-  const { first, last } = span(visible, tz, hours);
+  // All-day blocks sit above the hours, like all-day events on a phone calendar; the rest share the lanes.
+  const clipped = blocks.map((t) => ({ t, ...clip(t, date, tz)! }));
+  const allDay = clipped.filter((b) => b.s === 0 && b.e === 1440).map((b) => b.t);
+  const cut = clipped.filter((b) => !(b.s === 0 && b.e === 1440));
+  const { first, last } = span(visible, tz, hours, cut);
   const PX = 72; // pixels per hour
   const top = (min: number) => ((min - first) / 60) * PX;
   const placed = visible.map((a) => {
@@ -163,27 +186,60 @@ function DayTimeline({ date, appts, hours, tz }: {
     const e = ymd(a.end_at, tz) === date ? toMin(hm(a.end_at, tz)) : 1440;
     return { a, s, e: Math.max(e, s + 30) };
   });
-  const lane = lanes(placed.map((p) => ({ id: p.a.id, s: p.s, e: p.e })));
+  // Kept inside the hours shown.
+  const shown = cut.map((b) => ({ ...b, s: Math.max(b.s, first), e: Math.max(Math.min(b.e, last), Math.max(b.s, first) + 30) }));
+  const lane = lanes([...placed.map((p) => ({ id: p.a.id, s: p.s, e: p.e })), ...shown.map((b) => ({ id: b.t.id, s: b.s, e: b.e }))]);
   const total = visible.reduce((s, a) => s + a.total_cents, 0);
   const dogs = visible.reduce((s, a) => s + a.pets.length, 0);
 
   return (
     <section className="space-y-2" aria-label="Day schedule">
-      <p className="px-1 text-sm font-semibold">
-        {hours ? `${visible.length} appts · ${dogs} dog${dogs === 1 ? "" : "s"} · ${money(total)}` : "Day off"}
-        {appts.length > visible.length && <span className="font-normal text-muted"> · {appts.length - visible.length} cancelled</span>}
-      </p>
+      <div className="flex items-center justify-between gap-2 px-1">
+        <p className="text-sm font-semibold">
+          {hours ? `${visible.length} appts · ${dogs} dog${dogs === 1 ? "" : "s"} · ${money(total)}` : "Day off"}
+          {appts.length > visible.length && <span className="font-normal text-muted"> · {appts.length - visible.length} cancelled</span>}
+        </p>
+        {visible.length > 0 && (
+          <Link href={`/today?date=${date}`} className="shrink-0 rounded-full bg-surface px-3 py-1 text-sm font-semibold text-brand shadow-[var(--shadow-card)]">
+            Map
+          </Link>
+        )}
+      </div>
+      {allDay.map((t) => (
+        <Link key={t.id} href={`/calendar/block/${t.id}`}
+          className={`flex justify-between gap-3 rounded-[var(--radius-card)] border border-line px-4 py-2.5 text-sm ${BLOCK_STYLE}`}>
+          <span className="truncate font-semibold text-ink">{blockTitle(t)}</span>
+          <span className="shrink-0">All day</span>
+        </Link>
+      ))}
       <div className="card relative overflow-hidden" style={{ height: ((last - first) / 60) * PX }}>
         {Array.from({ length: (last - first) / 60 }, (_, i) => first + i * 60).map((min) => {
           const off = !hours || min < toMin(hours.start) || min >= toMin(hours.end);
           const time = `${String(min / 60).padStart(2, "0")}:00`;
+          const at = zonedToUtc(date, time, tz);
           return (
-            <Link key={min} href={`/appointments/new?date=${date}&time=${time}`}
-              className={`absolute inset-x-0 flex border-t border-line ${off ? "bg-bg/70" : "hover:bg-brand-soft/40"}`}
-              style={{ top: top(min), height: PX }} aria-label={`Book at ${timeLabel(zonedToUtc(date, time, tz), tz)}`}>
+            <SlotButton key={min} date={date} time={time} label={`${dayLabel(at, tz)} · ${timeLabel(at, tz)}`}
+              className={`absolute inset-x-0 flex border-t border-line text-left ${off ? "bg-bg/70" : "hover:bg-brand-soft/40"}`}
+              style={{ top: top(min), height: PX }}>
               <span className="w-14 shrink-0 pl-2 pt-1 text-xs font-semibold text-muted">
-                {timeLabel(zonedToUtc(date, time, tz), tz).replace(":00", "")}
+                {timeLabel(at, tz).replace(":00", "")}
               </span>
+            </SlotButton>
+          );
+        })}
+        {shown.map(({ t, s, e }) => {
+          const l = lane.get(t.id)!;
+          return (
+            <Link key={t.id} href={`/calendar/block/${t.id}`}
+              className={`absolute overflow-hidden rounded-xl border border-line p-2 text-xs ${BLOCK_STYLE}`}
+              style={{
+                top: top(s) + 1, height: Math.max(top(e) - top(s) - 2, 28),
+                left: `calc(3.5rem + (100% - 4rem) * ${l.lane / l.of})`, width: `calc((100% - 4rem) / ${l.of} - 4px)`,
+              }}>
+              <div className="truncate font-bold text-ink">{blockTitle(t)}</div>
+              <div className="truncate">
+                {timeLabel(t.start_at, tz)} – {timeLabel(t.end_at, tz)}
+              </div>
             </Link>
           );
         })}
@@ -211,8 +267,9 @@ function DayTimeline({ date, appts, hours, tz }: {
   );
 }
 
-function WeekGrid({ start, today, appts, hoursOf, tz }: {
-  start: string; today: string; appts: AppointmentListItem[]; hoursOf: (d: string) => { start: string; end: string } | null; tz: string;
+function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz }: {
+  start: string; today: string; appts: AppointmentListItem[]; blocksOn: (d: string) => TimeOff[];
+  hoursOf: (d: string) => { start: string; end: string } | null; tz: string;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i));
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
@@ -259,6 +316,18 @@ function WeekGrid({ start, today, appts, hoursOf, tz }: {
               {Array.from({ length: (last - first) / 60 }, (_, i) => (
                 <span key={i} aria-hidden className="absolute inset-x-0 border-t border-line/70" style={{ top: i * PX }} />
               ))}
+              {blocksOn(d).map((t) => {
+                const c = clip(t, d, tz)!;
+                const s = Math.max(c.s, first), e = Math.min(c.e, last);
+                if (e <= s) return null;
+                return (
+                  <Link key={t.id} href={`/calendar/block/${t.id}`} title={blockTitle(t)}
+                    className={`absolute inset-x-0 overflow-hidden px-0.5 text-[10px] leading-tight ${BLOCK_STYLE}`}
+                    style={{ top: top(s), height: top(e) - top(s) }}>
+                    {blockTitle(t)}
+                  </Link>
+                );
+              })}
               {list.map(({ a, s, e }) => {
                 const l = lane.get(a.id)!;
                 return (
@@ -278,8 +347,9 @@ function WeekGrid({ start, today, appts, hoursOf, tz }: {
   );
 }
 
-function MonthGrid({ start, count, month, today, onDay, working }: {
-  start: string; count: number; month: string; today: string; onDay: (d: string) => AppointmentListItem[]; working: (d: string) => boolean;
+function MonthGrid({ start, count, month, today, onDay, blocksOn, working }: {
+  start: string; count: number; month: string; today: string; onDay: (d: string) => AppointmentListItem[];
+  blocksOn: (d: string) => TimeOff[]; working: (d: string) => boolean;
 }) {
   const days = Array.from({ length: count }, (_, i) => addDaysYmd(start, i));
   return (
@@ -303,6 +373,9 @@ function MonthGrid({ start, count, month, today, onDay, working }: {
                   <span key={a.id} className="block truncate rounded bg-navy px-1 text-[10px] leading-4 text-white">{a.client_name}</span>
                 ))}
                 {list.length > 3 && <span className="block text-[10px] font-semibold text-muted">+{list.length - 3} more</span>}
+                {blocksOn(d).length > 0 && (
+                  <span className={`block truncate rounded px-1 text-[10px] leading-4 ${BLOCK_STYLE}`}>{blockTitle(blocksOn(d)[0])}</span>
+                )}
               </span>
               {dogs > 0 && <span className="mt-0.5 block text-[10px] text-muted">🐶 {dogs}</span>}
             </Link>
@@ -313,8 +386,9 @@ function MonthGrid({ start, count, month, today, onDay, working }: {
   );
 }
 
-function Agenda({ start, today, onDay, working, tz }: {
-  start: string; today: string; onDay: (d: string) => AppointmentListItem[]; working: (d: string) => boolean; tz: string;
+function Agenda({ start, today, onDay, blocksOn, working, tz }: {
+  start: string; today: string; onDay: (d: string) => AppointmentListItem[]; blocksOn: (d: string) => TimeOff[];
+  working: (d: string) => boolean; tz: string;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i));
   return (
@@ -336,6 +410,16 @@ function Agenda({ start, today, onDay, working, tz }: {
                   : ""}
               </span>
             </div>
+            {blocksOn(d).map((t) => {
+              const c = clip(t, d, tz)!;
+              return (
+                <Link key={t.id} href={`/calendar/block/${t.id}`}
+                  className={`flex justify-between gap-3 rounded-[var(--radius-card)] border border-line px-4 py-2.5 text-sm ${BLOCK_STYLE}`}>
+                  <span className="truncate font-semibold text-ink">{blockTitle(t)}</span>
+                  <span className="shrink-0">{c.s === 0 && c.e === 1440 ? "All day" : `${timeLabel(t.start_at, tz)} – ${timeLabel(t.end_at, tz)}`}</span>
+                </Link>
+              );
+            })}
             {list.length === 0 ? (
               <Link href={`/appointments/new?date=${d}`}
                 className="block rounded-[var(--radius-card)] border border-dashed border-line px-4 py-3 text-sm text-muted hover:bg-surface">

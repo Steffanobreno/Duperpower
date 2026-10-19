@@ -1,10 +1,11 @@
 "use client";
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
 // Tapping a phone number or an address opens a small menu, like on the iPhone:
 // phone → Call, Text, Copy; address → Apple Maps, Google Maps, Copy.
 
-function Sheet({ title, options, onClose }: { title: string; options: { label: string; href?: string; onClick?: () => void }[]; onClose: () => void }) {
+export function Sheet({ title, options, onClose }: { title: string; options: { label: string; href?: string; onClick?: () => void }[]; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy/40 animate-fade" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
@@ -12,7 +13,12 @@ function Sheet({ title, options, onClose }: { title: string; options: { label: s
         <div className="overflow-hidden rounded-2xl bg-surface">
           <p className="border-b border-line px-4 py-3 text-center text-sm text-muted">{title}</p>
           {options.map((o) =>
-            o.href ? (
+            o.href?.startsWith("/") ? (
+              <Link key={o.label} href={o.href} onClick={onClose}
+                className="block border-b border-line px-4 py-3.5 text-center text-lg font-semibold text-brand last:border-0">
+                {o.label}
+              </Link>
+            ) : o.href ? (
               <a key={o.label} href={o.href} target={o.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" onClick={onClose}
                 className="block border-b border-line px-4 py-3.5 text-center text-lg font-semibold text-brand last:border-0">
                 {o.label}

@@ -269,6 +269,7 @@ export function BookingWizard({
             </div>
             <label className="block">
               <span className={labelClass}>Email address</span>
+              <span className="-mt-1 mb-2 block text-sm text-muted">We send your confirmation and reminders here.</span>
               <input type="email" aria-label="Email" placeholder="you@example.com" autoComplete="email" className={inputClass}
                 value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} />
             </label>
@@ -276,9 +277,9 @@ export function BookingWizard({
           {errorBox}
           <BigButton
             className="mt-8"
-            disabled={!contact.firstName.trim() || !contact.lastName.trim()}
+            disabled={!contact.firstName.trim() || !contact.lastName.trim() || !contact.email.trim()}
             onClick={() => {
-              if (contact.email && !/^\S+@\S+\.\S+$/.test(contact.email)) return setError("Please check your email address.");
+              if (!/^\S+@\S+\.\S+$/.test(contact.email.trim())) return setError("Please check your email address.");
               go({ name: "address" });
             }}
           >

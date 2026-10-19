@@ -44,7 +44,11 @@ async function overlapWarning(staff: StaffContext, start: Date, end: Date, exclu
       and a.start_at < ${end} and a.end_at > ${start}
       and (${excludeId ?? null}::uuid is null or a.id <> ${excludeId ?? null})
     order by a.start_at limit 1`;
-  return other ? `This overlaps ${other.first_name}'s visit at ${timeLabel(other.start_at, staff.timezone)}.` : null;
+  if (other) return `This overlaps ${other.first_name}'s visit at ${timeLabel(other.start_at, staff.timezone)}.`;
+  const [block] = await sql`
+    select reason, start_at from time_off where staff_id = ${staff.staffId} and start_at < ${end} and end_at > ${start}
+    order by start_at limit 1`;
+  return block ? `This overlaps blocked time${block.reason ? ` (${block.reason})` : ""} at ${timeLabel(block.start_at, staff.timezone)}.` : null;
 }
 
 async function distanceWarning(staff: StaffContext, date: string, zip: string | null, excludeId?: string) {
