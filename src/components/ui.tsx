@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { MenuButton } from "./side-menu";
 
 // Small set of shared primitives. Pages compose these instead of styling from scratch.
 
@@ -33,10 +34,12 @@ export function PageHeader({ title, back, action }: { title: string; back?: stri
   return (
     <header className="sticky top-0 z-10 bg-navy text-white shadow-sm">
       <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
-        {back && (
+        {back ? (
           <Link href={back} className="-ml-2 rounded-lg p-2 text-white hover:bg-white/10" aria-label="Back">
             <span aria-hidden>←</span>
           </Link>
+        ) : (
+          <MenuButton />
         )}
         <h1 className="min-w-0 flex-1 truncate text-lg font-bold">{title}</h1>
         {action}
