@@ -14,7 +14,9 @@ function getTransport() {
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+    // Google shows app passwords as "abcd efgh ijkl mnop"; pasted with the spaces (or a stray
+    // line break) they are refused, so keep only the letters.
+    auth: { user: process.env.GMAIL_USER?.trim(), pass: process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "") },
   });
   return transport;
 }
@@ -86,5 +88,5 @@ export async function sendEmail({
 }: { to: string; subject: string; text: string; fromName: string; details?: EmailDetails | null }) {
   const t = getTransport();
   if (!t) throw new Error("Email is not set up (GMAIL_USER / GMAIL_APP_PASSWORD).");
-  await t.sendMail({ from: { name: fromName, address: process.env.GMAIL_USER! }, to, subject, text, html: emailHtml(text, fromName, details) });
+  await t.sendMail({ from: { name: fromName, address: process.env.GMAIL_USER!.trim() }, to, subject, text, html: emailHtml(text, fromName, details) });
 }
