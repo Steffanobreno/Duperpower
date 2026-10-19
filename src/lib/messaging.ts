@@ -2,6 +2,7 @@ import "server-only";
 import { formatInTimeZone } from "date-fns-tz";
 import { sql } from "./db";
 import { emailConfigured, sendEmail, type EmailDetails } from "./email";
+import { sendPush } from "./push";
 import { addDaysYmd, dayRangeUtc, hm, money, phoneLabel, todayYmd, ymd } from "./format";
 
 // Every client message goes through here. A message is a row in `messages`:
@@ -344,9 +345,15 @@ export async function runMessagingJobs() {
   }
 }
 
-/** Emails the owner (business email in Settings), e.g. a new online request or a cancellation. */
-export async function notifyOwner(businessId: string, subject: string, text: string) {
+/**
+ * Tells the owner something happened (a new online request, a cancellation, a reschedule
+ * request): an email to the business email in Settings and a notification on their phone.
+ * `url` is the screen the notification opens.
+ */
+export async function notifyOwner(businessId: string, subject: string, text: string, url?: string) {
   const [b] = await sql<{ email: string | null; name: string }[]>`select email, name from businesses where id = ${businessId}`;
-  if (!b?.email || !emailConfigured()) return;
-  await sendEmail({ to: b.email, subject, text, fromName: b.name }).catch(() => {});
+  await Promise.all([
+    b?.email && emailConfigured() ? sendEmail({ to: b.email, subject, text, fromName: b.name }).catch(() => {}) : null,
+    sendPush(businessId, { title: subject, body: text.split("\n")[0], url }).catch(() => 0),
+  ]);
 }

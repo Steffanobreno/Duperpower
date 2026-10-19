@@ -145,6 +145,15 @@ await client.getByText("Confirmed. See you then!").waitFor();
 await client.screenshot({ path: `${SHOTS}/A-client-confirmed.png`, fullPage: true });
 step("client confirmed from the link in the text");
 
+// The client asks for a different time; the owner sees it in Requests.
+await client.getByText("I need a different time").click();
+await client.locator('textarea[name="note"]').fill("Any morning next week");
+await client.getByRole("button", { name: "Ask for a new time" }).click();
+await client.getByText("We got your request for a different time").waitFor();
+await page.goto(`${BASE}/requests`);
+await page.getByText('"Any morning next week"').waitFor();
+step("client asked for a different time and it shows in Requests");
+
 const ics = await (await fetch(calendarUrl)).text();
 if (!ics.includes("BEGIN:VEVENT") || !ics.includes("Luna")) fail("calendar feed is missing the visit");
 const bad = await fetch(calendarUrl.replace(/key=\w+/, "key=" + "0".repeat(48)));

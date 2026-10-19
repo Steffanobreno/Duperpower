@@ -273,6 +273,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
     b.id,
     `New booking request: ${input.pets.map((p) => p.name).join(" & ")}, ${when}`,
     `${who}, ${input.phone}, asked for ${when}.\nAccept or decline: ${appUrl}/requests`,
+    "/requests",
   );
   return { ok: true, when: `${dayLabel(start, b.timezone)} at ${timeLabel(start, b.timezone)}` };
 }

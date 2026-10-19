@@ -8,7 +8,7 @@ import { AgreementText } from "@/components/agreement-text";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { Calendar, Dog } from "@/components/icons";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
-import { cancelByTokenAction, confirmByTokenAction } from "./actions";
+import { cancelByTokenAction, confirmByTokenAction, requestRescheduleByTokenAction } from "./actions";
 
 export const metadata: Metadata = { title: "Your appointment", robots: { index: false } };
 
@@ -31,9 +31,10 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
       timezone: string;
       website_url: string | null;
       cancellation_hours: number;
+      reschedule_requested_at: Date | null;
     }[]
   >`
-    select a.business_id, a.client_id, a.start_at, a.status, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
+    select a.business_id, a.client_id, a.start_at, a.status, a.reschedule_requested_at, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
       (select string_agg(p.name, ' & ' order by p.name) from appointment_pets ap join pets p on p.id = ap.pet_id
         where ap.appointment_id = a.id) as pets,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
@@ -109,6 +110,21 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
             </Button>
           </form>
         )}
+        {open && a.upcoming && (a.reschedule_requested_at ? (
+          <Notice kind="info">We got your request for a different time and will text you a new one.</Notice>
+        ) : (
+          <details className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+            <summary className="cursor-pointer text-center font-semibold text-brand">I need a different time</summary>
+            <form action={requestRescheduleByTokenAction.bind(null, token)} className="mt-3 space-y-2">
+              <label className="block text-sm">
+                <span className="font-medium">Which days and times work for you?</span>
+                <textarea name="note" rows={3} placeholder="e.g. Any morning next week, or Saturday after 1pm"
+                  className="mt-1 block w-full rounded-xl border border-line px-3 py-2" />
+              </label>
+              <Button type="submit" className="w-full">Ask for a new time</Button>
+            </form>
+          </details>
+        ))}
         {open && a.upcoming && (
           <details className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
             <summary className="cursor-pointer text-center font-semibold text-danger">I need to cancel</summary>

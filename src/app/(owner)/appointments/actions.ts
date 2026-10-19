@@ -183,7 +183,8 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
     if (warning) return { warning };
   }
   try {
-    await sql`update appointments set start_at = ${startAt}, end_at = ${endAt}, status = 'unconfirmed', confirmed_at = null
+    await sql`update appointments set start_at = ${startAt}, end_at = ${endAt}, status = 'unconfirmed', confirmed_at = null,
+                reschedule_requested_at = null, reschedule_note = null
               where id = ${appointmentId} and business_id = ${staff.businessId}`;
   } catch (e) {
     if (isExclusionViolation(e)) return { error: "You already have an appointment at that time. Pick another time." };

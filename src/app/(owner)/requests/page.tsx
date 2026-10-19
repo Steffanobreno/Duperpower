@@ -24,11 +24,30 @@ export default async function RequestsPage() {
     from appointments a join clients c on c.id = a.client_id
     where a.business_id = ${staff.businessId} and a.status = 'requested'
     order by a.start_at`;
+  const reschedules = await sql<{ id: string; start_at: Date; client: string; phone: string; reschedule_note: string | null }[]>`
+    select a.id, a.start_at, a.reschedule_note, trim(c.first_name || ' ' || c.last_name) as client, c.phone
+    from appointments a join clients c on c.id = a.client_id
+    where a.business_id = ${staff.businessId} and a.reschedule_requested_at is not null
+      and a.status in ('requested', 'unconfirmed', 'confirmed') and a.start_at > now()
+    order by a.reschedule_requested_at`;
   const tz = staff.timezone;
   return (
     <>
       <PageHeader title="Booking requests" back="/today" />
       <Page>
+        {reschedules.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="section-label">Asked for a different time</h2>
+            {reschedules.map((r) => (
+              <Link key={r.id} href={`/appointments/${r.id}#reschedule`} className="card block space-y-1 border-warn px-4 py-3">
+                <p className="font-semibold">{r.client} · <span className="font-normal">{dayLabel(r.start_at, tz)} {timeLabel(r.start_at, tz)}</span></p>
+                {r.reschedule_note && <p className="text-sm">&quot;{r.reschedule_note}&quot;</p>}
+                <p className="text-sm text-muted">{phoneLabel(r.phone)} · tap to move it</p>
+              </Link>
+            ))}
+          </section>
+        )}
+        {rows.length > 0 && reschedules.length > 0 && <h2 className="section-label">New booking requests</h2>}
         {rows.length === 0 ? (
           <Empty title="No requests waiting">New requests from your booking page show up here.</Empty>
         ) : (

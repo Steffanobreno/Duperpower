@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
   { href: "/settings/business", title: "Business", text: "Name, phone and booking link" },
   { href: "/settings/booking", title: "Online booking", text: "Booking page link, distance and notice rules" },
+  { href: "/settings/notifications", title: "Notifications", text: "Pop-ups on your phone for new bookings, cancellations and reschedules" },
   { href: "/settings/messages", title: "Texts and email", text: "iPhone texts, email and the message texts" },
   { href: "/settings/calendar", title: "Google Calendar", text: "See every visit in your Google Calendar" },
   { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },

@@ -19,8 +19,17 @@ export async function confirmByTokenAction(token: string, form: FormData) {
     if (form.get("agree") !== "on" || name.length < 3) return revalidatePath(`/a/${token}`);
     await recordSignature(sql, agreement, appt.client_id, name);
   }
-  await sql`update appointments set status = 'confirmed', confirmed_at = now() where id = ${appt.id} and status = 'unconfirmed'`;
+  const [done] = await sql`
+    update appointments a set status = 'confirmed', confirmed_at = now()
+    from clients c, businesses b
+    where a.id = ${appt.id} and a.status = 'unconfirmed' and c.id = a.client_id and b.id = a.business_id
+    returning a.start_at, b.timezone, trim(c.first_name || ' ' || c.last_name) as client`;
   await notifyAppointment(appt.id, "confirmed");
+  if (done) {
+    await notifyOwner(appt.business_id, `Confirmed: ${done.client}, ${dayLabel(done.start_at, done.timezone)}`,
+      `${done.client} confirmed ${dayLabel(done.start_at, done.timezone)} ${timeLabel(done.start_at, done.timezone)}.`,
+      `/appointments/${appt.id}`);
+  }
   revalidatePath(`/a/${token}`);
 }
 
@@ -48,6 +57,29 @@ export async function cancelByTokenAction(token: string) {
       a.business_id,
       `Cancelled${a.late ? " (late)" : ""}: ${a.client}, ${dayLabel(a.start_at, a.timezone)}`,
       `${a.client} cancelled ${when} from their link.${fee}\n${appUrl}/appointments/${a.id}`,
+      `/appointments/${a.id}`,
+    );
+  }
+  revalidatePath(`/a/${token}`);
+}
+
+/** The client asks for a different time; the owner gets an email and a notification and moves it. */
+export async function requestRescheduleByTokenAction(token: string, form: FormData) {
+  const note = String(form.get("note") ?? "").trim().slice(0, 500);
+  const [a] = await sql`
+    update appointments a set reschedule_requested_at = now(), reschedule_note = ${note || null}
+    from businesses b, clients c
+    where b.id = a.business_id and c.id = a.client_id and a.public_token = ${token}
+      and a.status in ('requested', 'unconfirmed', 'confirmed') and a.start_at > now()
+    returning a.id, a.business_id, a.start_at, b.timezone, trim(c.first_name || ' ' || c.last_name) as client, c.phone`;
+  if (a) {
+    const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
+    const when = `${dayLabel(a.start_at, a.timezone)} ${timeLabel(a.start_at, a.timezone)}`;
+    await notifyOwner(
+      a.business_id,
+      `Reschedule request: ${a.client}`,
+      `${a.client} wants to change ${when}.${note ? ` "${note}"` : ""}\nPhone: ${a.phone}\n${appUrl}/appointments/${a.id}`,
+      `/appointments/${a.id}`,
     );
   }
   revalidatePath(`/a/${token}`);

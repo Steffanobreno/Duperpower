@@ -80,6 +80,13 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
       <Page>
         {sp.booked === "1" && <Notice kind="success">Appointment booked.</Notice>}
         {sp.conflict === "1" && <Notice kind="error">Another appointment already uses that time.</Notice>}
+        {appt.reschedule_requested_at && (
+          <div className="rounded-2xl border border-warn bg-warn-soft px-4 py-3 text-warn">
+            <p className="font-bold">The client asked for a different time</p>
+            {appt.reschedule_note && <p className="mt-1 text-ink">&quot;{appt.reschedule_note}&quot;</p>}
+            <p className="mt-1 text-sm">Move it below in Reschedule (this note clears when you do), or text them.</p>
+          </div>
+        )}
 
         <details className="card group">
           <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">

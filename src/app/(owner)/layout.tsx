@@ -6,7 +6,9 @@ import { SideMenu } from "@/components/side-menu";
 export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   const staff = await requireStaff();
   const [{ requests }] = await sql<{ requests: number }[]>`
-    select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`;
+    select count(*)::int as requests from appointments
+    where business_id = ${staff.businessId}
+      and (status = 'requested' or (reschedule_requested_at is not null and status in ('unconfirmed', 'confirmed') and start_at > now()))`;
   return (
     <>
       {children}
