@@ -12,7 +12,8 @@ import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@
 import { Calendar, Card as Card2, Chat, Check, ChevronDown, ChevronRight, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { NEXT_STATUS } from "@/lib/appointment-status";
 import { ruleLabel, type RepeatRule } from "@/lib/repeat";
-import { setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
+import { assignGroomerAction, setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
+import { listGroomers } from "@/lib/data/staff";
 import { RescheduleForm } from "../reschedule-form";
 import { PetPhoto } from "@/components/pet-photo";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
@@ -52,7 +53,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const appt = await getAppointment(staff, id);
   if (!appt) notFound();
-  const [checkout, onMyWay, messages, [series]] = await Promise.all([
+  const [checkout, onMyWay, messages, [series], groomers] = await Promise.all([
     getInvoiceForAppointment(staff, id),
     smsTextFor(id, "on_my_way"),
     sql<{ id: string; channel: string; status: string; template_trigger: string | null; created_at: Date }[]>`
@@ -64,7 +65,10 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         (select count(*)::int from appointments x where x.series_id = s.id and x.start_at > ${appt.start_at}
            and x.status in ('unconfirmed', 'confirmed')) as upcoming
       from appointment_series s where s.id = ${appt.series_id ?? null}::uuid`,
+    listGroomers(staff),
   ]);
+  const groomer = groomers.find((g) => g.id === appt.staff_id);
+  const otherGroomers = groomers.filter((g) => g.active && g.id !== appt.staff_id);
   const tz = staff.timezone;
   const c = appt.client;
   const minutes = Math.round((appt.end_at.getTime() - appt.start_at.getTime()) / 60000);
@@ -161,6 +165,23 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             </div>
             {canChange && <a href="#reschedule" aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></a>}
           </div>
+          {(groomers.length > 1 || appt.staff_id !== staff.staffId) && groomer && (
+            <div className="card space-y-2 px-4 py-3">
+              {sp.groomerBusy && <Notice kind="error">That groomer already has a visit at this time.</Notice>}
+              <div className="flex items-center gap-3">
+                <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ background: groomer.color }} />
+                <span className="flex-1"><span className="text-sm text-muted">Groomer</span> <span className="font-semibold">{groomer.name}</span></span>
+              </div>
+              {otherGroomers.length > 0 && !["completed", "cancelled", "no_show", "declined"].includes(appt.status) && (
+                <form action={assignGroomerAction.bind(null, id)} className="flex gap-2">
+                  <select name="staff_id" aria-label="Give to" className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm">
+                    {otherGroomers.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                  <Button type="submit" kind="secondary">Give to</Button>
+                </form>
+              )}
+            </div>
+          )}
           {appt.status !== "requested" && !["cancelled", "no_show", "declined"].includes(appt.status) && (
             <Link href={`/appointments/${id}/repeat`} className="card flex items-center gap-3 px-4 py-3.5">
               <span aria-hidden className="text-xl text-success">↻</span>

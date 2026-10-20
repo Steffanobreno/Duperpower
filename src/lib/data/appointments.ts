@@ -23,10 +23,14 @@ export type AppointmentListItem = {
   total_cents: number;
   paid: boolean;
   series_id: string | null;
+  staff_id: string;
+  staff_name: string;
+  staff_color: string;
 };
 
 const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<AppointmentListItem[]>`
   select a.id, a.start_at, a.end_at, a.status, a.notes, a.address_line, a.zip, a.lat, a.lng, a.series_id,
+         a.staff_id, st.name as staff_name, st.color as staff_color,
          c.id as client_id, trim(c.first_name || ' ' || c.last_name) as client_name,
          c.phone as client_phone, c.city, c.access_notes,
          coalesce((
@@ -43,6 +47,7 @@ const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<Appointm
          exists (select 1 from invoices i where i.appointment_id = a.id and i.status = 'closed') as paid
   from appointments a
   join clients c on c.id = a.client_id
+  join staff st on st.id = a.staff_id
   where a.business_id = ${staff.businessId}
     and a.start_at >= ${start} and a.start_at < ${end}
     and a.status not in ('declined', 'waitlist')
@@ -72,6 +77,7 @@ export type AppointmentDetail = {
   lat: number | null;
   lng: number | null;
   series_id: string | null;
+  staff_id: string;
   checked_in_at: Date | null;
   checked_out_at: Date | null;
   reschedule_requested_at: Date | null;
@@ -103,7 +109,7 @@ export type AppointmentDetail = {
 export async function getAppointment(staff: StaffContext, id: string) {
   const [row] = await sql<AppointmentDetail[]>`
     select a.id, a.start_at, a.end_at, a.status, a.notes, a.address_line, a.zip, a.lat, a.lng, a.series_id,
-      a.checked_in_at, a.checked_out_at, a.reschedule_requested_at, a.reschedule_note,
+      a.staff_id, a.checked_in_at, a.checked_out_at, a.reschedule_requested_at, a.reschedule_note,
       json_build_object('id', c.id, 'first_name', c.first_name, 'last_name', c.last_name, 'phone', c.phone,
                         'city', c.city, 'state', c.state, 'access_notes', c.access_notes,
                         'sms_opted_out_at', c.sms_opted_out_at) as client,

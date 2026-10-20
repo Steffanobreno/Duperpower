@@ -8,6 +8,8 @@ import { addDaysYmd, dayLabel, dayRangeUtc, hm, isYmd, money, timeLabel, todayYm
 import { ButtonLink, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
 import { SlotButton } from "./slot-button";
+import { GroomerFilter } from "@/components/groomer-filter";
+import { listGroomers } from "@/lib/data/staff";
 
 export const metadata: Metadata = { title: "Calendar" };
 
@@ -68,13 +70,19 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const [from, count] =
     view === "day" ? [date, 1] : view === "month" ? [gridStart, gridDays] : [monday(date), 7];
 
-  const [appts, blocks, hours] = await Promise.all([
+  // ?groomer= shows one groomer's visits and blocks; without it, everyone's.
+  const groomer = typeof sp.groomer === "string" && /^[0-9a-f-]{36}$/.test(sp.groomer) ? sp.groomer : null;
+  const [all, blocks, hours, groomers] = await Promise.all([
     listRange(staff, from, count),
-    listTimeOff(staff, from, count),
+    listTimeOff(staff, from, count, groomer),
     sql<{ weekday: number; start: string; end: string }[]>`
       select weekday, to_char(start_time, 'HH24:MI') as start, to_char(end_time, 'HH24:MI') as end
-      from working_hours where staff_id = ${staff.staffId}`,
+      from working_hours where staff_id = ${groomer ?? staff.staffId}`,
+    listGroomers(staff, { activeOnly: true }),
   ]);
+  const appts = groomer ? all.filter((a) => a.staff_id === groomer) : all;
+  const multi = groomers.length > 1;
+  const q = groomer ? `&groomer=${groomer}` : "";
   const hoursOf = (d: string) => hours.find((h) => h.weekday === weekdayOf(d)) ?? null;
   const onDay = (d: string) => appts.filter((a) => ymd(a.start_at, tz) === d);
   const blocksOn = (d: string) => blocks.filter((t) => clip(t, d, tz));
@@ -89,7 +97,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
     view === "day" ? dayLabel(zonedToUtc(date, "12:00", tz), tz)
       : view === "month" ? fmt(date, { month: "long", year: "numeric" })
         : `${fmt(monday(date), { month: "short", day: "numeric" })} – ${fmt(addDaysYmd(monday(date), 6), { month: "short", day: "numeric" })}`;
-  const base = `/calendar?view=${view}&`;
+  const base = `/calendar?view=${view}${q}&`;
 
   return (
     <>
@@ -97,7 +105,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       <Page>
         <nav aria-label="View" className="grid grid-cols-4 gap-1 rounded-2xl bg-surface p-1 shadow-[var(--shadow-card)]">
           {VIEWS.map((v) => (
-            <Link key={v.key} href={`/calendar?view=${v.key}&date=${date}`} aria-current={v.key === view ? "page" : undefined}
+            <Link key={v.key} href={`/calendar?view=${v.key}&date=${date}${q}`} aria-current={v.key === view ? "page" : undefined}
               className={`rounded-xl py-2 text-center text-sm font-semibold ${v.key === view ? "bg-navy text-white" : "text-muted"}`}>
               {v.label}
             </Link>
@@ -106,9 +114,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         <DayNav base={base} prev={shift(-1)} next={shift(1)} today={today} label={label}
           isToday={view === "day" ? date === today : view === "month" ? date.slice(0, 7) === today.slice(0, 7) : monday(date) === monday(today)} />
 
-        {(view === "day" || view === "agenda") && <WeekStrip date={date} today={today} view={view} />}
+        <GroomerFilter groomers={groomers} current={groomer} href={(g) => `/calendar?view=${view}&date=${date}${g ? `&groomer=${g}` : ""}`} />
 
-        {view === "day" && <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} />}
+        {(view === "day" || view === "agenda") && <WeekStrip date={date} today={today} view={view} q={q} />}
+
+        {view === "day" && <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} multi={multi} groomer={groomer} />}
         {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} />}
         {view === "month" && (
           <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d)} />
@@ -119,12 +129,12 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   );
 }
 
-function WeekStrip({ date, today, view }: { date: string; today: string; view: View }) {
+function WeekStrip({ date, today, view, q }: { date: string; today: string; view: View; q: string }) {
   const start = monday(date);
   return (
     <div className="grid grid-cols-7 text-center">
       {Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i)).map((d) => (
-        <Link key={d} href={`/calendar?view=${view}&date=${d}`} aria-current={d === date ? "date" : undefined} className="flex flex-col items-center gap-1 py-1">
+        <Link key={d} href={`/calendar?view=${view}&date=${d}${q}`} aria-current={d === date ? "date" : undefined} className="flex flex-col items-center gap-1 py-1">
           <span className="text-xs font-semibold text-muted">{fmt(d, { weekday: "narrow" })}</span>
           <span className={`flex h-9 w-9 items-center justify-center rounded-full font-semibold ${
             d === date ? "bg-brand text-white" : d === today ? "ring-2 ring-brand text-brand" : ""}`}>
@@ -170,8 +180,9 @@ function span(appts: AppointmentListItem[], tz: string, hours: { start: string; 
   return { first: Math.floor(first / 60) * 60, last: Math.ceil(last / 60) * 60 };
 }
 
-function DayTimeline({ date, appts, blocks, hours, tz }: {
+function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer }: {
   date: string; appts: AppointmentListItem[]; blocks: TimeOff[]; hours: { start: string; end: string } | null; tz: string;
+  multi: boolean; groomer: string | null;
 }) {
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
   // All-day blocks sit above the hours, like all-day events on a phone calendar; the rest share the lanes.
@@ -200,7 +211,7 @@ function DayTimeline({ date, appts, blocks, hours, tz }: {
           {appts.length > visible.length && <span className="font-normal text-muted"> · {appts.length - visible.length} cancelled</span>}
         </p>
         {visible.length > 0 && (
-          <Link href={`/today?date=${date}`} className="shrink-0 rounded-full bg-surface px-3 py-1 text-sm font-semibold text-brand shadow-[var(--shadow-card)]">
+          <Link href={`/today?date=${date}${groomer ? `&groomer=${groomer}` : ""}`} className="shrink-0 rounded-full bg-surface px-3 py-1 text-sm font-semibold text-brand shadow-[var(--shadow-card)]">
             Map
           </Link>
         )}
@@ -218,7 +229,7 @@ function DayTimeline({ date, appts, blocks, hours, tz }: {
           const time = `${String(min / 60).padStart(2, "0")}:00`;
           const at = zonedToUtc(date, time, tz);
           return (
-            <SlotButton key={min} date={date} time={time} label={`${dayLabel(at, tz)} · ${timeLabel(at, tz)}`}
+            <SlotButton key={min} date={date} time={time} groomer={groomer} label={`${dayLabel(at, tz)} · ${timeLabel(at, tz)}`}
               className={`absolute inset-x-0 flex border-t border-line text-left ${off ? "bg-bg/70" : "hover:bg-brand-soft/40"}`}
               style={{ top: top(min), height: PX }}>
               <span className="w-14 shrink-0 pl-2 pt-1 text-xs font-semibold text-muted">
@@ -256,7 +267,10 @@ function DayTimeline({ date, appts, blocks, hours, tz }: {
                 <span className="truncate font-bold">{timeLabel(a.start_at, tz)} – {timeLabel(a.end_at, tz)}</span>
                 {a.paid && <span className="shrink-0 font-bold text-success">Paid</span>}
               </div>
-              <div className="truncate text-sm font-bold">{a.series_id && <span aria-label="Repeats" className="text-success">↻ </span>}{a.client_name}</div>
+              <div className="truncate text-sm font-bold">
+                {multi && <span aria-label={a.staff_name} title={a.staff_name} className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: a.staff_color }} />}
+                {a.series_id && <span aria-label="Repeats" className="text-success">↻ </span>}{a.client_name}
+              </div>
               <div className="truncate text-muted">{a.pets.map((p) => `${p.name} · ${p.services.join(", ")}`).join(" | ")}</div>
               <div className="truncate text-muted">{a.address_line}</div>
             </Link>

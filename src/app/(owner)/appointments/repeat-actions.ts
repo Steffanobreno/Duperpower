@@ -50,9 +50,9 @@ export async function saveRepeatAction(appointmentId: string, _: RepeatState, fo
   if (typeof rule === "string") return { error: rule };
   const tz = staff.timezone;
 
-  const [a] = await sql<{ id: string; client_id: string; start_at: Date; end_at: Date; status: string; series_id: string | null;
+  const [a] = await sql<{ id: string; client_id: string; staff_id: string; start_at: Date; end_at: Date; status: string; series_id: string | null;
                          address_line: string | null; zip: string | null; lat: number | null; lng: number | null; notes: string | null }[]>`
-    select id, client_id, start_at, end_at, status, series_id, address_line, zip, lat, lng, notes from appointments
+    select id, client_id, staff_id, start_at, end_at, status, series_id, address_line, zip, lat, lng, notes from appointments
     where id = ${appointmentId} and business_id = ${staff.businessId}`;
   if (!a) return { error: "Appointment not found." };
   if (!LIVE.includes(a.status) || a.status === "requested") return { error: "Accept the visit before repeating it." };
@@ -72,10 +72,10 @@ export async function saveRepeatAction(appointmentId: string, _: RepeatState, fo
   const busy = await sql<{ i: number; visit: string | null; block: string | null }[]>`
     select r.i::int as i,
       (select c.first_name || '''s visit' from appointments x join clients c on c.id = x.client_id
-        where x.staff_id = ${staff.staffId} and x.status = any(${LIVE}) and x.id <> ${a.id} and not (x.id = any(${old}::uuid[]))
+        where x.staff_id = ${a.staff_id} and x.status = any(${LIVE}) and x.id <> ${a.id} and not (x.id = any(${old}::uuid[]))
           and x.start_at < r.e and x.end_at > r.s limit 1) as visit,
       (select coalesce(t.reason, 'Blocked time') from time_off t
-        where t.staff_id = ${staff.staffId} and t.start_at < r.e and t.end_at > r.s limit 1) as block
+        where t.staff_id = ${a.staff_id} and t.start_at < r.e and t.end_at > r.s limit 1) as block
     from unnest(${ranges.map((r) => r.s.toISOString())}::timestamptz[], ${ranges.map((r) => r.e.toISOString())}::timestamptz[])
       with ordinality as r(s, e, i)`;
   const reasonAt = new Map(busy.map((b) => [b.i - 1, b.visit ?? b.block]));
@@ -107,7 +107,7 @@ export async function saveRepeatAction(appointmentId: string, _: RepeatState, fo
           const [copy] = await sp`
             insert into appointments (business_id, client_id, staff_id, series_id, start_at, end_at, status, source,
                                       address_line, zip, lat, lng, notes)
-            values (${staff.businessId}, ${a.client_id}, ${staff.staffId}, ${series.id}, ${r.s}, ${r.e}, 'unconfirmed', 'manual',
+            values (${staff.businessId}, ${a.client_id}, ${a.staff_id}, ${series.id}, ${r.s}, ${r.e}, 'unconfirmed', 'manual',
                     ${a.address_line}, ${a.zip}, ${a.lat}, ${a.lng}, ${a.notes})
             returning id`;
           for (const p of pets) {

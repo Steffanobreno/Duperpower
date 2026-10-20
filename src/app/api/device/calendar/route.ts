@@ -15,10 +15,11 @@ export async function GET(request: Request) {
 
   const rows = await sql<
     { id: string; start_at: Date; end_at: Date; status: string; address_line: string | null; notes: string | null;
-      client: string; phone: string; dogs: number; zip: string | null; detail: string | null; updated_at: Date }[]
+      client: string; phone: string; dogs: number; zip: string | null; detail: string | null; updated_at: Date; groomer: string | null }[]
   >`
     select a.id, a.start_at, a.end_at, a.status, a.address_line, a.zip, a.notes, a.updated_at,
            trim(c.first_name || ' ' || c.last_name) as client, c.phone,
+           (select st.name from staff st where st.id = a.staff_id and st.role <> 'owner') as groomer,
            (select count(*) from appointment_pets ap where ap.appointment_id = a.id)::int as dogs,
            -- One line per dog: "Loki (Cavapoo): Full Haircut - Medium, De-shedding"
            (select string_agg(p.name || coalesce(' (' || p.breed || ')', '') || ': ' ||
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   // "Grace Bresnahan 1Dog", like the old app, so the week reads the same at a glance.
   const titleOf = (r: (typeof rows)[number]) =>
-    `${r.status === "requested" ? "[Request] " : ""}${r.client} ${r.dogs}Dog${r.dogs === 1 ? "" : "s"}`;
+    `${r.status === "requested" ? "[Request] " : ""}${r.client} ${r.dogs}Dog${r.dogs === 1 ? "" : "s"}${r.groomer ? ` (${r.groomer})` : ""}`;
   const descriptionOf = (r: (typeof rows)[number]) =>
     [r.detail, r.phone, r.notes, appUrl && `Open in the app: ${appUrl}/appointments/${r.id}`,
      "Make changes in the Woofers app: changes made here are overwritten at the next sync."]

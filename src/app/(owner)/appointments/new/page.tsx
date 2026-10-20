@@ -7,6 +7,7 @@ import { isYmd, phoneLabel, todayYmd } from "@/lib/format";
 import { ButtonLink, Empty, Input, Page, PageHeader } from "@/components/ui";
 import { createAppointmentAction } from "../actions";
 import { BookingForm } from "../booking-form";
+import { listGroomers } from "@/lib/data/staff";
 
 export const metadata: Metadata = { title: "New appointment" };
 
@@ -18,13 +19,16 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
   const clientId = typeof sp.client === "string" ? sp.client : null;
   const date = isYmd(sp.date) ? sp.date : todayYmd(staff.timezone);
   const time = typeof sp.time === "string" && /^\d{2}:\d{2}$/.test(sp.time) ? sp.time : "09:00";
-  const client = clientId ? await getClient(staff, clientId) : null;
+  const [client, groomers] = await Promise.all([
+    clientId ? getClient(staff, clientId) : null,
+    listGroomers(staff, { activeOnly: true }),
+  ]);
 
   // Step 1: pick the client.
   if (!client) {
     const q = String(sp.q ?? "");
     const clients = await listClients(staff, q);
-    const keep = `&date=${date}&time=${time}`;
+    const keep = `&date=${date}&time=${time}${typeof sp.groomer === "string" ? `&groomer=${sp.groomer}` : ""}`;
     return (
       <>
         <PageHeader title="Who is it for?" back="/calendar" />
@@ -32,6 +36,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
           <form role="search" className="flex gap-2">
             <input type="hidden" name="date" value={date} />
             <input type="hidden" name="time" value={time} />
+            {typeof sp.groomer === "string" && <input type="hidden" name="groomer" value={sp.groomer} />}
             <label className="sr-only" htmlFor="q">Search clients</label>
             <Input id="q" name="q" type="search" defaultValue={q} placeholder="Search by name, phone or pet" autoFocus />
           </form>
@@ -103,6 +108,8 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
             services={services}
             defaultDate={date}
             defaultTime={time}
+            groomers={groomers}
+            defaultGroomer={typeof sp.groomer === "string" ? sp.groomer : staff.staffId}
           />
         )}
       </Page>

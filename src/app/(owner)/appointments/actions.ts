@@ -8,6 +8,7 @@ import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
 import { notifyAppointment } from "@/lib/messaging";
 import { NEXT_STATUS } from "@/lib/appointment-status";
+import { asGroomer, ownGroomer } from "@/lib/data/staff";
 
 export type FormState = { error?: string; warning?: string } | undefined;
 
@@ -59,7 +60,9 @@ async function distanceWarning(staff: StaffContext, date: string, zip: string | 
 }
 
 export async function createAppointmentAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const me = await requireStaff();
+  // The groomer who does the visit (their hours, blocks and route); the owner by default.
+  const staff = asGroomer(me, (await ownGroomer(me, form.get("staff_id"))) ?? me.staffId);
   const date = String(form.get("date") ?? "");
   const time = String(form.get("time") ?? "");
   const notes = String(form.get("notes") ?? "").trim() || null;
@@ -171,12 +174,13 @@ export async function setStatusAction(appointmentId: string, status: string) {
 }
 
 export async function rescheduleAction(appointmentId: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const me = await requireStaff();
   const date = String(form.get("date") ?? "");
   const time = String(form.get("time") ?? "");
   if (!isYmd(date) || !/^\d{2}:\d{2}$/.test(time)) return { error: "Pick a date and a start time." };
-  const [appt] = await sql`select start_at, end_at, zip from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  const [appt] = await sql`select start_at, end_at, zip, staff_id from appointments where id = ${appointmentId} and business_id = ${me.businessId}`;
   if (!appt) return { error: "Appointment not found." };
+  const staff = asGroomer(me, appt.staff_id);
   const startAt = zonedToUtc(date, time, staff.timezone);
   const endAt = new Date(startAt.getTime() + (appt.end_at.getTime() - appt.start_at.getTime()));
   if (form.get("override") !== "on") {
@@ -356,7 +360,7 @@ export type ServiceLine = { id?: string; appointmentPetId: string; serviceId: st
  */
 export async function saveServicesAction(appointmentId: string, lines: ServiceLine[]): Promise<{ error?: string; warning?: string } | undefined> {
   const staff = await requireStaff();
-  const [appt] = await sql`select id, start_at, status from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  const [appt] = await sql`select id, start_at, status, staff_id from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
   if (!appt) return { error: "Appointment not found." };
   const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId}`;
   if (inv) return { error: "Checkout already started. Change prices on the bill instead." };
@@ -408,6 +412,28 @@ export async function saveServicesAction(appointmentId: string, lines: ServiceLi
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath("/today");
   revalidatePath("/calendar");
-  const warning = await overlapWarning(staff, appt.start_at, endAt, appointmentId);
+  const warning = await overlapWarning(asGroomer(staff, appt.staff_id), appt.start_at, endAt, appointmentId);
   return warning ? { warning: `Saved. Heads up: ${warning.charAt(0).toLowerCase()}${warning.slice(1)}` } : undefined;
+}
+
+/** Gives the visit to another groomer (same time), when they're free then. */
+export async function assignGroomerAction(appointmentId: string, form: FormData) {
+  const staff = await requireStaff();
+  const to = await ownGroomer(staff, form.get("staff_id"));
+  if (!to) return;
+  const [busy] = await sql`
+    select 1 from appointments a join appointments x on x.id = ${appointmentId}
+    where a.staff_id = ${to} and a.id <> x.id and a.business_id = ${staff.businessId}
+      and a.status in ('requested', 'unconfirmed', 'confirmed', 'en_route', 'in_progress', 'completed')
+      and a.start_at < x.end_at and a.end_at > x.start_at limit 1`;
+  if (busy) redirect(`/appointments/${appointmentId}?groomerBusy=1`);
+  try {
+    await sql`update appointments set staff_id = ${to}, updated_at = now() where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  } catch (e) {
+    if (isExclusionViolation(e)) redirect(`/appointments/${appointmentId}?groomerBusy=1`);
+    throw e;
+  }
+  revalidatePath("/today");
+  revalidatePath("/calendar");
+  revalidatePath(`/appointments/${appointmentId}`);
 }

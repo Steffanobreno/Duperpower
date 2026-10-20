@@ -10,6 +10,8 @@ import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
 import { RouteMap } from "@/components/route-map";
 import { locateStops } from "@/lib/geocode";
+import { GroomerFilter } from "@/components/groomer-filter";
+import { listGroomers } from "@/lib/data/staff";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -19,11 +21,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const tz = staff.timezone;
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
-  const [all, [{ requests }]] = await Promise.all([
+  const [day, [{ requests }], groomers] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`,
+    listGroomers(staff, { activeOnly: true }),
   ]);
+  // A route is one groomer's day: yours unless another one (or all) is picked.
+  const groomer = sp.groomer === "all" ? null
+    : groomers.some((g) => g.id === sp.groomer) ? (sp.groomer as string)
+      : groomers.length > 1 ? staff.staffId : null;
+  const all = groomer ? day.filter((a) => a.staff_id === groomer) : day;
   const stops = all.filter((a) => !["cancelled", "no_show"].includes(a.status));
   await locateStops(stops);
   const pins = stops
@@ -50,8 +58,10 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
             {requests} booking request{requests > 1 ? "s" : ""} waiting
           </ButtonLink>
         )}
+        <GroomerFilter groomers={groomers} current={groomer}
+          href={(g) => `/today?date=${date}&groomer=${g ?? "all"}`} />
         <DayNav
-          base="/today?"
+          base={`/today?groomer=${groomer ?? "all"}&`}
           prev={addDaysYmd(date, -1)}
           next={addDaysYmd(date, 1)}
           today={today}

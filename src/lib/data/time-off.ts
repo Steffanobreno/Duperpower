@@ -3,21 +3,23 @@ import type { StaffContext } from "../auth";
 import { sql } from "../db";
 import { addDaysYmd, dayRangeUtc, hm, ymd } from "../format";
 
-export type TimeOff = { id: string; start_at: Date; end_at: Date; reason: string | null; series_id: string | null };
+export type TimeOff = { id: string; start_at: Date; end_at: Date; reason: string | null; series_id: string | null; staff_id?: string };
 
-/** Blocks that touch the days from `from`, `count` days long. */
-export function listTimeOff(staff: StaffContext, from: string, count: number) {
+/** Blocks that touch the days from `from`, `count` days long: one groomer's, or everyone's (null). */
+export function listTimeOff(staff: StaffContext, from: string, count: number, groomer: string | null = staff.staffId) {
   const start = dayRangeUtc(from, staff.timezone).start;
   const end = dayRangeUtc(addDaysYmd(from, count - 1), staff.timezone).end;
   return sql<TimeOff[]>`
-    select id, start_at, end_at, reason, series_id from time_off
-    where staff_id = ${staff.staffId} and start_at < ${end} and end_at > ${start}
-    order by start_at`;
+    select t.id, t.start_at, t.end_at, t.reason, t.series_id, t.staff_id from time_off t join staff s on s.id = t.staff_id
+    where s.business_id = ${staff.businessId} and (${groomer}::uuid is null or t.staff_id = ${groomer})
+      and t.start_at < ${end} and t.end_at > ${start}
+    order by t.start_at`;
 }
 
 export async function getTimeOff(staff: StaffContext, id: string) {
   const [row] = await sql<TimeOff[]>`
-    select id, start_at, end_at, reason, series_id from time_off where id = ${id} and staff_id = ${staff.staffId}`;
+    select t.id, t.start_at, t.end_at, t.reason, t.series_id, t.staff_id from time_off t join staff s on s.id = t.staff_id
+    where t.id = ${id} and s.business_id = ${staff.businessId}`;
   return row ?? null;
 }
 

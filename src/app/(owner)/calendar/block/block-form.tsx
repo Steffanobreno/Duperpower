@@ -7,10 +7,12 @@ import type { FormState } from "../../appointments/actions";
 // Blocked time: a date, a start and an end (or all day), a description,
 // and for a new block an optional weekly repeat.
 
-export function BlockForm({ action, initial, isNew }: {
+export function BlockForm({ action, initial, isNew, groomers = [], defaultGroomer }: {
   action: (state: FormState, form: FormData) => Promise<FormState>;
   initial: { date: string; start: string; end: string; allDay: boolean; reason: string };
   isNew: boolean;
+  groomers?: { id: string; name: string; color: string }[]; // whose time it blocks, when there's more than one
+  defaultGroomer?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [allDay, setAllDay] = useState(initial.allDay);
@@ -19,6 +21,20 @@ export function BlockForm({ action, initial, isNew }: {
     <ActionForm action={formAction} className="space-y-4">
       {state?.error && <Notice kind="error">{state.error}</Notice>}
       <Card className="space-y-3">
+        {isNew && groomers.length > 1 && (
+          <div>
+            <span className="mb-2 block text-sm font-medium">Whose time</span>
+            <div className="flex flex-wrap gap-2">
+              {groomers.map((g) => (
+                <label key={g.id} className="flex cursor-pointer items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm font-semibold has-[:checked]:border-brand has-[:checked]:bg-brand-soft">
+                  <input type="radio" name="staff_id" value={g.id} defaultChecked={g.id === (defaultGroomer ?? groomers[0].id)} className="sr-only" />
+                  <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: g.color }} />
+                  {g.name}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <Field label="Date">
           <Input type="date" name="date" defaultValue={initial.date} required />
         </Field>

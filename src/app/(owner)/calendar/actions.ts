@@ -6,6 +6,7 @@ import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { addDaysYmd, isYmd, zonedToUtc } from "@/lib/format";
 import type { FormState } from "../appointments/actions";
+import { ownGroomer } from "@/lib/data/staff";
 
 const TIME = /^\d{2}:\d{2}$/;
 
@@ -41,11 +42,12 @@ export async function createBlockAction(_: FormState, form: FormData): Promise<F
     for (let d = addDaysYmd(b.date, 7 * every); d <= until && dates.length < 53; d = addDaysYmd(d, 7 * every)) dates.push(d);
   }
   const series = dates.length > 1 ? randomUUID() : null;
+  const groomer = (await ownGroomer(staff, form.get("staff_id"))) ?? staff.staffId;
   await sql.begin(async (tx) => {
     for (const d of dates) {
       const [s, e] = range(b, d);
       await tx`insert into time_off (staff_id, start_at, end_at, reason, series_id)
-               values (${staff.staffId}, ${s}, ${e}, ${b.reason}, ${series})`;
+               values (${groomer}, ${s}, ${e}, ${b.reason}, ${series})`;
     }
   });
   revalidatePath("/calendar");
@@ -58,7 +60,7 @@ export async function updateBlockAction(id: string, _: FormState, form: FormData
   if ("error" in b) return { error: b.error };
   const [s, e] = range(b, b.date);
   await sql`update time_off set start_at = ${s}, end_at = ${e}, reason = ${b.reason}, updated_at = now()
-            where id = ${id} and staff_id = ${staff.staffId}`;
+            where id = ${id} and staff_id in (select id from staff where business_id = ${staff.businessId})`;
   revalidatePath("/calendar");
   redirect(`/calendar?date=${b.date}`);
 }
@@ -66,12 +68,12 @@ export async function updateBlockAction(id: string, _: FormState, form: FormData
 /** Removes one block, or (scope "following") this one and the later ones of its series. */
 export async function deleteBlockAction(id: string, form: FormData) {
   const staff = await requireStaff();
-  const [row] = await sql`select start_at, series_id from time_off where id = ${id} and staff_id = ${staff.staffId}`;
+  const [row] = await sql`select start_at, series_id from time_off where id = ${id} and staff_id in (select id from staff where business_id = ${staff.businessId})`;
   if (!row) redirect("/calendar");
   if (form.get("scope") === "following" && row.series_id) {
-    await sql`delete from time_off where staff_id = ${staff.staffId} and series_id = ${row.series_id} and start_at >= ${row.start_at}`;
+    await sql`delete from time_off where staff_id in (select id from staff where business_id = ${staff.businessId}) and series_id = ${row.series_id} and start_at >= ${row.start_at}`;
   } else {
-    await sql`delete from time_off where id = ${id} and staff_id = ${staff.staffId}`;
+    await sql`delete from time_off where id = ${id} and staff_id in (select id from staff where business_id = ${staff.businessId})`;
   }
   revalidatePath("/calendar");
   redirect(`/calendar?date=${String(form.get("date") ?? "")}`);

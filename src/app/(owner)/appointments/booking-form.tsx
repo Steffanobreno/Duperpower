@@ -23,12 +23,16 @@ export function BookingForm({
   services,
   defaultDate,
   defaultTime,
+  groomers = [],
+  defaultGroomer,
 }: {
   action: (state: FormState, form: FormData) => Promise<FormState>;
   pets: Pet[];
   services: Service[];
   defaultDate: string;
   defaultTime: string;
+  groomers?: { id: string; name: string; color: string }[]; // shown when there's more than one
+  defaultGroomer?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [chosen, setChosen] = useState<Record<string, boolean>>(() =>
@@ -156,6 +160,20 @@ export function BookingForm({
 
       <h2 className="section-label pt-2">When</h2>
       <div className="card divide-y divide-line">
+        {groomers.length > 1 && (
+          <div className="px-4 py-3">
+            <span className="mb-2 block text-sm font-medium">Groomer</span>
+            <div className="flex flex-wrap gap-2">
+              {groomers.map((g) => (
+                <label key={g.id} className="flex cursor-pointer items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm font-semibold has-[:checked]:border-brand has-[:checked]:bg-brand-soft">
+                  <input type="radio" name="staff_id" value={g.id} defaultChecked={g.id === (defaultGroomer ?? groomers[0].id)} className="sr-only" />
+                  <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: g.color }} />
+                  {g.name}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3 px-4 py-4">
           <Field label="Date">
             <Input type="date" name="date" defaultValue={defaultDate} required />

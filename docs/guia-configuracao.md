@@ -162,3 +162,16 @@ cancelamento: grátis até 48 h antes, depois 50% do serviço). Ao agendar onlin
 4. Se não aparecer: Ajustes do iPhone → **Notificações** → **Woofers** → Permitir Notificações ligado,
    Tela Bloqueada / Central / Faixas marcados, Sons ligado. Confira também se um **Foco** (Não Perturbe,
    Sono, Trabalho) não está silenciando: Ajustes → Foco → (o foco) → Apps → adicionar Woofers.
+
+## 11. Backup semanal no Google Drive
+
+Uma vez só, no iPad (Safari em "Solicitar Site para Computador") ou num computador:
+
+1. No app: Settings → **Backups** → **Copy** no script.
+2. Abra **script.google.com** com a conta Google da Woofers → **New project** (um projeto novo, não o do
+   Google Calendar) → apague o que estiver lá → cole.
+3. Salve (disquete) → escolha **setup** → **Run** → dê a permissão (Advanced → Go to Untitled project → Allow).
+4. No Google Drive aparece a pasta **Woofers backups** com 2 arquivos: tudo (JSON) e a lista de clientes
+   (planilha). Todo domingo à noite ele salva de novo e guarda as últimas 12 semanas.
+
+Em Settings → Backups aparece "Working. Last backup: …". Se passar de 8 dias sem backup, aparece um aviso.

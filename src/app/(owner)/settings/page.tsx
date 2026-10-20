@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: "Settings" };
 const LINKS = [
   { href: "/settings/services", title: "Services and prices", text: "Packages, add-ons, prices and times" },
   { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
+  { href: "/settings/team", title: "Team", text: "Groomers, their colors and who does each visit" },
   { href: "/settings/business", title: "Business", text: "Name, phone and booking link" },
   { href: "/settings/booking", title: "Online booking", text: "Booking page link, distance and notice rules" },
   { href: "/settings/notifications", title: "Notifications", text: "Pop-ups on your phone for new bookings, cancellations and reschedules" },
@@ -16,6 +17,7 @@ const LINKS = [
   { href: "/settings/calendar", title: "Google Calendar", text: "See every visit in your Google Calendar" },
   { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
   { href: "/settings/import", title: "Import and export clients", text: "Bring in your client list, or download a backup (CSV)" },
+  { href: "/settings/backups", title: "Backups", text: "A weekly copy of everything on your Google Drive" },
   { href: "/settings/agreement", title: "Service agreement", text: "The terms clients sign" },
 ];
 
