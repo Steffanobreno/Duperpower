@@ -4,7 +4,8 @@ import { sql } from "./db";
 import { emailConfigured, sendEmail, type EmailDetails } from "./email";
 import { sendPush } from "./push";
 import { clientEvent } from "./client-calendar";
-import { processCampaigns } from "./data/marketing";
+import { lastSentByTemplate, processCampaigns } from "./data/marketing";
+import { nextDate, suggestions } from "./marketing-templates";
 import { addDaysYmd, dayRangeUtc, hm, money, phoneLabel, todayYmd, ymd } from "./format";
 
 // Every client message goes through here. A message is a row in `messages`:
@@ -347,6 +348,7 @@ export async function runMessagingJobs() {
     await queueDueMessages(b.id);
     await sendQueuedEmails(b.id);
     await processCampaigns(b.id);
+    await monthlyMarketingReminder(b.id);
   }
 }
 
@@ -361,4 +363,36 @@ export async function notifyOwner(businessId: string, subject: string, text: str
     b?.email && emailConfigured() ? sendEmail({ to: b.email, subject, text, fromName: b.name }).catch(() => {}) : null,
     sendPush(businessId, { title: subject, body: text.split("\n")[0], url }).catch(() => 0),
   ]);
+}
+
+/**
+ * Once a month (from 9am on the 1st, or the first check after), reminds the owner to send
+ * this month's marketing email, with a suggestion. Skipped when one already went out or is
+ * scheduled this month, or when the reminder is switched off on the Marketing page.
+ */
+export async function monthlyMarketingReminder(businessId: string) {
+  const [b] = await sql<{ timezone: string; on: boolean; done: string | null }[]>`
+    select timezone, marketing_reminder as on, marketing_reminded_month as done from businesses where id = ${businessId}`;
+  if (!b?.on) return;
+  const today = todayYmd(b.timezone);
+  const month = today.slice(0, 7);
+  if (b.done === month || hm(new Date(), b.timezone) < "09:00") return;
+  const [claimed] = await sql`
+    update businesses set marketing_reminded_month = ${month}
+    where id = ${businessId} and coalesce(marketing_reminded_month, '') <> ${month} returning id`;
+  if (!claimed) return;
+  const { start } = dayRangeUtc(`${month}-01`, b.timezone);
+  const [already] = await sql`
+    select 1 from campaigns where business_id = ${businessId} and (status = 'scheduled' or started_at >= ${start}) limit 1`;
+  if (already) return;
+  const [pick] = suggestions(today, await lastSentByTemplate(businessId, b.timezone));
+  if (!pick) return;
+  const when = nextDate(pick, today);
+  const on = when ? ` (${formatInTimeZone(new Date(`${when}T12:00:00Z`), "UTC", "EEE, MMM d")})` : "";
+  await notifyOwner(
+    businessId,
+    "Time for this month's email 📬",
+    `Suggested: ${pick.name}${on}. Open Marketing, check the text and tap Send. It takes 2 minutes.`,
+    "/marketing/new",
+  );
 }

@@ -8,7 +8,7 @@ import type { CampaignState } from "../actions";
 // Step 1: what the email says, with the email shown live underneath as the client will see it.
 
 export type EditorCampaign = {
-  name: string; subject: string; banner: string | null; headline: string; body: string; button_label: string | null; button_url: string | null;
+  name: string; subject: string; preheader: string; banner: string | null; headline: string; body: string; button_label: string | null; button_url: string | null;
 };
 
 export function CampaignEditor({ campaign, banners, appUrl, sample, phone, mailingAddress, save }: {
@@ -25,7 +25,7 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
   const set = (k: keyof EditorCampaign) => (e: { target: { value: string } }) => setC({ ...c, [k]: e.target.value });
   const html = marketingEmailHtml({
     appUrl,
-    content: { banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url },
+    content: { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url },
     vars: sample, phone, mailingAddress, unsubscribeUrl: "#",
   });
   return (
@@ -38,6 +38,9 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
         </Field>
         <Field label="Subject" hint="The first thing clients read in their inbox. {pet_name} and {first_name} work here too.">
           <Input name="subject" value={c.subject} onChange={set("subject")} placeholder="We miss {pet_name}! 🐾" />
+        </Field>
+        <Field label="Preview text" hint="The grey line after the subject in the inbox. A short teaser gets more opens.">
+          <Input name="preheader" value={c.preheader} onChange={set("preheader")} placeholder="Your spa day is just a few taps away." />
         </Field>
       </Card>
 

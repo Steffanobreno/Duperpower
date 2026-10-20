@@ -39,16 +39,24 @@ await page.click('button[type="submit"]');
 await page.waitForURL(/\/today/);
 
 await page.goto(`${BASE}/marketing`);
+// The Woofers address comes preset; change it here to check the form.
+await page.getByText("Mailing address in the emails").click();
+const preset = await page.getByLabel("Mailing address").inputValue();
+if (preset !== "1201 Monte Diablo Ave, San Mateo, CA 94401") fail(`preset address wrong: ${preset}`);
 await page.getByLabel("Mailing address").fill("PO Box 123, Redwood City, CA 94063");
 await page.getByRole("button", { name: "Save address" }).click();
-await page.getByText("Mailing address in the emails").waitFor();
-step("mailing address saved");
+await page.getByText("Saved.").waitFor();
+await page.getByText("Suggested this month").waitFor();
+await page.getByRole("switch", { name: "Monthly reminder" }).waitFor();
+step("mailing address preset and editable; monthly suggestion and reminder switch shown");
 
 await page.goto(`${BASE}/marketing/new`);
 await shot("marketing-templates");
-await page.getByRole("button", { name: /Halloween/ }).click();
+await page.getByText("Suggested now").waitFor();
+await page.getByRole("button", { name: /Halloween/ }).first().click();
 await page.waitForURL(/\/marketing\/[0-9a-f-]+$/);
 if ((await page.locator('input[name="subject"]').inputValue()) !== "No tricks, just treats for {pet_name} 🎃") fail("template subject not filled");
+if ((await page.locator('input[name="preheader"]').inputValue()) !== "Costume-ready in one visit.") fail("preview text not filled");
 await page.fill('input[name="headline"]', "Happy Howl-o-ween!");
 const preview = page.frameLocator('iframe[title="Email preview"]');
 await preview.getByText("Happy Howl-o-ween!").waitFor();
@@ -57,6 +65,8 @@ await page.getByRole("button", { name: /Next: who gets it/ }).click();
 await page.waitForURL(/step=recipients/);
 step("Halloween template → edit with live preview → next");
 
+// Halloween starts with "nothing booked yet"; widen it to everyone.
+await page.getByRole("combobox").nth(1).selectOption("any");
 const all = await count();
 if (all !== 5) fail(`expected 5 clients with email (one unsubscribed left out), got ${all}`);
 await page.getByRole("combobox").first().selectOption("over");
@@ -82,6 +92,7 @@ await page.getByRole("button", { name: "Send test" }).click();
 await page.getByText(/Sent to owner@example.com/).waitFor();
 const test = mails().slice(before).find((m) => m.subject?.startsWith("[Test]"));
 if (!test || !test.html.includes("Happy Howl-o-ween!") || !test.html.includes("Luna")) fail("test email missing or wrong");
+if (!test.html.includes("Costume-ready in one visit.")) fail("preview text missing from the email");
 step("test email arrives with the sample client");
 
 await page.getByRole("button", { name: "Send now" }).click();
@@ -111,7 +122,9 @@ step("one-click unsubscribe works");
 await page.goto(`${BASE}/marketing`);
 await page.getByRole("link", { name: /Halloween/ }).first().waitFor();
 await page.goto(`${BASE}/marketing/new`);
-await page.getByRole("button", { name: /We miss you/ }).click();
+await page.getByRole("button", { name: /Halloween/ }).first().waitFor();
+if (!(await page.getByText(/Last sent/).count())) fail("Halloween should show when it was last sent");
+await page.getByRole("button", { name: /Start from scratch/ }).click();
 await page.waitForURL(/\/marketing\/[0-9a-f-]+$/);
 await page.goto(`${page.url()}?step=recipients`);
 if ((await count()) !== 3) fail("Bella and Carl unsubscribed: 3 left");

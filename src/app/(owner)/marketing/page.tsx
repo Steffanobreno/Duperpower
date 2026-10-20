@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { emailsLeftToday } from "@/lib/data/marketing";
-import { dayLabel, timeLabel } from "@/lib/format";
+import { emailsLeftToday, lastSentByTemplate } from "@/lib/data/marketing";
+import { dayLabel, timeLabel, todayYmd } from "@/lib/format";
+import { suggestions } from "@/lib/marketing-templates";
 import { ButtonLink, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { MailingAddressForm } from "./mailing-address-form";
+import { createCampaignAction, setMarketingReminderAction } from "./actions";
 
 export const metadata: Metadata = { title: "Marketing" };
 
@@ -19,8 +21,9 @@ const STATUS: Record<string, { label: string; className: string }> = {
 export default async function MarketingPage() {
   const staff = await requireStaff();
   const tz = staff.timezone;
-  const [[b], campaigns, left] = await Promise.all([
-    sql<{ mailing_address: string | null }[]>`select mailing_address from businesses where id = ${staff.businessId}`,
+  const [[b], campaigns, left, lastSent] = await Promise.all([
+    sql<{ mailing_address: string | null; marketing_reminder: boolean }[]>`
+      select mailing_address, marketing_reminder from businesses where id = ${staff.businessId}`,
     sql<{ id: string; name: string; subject: string; banner: string | null; status: string; scheduled_at: Date | null;
           started_at: Date | null; created_at: Date; sent: number; total: number; booked: number }[]>`
       select c.id, c.name, c.subject, c.banner, c.status, c.scheduled_at, c.started_at, c.created_at,
@@ -30,7 +33,9 @@ export default async function MarketingPage() {
           where r.campaign_id = c.id and r.status = 'sent' and a.created_at > c.started_at)::int as booked
       from campaigns c where c.business_id = ${staff.businessId} order by c.created_at desc limit 100`,
     emailsLeftToday(staff.businessId),
+    lastSentByTemplate(staff.businessId, tz),
   ]);
+  const [pick] = suggestions(todayYmd(tz), lastSent);
 
   return (
     <>
@@ -44,6 +49,22 @@ export default async function MarketingPage() {
               small print at the bottom.
             </p>
             <MailingAddressForm value="" />
+          </Card>
+        )}
+
+        {pick && (
+          <Card className="flex items-center gap-3 p-3">
+            {pick.banner && (
+              // eslint-disable-next-line @next/next/no-img-element -- small static picture
+              <img src={pick.banner} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold uppercase text-brand">Suggested this month</span>
+              <span className="block truncate font-bold">{pick.name}</span>
+            </span>
+            <form action={createCampaignAction.bind(null, pick.key)}>
+              <button type="submit" className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-on-brand">Start</button>
+            </form>
           </Card>
         )}
 
@@ -88,6 +109,16 @@ export default async function MarketingPage() {
           Emails go out from the Woofers Gmail. Gmail sends about 450 a day, so bigger lists finish the next day.
           {left < 450 && ` ${left} left today.`}
         </p>
+        <form action={setMarketingReminderAction.bind(null, !b.marketing_reminder)} className="card flex items-center justify-between gap-3 px-4 py-3">
+          <span>
+            <span className="block font-semibold">Monthly reminder</span>
+            <span className="block text-sm text-muted">On the 1st, a notification with this month&apos;s suggested email</span>
+          </span>
+          <button type="submit" role="switch" aria-checked={b.marketing_reminder} aria-label="Monthly reminder"
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${b.marketing_reminder ? "bg-success" : "bg-line"}`}>
+            <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${b.marketing_reminder ? "left-[22px]" : "left-0.5"}`} />
+          </button>
+        </form>
         {b.mailing_address && (
           <details className="card px-4 py-3 text-sm">
             <summary className="cursor-pointer font-semibold">Mailing address in the emails</summary>

@@ -77,7 +77,7 @@ export async function emailsLeftToday(businessId: string) {
 }
 
 type Campaign = {
-  id: string; business_id: string; subject: string; banner: string | null; headline: string; body: string;
+  id: string; business_id: string; subject: string; preheader: string; banner: string | null; headline: string; body: string;
   button_label: string | null; button_url: string | null; filters: unknown; status: string;
 };
 
@@ -121,8 +121,9 @@ export async function sendCampaignBatch(campaignId: string, max = 8) {
         order by email limit ${room} for update skip locked)
       returning r.id, r.email, cl.marketing_token as token, cl.first_name,
         (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = cl.id and p.deceased_at is null) as pet_name`;
-    const content: CampaignContent = { banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
-    const booking = c.website_url ?? `${appUrl()}/book`;
+    const content: CampaignContent = { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
+    // The button goes straight to the booking page: one less click than the website.
+    const booking = `${appUrl()}/book`;
     const mails = batch.map((r) => {
       const vars = { first_name: r.first_name, pet_name: r.pet_name ?? "your pup", business: c.name, booking_link: booking };
       const unsubscribeUrl = `${appUrl()}/u/${r.token}`;
@@ -156,4 +157,13 @@ export async function processCampaigns(businessId: string, max = 10) {
   const sending = await sql<{ id: string }[]>`
     select id from campaigns where business_id = ${businessId} and status = 'sending' order by started_at limit 1`;
   if (sending[0]) await sendCampaignBatch(sending[0].id, max);
+}
+
+/** The day each template last went out (yyyy-MM-dd), for suggestions and "sent" labels. */
+export async function lastSentByTemplate(businessId: string, timezone: string) {
+  const rows = await sql<{ template: string; day: string }[]>`
+    select template, to_char(max(started_at) at time zone ${timezone}, 'YYYY-MM-DD') as day from campaigns
+    where business_id = ${businessId} and template is not null and status in ('sending', 'sent')
+    group by template`;
+  return Object.fromEntries(rows.map((r) => [r.template, r.day])) as Record<string, string | undefined>;
 }

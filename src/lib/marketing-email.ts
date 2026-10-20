@@ -3,6 +3,7 @@
 // used for the live preview in the editor and for sending.
 
 export type CampaignContent = {
+  preheader?: string | null; // the grey line next to the subject in the inbox
   banner: string | null; // "/marketing/halloween.jpg"
   headline: string;
   body: string;
@@ -34,7 +35,11 @@ export function marketingEmailHtml({ appUrl, content, vars, phone, mailingAddres
   const banner = content.banner
     ? `<img src="${escape(content.banner.startsWith("http") ? content.banner : appUrl + content.banner)}" width="520" alt="" style="display:block;width:100%;height:auto;border:0;border-radius:16px;margin:0 0 22px">`
     : "";
-  return `<div style="background:#f3f5f8;padding:24px 12px;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif">
+  // Hidden text the inbox shows after the subject; the spaces keep the email body from showing after it.
+  const preheader = content.preheader
+    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${escape(fillVars(content.preheader, vars))}${"&#8199;&#65279;&#847; ".repeat(40)}</div>`
+    : "";
+  return `${preheader}<div style="background:#f3f5f8;padding:24px 12px;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;padding:24px 20px;color:#132039;font-size:16px;line-height:1.6">
 <img src="${escape(appUrl)}/logo.png" width="110" alt="${escape(vars.business)}" style="display:block;margin:0 auto 16px;border:0">
 ${banner}

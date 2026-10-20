@@ -23,8 +23,9 @@ export async function createCampaignAction(templateKey: string) {
   const staff = await requireStaff();
   const t = templateByKey(templateKey) ?? templateByKey("blank")!;
   const [c] = await sql`
-    insert into campaigns (business_id, name, template, subject, banner, headline, body, button_label)
-    values (${staff.businessId}, ${t.name}, ${t.key}, ${t.subject}, ${t.banner}, ${t.headline}, ${t.body}, ${t.button})
+    insert into campaigns (business_id, name, template, subject, preheader, banner, headline, body, button_label, filters)
+    values (${staff.businessId}, ${t.name}, ${t.key}, ${t.subject}, ${t.preheader}, ${t.banner}, ${t.headline}, ${t.body}, ${t.button},
+            ${sql.json(cleanFilters(t.filters))})
     returning id`;
   redirect(`/marketing/${c.id}`);
 }
@@ -39,7 +40,8 @@ export async function saveCampaignAction(id: string, _: CampaignState, form: For
   if (banner && !/^\/marketing\/[a-z0-9-]+\.jpg$/.test(banner)) return { error: "Pick a picture from the list." };
   if (buttonUrl && !/^https:\/\/\S+$/.test(buttonUrl)) return { error: "The button link must start with https://" };
   await sql`
-    update campaigns set name = ${text("name", 120) || c.name}, subject = ${text("subject", 200)}, banner = ${banner},
+    update campaigns set name = ${text("name", 120) || c.name}, subject = ${text("subject", 200)},
+      preheader = ${text("preheader", 200)}, banner = ${banner},
       headline = ${text("headline", 200)}, body = ${text("body", 5000)}, button_label = ${text("button_label", 60) || null},
       button_url = ${buttonUrl}
     where id = ${id}`;
@@ -71,8 +73,8 @@ export async function sendTestAction(id: string, _: CampaignState, form: FormDat
   const to = String(form.get("to") ?? "").trim();
   if (!/^\S+@\S+\.\S+$/.test(to)) return { error: "Type the email to send the test to." };
   const [b] = await sql`select name, phone, mailing_address, website_url from businesses where id = ${staff.businessId}`;
-  const vars = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: b.website_url ?? `${appUrl()}/book` };
-  const content = { banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
+  const vars = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book` };
+  const content = { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
   const unsubscribeUrl = `${appUrl()}/marketing`;
   const [error] = await sendMany(b.name, [{
     to,
@@ -137,8 +139,8 @@ export async function duplicateCampaignAction(id: string) {
   const { staff, c } = await own(id);
   if (!c) redirect("/marketing");
   const [copy] = await sql`
-    insert into campaigns (business_id, name, template, subject, banner, headline, body, button_label, button_url, filters)
-    values (${staff.businessId}, ${`${c.name} (copy)`}, ${c.template}, ${c.subject}, ${c.banner}, ${c.headline}, ${c.body},
+    insert into campaigns (business_id, name, template, subject, preheader, banner, headline, body, button_label, button_url, filters)
+    values (${staff.businessId}, ${`${c.name} (copy)`}, ${c.template}, ${c.subject}, ${c.preheader}, ${c.banner}, ${c.headline}, ${c.body},
             ${c.button_label}, ${c.button_url}, ${sql.json(c.filters)})
     returning id`;
   redirect(`/marketing/${copy.id}`);
@@ -149,6 +151,12 @@ export async function deleteCampaignAction(id: string) {
   await sql`delete from campaigns where id = ${id} and business_id = ${staff.businessId} and status in ('draft', 'scheduled')`;
   revalidatePath("/marketing");
   redirect("/marketing");
+}
+
+export async function setMarketingReminderAction(on: boolean) {
+  const staff = await requireStaff();
+  await sql`update businesses set marketing_reminder = ${on} where id = ${staff.businessId}`;
+  revalidatePath("/marketing");
 }
 
 export async function saveMailingAddressAction(_: CampaignState, form: FormData): Promise<CampaignState> {

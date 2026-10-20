@@ -110,9 +110,10 @@ async function main() {
 
   await sql.begin(async (tx) => {
     const [biz] = await tx`
-      insert into businesses (name, phone, booking_slug, start_zip, review_url, website_url, cancellation_hours)
+      insert into businesses (name, phone, booking_slug, start_zip, review_url, website_url, cancellation_hours, mailing_address)
       values ('Woofers Dog Spa', '+16504800599', 'woofers', '94401',
-              'https://g.page/r/CQs7lH-SjO5jEAE/review', 'https://woofersdogspa.com', 48)
+              'https://g.page/r/CQs7lH-SjO5jEAE/review', 'https://woofersdogspa.com', 48,
+              '1201 Monte Diablo Ave, San Mateo, CA 94401')
       returning id`;
     // 48 hours: the cancellation notice in the service agreement.
     await tx`insert into agreements (business_id, title, body) values (${biz.id}, ${AGREEMENT_TITLE}, ${AGREEMENT_BODY})`;

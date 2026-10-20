@@ -1,5 +1,5 @@
 import { businessForDeviceKey } from "@/lib/device";
-import { queueDueMessages, sendQueuedEmails, takeSmsOutbox } from "@/lib/messaging";
+import { monthlyMarketingReminder, queueDueMessages, sendQueuedEmails, takeSmsOutbox } from "@/lib/messaging";
 import { processCampaigns } from "@/lib/data/marketing";
 
 // Called by the owner's iPhone Shortcut (Automation, e.g. 10:00 and 18:00 every day).
@@ -15,6 +15,7 @@ export async function GET(request: Request) {
   const messages = await takeSmsOutbox(business.id);
   // Email campaigns keep going a little each time the phone checks in (scheduled ones start here too).
   await processCampaigns(business.id, 8).catch(() => {});
+  await monthlyMarketingReminder(business.id).catch(() => {});
   return Response.json(
     { count: messages.length, messages: messages.map((m) => ({ phone: m.phone, body: m.body })) },
     { headers: { "Cache-Control": "no-store" } },
