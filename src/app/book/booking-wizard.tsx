@@ -160,7 +160,8 @@ export function BookingWizard({
       const res = await availabilityAction({ phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
       if (res.error) return setError(res.error);
       setDays(res.days ?? []);
-      setDay(res.days?.[0]?.date ?? null);
+      // Start on a day we're already nearby, when there is one.
+      setDay((res.days?.find((d) => d.near) ?? res.days?.[0])?.date ?? null);
       setStart(null);
       go({ name: "time" });
     });
@@ -501,9 +502,26 @@ export function BookingWizard({
       return (
         <StepCard>
           {header("Select a time", <>Your visit takes about {minutesLabel(minutes)}. The time is when we arrive.</>)}
+          {days.some((d) => d.near) && (
+            <div className="mb-5 rounded-2xl bg-success-soft p-4">
+              <p className="font-bold text-success">🚐 We&apos;re already in your area on</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {days.filter((d) => d.near).slice(0, 6).map((d) => (
+                  <button key={d.date} type="button" aria-pressed={day === d.date} onClick={() => { setDay(d.date); setStart(null); }}
+                    className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold ${day === d.date ? "border-success bg-success text-white" : "border-success/40 bg-surface"}`}>
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-muted">These days are easiest for us, so they fill up first.</p>
+            </div>
+          )}
           <MonthCalendar days={days} today={today} selected={day} onSelect={(d) => { setDay(d); setStart(null); }} />
           {selected && (
             <div className="mt-7 space-y-5" role="group" aria-label="Open times">
+              {selected.times.some((t) => t.best) && (
+                <p className="text-sm text-muted">⭐ Best times: we&apos;re right around the corner then.</p>
+              )}
               {[["Morning", am], ["Afternoon", pm]].map(([label, list]) =>
                 (list as typeof am).length ? (
                   <div key={label as string}>
@@ -513,7 +531,7 @@ export function BookingWizard({
                         <button key={t.value} type="button" aria-pressed={start === t.value}
                           onClick={() => { setStart(t.value); setSheet("time"); }}
                           className={`rounded-full border-2 px-5 py-3 font-semibold ${start === t.value ? "border-brand bg-brand text-on-brand" : "border-line hover:border-brand"}`}>
-                          {t.label.toLowerCase()}
+                          {t.best && "⭐ "}{t.label.toLowerCase()}
                         </button>
                       ))}
                     </div>

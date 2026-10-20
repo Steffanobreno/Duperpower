@@ -8,6 +8,8 @@ import { zipInfo, zipMiles } from "./geo/zip";
 // 2. inside working hours, with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. on a day that already has visits, every one of them is within `max_cluster_miles`.
+// Days when the van is already close by (NEAR_MILES) are marked, and on them the times right
+// before or after the nearby visit are marked "best", so clients pick what keeps the route short.
 // Requests hold their time slot until the owner accepts or declines them.
 
 export type PublicBusiness = {
@@ -58,7 +60,14 @@ export function zipProblem(b: PublicBusiness, zip: string) {
 
 const ACTIVE = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
 
-export type DaySlots = { date: string; label: string; times: { value: string; label: string }[] };
+export const NEAR_MILES = 5;
+
+export type DaySlots = {
+  date: string;
+  label: string;
+  near: boolean; // another visit that day is within NEAR_MILES
+  times: { value: string; label: string; best?: boolean }[];
+};
 
 /** Open start times for a visit of `durationMin` minutes at `zip`, for the coming days. */
 export async function findSlots(b: PublicBusiness, zip: string, durationMin: number, onlyDate?: string): Promise<DaySlots[]> {
@@ -114,11 +123,24 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
         if (t >= earliest) starts.add(t);
       }
     }
-    const times: DaySlots["times"] = [...starts].sort((x, y) => x - y).map((t) => {
+    const sorted = [...starts].sort((x, y) => x - y);
+    // The closest visit that day; the first start after it and the last one that ends before it.
+    const closest = sameDay
+      .map((a) => ({ a, m: zipMiles(zip, a.zip) }))
+      .filter((x): x is { a: (typeof sameDay)[number]; m: number } => x.m != null && x.m <= NEAR_MILES)
+      .sort((x, y) => x.m - y.m)[0]?.a;
+    const best = new Set<number>();
+    if (closest) {
+      const after = sorted.find((t) => t >= closest.end_at.getTime() + buffer);
+      const before = sorted.filter((t) => t + length + buffer <= closest.start_at.getTime()).at(-1);
+      if (after != null) best.add(after);
+      if (before != null) best.add(before);
+    }
+    const times: DaySlots["times"] = sorted.map((t) => {
       const d = new Date(t);
-      return { value: d.toISOString(), label: timeLabel(d, tz) };
+      return { value: d.toISOString(), label: timeLabel(d, tz), ...(best.has(t) ? { best: true } : {}) };
     });
-    if (times.length) result.push({ date, label: dayLabel(zonedToUtc(date, "12:00", tz), tz), times });
+    if (times.length) result.push({ date, label: dayLabel(zonedToUtc(date, "12:00", tz), tz), near: !!closest, times });
   }
   return result;
 }

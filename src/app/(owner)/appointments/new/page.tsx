@@ -3,11 +3,12 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { clientHistory, fullName, getClient, listClients, listPets } from "@/lib/data/clients";
 import { listServices } from "@/lib/data/services";
-import { isYmd, phoneLabel, todayYmd } from "@/lib/format";
+import { dayLabel, isYmd, phoneLabel, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Input, Page, PageHeader } from "@/components/ui";
 import { createAppointmentAction } from "../actions";
 import { BookingForm } from "../booking-form";
 import { listGroomers } from "@/lib/data/staff";
+import { nearbyDays } from "@/lib/data/appointments";
 
 export const metadata: Metadata = { title: "New appointment" };
 
@@ -68,10 +69,11 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
   }
 
   // Step 2: pets, services and time.
-  const [pets, services, history] = await Promise.all([
+  const [pets, services, history, nearby] = await Promise.all([
     listPets(staff, client.id),
     listServices(staff),
     clientHistory(staff, client.id),
+    nearbyDays(staff, client.zip),
   ]);
   const count = (status: string) => history.filter((a) => a.status === status).length;
   return (
@@ -97,6 +99,26 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
             ))}
           </dl>
         </div>
+        {nearby.length > 0 && pets.length > 0 && (
+          <section className="card space-y-1 border-success bg-success-soft px-4 py-3">
+            <h2 className="text-sm font-bold text-success">🚐 You&apos;re already near {client.first_name} on</h2>
+            <ul className="divide-y divide-success/20 text-sm">
+              {nearby.map((n) => (
+                <li key={n.date}>
+                  <Link href={`/appointments/new?client=${client.id}&date=${n.date}&time=${n.after}${typeof sp.groomer === "string" ? `&groomer=${sp.groomer}` : ""}`}
+                    className="flex items-center justify-between gap-2 py-2">
+                    <span>
+                      <span className="font-semibold">{dayLabel(zonedToUtc(n.date, "12:00", staff.timezone), staff.timezone)}</span>
+                      <span className="text-muted"> · {n.miles < 1 ? "same area as" : `${Math.round(n.miles)} mi from`} {n.name}</span>
+                    </span>
+                    <span className="shrink-0 font-semibold text-brand">{timeLabel(zonedToUtc(n.date, n.after, staff.timezone), staff.timezone)} →</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted">Tap one to book right after that visit.</p>
+          </section>
+        )}
         {pets.length === 0 ? (
           <Empty title="This client has no pets yet">
             <ButtonLink href={`/clients/${client.id}/pets/new`} className="mt-2">Add a pet</ButtonLink>

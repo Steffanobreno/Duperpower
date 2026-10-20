@@ -1,7 +1,7 @@
 import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
-import { dayRangeUtc, addDaysYmd, isUuid } from "../format";
+import { dayRangeUtc, addDaysYmd, hm, isUuid, ymd } from "../format";
 import { zipMiles } from "../geo/zip";
 
 export type AppointmentListItem = {
@@ -161,4 +161,28 @@ export async function tooFarFromDay(staff: StaffContext, date: string, zip: stri
     if (miles != null && miles > limit && (!worst || miles > worst.miles)) worst = { miles, client: o.client };
   }
   return worst ? { ...worst, limit } : null;
+}
+
+/**
+ * The coming days when this groomer already has a visit close to `zip`, closest first:
+ * where to put a new visit so the route stays short. `after` is when the nearby visit ends,
+ * rounded up to the next quarter hour.
+ */
+export async function nearbyDays(staff: StaffContext, zip: string | null, limit = 4) {
+  if (!zip) return [];
+  const rows = await sql<{ start_at: Date; end_at: Date; zip: string | null; first_name: string }[]>`
+    select a.start_at, a.end_at, a.zip, c.first_name from appointments a join clients c on c.id = a.client_id
+    where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId}
+      and a.start_at > now() and a.start_at < now() + interval '45 days' and a.zip is not null
+      and a.status in ('requested', 'unconfirmed', 'confirmed')`;
+  const best = new Map<string, { date: string; miles: number; name: string; after: string }>();
+  for (const r of rows) {
+    const miles = zipMiles(zip, r.zip);
+    if (miles == null || miles > 25) continue;
+    const date = ymd(r.start_at, staff.timezone);
+    const end = hm(new Date(Math.ceil(r.end_at.getTime() / 900_000) * 900_000), staff.timezone);
+    const prev = best.get(date);
+    if (!prev || miles < prev.miles) best.set(date, { date, miles, name: r.first_name, after: end });
+  }
+  return [...best.values()].sort((a, b) => a.miles - b.miles || a.date.localeCompare(b.date)).slice(0, limit);
 }
