@@ -12,6 +12,7 @@ import { RouteMap } from "@/components/route-map";
 import { locateStops } from "@/lib/geocode";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
+import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -34,7 +35,10 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       : groomers.length > 1 ? staff.staffId : null;
   const all = groomer ? day.filter((a) => a.staff_id === groomer) : day;
   const stops = all.filter((a) => !["cancelled", "no_show"].includes(a.status));
-  await locateStops(stops);
+  const [vaccines] = await Promise.all([
+    vaccineAlerts(staff, stops.flatMap((s) => s.pets.map((p) => p.id)), date),
+    locateStops(stops),
+  ]);
   const pins = stops
     .map((s, i) => ({ s, n: i + 1 }))
     .filter(({ s }) => s.lat != null && s.lng != null)
@@ -118,6 +122,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                         </div>
                       ))}
                       <div className="truncate text-sm text-muted">{s.address_line ?? "No address"}</div>
+                      {s.pets.flatMap((p) => vaccines.filter((v) => v.pet_id === p.id).map((v) => (
+                        <div key={p.id + v.name} className={`text-xs font-semibold ${v.expired ? "text-danger" : "text-warn"}`}>
+                          💉 {p.name}: {alertText(v)}
+                        </div>
+                      )))}
                     </div>
                   </Link>
                   <div className="grid grid-cols-3 divide-x divide-line border-t border-line text-sm font-semibold text-brand">

@@ -19,7 +19,7 @@ export type AppointmentListItem = {
   client_phone: string;
   city: string | null;
   access_notes: string | null;
-  pets: { name: string; size_class: string | null; services: string[] }[];
+  pets: { id: string; name: string; size_class: string | null; services: string[] }[];
   total_cents: number;
   paid: boolean;
   series_id: string | null;
@@ -35,7 +35,7 @@ const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<Appointm
          c.phone as client_phone, c.city, c.access_notes,
          coalesce((
            select json_agg(json_build_object(
-                    'name', p.name, 'size_class', p.size_class,
+                    'id', p.id, 'name', p.name, 'size_class', p.size_class,
                     'services', coalesce((select json_agg(s.name order by s.created_at)
                                           from appointment_services s where s.appointment_pet_id = ap.id), '[]'::json))
                   order by p.name)

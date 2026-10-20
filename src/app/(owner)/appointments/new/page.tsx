@@ -9,6 +9,7 @@ import { createAppointmentAction } from "../actions";
 import { BookingForm } from "../booking-form";
 import { listGroomers } from "@/lib/data/staff";
 import { nearbyDays } from "@/lib/data/appointments";
+import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 
 export const metadata: Metadata = { title: "New appointment" };
 
@@ -76,6 +77,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
     nearbyDays(staff, client.zip),
   ]);
   const count = (status: string) => history.filter((a) => a.status === status).length;
+  const vaccines = await vaccineAlerts(staff, pets.map((p) => p.id), date);
   return (
     <>
       <PageHeader title={`Book ${fullName(client)}`} back={`/clients/${client.id}`} />
@@ -126,7 +128,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
         ) : (
           <BookingForm
             action={createAppointmentAction.bind(null, client.id)}
-            pets={pets}
+            pets={pets.map((p) => ({ ...p, vaccineAlert: vaccines.filter((v) => v.pet_id === p.id).map(alertText).join(" · ") || null }))}
             services={services}
             defaultDate={date}
             defaultTime={time}

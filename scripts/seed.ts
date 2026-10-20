@@ -88,6 +88,13 @@ const templates = [
     body: "From {business}, Hello {client}, it has been almost {days} days since {pet}'s last service. Would you like to book a new appointment? Book online: {booking_url} or text us {business_phone}",
   },
   {
+    trigger: "vaccine_due",
+    offset_days: 30,
+    send_at_time: "10:00",
+    email_subject: "{pet}'s {vaccine} vaccine expires soon",
+    body: "Hi {client}! Our records show {pet}'s {vaccine} vaccine expires on {expires}. When it's renewed, please text a photo of the new certificate to {business_phone}. Thank you! 🐾 {business}",
+  },
+  {
     trigger: "review_request",
     offset_minutes: 30,
     email_subject: "How did we do?",

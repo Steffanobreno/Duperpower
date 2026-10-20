@@ -6,7 +6,7 @@ import { minutesLabel, money, sizeLabel } from "@/lib/format";
 import { Dog } from "@/components/icons";
 import type { FormState } from "./actions";
 
-type Pet = { id: string; name: string; breed: string | null; size_class: string | null };
+type Pet = { id: string; name: string; breed: string | null; size_class: string | null; vaccineAlert?: string | null };
 type Service = {
   id: string;
   name: string;
@@ -79,6 +79,7 @@ export function BookingForm({
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-bold">{pet.name}</span>
                 <span className="block truncate text-sm text-muted">{[pet.breed, sizeLabel(pet.size_class)].filter(Boolean).join(" · ")}</span>
+                {pet.vaccineAlert && <span className="block text-xs font-semibold text-danger">💉 {pet.vaccineAlert}</span>}
               </span>
               <input
                 type="checkbox"

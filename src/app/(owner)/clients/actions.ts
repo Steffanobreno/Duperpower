@@ -198,3 +198,30 @@ export async function deleteNoteAction(clientId: string, noteId: string) {
             where n.id = ${noteId} and c.id = n.client_id and c.business_id = ${staff.businessId}`;
   revalidatePath(`/clients/${clientId}`);
 }
+
+export async function addVaccineAction(clientId: string, petId: string, _: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const name = String(form.get("name") ?? "").trim().slice(0, 60);
+  const expires = String(form.get("expires_on") ?? "");
+  const given = String(form.get("given_on") ?? "");
+  if (!name) return { error: "Pick the vaccine." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(expires)) return { error: "Type when it expires (it's on the certificate)." };
+  if (given && !/^\d{4}-\d{2}-\d{2}$/.test(given)) return { error: "Check the date it was given." };
+  const [ok] = await sql`
+    insert into vaccines (pet_id, name, given_on, expires_on)
+    select p.id, ${name}, ${given || null}, ${expires} from pets p join clients c on c.id = p.client_id
+    where p.id = ${petId} and c.business_id = ${staff.businessId}
+    returning id`;
+  if (!ok) return { error: "Pet not found." };
+  revalidatePath(`/clients/${clientId}/pets/${petId}`);
+  revalidatePath(`/clients/${clientId}`);
+  return undefined;
+}
+
+export async function deleteVaccineAction(clientId: string, petId: string, vaccineId: string) {
+  const staff = await requireStaff();
+  await sql`delete from vaccines v using pets p, clients c
+            where v.id = ${vaccineId} and p.id = v.pet_id and c.id = p.client_id and c.business_id = ${staff.businessId}`;
+  revalidatePath(`/clients/${clientId}/pets/${petId}`);
+  revalidatePath(`/clients/${clientId}`);
+}

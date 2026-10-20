@@ -6,7 +6,8 @@ import { clientHistory, clientSummary, fullAddress, fullName, getClient, listCli
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
 import { Chat, Phone } from "@/components/icons";
 import { methodLabel } from "@/lib/payment-methods";
-import { dayLabel, isUuid, money, phoneLabel, sizeLabel, timeLabel } from "@/lib/format";
+import { dayLabel, isUuid, money, phoneLabel, sizeLabel, timeLabel, todayYmd } from "@/lib/format";
+import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { sql } from "@/lib/db";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { addNoteAction, deleteNoteAction, setClientControlAction } from "../actions";
@@ -30,6 +31,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
     sql<{ id: string; name: string }[]>`select id, name from pets where client_id = ${id} and deceased_at is not null order by name`,
   ]);
   if (!client) notFound();
+  const vaccines = await vaccineAlerts(staff, pets.map((p) => p.id), todayYmd(staff.timezone));
   const signature = agreement ? await currentSignature(agreement, id) : null;
   const address = fullAddress(client);
   const tz = staff.timezone;
@@ -169,6 +171,9 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
                     <div className="min-w-0">
                       <div className="font-semibold">{p.name}</div>
                       <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                      {vaccines.filter((v) => v.pet_id === p.id).map((v) => (
+                        <div key={v.name} className={`text-xs font-semibold ${v.expired ? "text-danger" : "text-warn"}`}>💉 {alertText(v)}</div>
+                      ))}
                       {p.behavior && <div className="mt-1 text-sm text-warn">{p.behavior}</div>}
                     </div>
                   </Link>

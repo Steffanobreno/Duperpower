@@ -26,7 +26,8 @@ export type Trigger =
   | "cancelled"
   | "on_my_way"
   | "rebook"
-  | "review_request";
+  | "review_request"
+  | "vaccine_due";
 
 type Template = {
   body: string;
@@ -235,7 +236,24 @@ export async function queueDueMessages(businessId: string) {
     }
   }
 
-  // 3. Review request, a while after checkout (only when a review link is set).
+  // 3. Vaccine reminders: N days before a pet's vaccine expires, once per expiry date.
+  const vaccine = on ? await template(businessId, "vaccine_due") : null;
+  if (vaccine && nowLocal >= (vaccine.send_at_time ?? "00:00")) {
+    const due = await sql<{ id: string; name: string; expires: string; pet: string; client_id: string }[]>`
+      select v.id, v.name, to_char(v.expires_on, 'YYYY-MM-DD') as expires, p.name as pet, c.id as client_id
+      from vaccines v join pets p on p.id = v.pet_id join clients c on c.id = p.client_id
+      where c.business_id = ${businessId} and v.alert_enabled and p.deceased_at is null and c.archived_at is null
+        and v.expires_on between ${today}::date and ${addDaysYmd(today, vaccine.offset_days ?? 30)}::date
+        -- skip it when a newer record of the same vaccine is already on file
+        and not exists (select 1 from vaccines n where n.pet_id = v.pet_id and lower(n.name) = lower(v.name) and n.expires_on > v.expires_on)`;
+    for (const v of due) {
+      const c = await clientContext(v.client_id, new Date());
+      const expires = formatInTimeZone(new Date(`${v.expires}T12:00:00Z`), "UTC", "MMM d, yyyy");
+      if (c) await enqueue(c, "vaccine_due", vaccine, `vaccine:${v.id}:${v.expires}`, { pet: v.pet, vaccine: v.name, expires });
+    }
+  }
+
+  // 4. Review request, a while after checkout (only when a review link is set).
   const review = await template(businessId, "review_request");
   if (review) {
     const minutes = review.offset_minutes ?? 30;

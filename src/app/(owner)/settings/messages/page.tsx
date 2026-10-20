@@ -23,6 +23,7 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
   on_my_way: { title: "On my way", when: "You send it with the button on the appointment" },
   rebook: { title: "Time to rebook", when: "When the pet's grooming frequency has passed, at a set time" },
   review_request: { title: "Review request", when: "Minutes after checkout (needs the review link)" },
+  vaccine_due: { title: "Vaccine expiring", when: "Days before a pet's vaccine expires, at a set time" },
 };
 const ORDER = Object.keys(TEMPLATE_INFO);
 
@@ -114,7 +115,7 @@ export default async function MessagesSettingsPage() {
           </div>
           <p className="px-1 text-xs text-muted">
             You can use {"{client}"}, {"{pet}"}, {"{date}"}, {"{time}"}, {"{link}"} (confirm or cancel page), {"{booking_url}"},{" "}
-            {"{business}"}, {"{business_phone}"}, {"{days}"} and {"{review_url}"}.
+            {"{business}"}, {"{business_phone}"}, {"{days}"}, {"{review_url}"}, and in the vaccine message {"{vaccine}"} and {"{expires}"}.
           </p>
           {templates.map((t) => {
             const info = TEMPLATE_INFO[t.trigger] ?? { title: t.trigger, when: "" };
@@ -131,12 +132,17 @@ export default async function MessagesSettingsPage() {
                       <input type="checkbox" name="enabled" defaultChecked={t.enabled} className="h-4 w-4" />
                       Send this message
                     </label>
+                    {t.trigger === "vaccine_due" && (
+                      <Field label="Days before it expires">
+                        <Input name="offset_days" type="number" min={1} max={90} defaultValue={t.offset_days ?? 30} />
+                      </Field>
+                    )}
                     {t.trigger === "reminder" && (
                       <Field label="Days before the visit">
                         <Input name="offset_days" type="number" min={0} max={14} defaultValue={t.offset_days ?? 2} />
                       </Field>
                     )}
-                    {(t.trigger === "reminder" || t.trigger === "rebook") && (
+                    {(t.trigger === "reminder" || t.trigger === "rebook" || t.trigger === "vaccine_due") && (
                       <Field label="Send at">
                         <Input name="send_at_time" type="time" defaultValue={t.send_at_time ?? "10:00"} />
                       </Field>

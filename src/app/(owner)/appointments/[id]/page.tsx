@@ -14,6 +14,7 @@ import { NEXT_STATUS } from "@/lib/appointment-status";
 import { ruleLabel, type RepeatRule } from "@/lib/repeat";
 import { assignGroomerAction, setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { listGroomers } from "@/lib/data/staff";
+import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { RescheduleForm } from "../reschedule-form";
 import { PetPhoto } from "@/components/pet-photo";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
@@ -53,7 +54,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const appt = await getAppointment(staff, id);
   if (!appt) notFound();
-  const [checkout, onMyWay, messages, [series], groomers] = await Promise.all([
+  const [checkout, onMyWay, messages, [series], groomers, vaccines] = await Promise.all([
     getInvoiceForAppointment(staff, id),
     smsTextFor(id, "on_my_way"),
     sql<{ id: string; channel: string; status: string; template_trigger: string | null; created_at: Date }[]>`
@@ -66,6 +67,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
            and x.status in ('unconfirmed', 'confirmed')) as upcoming
       from appointment_series s where s.id = ${appt.series_id ?? null}::uuid`,
     listGroomers(staff),
+    vaccineAlerts(staff, appt.pets.map((p) => p.pet_id), ymd(appt.start_at, staff.timezone)),
   ]);
   const groomer = groomers.find((g) => g.id === appt.staff_id);
   const otherGroomers = groomers.filter((g) => g.active && g.id !== appt.staff_id);
@@ -213,6 +215,16 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                   <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
                 </div>
               </div>
+              {vaccines.some((v) => v.pet_id === p.pet_id) && (
+                <div className="space-y-1 px-4 py-3">
+                  {vaccines.filter((v) => v.pet_id === p.pet_id).map((v) => (
+                    <Notice key={v.name} kind={v.expired ? "error" : "warn"}>
+                      💉 {alertText(v)}{v.expired ? " — ask for the new certificate" : ""}
+                    </Notice>
+                  ))}
+                  <Link href={`/clients/${c.id}/pets/${p.pet_id}`} className="block text-xs font-semibold text-brand">Update vaccines</Link>
+                </div>
+              )}
               {(p.behavior || p.notes) && (
                 <div className="space-y-2 px-4 py-3">
                   {p.behavior && <Notice kind="warn">{p.behavior}</Notice>}
