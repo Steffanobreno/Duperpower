@@ -1,7 +1,7 @@
 import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
-import { dayRangeUtc, addDaysYmd } from "../format";
+import { dayRangeUtc, addDaysYmd, isUuid } from "../format";
 import { zipMiles } from "../geo/zip";
 
 export type AppointmentListItem = {
@@ -107,6 +107,7 @@ export type AppointmentDetail = {
 };
 
 export async function getAppointment(staff: StaffContext, id: string) {
+  if (!isUuid(id)) return null;
   const [row] = await sql<AppointmentDetail[]>`
     select a.id, a.start_at, a.end_at, a.status, a.notes, a.address_line, a.zip, a.lat, a.lng, a.series_id,
       a.staff_id, a.checked_in_at, a.checked_out_at, a.reschedule_requested_at, a.reschedule_note,
@@ -151,7 +152,7 @@ export async function tooFarFromDay(staff: StaffContext, date: string, zip: stri
   const limit = Number(biz?.max_cluster_miles ?? 25);
   const others = await sql<{ zip: string | null; client: string }[]>`
     select a.zip, c.first_name as client from appointments a join clients c on c.id = a.client_id
-    where a.business_id = ${staff.businessId} and a.start_at >= ${start} and a.start_at < ${end}
+    where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId} and a.start_at >= ${start} and a.start_at < ${end}
       and a.status in ('requested', 'unconfirmed', 'confirmed', 'en_route', 'in_progress', 'completed')
       and (${excludeId ?? null}::uuid is null or a.id <> ${excludeId ?? null})`;
   let worst: { miles: number; client: string } | null = null;

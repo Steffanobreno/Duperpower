@@ -46,6 +46,9 @@ export function dayRangeUtc(date: string, tz: string) {
   return { start: zonedToUtc(date, "00:00", tz), end: zonedToUtc(addDaysYmd(date, 1), "00:00", tz) };
 }
 
+export const isUuid = (s: unknown): s is string =>
+  typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 export const isYmd = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 /** Formats an E.164 US number as (650) 555-0123 for display. */

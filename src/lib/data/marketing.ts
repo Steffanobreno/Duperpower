@@ -116,7 +116,7 @@ export async function sendCampaignBatch(campaignId: string, max = 8) {
     const batch = await sql<{ id: string; email: string; token: string; first_name: string; pet_name: string | null }[]>`
       update campaign_recipients r set status = 'skipped', error = 'sending', sent_at = now()
       from clients cl
-      where cl.id = r.client_id and r.id in (
+      where cl.id = r.client_id and cl.email_unsubscribed_at is null and r.id in (
         select id from campaign_recipients where campaign_id = ${c.id} and status = 'queued'
         order by email limit ${room} for update skip locked)
       returning r.id, r.email, cl.marketing_token as token, cl.first_name,

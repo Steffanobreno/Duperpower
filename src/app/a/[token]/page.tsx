@@ -13,8 +13,9 @@ import { cancelByTokenAction, confirmByTokenAction, requestRescheduleByTokenActi
 
 export const metadata: Metadata = { title: "Your appointment", robots: { index: false } };
 
-export default async function ClientAppointmentPage({ params }: PageProps<"/a/[token]">) {
+export default async function ClientAppointmentPage({ params, searchParams }: PageProps<"/a/[token]">) {
   const { token } = await params;
+  const sp = await searchParams;
   if (!/^[0-9a-f]{24}$/.test(token)) notFound();
   const [a] = await sql<
     {
@@ -87,6 +88,13 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
         {a.status === "confirmed" && <Notice kind="success">Confirmed. See you then! 🐾</Notice>}
         {a.status === "cancelled" && <Notice kind="warn">This appointment is cancelled.</Notice>}
         {a.status === "completed" && <Notice kind="success">All done. Thank you!</Notice>}
+        {a.status === "en_route" && <Notice kind="success">We&apos;re on our way to you! 🚐</Notice>}
+        {a.status === "in_progress" && <Notice kind="success">Grooming in progress. 🛁</Notice>}
+        {a.status === "declined" && <Notice kind="warn">Sorry, we couldn&apos;t take this request. Please pick another time.</Notice>}
+        {a.status === "no_show" && <Notice kind="warn">We missed you at this visit. Text us to book a new time.</Notice>}
+        {sp.needSign && a.status === "unconfirmed" && (
+          <Notice kind="error">Please tick the box and type your full name to sign, then confirm.</Notice>
+        )}
 
         {calendar && (
           <div className="grid grid-cols-2 gap-2">
@@ -158,17 +166,19 @@ export default async function ClientAppointmentPage({ params }: PageProps<"/a/[t
             </form>
           </details>
         )}
-        {a.status === "cancelled" && (
+        {(a.status === "cancelled" || a.status === "declined") && (
           <ButtonLink href={bookingUrl(a)} className="w-full rounded-full py-4 text-lg">
             Book a new time
           </ButtonLink>
         )}
-        <p className="text-center text-sm text-muted">
-          Questions? Text{" "}
-          <a className="underline" href={`sms:${a.phone}`}>
-            {phone}
-          </a>
-        </p>
+        {a.phone && (
+          <p className="text-center text-sm text-muted">
+            Questions? Text{" "}
+            <a className="underline" href={`sms:${a.phone}`}>
+              {phone}
+            </a>
+          </p>
+        )}
       </StepCard>
     </ClientShell>
   );

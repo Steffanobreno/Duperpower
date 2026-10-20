@@ -1,14 +1,14 @@
 // Groomers and backups, end to end. Run after slice.mjs (it reuses Maria Lopez, the client).
 // Add a groomer → book the same time for the owner and for her (no clash: separate routes) →
 // calendar and Today filter by groomer → give a visit to another groomer → backup files.
-// Usage: DEVICE_KEY=... node tests/e2e/team-backup.mjs [baseUrl] [screenshotDir]
+// Usage: BACKUP_KEY=... node tests/e2e/team-backup.mjs [baseUrl] [screenshotDir]
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const SHOTS = process.argv[3] ?? "replica/clone-screens";
-const KEY = process.env.DEVICE_KEY;
-if (!KEY) throw new Error("Set DEVICE_KEY");
+const KEY = process.env.BACKUP_KEY;
+if (!KEY) throw new Error("Set BACKUP_KEY");
 mkdirSync(SHOTS, { recursive: true });
 
 const browser = await chromium.launch({
@@ -61,6 +61,7 @@ await page.getByText("Groomer Jess").waitFor();
 step("booked 10:00 for Steffano and for Jess the same day, no clash");
 
 await page.goto(`${BASE}/calendar?view=day&date=${date}`);
+await page.getByRole("link", { name: /Maria Lopez/ }).nth(1).waitFor({ timeout: 10_000 }).catch(() => {});
 if ((await page.getByRole("link", { name: /Maria Lopez/ }).count()) !== 2) fail("All should show both visits");
 await page.getByRole("navigation", { name: "Groomer" }).getByRole("link", { name: "Jess" }).click();
 await page.waitForURL(/groomer=/);

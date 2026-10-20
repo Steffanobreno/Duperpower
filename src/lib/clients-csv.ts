@@ -6,7 +6,8 @@ import { sql } from "./db";
 // so an export can be imported again (or opened in Excel / Google Sheets).
 
 const cell = (v: unknown) => {
-  const s = v == null ? "" : String(v);
+  // A name typed as "=HYPERLINK(...)" must not run as a formula in Excel / Sheets.
+  const s = v == null ? "" : String(v).replace(/^[=+\-@\t\r]/, "'$&");
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

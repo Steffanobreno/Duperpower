@@ -2,14 +2,18 @@ import { formatInTimeZone } from "date-fns-tz";
 import { buildBackup } from "@/lib/backup";
 import { clientsCsv } from "@/lib/clients-csv";
 import { sql } from "@/lib/db";
-import { businessForDeviceKey } from "@/lib/device";
+
 
 // Read once a week by the Google Apps Script in Settings → Backups, which saves the files
 // in a "Woofers backups" folder on the Woofers Google Drive.
 // ?file=data → everything as JSON; ?file=clients → the client list as a spreadsheet (CSV).
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const business = await businessForDeviceKey(url.searchParams.get("key"));
+  // Its own key (not the iPhone / calendar one): this file has every client's details.
+  const key = url.searchParams.get("key") ?? "";
+  const [business] = key.length >= 32
+    ? await sql<{ id: string; timezone: string }[]>`select id, timezone from businesses where backup_key = ${key}`
+    : [];
   if (!business) return new Response("Unknown key", { status: 401 });
   const stamp = formatInTimeZone(new Date(), business.timezone, "yyyy-MM-dd");
   if (url.searchParams.get("file") === "clients") {

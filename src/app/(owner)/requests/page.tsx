@@ -22,7 +22,7 @@ export default async function RequestsPage() {
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
         where ap.appointment_id = a.id), 0)::int as total_cents
     from appointments a join clients c on c.id = a.client_id
-    where a.business_id = ${staff.businessId} and a.status = 'requested'
+    where a.business_id = ${staff.businessId} and a.status = 'requested' and a.start_at > now() -- past ones expired
     order by a.start_at`;
   const reschedules = await sql<{ id: string; start_at: Date; client: string; phone: string; reschedule_note: string | null }[]>`
     select a.id, a.start_at, a.reschedule_note, trim(c.first_name || ' ' || c.last_name) as client, c.phone

@@ -206,7 +206,8 @@ export async function queueDueMessages(businessId: string) {
         (select min(p.rebook_every_days) from appointment_pets ap join pets p on p.id = ap.pet_id
           where ap.appointment_id = last.id) as days
       from last
-      where not exists (select 1 from appointments f where f.client_id = last.client_id and f.start_at > now()
+      where not exists (select 1 from clients c where c.id = last.client_id and c.archived_at is not null)
+        and not exists (select 1 from appointments f where f.client_id = last.client_id and f.start_at > now()
                           and f.status in ('requested', 'unconfirmed', 'confirmed'))`;
     for (const r of rows) {
       if (!r.days) continue;

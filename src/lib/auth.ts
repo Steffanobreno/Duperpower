@@ -40,14 +40,27 @@ async function startSession(userId: string) {
   });
 }
 
+/** Too many wrong passwords for this email lately. */
+export async function loginLocked(email: string) {
+  const [r] = await sql`select count(*)::int as n from login_failures
+                        where email = ${email.trim().toLowerCase()} and at > now() - interval '15 minutes'`;
+  return r.n >= 8;
+}
+
 /** Returns true when the email and password match a user, and logs them in. */
 export async function login(email: string, password: string) {
-  const [user] = await sql`select id, password_hash from users where email = ${email.trim().toLowerCase()}`;
+  const address = email.trim().toLowerCase();
+  const [user] = await sql`select id, password_hash from users where email = ${address}`;
   // Hash anyway when the user does not exist so timing does not reveal valid emails.
   const ok = user
     ? await verifyPassword(password, user.password_hash)
     : (await hashPassword(password), false);
-  if (!ok) return false;
+  if (!ok) {
+    await sql`insert into login_failures (email) values (${address})`;
+    await sql`delete from login_failures where at < now() - interval '1 day'`;
+    return false;
+  }
+  await sql`delete from login_failures where email = ${address}`;
   await startSession(user.id);
   return true;
 }

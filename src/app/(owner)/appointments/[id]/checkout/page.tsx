@@ -13,8 +13,7 @@ import {
   removeInvoiceItemAction,
   reopenInvoiceAction,
   saveVisitTimesAction,
-  startCheckoutAction,
-} from "../../actions";
+  startCheckoutAction, deletePaymentAction } from "../../actions";
 import { PaymentForm } from "../../payment-form";
 
 export const metadata: Metadata = { title: "Invoice" };
@@ -159,6 +158,12 @@ export default async function CheckoutPage({ params }: PageProps<"/appointments/
                   <div className="text-right">
                     <div className="font-semibold">{money(p.amount_cents + p.tip_cents)}</div>
                     {p.tip_cents > 0 && <div className="text-muted">incl. {money(p.tip_cents)} tip</div>}
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-xs font-semibold text-danger">Remove</summary>
+                      <form action={deletePaymentAction.bind(null, id, p.id)}>
+                        <button type="submit" className="mt-1 rounded-lg bg-danger px-2 py-1 text-xs font-bold text-white">Yes, remove it</button>
+                      </form>
+                    </details>
                   </div>
                 </li>
               ))}

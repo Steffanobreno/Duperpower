@@ -24,7 +24,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const [day, [{ requests }], groomers] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
-      select count(*)::int as requests from appointments where business_id = ${staff.businessId} and status = 'requested'`,
+      select count(*)::int as requests from appointments
+      where business_id = ${staff.businessId} and status = 'requested' and start_at > now()`,
     listGroomers(staff, { activeOnly: true }),
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.

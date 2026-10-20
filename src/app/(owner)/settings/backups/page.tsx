@@ -9,11 +9,11 @@ export const metadata: Metadata = { title: "Backups" };
 
 export default async function BackupsPage() {
   const staff = await requireStaff();
-  const [b] = await sql<{ device_key: string; backup_at: Date | null; stale: boolean }[]>`
-    select device_key, backup_at, coalesce(backup_at < now() - interval '8 days', true) as stale
+  const [b] = await sql<{ backup_key: string; backup_at: Date | null; stale: boolean }[]>`
+    select backup_key, backup_at, coalesce(backup_at < now() - interval '8 days', true) as stale
     from businesses where id = ${staff.businessId}`;
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
-  const script = backupScript(`${appUrl}/api/device/backup?key=${b.device_key}`, staff.timezone);
+  const script = backupScript(`${appUrl}/api/device/backup?key=${b.backup_key}`, staff.timezone);
   const when = b.backup_at?.toLocaleString("en-US", { timeZone: staff.timezone, dateStyle: "medium", timeStyle: "short" });
   return (
     <>

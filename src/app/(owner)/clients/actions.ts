@@ -182,3 +182,19 @@ export async function setClientControlAction(
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
 }
+
+/** Marks a pet as passed away (or undoes it): hidden from booking, lists and reminders. */
+export async function setPetPassedAction(clientId: string, petId: string, passed: boolean) {
+  const staff = await requireStaff();
+  await sql`update pets p set deceased_at = ${passed ? new Date() : null}
+            from clients c where c.id = p.client_id and p.id = ${petId} and c.business_id = ${staff.businessId}`;
+  revalidatePath(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}`);
+}
+
+export async function deleteNoteAction(clientId: string, noteId: string) {
+  const staff = await requireStaff();
+  await sql`delete from client_notes n using clients c
+            where n.id = ${noteId} and c.id = n.client_id and c.business_id = ${staff.businessId}`;
+  revalidatePath(`/clients/${clientId}`);
+}

@@ -178,8 +178,11 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
   const date = String(form.get("date") ?? "");
   const time = String(form.get("time") ?? "");
   if (!isYmd(date) || !/^\d{2}:\d{2}$/.test(time)) return { error: "Pick a date and a start time." };
-  const [appt] = await sql`select start_at, end_at, zip, staff_id from appointments where id = ${appointmentId} and business_id = ${me.businessId}`;
+  const [appt] = await sql`select start_at, end_at, zip, staff_id, status from appointments where id = ${appointmentId} and business_id = ${me.businessId}`;
   if (!appt) return { error: "Appointment not found." };
+  if (!["requested", "unconfirmed", "confirmed"].includes(appt.status)) {
+    return { error: "This visit already started or is closed. Book a new one instead." };
+  }
   const staff = asGroomer(me, appt.staff_id);
   const startAt = zonedToUtc(date, time, staff.timezone);
   const endAt = new Date(startAt.getTime() + (appt.end_at.getTime() - appt.start_at.getTime()));
@@ -436,4 +439,22 @@ export async function assignGroomerAction(appointmentId: string, form: FormData)
   revalidatePath("/today");
   revalidatePath("/calendar");
   revalidatePath(`/appointments/${appointmentId}`);
+}
+
+/** Removes a payment typed by mistake; the bill opens again if it's no longer covered. */
+export async function deletePaymentAction(appointmentId: string, paymentId: string) {
+  const staff = await requireStaff();
+  await sql.begin(async (tx) => {
+    const [p] = await tx`
+      select p.invoice_id from payments p join invoices i on i.id = p.invoice_id
+      where p.id = ${paymentId} and i.business_id = ${staff.businessId} and i.appointment_id = ${appointmentId}`;
+    if (!p) return;
+    await tx`delete from payments where id = ${paymentId}`;
+    await recalcInvoice(tx, p.invoice_id);
+    await tx`update invoices set status = 'open', closed_at = null
+             where id = ${p.invoice_id} and status = 'closed' and paid_cents < total_cents`;
+  });
+  revalidatePath(`/appointments/${appointmentId}`);
+  revalidatePath(`/appointments/${appointmentId}/checkout`);
+  revalidatePath("/reports");
 }

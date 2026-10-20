@@ -1,7 +1,7 @@
 import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
-import { addDaysYmd, dayRangeUtc, hm, ymd } from "../format";
+import { addDaysYmd, dayRangeUtc, hm, isUuid, ymd } from "../format";
 
 export type TimeOff = { id: string; start_at: Date; end_at: Date; reason: string | null; series_id: string | null; staff_id?: string };
 
@@ -17,6 +17,7 @@ export function listTimeOff(staff: StaffContext, from: string, count: number, gr
 }
 
 export async function getTimeOff(staff: StaffContext, id: string) {
+  if (!isUuid(id)) return null;
   const [row] = await sql<TimeOff[]>`
     select t.id, t.start_at, t.end_at, t.reason, t.series_id, t.staff_id from time_off t join staff s on s.id = t.staff_id
     where t.id = ${id} and s.business_id = ${staff.businessId}`;

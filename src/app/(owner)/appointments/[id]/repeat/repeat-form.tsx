@@ -128,7 +128,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, initial, repe
           </ol>
         </Card>
         {repeating && (
-          <Notice kind="warn">Saving replaces the later visits of this repeat that are still just booked (not checked in or paid).</Notice>
+          <Notice kind="warn">Saving replaces the later visits of this repeat that the client hasn&apos;t confirmed yet. Confirmed, checked-in and paid visits stay.</Notice>
         )}
         <Button type="submit" disabled={saving || dates.length < 2} className="w-full py-3.5 text-base">
           {saving ? "Booking…" : `Save and book ${Math.max(dates.length - 1, 0)} more`}

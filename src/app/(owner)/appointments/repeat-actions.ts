@@ -6,8 +6,8 @@ import { hm, isYmd, ymd, zonedToUtc } from "@/lib/format";
 import { MAX_VISITS, repeatDates, type RepeatRule } from "@/lib/repeat";
 
 // Repeating a visit: books copies of it (same time, pets and services) on every date of the
-// rule. Changing the rule replaces the later copies that are still just booked; visits that
-// were checked in, paid or moved by hand are left alone. A date that is taken is skipped and
+// rule. Changing the rule replaces the later copies that are still just booked; visits the
+// client confirmed, checked in or paid are left alone. A date that is taken is skipped and
 // reported, so the owner can book that one at another time.
 
 export type RepeatState = {
@@ -33,13 +33,13 @@ function readRule(form: FormData): RepeatRule | string {
   return { freq, every, count: null, until };
 }
 
-/** Later copies in this visit's series that can still be replaced: just booked, not paid. */
+/** Later copies in this visit's series that can still be replaced: not confirmed yet, not paid. */
 async function replaceable(staff: StaffContext, a: { id: string; series_id: string | null; start_at: Date }) {
   if (!a.series_id) return [] as string[];
   const rows = await sql<{ id: string }[]>`
     select x.id from appointments x
     where x.business_id = ${staff.businessId} and x.series_id = ${a.series_id} and x.start_at > ${a.start_at}
-      and x.status in ('unconfirmed', 'confirmed')
+      and x.status = 'unconfirmed' -- a visit the client already confirmed stays
       and not exists (select 1 from invoices i where i.appointment_id = x.id)`;
   return rows.map((r) => r.id);
 }

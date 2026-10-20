@@ -15,6 +15,7 @@ const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\
 
 async function own(id: string) {
   const staff = await requireStaff();
+  if (!/^[0-9a-f-]{36}$/.test(id)) return { staff, c: null };
   const [c] = await sql`select * from campaigns where id = ${id} and business_id = ${staff.businessId}`;
   return { staff, c: c ?? null };
 }

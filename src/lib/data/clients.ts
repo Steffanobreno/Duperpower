@@ -1,6 +1,7 @@
 import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
+import { isUuid } from "../format";
 
 export type ClientRow = {
   id: string;
@@ -39,6 +40,7 @@ export type PetRow = {
   behavior: string | null;
   vet_name: string | null;
   vet_phone: string | null;
+  deceased_at: Date | null;
   notes: string | null;
   rebook_every_days: number | null;
   photo_version: string | null;
@@ -50,7 +52,7 @@ export const fullName = (c: { first_name: string; last_name: string }) =>
 export const fullAddress = (c: Pick<ClientRow, "address_line" | "city" | "state" | "zip">) =>
   [c.address_line, c.city, [c.state, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 
-export async function listClients(staff: StaffContext, q: string) {
+export async function listClients(staff: StaffContext, q: string, inactive = false) {
   const term = q.trim();
   const like = `%${term}%`;
   const digits = term.replace(/\D/g, "");
@@ -63,7 +65,7 @@ export async function listClients(staff: StaffContext, q: string) {
       (c.imported_last_service_at is null and not exists (
          select 1 from appointments a where a.client_id = c.id and a.status = 'completed')) as is_new
     from clients c
-    where c.business_id = ${staff.businessId} and c.archived_at is null
+    where c.business_id = ${staff.businessId} and (c.archived_at is not null) = ${inactive}
       and (${term} = ''
            or c.first_name || ' ' || c.last_name ilike ${like}
            or (${digits} <> '' and c.phone like ${"%" + digits + "%"})
@@ -82,6 +84,7 @@ export async function clientCounts(staff: StaffContext) {
 }
 
 export async function getClient(staff: StaffContext, id: string) {
+  if (!isUuid(id)) return null;
   const [client] = await sql<ClientRow[]>`
     select * from clients where id = ${id} and business_id = ${staff.businessId}`;
   return client ?? null;
@@ -97,6 +100,7 @@ export async function listPets(staff: StaffContext, clientId: string) {
 }
 
 export async function getPet(staff: StaffContext, petId: string) {
+  if (!isUuid(petId)) return null;
   const [pet] = await sql<PetRow[]>`
     select p.*, p.birth_date::text as birth_date,
       (select ph.updated_at::text from pet_photos ph where ph.pet_id = p.id) as photo_version

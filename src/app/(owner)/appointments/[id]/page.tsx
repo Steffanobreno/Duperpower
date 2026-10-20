@@ -83,6 +83,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
   const rebookWeeks = Math.round(rebookDays / 7);
   const canChange = !closed && appt.status !== "completed";
+  const canMove = ["requested", "unconfirmed", "confirmed"].includes(appt.status); // not once on the way
   const pillar = "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 text-xs font-semibold text-brand hover:bg-brand-soft";
 
   return (
@@ -134,7 +135,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
             <a href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className={pillar}><Van size={22} />On my way</a>
           )}
-          {canChange && <a href="#reschedule" className={pillar}><Calendar size={22} />Reschedule</a>}
+          {canMove && <a href="#reschedule" className={pillar}><Calendar size={22} />Reschedule</a>}
           {canChange && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
           <Link href={`/appointments/new?client=${c.id}&date=${nextDate}&time=${hm(appt.start_at, tz)}`} className={pillar}>
             <Plus size={22} />Book again
@@ -163,7 +164,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
               <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}</p>
             </div>
-            {canChange && <a href="#reschedule" aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></a>}
+            {canMove && <a href="#reschedule" aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></a>}
           </div>
           {(groomers.length > 1 || appt.staff_id !== staff.staffId) && groomer && (
             <div className="card space-y-2 px-4 py-3">
@@ -269,7 +270,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           </form>
         </section>
 
-        {canChange && (
+        {canMove && (
           <section className="scroll-mt-20 space-y-2" id="reschedule">
             <h2 className="section-label">Reschedule</h2>
             <Card>

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { audience, cleanFilters, clientCities } from "@/lib/data/marketing";
-import { dayLabel, phoneLabel, timeLabel, todayYmd } from "@/lib/format";
+import { dayLabel, isUuid, phoneLabel, timeLabel, todayYmd } from "@/lib/format";
 import { marketingEmailHtml } from "@/lib/marketing-email";
 import { MARKETING_TEMPLATES } from "@/lib/marketing-templates";
 import { Button, Card, Notice, Page, PageHeader } from "@/components/ui";
@@ -29,6 +29,7 @@ const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\
 export default async function CampaignPage({ params, searchParams }: PageProps<"/marketing/[id]">) {
   const staff = await requireStaff();
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const sp = await searchParams;
   const tz = staff.timezone;
   const [[c], [b]] = await Promise.all([

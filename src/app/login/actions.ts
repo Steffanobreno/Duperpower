@@ -1,12 +1,13 @@
 "use server";
 import { redirect } from "next/navigation";
-import { createOwner, hasAnyUser, login, logout } from "@/lib/auth";
+import { createOwner, hasAnyUser, login, loginLocked, logout } from "@/lib/auth";
 
 export type FormState = { error?: string } | undefined;
 
 export async function loginAction(_: FormState, form: FormData): Promise<FormState> {
   const email = String(form.get("email") ?? "");
   const password = String(form.get("password") ?? "");
+  if (await loginLocked(email)) return { error: "Too many wrong tries. Wait 15 minutes and try again." };
   if (!(await login(email, password))) return { error: "That email and password don't match." };
   redirect("/today");
 }

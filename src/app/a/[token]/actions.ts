@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { sql } from "@/lib/db";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
@@ -16,7 +17,7 @@ export async function confirmByTokenAction(token: string, form: FormData) {
   const agreement = await activeAgreement(appt.business_id);
   if (agreement && !(await currentSignature(agreement, appt.client_id))) {
     const name = String(form.get("signature") ?? "").trim();
-    if (form.get("agree") !== "on" || name.length < 3) return revalidatePath(`/a/${token}`);
+    if (form.get("agree") !== "on" || name.length < 3) redirect(`/a/${token}?needSign=1`);
     await recordSignature(sql, agreement, appt.client_id, name);
   }
   const [done] = await sql`

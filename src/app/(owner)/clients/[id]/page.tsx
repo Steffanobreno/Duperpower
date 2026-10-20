@@ -6,9 +6,10 @@ import { clientHistory, clientSummary, fullAddress, fullName, getClient, listCli
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
 import { Chat, Phone } from "@/components/icons";
 import { methodLabel } from "@/lib/payment-methods";
-import { dayLabel, money, phoneLabel, sizeLabel, timeLabel } from "@/lib/format";
+import { dayLabel, isUuid, money, phoneLabel, sizeLabel, timeLabel } from "@/lib/format";
+import { sql } from "@/lib/db";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
-import { addNoteAction, setClientControlAction } from "../actions";
+import { addNoteAction, deleteNoteAction, setClientControlAction } from "../actions";
 import { PetPhoto } from "@/components/pet-photo";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 
@@ -17,14 +18,16 @@ export const metadata: Metadata = { title: "Client" };
 export default async function ClientPage({ params }: PageProps<"/clients/[id]">) {
   const staff = await requireStaff();
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   // Everything at once: each round trip to the database adds a little wait.
-  const [client, pets, notes, history, agreement, summary] = await Promise.all([
+  const [client, pets, notes, history, agreement, summary, passed] = await Promise.all([
     getClient(staff, id),
     listPets(staff, id),
     listClientNotes(staff, id),
     clientHistory(staff, id),
     activeAgreement(staff.businessId),
     clientSummary(staff, id),
+    sql<{ id: string; name: string }[]>`select id, name from pets where client_id = ${id} and deceased_at is not null order by name`,
   ]);
   if (!client) notFound();
   const signature = agreement ? await currentSignature(agreement, id) : null;
@@ -147,6 +150,14 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
             <h2 className="section-label">Pets</h2>
             <ButtonLink kind="ghost" href={`/clients/${id}/pets/new`}>Add pet</ButtonLink>
           </div>
+          {passed.length > 0 && (
+            <p className="px-1 text-sm text-muted">
+              In memory 🌈{" "}
+              {passed.map((p, i) => (
+                <span key={p.id}>{i > 0 && ", "}<Link href={`/clients/${id}/pets/${p.id}`} className="underline">{p.name}</Link></span>
+              ))}
+            </p>
+          )}
           {pets.length === 0 ? (
             <Empty title="No pets yet">Add a pet before booking.</Empty>
           ) : (
@@ -250,10 +261,15 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
           {notes.map((n) => (
             <Card key={n.id} className="text-sm">
               <p className="whitespace-pre-line">{n.body}</p>
-              <p className="mt-1 text-xs text-muted">
-                {dayLabel(n.created_at, tz)} {timeLabel(n.created_at, tz)}
-                {n.staff_name ? ` · ${n.staff_name}` : ""}
-              </p>
+              <div className="mt-1 flex items-center justify-between text-xs text-muted">
+                <span>
+                  {dayLabel(n.created_at, tz)} {timeLabel(n.created_at, tz)}
+                  {n.staff_name ? ` · ${n.staff_name}` : ""}
+                </span>
+                <form action={deleteNoteAction.bind(null, id, n.id)}>
+                  <button type="submit" className="font-semibold text-danger">Delete</button>
+                </form>
+              </div>
             </Card>
           ))}
         </section>

@@ -35,7 +35,8 @@ export type LookupResult = { error?: string } & (KnownClient | { known: false; m
 const lookups = new Map<string, number[]>();
 async function tooManyLookups() {
   const h = await headers();
-  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "local";
+  // Netlify's own header can't be set by the browser; x-forwarded-for can.
+  const ip = h.get("x-nf-client-connection-ip") ?? ((h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "local");
   const now = Date.now();
   const recent = (lookups.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
   recent.push(now);
@@ -47,7 +48,7 @@ async function findClient(b: PublicBusiness, phone: string) {
   const [c] = await sql<{ id: string; first_name: string; city: string | null; zip: string | null; address_line: string | null; state: string | null;
                          online_booking_blocked: boolean }[]>`
     select id, first_name, city, zip, address_line, state, online_booking_blocked from clients
-    where business_id = ${b.id} and phone = ${phone} and archived_at is null`;
+    where business_id = ${b.id} and phone = ${phone}`; // inactive clients too: booking makes them active again
   return c ?? null;
 }
 
@@ -207,6 +208,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
       let clientId: string;
       if (existing) {
         clientId = existing.id;
+        await tx`update clients set archived_at = null where id = ${clientId} and archived_at is not null`;
         if (input.smsConsent) {
           await tx`update clients set sms_consent_at = coalesce(sms_consent_at, now()) where id = ${clientId} and sms_opted_out_at is null`;
         }
