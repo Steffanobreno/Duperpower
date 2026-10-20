@@ -225,3 +225,24 @@ export async function deleteVaccineAction(clientId: string, petId: string, vacci
   revalidatePath(`/clients/${clientId}/pets/${petId}`);
   revalidatePath(`/clients/${clientId}`);
 }
+
+/**
+ * Removes a client for good: their pets, visits, bills and payments, notes and signatures.
+ * Messages already sent stay in the log without the name. Can't be undone.
+ */
+export async function deleteClientAction(clientId: string) {
+  const staff = await requireStaff();
+  await sql.begin(async (tx) => {
+    const [c] = await tx`select id from clients where id = ${clientId} and business_id = ${staff.businessId} for update`;
+    if (!c) return;
+    await tx`delete from payments where invoice_id in (select id from invoices where client_id = ${clientId})`;
+    await tx`delete from invoices where client_id = ${clientId}`;
+    await tx`delete from appointments where client_id = ${clientId}`;
+    await tx`delete from clients where id = ${clientId}`;
+  });
+  revalidatePath("/clients");
+  revalidatePath("/calendar");
+  revalidatePath("/today");
+  revalidatePath("/reports");
+  redirect("/clients?removed=1");
+}

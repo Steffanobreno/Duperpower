@@ -10,7 +10,7 @@ import { dayLabel, isUuid, money, phoneLabel, sizeLabel, timeLabel, todayYmd } f
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { sql } from "@/lib/db";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
-import { addNoteAction, deleteNoteAction, setClientControlAction } from "../actions";
+import { addNoteAction, deleteClientAction, deleteNoteAction, setClientControlAction } from "../actions";
 import { PetPhoto } from "@/components/pet-photo";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 
@@ -255,6 +255,21 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
             <Toggle clientId={id} control="no_marketing" on={!!client.email_unsubscribed_at} label="No marketing emails" hint="Left out of email campaigns (they can unsubscribe themselves too)" />
           </div>
         </section>
+
+        <details className="card px-4 py-3">
+          <summary className="cursor-pointer font-semibold text-danger">Remove client</summary>
+          <div className="mt-3 space-y-3 text-sm">
+            <p>
+              This deletes {fullName(client)} for good, with {pets.length} pet{pets.length === 1 ? "" : "s"},{" "}
+              {history.length} visit{history.length === 1 ? "" : "s"}
+              {summary.paid + summary.tips > 0 ? ` and ${money(summary.paid + summary.tips)} in payments (they leave your reports)` : ""}.
+              It can&apos;t be undone. To just hide them, use <strong>Inactive customer</strong> above.
+            </p>
+            <form action={deleteClientAction.bind(null, id)}>
+              <button type="submit" className="w-full rounded-xl bg-danger py-3 font-bold text-white">Yes, remove {client.first_name} forever</button>
+            </form>
+          </div>
+        </details>
 
         <section className="space-y-2">
           <h2 className="section-label">Notes</h2>
