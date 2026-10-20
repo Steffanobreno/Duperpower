@@ -236,6 +236,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
             <Toggle clientId={id} control="inactive" on={!!client.archived_at} label="Inactive customer" hint="Hidden from the client list" />
             <Toggle clientId={id} control="block_messages" on={!!client.sms_opted_out_at} label="Block messages" hint="No automatic texts" />
             <Toggle clientId={id} control="block_online" on={client.online_booking_blocked} label="Block online booking" hint="They're asked to text you instead" />
+            <Toggle clientId={id} control="no_marketing" on={!!client.email_unsubscribed_at} label="No marketing emails" hint="Left out of email campaigns (they can unsubscribe themselves too)" />
           </div>
         </section>
 
@@ -262,7 +263,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
 }
 
 function Toggle({ clientId, control, on, label, hint }: {
-  clientId: string; control: "inactive" | "block_messages" | "block_online"; on: boolean; label: string; hint: string;
+  clientId: string; control: "inactive" | "block_messages" | "block_online" | "no_marketing"; on: boolean; label: string; hint: string;
 }) {
   return (
     <form action={setClientControlAction.bind(null, clientId, control, !on)}>

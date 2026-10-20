@@ -4,6 +4,7 @@ import { sql } from "./db";
 import { emailConfigured, sendEmail, type EmailDetails } from "./email";
 import { sendPush } from "./push";
 import { clientEvent } from "./client-calendar";
+import { processCampaigns } from "./data/marketing";
 import { addDaysYmd, dayRangeUtc, hm, money, phoneLabel, todayYmd, ymd } from "./format";
 
 // Every client message goes through here. A message is a row in `messages`:
@@ -345,6 +346,7 @@ export async function runMessagingJobs() {
   for (const b of businesses) {
     await queueDueMessages(b.id);
     await sendQueuedEmails(b.id);
+    await processCampaigns(b.id);
   }
 }
 

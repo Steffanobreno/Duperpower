@@ -20,6 +20,7 @@ export type ClientRow = {
   sms_opted_out_at: Date | null;
   archived_at: Date | null;
   online_booking_blocked: boolean;
+  email_unsubscribed_at: Date | null;
   created_at: Date;
   imported_total_sales_cents: number | null;
 };

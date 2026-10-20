@@ -8,12 +8,16 @@ let transport: Transporter | null = null;
 
 export const emailConfigured = () => !!(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
 
+// Gmail; SMTP_HOST / SMTP_PORT point the tests at a local mail catcher instead.
+function smtpServer() {
+  const port = Number(process.env.SMTP_PORT ?? 465);
+  return { host: process.env.SMTP_HOST ?? "smtp.gmail.com", port, secure: port === 465 };
+}
+
 function getTransport() {
   if (!emailConfigured()) return null;
   transport ??= nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    ...smtpServer(),
     // Google shows app passwords as "abcd efgh ijkl mnop"; pasted with the spaces (or a stray
     // line break) they are refused, so keep only the letters.
     auth: { user: process.env.GMAIL_USER?.trim(), pass: process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "") },
@@ -102,4 +106,36 @@ export async function sendEmail({
       ? [{ filename: "woofers-visit.ics", content: details.calendar.ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }]
       : undefined,
   });
+}
+
+/**
+ * Sends several emails over one connection (marketing campaigns). Returns, for each email,
+ * null when it was sent or the error message.
+ */
+export async function sendMany(
+  fromName: string,
+  mails: { to: string; subject: string; text: string; html: string; headers?: Record<string, string> }[],
+) {
+  if (!emailConfigured()) throw new Error("Email is not set up (GMAIL_USER / GMAIL_APP_PASSWORD).");
+  const pool = nodemailer.createTransport({
+    pool: true,
+    maxConnections: 1,
+    ...smtpServer(),
+    auth: { user: process.env.GMAIL_USER?.trim(), pass: process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "") },
+  });
+  const from = { name: fromName, address: process.env.GMAIL_USER!.trim() };
+  try {
+    const out: (string | null)[] = [];
+    for (const m of mails) {
+      try {
+        await pool.sendMail({ from, ...m });
+        out.push(null);
+      } catch (e) {
+        out.push(String((e as Error).message).slice(0, 500));
+      }
+    }
+    return out;
+  } finally {
+    pool.close();
+  }
 }
