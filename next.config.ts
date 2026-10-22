@@ -11,7 +11,8 @@ const nextConfig: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: "4mb" }, staleTimes: { dynamic: 30 } },
   // The booking page may be shown inside the business website (iframe); nothing else may.
   async headers() {
-    const site = "https://woofersdogspa.com https://*.woofersdogspa.com https://*.lovable.app https://*.lovableproject.com";
+    // lovable.dev too: its editor shows the site preview inside itself, and every frame up the chain must be allowed.
+    const site = "https://woofersdogspa.com https://*.woofersdogspa.com https://*.lovable.app https://*.lovableproject.com https://lovable.dev https://*.lovable.dev";
     return [
       { source: "/:path*", headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'self'" }] },
       { source: "/book", headers: [{ key: "Content-Security-Policy", value: `frame-ancestors 'self' ${site}` }] },
