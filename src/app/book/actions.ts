@@ -268,6 +268,9 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
     if (bytes) await savePetPhoto(petId, bytes).catch(() => null);
   }
 
+  // The booking went through: it's no longer an abandoned one.
+  await sql`update booking_drafts set completed_at = now(), updated_at = now()
+            where business_id = ${b.id} and phone = ${phone} and completed_at is null`;
   await notifyAppointment(appointmentId, "request_received");
   const when = `${dayLabel(start, b.timezone)} ${timeLabel(start, b.timezone)}`;
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
@@ -279,4 +282,48 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
     "/requests",
   );
   return { ok: true, when: `${dayLabel(start, b.timezone)} at ${timeLabel(start, b.timezone)}` };
+}
+
+export type DraftStep = "phone" | "contact" | "address" | "times" | "review";
+
+/**
+ * Remembers how far someone got on the booking page (one row per phone, refreshed as they
+ * go), so they can get a "finish booking" message if they stop. Best effort: never fails.
+ */
+export async function trackDraftAction(input: {
+  phone: string; step: DraftStep; firstName?: string; lastName?: string; email?: string; zip?: string; pets?: string;
+}) {
+  try {
+    const b = await getPublicBusiness();
+    const phone = normalizePhone(input.phone);
+    if (!b || !phone || !["phone", "contact", "address", "times", "review"].includes(input.step)) return;
+    const cut = (v: string | undefined, n: number) => (v ?? "").trim().slice(0, n) || null;
+    const email = cut(input.email, 120)?.toLowerCase() ?? null;
+    const known = await findClient(b, phone);
+    const fields = {
+      first_name: cut(input.firstName, 60) ?? known?.first_name ?? null,
+      last_name: cut(input.lastName, 60),
+      email: email && /^\S+@\S+\.\S+$/.test(email) ? email : null,
+      zip: cut(input.zip, 10),
+      pets: cut(input.pets, 200),
+    };
+    const [open] = await sql`
+      select id from booking_drafts where business_id = ${b.id} and phone = ${phone} and completed_at is null
+        and created_at > now() - interval '2 days'
+      order by created_at desc limit 1`;
+    if (open) {
+      await sql`
+        update booking_drafts set step = ${input.step}, updated_at = now(), client_id = ${known?.id ?? null},
+          first_name = coalesce(${fields.first_name}, first_name), last_name = coalesce(${fields.last_name}, last_name),
+          email = coalesce(${fields.email}, email), zip = coalesce(${fields.zip}, zip), pets = coalesce(${fields.pets}, pets)
+        where id = ${open.id}`;
+    } else {
+      await sql`
+        insert into booking_drafts (business_id, client_id, phone, first_name, last_name, email, zip, pets, step)
+        values (${b.id}, ${known?.id ?? null}, ${phone}, ${fields.first_name}, ${fields.last_name}, ${fields.email},
+                ${fields.zip}, ${fields.pets}, ${input.step})`;
+    }
+  } catch (e) {
+    console.error("draft tracking failed", e);
+  }
 }

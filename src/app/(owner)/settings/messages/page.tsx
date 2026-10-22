@@ -24,6 +24,7 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
   rebook: { title: "Time to rebook", when: "When the pet's grooming frequency has passed, at a set time" },
   review_request: { title: "Review request", when: "Minutes after checkout (needs the review link)" },
   vaccine_due: { title: "Vaccine expiring", when: "Days before a pet's vaccine expires, at a set time" },
+  abandoned_booking: { title: "Didn't finish booking", when: "A while after someone stops halfway on the booking page (8am–8pm)" },
 };
 const ORDER = Object.keys(TEMPLATE_INFO);
 
@@ -145,6 +146,11 @@ export default async function MessagesSettingsPage() {
                     {(t.trigger === "reminder" || t.trigger === "rebook" || t.trigger === "vaccine_due") && (
                       <Field label="Send at">
                         <Input name="send_at_time" type="time" defaultValue={t.send_at_time ?? "10:00"} />
+                      </Field>
+                    )}
+                    {t.trigger === "abandoned_booking" && (
+                      <Field label="Minutes after they stop">
+                        <Input name="offset_minutes" type="number" min={30} max={1440} defaultValue={t.offset_minutes ?? 120} />
                       </Field>
                     )}
                     {t.trigger === "review_request" && (

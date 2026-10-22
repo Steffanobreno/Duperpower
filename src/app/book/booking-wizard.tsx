@@ -13,6 +13,7 @@ import { SignaturePad } from "./signature-pad";
 import {
   availabilityAction,
   lookupClientAction,
+  trackDraftAction,
   requestBookingAction,
   type KnownClient,
   type PetRequest,
@@ -66,7 +67,9 @@ export function BookingWizard({
   today,
   agreementTitle,
   agreement,
+  initialPhone = "",
 }: {
+  initialPhone?: string; // from the "finish booking" link
   services: Service[];
   businessName: string;
   businessPhone: string;
@@ -75,7 +78,7 @@ export function BookingWizard({
   agreement: ReactNode | null;
 }) {
   const [history, setHistory] = useState<Step[]>([{ name: "phone" }]);
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialPhone);
   const [who, setWho] = useState<Who | null>(null);
   const [pets, setPets] = useState<Pet[]>([]);
   const [draft, setDraft] = useState<Pet>(blankPet);
@@ -125,6 +128,8 @@ export function BookingWizard({
       const res = await lookupClientAction(phone);
       if (res.error || res.known === undefined) return setError(res.error ?? "Something went wrong. Please try again.");
       setWho(res);
+      // Remember how far they got, for the "finish booking" message (best effort).
+      void trackDraftAction({ phone, step: "phone" });
       if (res.known) {
         setPets(res.pets.map((p) => ({
           key: p.id, petId: p.id, on: res.pets.length === 1, name: p.name, breed: p.breed ?? "", size: p.size ?? "",
@@ -139,6 +144,7 @@ export function BookingWizard({
     });
 
   const afterAddress = () => {
+    void trackDraftAction({ phone, step: "address", zip: fileAddress ? undefined : address.zip });
     if (pets.length === 0) {
       setDraft(blankPet());
       go({ name: "newpet" });
@@ -157,6 +163,7 @@ export function BookingWizard({
   const findTimes = () =>
     startTransition(async () => {
       setError(null);
+      void trackDraftAction({ phone, step: "times", pets: chosen.map((p) => p.name).join(" & ") });
       const res = await availabilityAction({ phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
       if (res.error) return setError(res.error);
       setDays(res.days ?? []);
@@ -270,7 +277,7 @@ export function BookingWizard({
             </div>
             <label className="block">
               <span className={labelClass}>Email address</span>
-              <span className="-mt-1 mb-2 block text-sm text-muted">We send your confirmation and reminders here.</span>
+              <span className="-mt-1 mb-2 block text-sm text-muted">We send your confirmation and reminders here (and a link to finish, if you stop halfway).</span>
               <input type="email" aria-label="Email" placeholder="you@example.com" autoComplete="email" className={inputClass}
                 value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} />
             </label>
@@ -281,6 +288,7 @@ export function BookingWizard({
             disabled={!contact.firstName.trim() || !contact.lastName.trim() || !contact.email.trim()}
             onClick={() => {
               if (!/^\S+@\S+\.\S+$/.test(contact.email.trim())) return setError("Please check your email address.");
+              void trackDraftAction({ phone, step: "contact", firstName: contact.firstName, lastName: contact.lastName, email: contact.email });
               go({ name: "address" });
             }}
           >
@@ -547,7 +555,7 @@ export function BookingWizard({
                 pets={chosen.map((p) => ({ name: p.name, services: serviceIdsOf(p).map((id) => byId.get(id)?.name ?? "") }))}
                 total={total}
               />
-              <BigButton className="mt-6" onClick={() => { setSheet(null); go({ name: "review" }); }}>Continue</BigButton>
+              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ phone, step: "review" }); go({ name: "review" }); }}>Continue</BigButton>
             </Sheet>
           )}
         </StepCard>

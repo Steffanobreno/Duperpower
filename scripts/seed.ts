@@ -88,6 +88,12 @@ const templates = [
     body: "From {business}, Hello {client}, it has been almost {days} days since {pet}'s last service. Would you like to book a new appointment? Book online: {booking_url} or text us {business_phone}",
   },
   {
+    trigger: "abandoned_booking",
+    offset_minutes: 120,
+    email_subject: "Finish booking {pet}'s spa day?",
+    body: "Hi {client}! Looks like you didn't get to finish booking {pet}'s visit with {business}. Pick a time here: {booking_url} or text us at {business_phone} and we'll book it for you. 🐾",
+  },
+  {
     trigger: "vaccine_due",
     offset_days: 30,
     send_at_time: "10:00",

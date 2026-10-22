@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function BookPage({ searchParams }: PageProps<"/book">) {
   const b = await getPublicBusiness();
   if (!b) return null;
-  const { embed } = await searchParams;
+  const { embed, phone: resumePhone } = await searchParams;
   const [services, agreement] = await Promise.all([onlineServices(b.id), activeAgreement(b.id)]);
   const phone = phoneLabel(b.phone);
   return (
@@ -26,6 +26,7 @@ export default async function BookPage({ searchParams }: PageProps<"/book">) {
           today={todayYmd(b.timezone)}
           agreementTitle={agreement?.title ?? null}
           agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null}
+          initialPhone={typeof resumePhone === "string" ? resumePhone.replace(/\D/g, "").slice(-10) : ""}
         />
       ) : (
         <StepCard>

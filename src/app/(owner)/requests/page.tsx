@@ -5,6 +5,8 @@ import { sql } from "@/lib/db";
 import { dayLabel, money, phoneLabel, timeLabel } from "@/lib/format";
 import { Button, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setStatusAction } from "../appointments/actions";
+import { STEP_LABEL } from "@/lib/messaging";
+import { dismissDraftAction } from "./actions";
 
 export const metadata: Metadata = { title: "Requests" };
 
@@ -30,6 +32,15 @@ export default async function RequestsPage() {
     where a.business_id = ${staff.businessId} and a.reschedule_requested_at is not null
       and a.status in ('requested', 'unconfirmed', 'confirmed') and a.start_at > now()
     order by a.reschedule_requested_at`;
+  // People who started booking online in the last two weeks and stopped.
+  const drafts = await sql<{ id: string; phone: string; first_name: string | null; last_name: string | null; email: string | null;
+                            pets: string | null; step: string; updated_at: Date; reminded_at: Date | null; client_id: string | null }[]>`
+    select id, phone, first_name, last_name, email, pets, step, updated_at, reminded_at, client_id from booking_drafts d
+    where business_id = ${staff.businessId} and completed_at is null and dismissed_at is null
+      and updated_at > now() - interval '14 days' and updated_at < now() - interval '20 minutes'
+      and not exists (select 1 from appointments a join clients c on c.id = a.client_id
+                      where c.business_id = d.business_id and c.phone = d.phone and a.created_at > d.created_at)
+    order by updated_at desc limit 30`;
   const tz = staff.timezone;
   return (
     <>
@@ -78,6 +89,41 @@ export default async function RequestsPage() {
               </div>
             </Card>
           ))
+        )}
+
+        {drafts.length > 0 && (
+          <section className="space-y-2 pt-2">
+            <h2 className="section-label">Didn&apos;t finish booking online</h2>
+            <p className="px-1 text-sm text-muted">
+              They started on your booking page and stopped. A quick call or text often gets the booking.
+            </p>
+            {drafts.map((d) => (
+              <Card key={d.id} className="space-y-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  {d.client_id ? (
+                    <Link href={`/clients/${d.client_id}`} className="font-semibold underline-offset-2 hover:underline">
+                      {[d.first_name, d.last_name].filter(Boolean).join(" ") || "Client"}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold">{[d.first_name, d.last_name].filter(Boolean).join(" ") || "Unknown name"}</span>
+                  )}
+                  <span className="shrink-0 text-xs text-muted">{dayLabel(d.updated_at, tz)} {timeLabel(d.updated_at, tz)}</span>
+                </div>
+                <p className="text-sm text-muted">
+                  Stopped {STEP_LABEL[d.step] ?? d.step}{d.pets ? ` · ${d.pets}` : ""}
+                </p>
+                <p className="text-sm">{phoneLabel(d.phone)}{d.email ? ` · ${d.email}` : ""}</p>
+                {d.reminded_at && <p className="text-xs font-semibold text-success">Sent them a link to finish on {dayLabel(d.reminded_at, tz)}</p>}
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <a href={`sms:${d.phone}`} className="rounded-xl border border-line py-2 text-center text-sm font-semibold text-brand">Text</a>
+                  <a href={`tel:${d.phone}`} className="rounded-xl border border-line py-2 text-center text-sm font-semibold text-brand">Call</a>
+                  <form action={dismissDraftAction.bind(null, d.id)}>
+                    <button type="submit" className="w-full rounded-xl border border-line py-2 text-sm font-semibold text-muted">Clear</button>
+                  </form>
+                </div>
+              </Card>
+            ))}
+          </section>
         )}
       </Page>
     </>

@@ -27,9 +27,10 @@ export type Trigger =
   | "on_my_way"
   | "rebook"
   | "review_request"
-  | "vaccine_due";
+  | "vaccine_due"
+  | "abandoned_booking";
 
-type Template = {
+export type Template = {
   body: string;
   email_subject: string | null;
   offset_days: number | null;
@@ -253,7 +254,13 @@ export async function queueDueMessages(businessId: string) {
     }
   }
 
-  // 4. Review request, a while after checkout (only when a review link is set).
+  // 4. Abandoned online bookings: one "finish booking" message a while after they stopped
+  //    (between 8am and 8pm), and a heads-up to the owner. Part of the online booking flow,
+  //    so it goes out even before automatic messages are switched on.
+  const abandoned = await template(businessId, "abandoned_booking");
+  if (abandoned && nowLocal >= "08:00" && nowLocal < "20:00") await remindAbandoned(businessId, abandoned);
+
+  // 5. Review request, a while after checkout (only when a review link is set).
   const review = await template(businessId, "review_request");
   if (review) {
     const minutes = review.offset_minutes ?? 30;
@@ -415,3 +422,59 @@ export async function monthlyMarketingReminder(businessId: string) {
     "/marketing/new",
   );
 }
+
+/** Sends the "finish booking" message for drafts that went quiet. Each draft gets one. */
+export async function remindAbandoned(businessId: string, t: Template) {
+  const minutes = t.offset_minutes ?? 120;
+  const drafts = await sql<{ id: string; phone: string; first_name: string | null; email: string | null; pets: string | null;
+                            step: string; client_id: string | null; sms_ok: boolean; business: string; business_phone: string | null }[]>`
+    update booking_drafts d set reminded_at = now()
+    from businesses b
+    where b.id = d.business_id and d.id in (
+      select x.id from booking_drafts x
+      where x.business_id = ${businessId} and x.completed_at is null and x.reminded_at is null and x.dismissed_at is null
+        and x.updated_at < now() - make_interval(mins => ${minutes}) and x.updated_at > now() - interval '3 days'
+        -- they may have booked another way since (a text, a call, the owner booked them)
+        and not exists (select 1 from appointments a join clients c on c.id = a.client_id
+                        where c.business_id = x.business_id and c.phone = x.phone and a.created_at > x.created_at)
+      for update skip locked)
+    returning d.id, d.phone, d.first_name, d.email, d.pets, d.step, d.client_id, b.name as business, b.phone as business_phone,
+      exists (select 1 from clients c where c.id = d.client_id and c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok`;
+  for (const d of drafts) {
+    const vars = {
+      client: d.first_name ?? "there",
+      pet: d.pets ?? "your pup",
+      business: d.business,
+      business_phone: phoneLabel(d.business_phone),
+      booking_url: `${appUrl()}/book?phone=${d.phone.replace(/^\+1/, "")}`,
+    };
+    const body = render(t.body, vars);
+    // Text only to clients who agreed to texts before; everyone else who left an email gets an email.
+    if (d.sms_ok) {
+      await sql`
+        insert into messages (business_id, client_id, direction, channel, to_phone, body, template_trigger, status, dedupe_key)
+        values (${businessId}, ${d.client_id}, 'out', 'sms', ${d.phone}, ${body}, 'abandoned_booking', 'queued', ${`abandoned:${d.id}:sms`})
+        on conflict (dedupe_key) do nothing`;
+    }
+    if (d.email) {
+      await sql`
+        insert into messages (business_id, client_id, direction, channel, to_email, subject, body, template_trigger, status, dedupe_key)
+        values (${businessId}, ${d.client_id}, 'out', 'email', ${d.email}, ${render(t.email_subject ?? d.business, vars)}, ${body},
+                'abandoned_booking', 'queued', ${`abandoned:${d.id}:email`})
+        on conflict (dedupe_key) do nothing`;
+    }
+    const who = `${d.first_name ?? "Someone"} ${phoneLabel(d.phone)}`;
+    const sent = d.sms_ok || d.email ? "We sent them a link to finish." : "They left no email, so give them a call.";
+    await notifyOwner(businessId, `Didn't finish booking: ${d.first_name ?? phoneLabel(d.phone)}`,
+      `${who} started booking${d.pets ? ` ${d.pets}` : ""} online and stopped (${STEP_LABEL[d.step] ?? d.step}). ${sent}`,
+      "/requests");
+  }
+}
+
+export const STEP_LABEL: Record<string, string> = {
+  phone: "after the phone number",
+  contact: "after name and email",
+  address: "after the address",
+  times: "while picking a time",
+  review: "on the last step",
+};
