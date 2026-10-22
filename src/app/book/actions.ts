@@ -269,7 +269,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   }
 
   // The booking went through: it's no longer an abandoned one.
-  await sql`update booking_drafts set completed_at = now(), updated_at = now()
+  await sql`update booking_drafts set completed_at = now()
             where business_id = ${b.id} and phone = ${phone} and completed_at is null`;
   await notifyAppointment(appointmentId, "request_received");
   const when = `${dayLabel(start, b.timezone)} ${timeLabel(start, b.timezone)}`;
@@ -290,8 +290,11 @@ export type DraftStep = "phone" | "contact" | "address" | "times" | "review";
  * Remembers how far someone got on the booking page (one row per phone, refreshed as they
  * go), so they can get a "finish booking" message if they stop. Best effort: never fails.
  */
+export type DraftPet = { name: string; breed: string; size: string; service: string; addons: string[] };
+
 export async function trackDraftAction(input: {
   phone: string; step: DraftStep; firstName?: string; lastName?: string; email?: string; zip?: string; pets?: string;
+  addressLine?: string; city?: string; petDetails?: DraftPet[]; start?: string;
 }) {
   try {
     const b = await getPublicBusiness();
@@ -306,6 +309,15 @@ export async function trackDraftAction(input: {
       email: email && /^\S+@\S+\.\S+$/.test(email) ? email : null,
       zip: cut(input.zip, 10),
       pets: cut(input.pets, 200),
+      address_line: cut(input.addressLine, 120),
+      city: cut(input.city, 60),
+      pet_details: Array.isArray(input.petDetails)
+        ? input.petDetails.slice(0, 4).map((p) => ({
+            name: String(p.name ?? "").slice(0, 40), breed: String(p.breed ?? "").slice(0, 60), size: String(p.size ?? "").slice(0, 20),
+            service: String(p.service ?? "").slice(0, 80), addons: (Array.isArray(p.addons) ? p.addons : []).slice(0, 6).map((a) => String(a).slice(0, 60)),
+          }))
+        : null,
+      chosen_start: input.start && !Number.isNaN(Date.parse(input.start)) ? new Date(input.start) : null,
     };
     const [open] = await sql`
       select id from booking_drafts where business_id = ${b.id} and phone = ${phone} and completed_at is null
@@ -315,13 +327,18 @@ export async function trackDraftAction(input: {
       await sql`
         update booking_drafts set step = ${input.step}, updated_at = now(), client_id = ${known?.id ?? null},
           first_name = coalesce(${fields.first_name}, first_name), last_name = coalesce(${fields.last_name}, last_name),
-          email = coalesce(${fields.email}, email), zip = coalesce(${fields.zip}, zip), pets = coalesce(${fields.pets}, pets)
+          email = coalesce(${fields.email}, email), zip = coalesce(${fields.zip}, zip), pets = coalesce(${fields.pets}, pets),
+          address_line = coalesce(${fields.address_line}, address_line), city = coalesce(${fields.city}, city),
+          pet_details = coalesce(${fields.pet_details ? sql.json(fields.pet_details) : null}::jsonb, pet_details),
+          chosen_start = coalesce(${fields.chosen_start}, chosen_start)
         where id = ${open.id}`;
     } else {
       await sql`
-        insert into booking_drafts (business_id, client_id, phone, first_name, last_name, email, zip, pets, step)
+        insert into booking_drafts (business_id, client_id, phone, first_name, last_name, email, zip, pets, step,
+                                    address_line, city, pet_details, chosen_start)
         values (${b.id}, ${known?.id ?? null}, ${phone}, ${fields.first_name}, ${fields.last_name}, ${fields.email},
-                ${fields.zip}, ${fields.pets}, ${input.step})`;
+                ${fields.zip}, ${fields.pets}, ${input.step}, ${fields.address_line}, ${fields.city},
+                ${fields.pet_details ? sql.json(fields.pet_details) : null}, ${fields.chosen_start})`;
     }
   } catch (e) {
     console.error("draft tracking failed", e);

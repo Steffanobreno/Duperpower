@@ -144,7 +144,8 @@ export function BookingWizard({
     });
 
   const afterAddress = () => {
-    void trackDraftAction({ phone, step: "address", zip: fileAddress ? undefined : address.zip });
+    void trackDraftAction(fileAddress ? { phone, step: "address" }
+      : { phone, step: "address", zip: address.zip, addressLine: address.address, city: address.city });
     if (pets.length === 0) {
       setDraft(blankPet());
       go({ name: "newpet" });
@@ -163,7 +164,13 @@ export function BookingWizard({
   const findTimes = () =>
     startTransition(async () => {
       setError(null);
-      void trackDraftAction({ phone, step: "times", pets: chosen.map((p) => p.name).join(" & ") });
+      void trackDraftAction({
+        phone, step: "times", pets: chosen.map((p) => p.name).join(" & "),
+        petDetails: chosen.map((p) => ({
+          name: p.name, breed: p.breed, size: p.size,
+          service: byId.get(p.mainId)?.name ?? "", addons: p.extraIds.map((id) => byId.get(id)?.name ?? "").filter(Boolean),
+        })),
+      });
       const res = await availabilityAction({ phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
       if (res.error) return setError(res.error);
       setDays(res.days ?? []);
@@ -555,7 +562,7 @@ export function BookingWizard({
                 pets={chosen.map((p) => ({ name: p.name, services: serviceIdsOf(p).map((id) => byId.get(id)?.name ?? "") }))}
                 total={total}
               />
-              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ phone, step: "review" }); go({ name: "review" }); }}>Continue</BigButton>
+              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ phone, step: "review", start: start ?? undefined }); go({ name: "review" }); }}>Continue</BigButton>
             </Sheet>
           )}
         </StepCard>
