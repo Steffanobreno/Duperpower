@@ -40,8 +40,8 @@ const drafts = (staff: StaffContext, extra = sql``, limit = 500) => sql<Draft[]>
   order by d.updated_at desc
   limit ${limit}`;
 
-export function listDrafts(staff: StaffContext, status: DraftStatus | null) {
-  return drafts(staff, sql`and d.updated_at > now() - interval '90 days'
+export function listDrafts(staff: StaffContext, status: DraftStatus | null, days = 90) {
+  return drafts(staff, sql`and d.updated_at > now() - make_interval(days => ${days})
     ${status ? sql`and (case when d.booked_id is not null then 'recovered'
                              when d.reminded_at is not null or d.contacted_at is not null then 'contacted'
                              else 'abandoned' end) = ${status}` : sql``}`, 200);

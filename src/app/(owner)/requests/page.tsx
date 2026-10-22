@@ -32,7 +32,7 @@ export default async function RequestsPage() {
       and a.status in ('requested', 'unconfirmed', 'confirmed') and a.start_at > now()
     order by a.reschedule_requested_at`;
   // Started booking online and haven't booked yet (whether or not they got the message).
-  const waiting = (await listDrafts(staff, null)).filter((d) => d.status !== "recovered" && Date.now() - d.updated_at.getTime() < 14 * 86_400_000).length;
+  const waiting = (await listDrafts(staff, null, 14)).filter((d) => d.status !== "recovered").length;
   const tz = staff.timezone;
   return (
     <>
