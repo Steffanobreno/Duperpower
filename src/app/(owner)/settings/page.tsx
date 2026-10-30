@@ -9,7 +9,7 @@ const GROUPS: SettingsGroup[] = [
   {
     title: "Basic settings",
     links: [
-      { href: "/settings/account", title: "Account", text: "Your name, login email, password and devices" },
+      { href: "/settings/account", title: "Account", text: "Your name, login email, password, app lock (PIN) and devices" },
       { href: "/settings/business", title: "Business", text: "Name, logo, phone, address, links and time zone" },
       { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
       { href: "/settings/closed", title: "Closed dates and holidays", text: "Vacations and holidays with no bookings" },

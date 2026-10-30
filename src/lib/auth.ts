@@ -225,3 +225,28 @@ export async function removeStaffLogin(businessId: string, staffId: string) {
     await tx`delete from users where id = ${s.user_id}`;
   });
 }
+
+/** Sets (or, with null, removes) the app lock PIN of a team member. */
+export async function setPin(staffId: string, pin: string | null) {
+  await sql`update staff set pin_hash = ${pin ? await hashPassword(pin) : null}, pin_failures = 0 where id = ${staffId}`;
+}
+
+/**
+ * Checks the app lock PIN. After 5 wrong tries in a row the person is logged out of this
+ * device, so a found phone can't be opened by guessing.
+ */
+export async function checkPin(staffId: string, pin: string): Promise<"ok" | "wrong" | "logged-out"> {
+  const [s] = await sql`select pin_hash, pin_failures from staff where id = ${staffId}`;
+  if (!s?.pin_hash) return "ok";
+  if (await verifyPassword(pin, s.pin_hash)) {
+    await sql`update staff set pin_failures = 0 where id = ${staffId}`;
+    return "ok";
+  }
+  const [r] = await sql`update staff set pin_failures = pin_failures + 1 where id = ${staffId} returning pin_failures`;
+  if (r.pin_failures >= 5) {
+    await sql`update staff set pin_failures = 0 where id = ${staffId}`;
+    await logout();
+    return "logged-out";
+  }
+  return "wrong";
+}

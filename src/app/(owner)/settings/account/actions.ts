@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { accountEmail, changeEmail, changePassword, logoutOthers, requireStaff } from "@/lib/auth";
+import { accountEmail, changeEmail, changePassword, checkPin, logoutOthers, requireStaff, setPin } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { FormState } from "../actions";
 
@@ -30,4 +30,25 @@ export async function changePasswordAction(_: FormState, form: FormData): Promis
 export async function logoutOthersAction() {
   const staff = await requireStaff();
   await logoutOthers(staff.staffId);
+}
+
+export async function savePinAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  if (form.get("remove") === "1") {
+    await setPin(staff.staffId, null);
+    revalidatePath("/", "layout");
+    return { saved: true };
+  }
+  const pin = String(form.get("pin") ?? "");
+  if (!/^\d{4,6}$/.test(pin)) return { error: "The PIN is 4 to 6 numbers." };
+  if (pin !== form.get("pin_again")) return { error: "The two PINs are different." };
+  await setPin(staff.staffId, pin);
+  revalidatePath("/", "layout");
+  return { saved: true };
+}
+
+/** The lock screen's check. */
+export async function unlockAction(pin: string): Promise<"ok" | "wrong" | "logged-out"> {
+  const staff = await requireStaff();
+  return checkPin(staff.staffId, pin);
 }
