@@ -19,9 +19,49 @@ export type ClientValues = {
   zip: string | null;
   access_notes: string | null;
   sms_consent: boolean;
+  referral_source?: string | null;
+  tags?: string[];
 };
 
-export function ClientForm({ action, initial, submitLabel }: { action: Action; initial?: ClientValues; submitLabel: string }) {
+/** The owner's lists from Settings → Client and pet options. */
+export type ClientOptions = { tags: string[]; sources: string[] };
+export type PetOptions = { coats: string[]; behaviors: string[]; breeds: string[] };
+
+/** Checkboxes shown as chips, for picking tags. Keeps values that left the list but are still set. */
+function ChipChecks({ name, legend, options, checked }: { name: string; legend: string; options: string[]; checked: string[] }) {
+  const all = [...options, ...checked.filter((c) => !options.includes(c))];
+  if (!all.length) return null;
+  return (
+    <fieldset>
+      <legend className="mb-1 text-sm font-medium">{legend}</legend>
+      <div className="flex flex-wrap gap-2">
+        {all.map((o) => (
+          <label key={o} className="cursor-pointer">
+            <input type="checkbox" name={name} value={o} defaultChecked={checked.includes(o)} className="peer sr-only" />
+            <span className="block rounded-full border border-line px-3 py-1.5 text-sm peer-checked:border-brand peer-checked:bg-brand-soft peer-checked:font-semibold peer-checked:text-brand-strong peer-focus-visible:ring-2 peer-focus-visible:ring-brand">
+              {o}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/** A select from a list that keeps the current value even when it is no longer on the list. */
+function ListSelect({ name, options, value, empty }: { name: string; options: string[]; value: string | null | undefined; empty: string }) {
+  const all = value && !options.includes(value) ? [...options, value] : options;
+  return (
+    <Select name={name} defaultValue={value ?? ""}>
+      <option value="">{empty}</option>
+      {all.map((o) => <option key={o} value={o}>{o}</option>)}
+    </Select>
+  );
+}
+
+export function ClientForm({ action, initial, submitLabel, options }: {
+  action: Action; initial?: ClientValues; submitLabel: string; options: ClientOptions;
+}) {
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
@@ -61,6 +101,10 @@ export function ClientForm({ action, initial, submitLabel }: { action: Action; i
       <Field label="Parking and access notes" hint="Gate code, where to park the van, water or power outlet.">
         <Textarea name="access_notes" defaultValue={initial?.access_notes ?? ""} />
       </Field>
+      <Field label="How they found you">
+        <ListSelect name="referral_source" options={options.sources} value={initial?.referral_source} empty="Not set" />
+      </Field>
+      <ChipChecks name="tags" legend="Tags" options={options.tags} checked={initial?.tags ?? []} />
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Saving…" : submitLabel}
       </Button>
@@ -77,6 +121,8 @@ export type PetValues = {
   birth_date: string | null;
   sex: string | null;
   behavior: string | null;
+  behavior_tags?: string[];
+  fixed?: boolean | null;
   vet_name: string | null;
   vet_phone: string | null;
   notes: string | null;
@@ -87,10 +133,12 @@ export function PetForm({
   action,
   initial,
   offerBooking,
+  options,
 }: {
   action: Action;
   initial?: PetValues;
   offerBooking?: boolean;
+  options: PetOptions;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
@@ -102,7 +150,7 @@ export function PetForm({
         </Field>
         <Field label="Breed">
           <Input name="breed" defaultValue={initial?.breed ?? ""} list="dog-breeds" autoComplete="off" placeholder="Start typing…" />
-          <BreedOptions />
+          <BreedOptions extra={options.breeds} />
         </Field>
       </div>
       <Field label="Size (height at the shoulder)" hint="Picks the right price when booking.">
@@ -130,13 +178,23 @@ export function PetForm({
           <Input name="birth_date" type="date" defaultValue={initial?.birth_date ?? ""} />
         </Field>
       </div>
-      <Field label="Coat">
-        <Input name="coat_type" defaultValue={initial?.coat_type ?? ""} placeholder="Double coat, curly, wire…" />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Coat">
+          <ListSelect name="coat_type" options={options.coats} value={initial?.coat_type} empty="Not set" />
+        </Field>
+        <Field label="Spayed / neutered">
+          <Select name="fixed" defaultValue={initial?.fixed == null ? "" : initial.fixed ? "yes" : "no"}>
+            <option value="">Not set</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </Select>
+        </Field>
+      </div>
       <Field label="Groom every (days)" hint="Used for the rebook reminder. Leave empty if unknown.">
         <Input name="rebook_every_days" inputMode="numeric" defaultValue={initial?.rebook_every_days ?? ""} placeholder="42" />
       </Field>
-      <Field label="Behavior">
+      <ChipChecks name="behavior_tags" legend="Behavior" options={options.behaviors} checked={initial?.behavior_tags ?? []} />
+      <Field label="Behavior notes">
         <Textarea name="behavior" defaultValue={initial?.behavior ?? ""} placeholder="Nervous with dryer, nips at paws…" />
       </Field>
       <div className="grid grid-cols-2 gap-3">

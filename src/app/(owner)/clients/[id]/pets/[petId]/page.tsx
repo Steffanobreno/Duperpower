@@ -3,11 +3,14 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getPet } from "@/lib/data/clients";
 import { Card, Page, PageHeader } from "@/components/ui";
-import { addVaccineAction, deletePetPriceAction, deleteVaccineAction, savePetAction, savePetPriceAction, setPetPassedAction } from "../../../actions";
+import { addVaccineAction, deletePetPriceAction, deleteVaccineAction, savePetAction, savePetPriceAction, setPetCodesAction, setPetPassedAction } from "../../../actions";
+import { allOptions, listPetCodes, petCodesFor } from "@/lib/data/options";
+import { petOptions } from "../../../options";
+import Link from "next/link";
 import { listServices } from "@/lib/data/services";
 import { petPrices } from "@/lib/data/pet-prices";
 import { PetPriceForm } from "./price-form";
-import { listVaccines, SOON_DAYS, VACCINE_NAMES } from "@/lib/data/vaccines";
+import { listVaccines, SOON_DAYS } from "@/lib/data/vaccines";
 import { addDaysYmd, minutesLabel, money, todayYmd } from "@/lib/format";
 import { VaccineForm } from "./vaccine-form";
 import { PetPhotoUpload } from "../../../pet-photo-upload";
@@ -19,9 +22,11 @@ export const metadata: Metadata = { title: "Edit pet" };
 export default async function EditPetPage({ params }: PageProps<"/clients/[id]/pets/[petId]">) {
   const staff = await requireStaff();
   const { id, petId } = await params;
-  const [pet, vaccines, services, own] = await Promise.all([
+  const [pet, vaccines, services, own, lists, codes, petCodes] = await Promise.all([
     getPet(staff, petId), listVaccines(staff, petId), listServices(staff), petPrices([petId]),
+    allOptions(staff.businessId), listPetCodes(staff.businessId), petCodesFor([petId]),
   ]);
+  const onPet = new Set((petCodes.get(petId) ?? []).map((c) => c.id));
   if (!pet || pet.client_id !== id) notFound();
   const serviceById = new Map(services.map((s) => [s.id, s]));
   const custom = [...own.values()].filter((r) => serviceById.has(r.service_id));
@@ -39,8 +44,32 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
           <PetPhoto petId={petId} version={pet.photo_version} name={pet.name} size={88} />
           <PetPhotoUpload petId={petId} hasPhoto={!!pet.photo_version} />
         </Card>
+        <Card className="space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-bold">Pet codes</h2>
+            <Link href="/settings/lists/pet-codes" className="text-sm font-semibold text-brand">Edit codes</Link>
+          </div>
+          {codes.length ? (
+            <form action={setPetCodesAction.bind(null, id, petId)} className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {codes.map((c) => (
+                  <label key={c.id} className="cursor-pointer" title={c.description ?? undefined}>
+                    <input type="checkbox" name="code" value={c.id} defaultChecked={onPet.has(c.id)} className="peer sr-only" />
+                    <span className="block rounded-full border-2 border-[var(--c)] px-3 py-1 text-sm font-bold text-[var(--c)] peer-checked:bg-[var(--c)] peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand"
+                      style={{ ["--c" as string]: c.color }}>
+                      {c.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <button type="submit" className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-brand">Save codes</button>
+            </form>
+          ) : (
+            <p className="text-sm text-muted">No codes yet. Add some in Settings.</p>
+          )}
+        </Card>
         <Card>
-          <PetForm action={savePetAction.bind(null, id, petId)} initial={pet} />
+          <PetForm action={savePetAction.bind(null, id, petId)} initial={pet} options={petOptions(lists)} />
         </Card>
         <Card className="space-y-3" id="prices">
           <div>
@@ -105,7 +134,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
               })}
             </ul>
           )}
-          <VaccineForm action={addVaccineAction.bind(null, id, petId)} names={VACCINE_NAMES} />
+          <VaccineForm action={addVaccineAction.bind(null, id, petId)} names={lists.vaccine.map((v) => v.label)} />
         </Card>
         <form action={setPetPassedAction.bind(null, id, petId, !pet.deceased_at)} className="text-center">
           <button type="submit" className="text-sm font-semibold text-muted underline">

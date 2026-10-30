@@ -14,6 +14,8 @@ import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { closedDays } from "@/lib/data/closed";
+import { petCodesFor } from "@/lib/data/options";
+import { PetCodeChips } from "@/components/chips";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -37,9 +39,10 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       : groomers.length > 1 ? staff.staffId : null;
   const all = groomer ? day.filter((a) => a.staff_id === groomer) : day;
   const stops = all.filter((a) => !["cancelled", "no_show"].includes(a.status));
-  const [vaccines] = await Promise.all([
+  const [vaccines, , codes] = await Promise.all([
     vaccineAlerts(staff, stops.flatMap((s) => s.pets.map((p) => p.id)), date),
     locateStops(stops),
+    petCodesFor(stops.flatMap((s) => s.pets.map((p) => p.id))),
   ]);
   const pins = stops
     .map((s, i) => ({ s, n: i + 1 }))
@@ -120,7 +123,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                       </div>
                       {s.pets.map((p) => (
                         <div key={p.name} className="truncate text-sm">
-                          <span className="font-semibold">{p.name}</span>
+                          <span className="font-semibold">{p.name}</span>{" "}
+                          <PetCodeChips codes={codes.get(p.id)} />
                           <span className="text-muted"> · {p.services.join(", ")}</span>
                         </div>
                       ))}

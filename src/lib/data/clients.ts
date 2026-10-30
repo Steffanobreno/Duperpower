@@ -16,6 +16,7 @@ export type ClientRow = {
   lat: number | null;
   lng: number | null;
   access_notes: string | null;
+  referral_source: string | null;
   sms_consent_at: Date | null;
   imported_last_service_at: Date | null;
   sms_opted_out_at: Date | null;
@@ -38,6 +39,8 @@ export type PetRow = {
   birth_date: string | null;
   sex: string | null;
   behavior: string | null;
+  behavior_tags: string[];
+  fixed: boolean | null;
   vet_name: string | null;
   vet_phone: string | null;
   deceased_at: Date | null;
@@ -52,7 +55,7 @@ export const fullName = (c: { first_name: string; last_name: string }) =>
 export const fullAddress = (c: Pick<ClientRow, "address_line" | "city" | "state" | "zip">) =>
   [c.address_line, c.city, [c.state, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 
-export async function listClients(staff: StaffContext, q: string, inactive = false) {
+export async function listClients(staff: StaffContext, q: string, inactive = false, tag = "") {
   const term = q.trim();
   const like = `%${term}%`;
   const digits = term.replace(/\D/g, "");
@@ -70,6 +73,7 @@ export async function listClients(staff: StaffContext, q: string, inactive = fal
            or c.first_name || ' ' || c.last_name ilike ${like}
            or (${digits} <> '' and c.phone like ${"%" + digits + "%"})
            or exists (select 1 from pets p where p.client_id = c.id and p.name ilike ${like}))
+      and (${tag} = '' or exists (select 1 from client_tags t where t.client_id = c.id and t.label = ${tag}))
     order by c.first_name, c.last_name
     limit 1000`;
 }

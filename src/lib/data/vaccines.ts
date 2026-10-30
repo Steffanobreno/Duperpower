@@ -6,7 +6,6 @@ import { addDaysYmd, isUuid } from "../format";
 // Pet vaccines and their alerts: a vaccine that has expired, or expires within SOON_DAYS
 // of the visit, shows a warning on the visit, the route, the booking form and the pet.
 
-export const VACCINE_NAMES = ["Rabies", "DHPP", "Bordetella", "Leptospirosis", "Canine influenza", "Lyme"];
 export const SOON_DAYS = 30;
 
 export type Vaccine = { id: string; pet_id: string; name: string; given_on: string | null; expires_on: string | null };

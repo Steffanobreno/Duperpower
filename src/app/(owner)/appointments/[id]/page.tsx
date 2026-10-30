@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { clientTagsFor, petCodesFor } from "@/lib/data/options";
+import { PetCodeChips, TagChips } from "@/components/chips";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getAppointment } from "@/lib/data/appointments";
@@ -71,6 +73,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
     listGroomers(staff),
     vaccineAlerts(staff, appt.pets.map((p) => p.pet_id), ymd(appt.start_at, staff.timezone)),
   ]);
+  const [codes, tags] = await Promise.all([petCodesFor(appt.pets.map((p) => p.pet_id)), clientTagsFor([appt.client.id])]);
   const groomer = groomers.find((g) => g.id === appt.staff_id);
   const otherGroomers = groomers.filter((g) => g.active && g.id !== appt.staff_id);
   const tz = staff.timezone;
@@ -240,6 +243,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <div className="min-w-0">
                   <div className="text-lg font-bold">{p.name}</div>
                   <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                  <PetCodeChips codes={codes.get(p.pet_id)} />
                 </div>
               </div>
               {vaccines.some((v) => v.pet_id === p.pet_id) && (
@@ -282,7 +286,10 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
                 {(c.first_name[0] ?? "") + (c.last_name[0] ?? "")}
               </span>
-              <span className="flex-1 font-semibold">{fullName(c)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">{fullName(c)}</span>
+                <TagChips tags={tags.get(c.id)} />
+              </span>
               <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand-strong">every {rebookWeeks} weeks</span>
             </Link>
             <PhoneLink phone={c.phone} label={phoneLabel(c.phone)} className="flex w-full items-center gap-3 px-4 py-3 text-brand">

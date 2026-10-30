@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { clientTagsFor, petCodesFor } from "@/lib/data/options";
+import { PetCodeChips, TagChips } from "@/components/chips";
 import { requireStaff } from "@/lib/auth";
 import { clientHistory, clientSummary, fullAddress, fullName, getClient, listClientNotes, listPets } from "@/lib/data/clients";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
@@ -32,9 +34,11 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
     sql<{ id: string; name: string }[]>`select id, name from pets where client_id = ${id} and deceased_at is not null order by name`,
   ]);
   if (!client) notFound();
-  const [vaccines, ownPrices] = await Promise.all([
+  const [vaccines, ownPrices, codes, tags] = await Promise.all([
     vaccineAlerts(staff, pets.map((p) => p.id), todayYmd(staff.timezone)),
     petPrices(pets.map((p) => p.id)),
+    petCodesFor(pets.map((p) => p.id)),
+    clientTagsFor([id]),
   ]);
   const ownPriceCount = (petId: string) => [...ownPrices.values()].filter((r) => r.pet_id === petId).length;
   const signature = agreement ? await currentSignature(agreement, id) : null;
@@ -128,6 +132,18 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
                 <dd className="whitespace-pre-line">{client.access_notes}</dd>
               </>
             )}
+            {(tags.get(id)?.length ?? 0) > 0 && (
+              <>
+                <dt className="text-muted">Tags</dt>
+                <dd><TagChips tags={tags.get(id)} /></dd>
+              </>
+            )}
+            {client.referral_source && (
+              <>
+                <dt className="text-muted">Found you</dt>
+                <dd>{client.referral_source}</dd>
+              </>
+            )}
             <dt className="text-muted">Client since</dt>
             <dd>{dayLabel(client.imported_last_service_at && client.imported_last_service_at < client.created_at ? client.imported_last_service_at : client.created_at, tz)}</dd>
           </dl>
@@ -176,6 +192,9 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
                     <div className="min-w-0">
                       <div className="font-semibold">{p.name}</div>
                       <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                      {(codes.has(p.id) || p.behavior_tags.length > 0) && (
+                        <div className="mt-1 flex flex-wrap gap-1"><PetCodeChips codes={codes.get(p.id)} /><TagChips tags={p.behavior_tags} /></div>
+                      )}
                       {vaccines.filter((v) => v.pet_id === p.id).map((v) => (
                         <div key={v.name} className={`text-xs font-semibold ${v.expired ? "text-danger" : "text-warn"}`}>💉 {alertText(v)}</div>
                       ))}
