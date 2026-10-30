@@ -6,6 +6,7 @@ const files = [
   "src/app/book/booking-wizard.tsx", "src/app/book/month-calendar.tsx", "src/app/book/signature-pad.tsx",
   "src/app/book/page.tsx", "src/app/a/[token]/page.tsx", "src/app/r/[token]/page.tsx",
   "src/components/client-shell.tsx", "src/components/receipt-view.tsx", "src/lib/i18n/index.ts",
+  "src/app/intake/intake-form.tsx", "src/app/intake/page.tsx",
 ];
 const unescape = (s) => s.replace(/\\(.)/g, "$1");
 const used = new Set();
@@ -16,7 +17,7 @@ for (const f of files) {
 for (const m of readFileSync("src/lib/i18n/index.ts", "utf8").matchAll(/\/, "((?:[^"\\]|\\.)*)"\]/g)) used.add(unescape(m[1]));
 for (const size of ["Small", "Medium", "Large", "X-Large"]) used.add(size);
 // English messages the booking server actions send back (shown translated on the page).
-for (const f of ["src/app/book/actions.ts", "src/lib/booking.ts"]) {
+for (const f of ["src/app/book/actions.ts", "src/lib/booking.ts", "src/app/intake/actions.ts"]) {
   const src = readFileSync(f, "utf8");
   for (const m of src.matchAll(/(?:error: |return )"((?:[^"\\]|\\.)*)"/g)) if (/[a-z]/.test(m[1]) && m[1].length > 12) used.add(unescape(m[1]));
 }

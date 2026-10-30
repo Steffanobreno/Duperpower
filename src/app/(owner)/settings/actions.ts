@@ -169,6 +169,15 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
   return { saved: true };
 }
 
+export async function saveAutoAcceptAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const value = String(form.get("auto_accept"));
+  if (!["none", "returning", "all"].includes(value)) return { error: "Pick one." };
+  await sql`update businesses set auto_accept = ${value} where id = ${staff.businessId}`;
+  revalidatePath("/settings/booking");
+  return { saved: true };
+}
+
 export async function saveMessagingSettingsAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();
   const text = (k: string) => String(form.get(k) ?? "").trim() || null;

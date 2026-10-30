@@ -154,6 +154,10 @@ export const ko: Messages = {
   "Sign agreement": "동의서 서명",
 
   "Yay! Your booking request was sent. 🎉": "예약 요청을 보냈어요! 🎉",
+  "Yay! You're booked. 🎉": "예약이 완료되었어요! 🎉",
+  Booked: "예약 완료",
+  "See you then!": "그때 만나요!",
+  "We'll text you a reminder before the visit. Questions? Text us at {phone}.": "방문 전에 알림 문자를 보내드릴게요. 궁금한 점은 {phone}로 문자 주세요.",
   "Request sent": "요청 완료",
   "Waiting for confirmation": "확인 대기 중",
   "We'll text you as soon as it's confirmed. Questions? Text us at {phone}.": "확정되면 바로 문자 드릴게요. 궁금한 점은 {phone}로 문자 주세요.",
@@ -230,4 +234,17 @@ export const ko: Messages = {
   "Download PDF": "PDF 다운로드",
   Share: "공유",
   "Preparing…": "준비 중…",
+
+  // New client form
+  "Thank you! We got your info. 🐾": "감사합니다! 정보를 받았어요. 🐾",
+  "Want to pick a time now?": "지금 시간을 고르시겠어요?",
+  "Book a visit": "방문 예약하기",
+  "New client form": "신규 고객 양식",
+  "Tell us about you and your pets, so we're ready for the first visit.": "첫 방문을 준비할 수 있도록 고객님과 반려동물에 대해 알려주세요.",
+  "I agree to receive text messages about my appointments.": "예약 관련 문자 메시지 수신에 동의합니다.",
+  "Your pets": "반려동물",
+  "Anything we should know? (health, behavior, coat)": "알아야 할 점이 있나요? (건강, 성격, 털 상태)",
+  "Send": "보내기",
+  "Please check the ZIP code.": "우편번호를 확인해 주세요.",
+  "Please add your pet's name.": "반려동물 이름을 입력해 주세요.",
 };

@@ -154,6 +154,10 @@ export const tl: Messages = {
   "Sign agreement": "Pirmahan ang kasunduan",
 
   "Yay! Your booking request was sent. 🎉": "Yey! Naipadala na ang inyong booking request. 🎉",
+  "Yay! You're booked. 🎉": "Yay! Naka-book ka na. 🎉",
+  Booked: "Naka-book",
+  "See you then!": "Kita-kits!",
+  "We'll text you a reminder before the visit. Questions? Text us at {phone}.": "Magte-text kami ng paalala bago ang pagbisita. May tanong? I-text kami sa {phone}.",
   "Request sent": "Naipadala ang request",
   "Waiting for confirmation": "Naghihintay ng kumpirmasyon",
   "We'll text you as soon as it's confirmed. Questions? Text us at {phone}.": "Ite-text namin kayo kapag nakumpirma na. May tanong? I-text kami sa {phone}.",
@@ -230,4 +234,17 @@ export const tl: Messages = {
   "Download PDF": "I-download ang PDF",
   Share: "Ibahagi",
   "Preparing…": "Inihahanda…",
+
+  // New client form
+  "Thank you! We got your info. 🐾": "Salamat! Natanggap namin ang info mo. 🐾",
+  "Want to pick a time now?": "Gusto mo bang pumili ng oras ngayon?",
+  "Book a visit": "Mag-book ng pagbisita",
+  "New client form": "Form para sa bagong kliyente",
+  "Tell us about you and your pets, so we're ready for the first visit.": "Sabihin sa amin ang tungkol sa iyo at sa mga alaga mo, para handa kami sa unang pagbisita.",
+  "I agree to receive text messages about my appointments.": "Pumapayag akong makatanggap ng text tungkol sa mga appointment ko.",
+  "Your pets": "Mga alaga mo",
+  "Anything we should know? (health, behavior, coat)": "May dapat ba kaming malaman? (kalusugan, ugali, balahibo)",
+  "Send": "Ipadala",
+  "Please check the ZIP code.": "Pakisuri ang ZIP code.",
+  "Please add your pet's name.": "Pakilagay ang pangalan ng alaga mo.",
 };

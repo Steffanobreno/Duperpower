@@ -2,11 +2,11 @@
 import { useState } from "react";
 
 /**
- * Sends the receipt PDF through the phone's share sheet (Messages, WhatsApp, Mail…), or
+ * Sends a file (the receipt PDF, the QR code) through the phone's share sheet (Messages, WhatsApp, Mail…), or
  * downloads it where sharing files isn't possible.
  */
-export function ShareReceiptButton({ pdfUrl, fileName, className, children, busyLabel = "Preparing…" }: {
-  pdfUrl: string; fileName: string; className?: string; children: React.ReactNode; busyLabel?: string;
+export function ShareReceiptButton({ pdfUrl, fileName, className, children, busyLabel = "Preparing…", type = "application/pdf" }: {
+  pdfUrl: string; fileName: string; className?: string; children: React.ReactNode; busyLabel?: string; type?: string;
 }) {
   const [busy, setBusy] = useState(false);
   return (
@@ -18,7 +18,7 @@ export function ShareReceiptButton({ pdfUrl, fileName, className, children, busy
         setBusy(true);
         try {
           const blob = await (await fetch(pdfUrl)).blob();
-          const file = new File([blob], fileName, { type: "application/pdf" });
+          const file = new File([blob], fileName, { type });
           if (navigator.canShare?.({ files: [file] })) {
             await navigator.share({ files: [file], title: fileName });
           } else {

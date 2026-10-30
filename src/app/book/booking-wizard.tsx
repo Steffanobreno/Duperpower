@@ -105,6 +105,7 @@ export function BookingWizard({
   const [signed, setSigned] = useState<{ name: string; drawing: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
   const [pending, startTransition] = useTransition();
   const { t, locale, serverMessage } = useT();
   const sizeName = (size: string) => t(SIZES.find((x) => x.value === size)?.label.split(" (")[0] ?? "");
@@ -216,6 +217,7 @@ export function BookingWizard({
       });
       if (res.error) setError(serverMessage(res.error));
       else {
+        setAccepted(!!res.accepted);
         setDone(t("{date} at {time}", { date: dayOf(day ?? "", true), time: timeOf(start) }));
         window.scrollTo({ top: 0 });
       }
@@ -231,7 +233,7 @@ export function BookingWizard({
     setContact({ ...contact, notes: "" });
   };
 
-  if (done) return <Submitted when={done} pets={chosen.map((p) => p.name)} businessPhone={businessPhone} onAgain={startOver} />;
+  if (done) return <Submitted when={done} accepted={accepted} pets={chosen.map((p) => p.name)} businessPhone={businessPhone} onAgain={startOver} />;
 
   const errorBox = error && (
     <p role="alert" className="mt-4 rounded-2xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
@@ -1003,7 +1005,9 @@ function AgreementSheet({
   );
 }
 
-function Submitted({ when, pets, businessPhone, onAgain }: { when: string; pets: string[]; businessPhone: string; onAgain: () => void }) {
+function Submitted({ when, accepted, pets, businessPhone, onAgain }: {
+  when: string; accepted: boolean; pets: string[]; businessPhone: string; onAgain: () => void;
+}) {
   const { t } = useT();
   return (
     <StepCard flush>
@@ -1012,22 +1016,31 @@ function Submitted({ when, pets, businessPhone, onAgain }: { when: string; pets:
         <img src="/van.jpg" alt="" width={900} height={507} className="mx-auto w-full max-w-sm" />
       </div>
       <div className="p-6 sm:p-8">
-        <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">{t("Yay! Your booking request was sent. 🎉")}</h1>
+        <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">
+          {accepted ? t("Yay! You're booked. 🎉") : t("Yay! Your booking request was sent. 🎉")}
+        </h1>
         <p className="mt-2 text-muted">
           {pets.join(" & ")}, {when}.
         </p>
         <ol className="mt-6 rounded-2xl border border-line p-5">
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success text-white"><Check size={16} strokeWidth={3} /></span>
-            <span className="font-bold">{t("Request sent")}</span>
+            <span className="font-bold">{accepted ? t("Booked") : t("Request sent")}</span>
           </li>
           <li aria-hidden className="ml-3.5 h-6 border-l-2 border-dashed border-line" />
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg"><Hourglass size={16} /></span>
-            <span>
-              <span className="block font-bold">{t("Waiting for confirmation")}</span>
-              <span className="block text-sm text-muted">{t("We'll text you as soon as it's confirmed. Questions? Text us at {phone}.", { phone: businessPhone })}</span>
-            </span>
+            {accepted ? (
+              <span>
+                <span className="block font-bold">{t("See you then!")}</span>
+                <span className="block text-sm text-muted">{t("We'll text you a reminder before the visit. Questions? Text us at {phone}.", { phone: businessPhone })}</span>
+              </span>
+            ) : (
+              <span>
+                <span className="block font-bold">{t("Waiting for confirmation")}</span>
+                <span className="block text-sm text-muted">{t("We'll text you as soon as it's confirmed. Questions? Text us at {phone}.", { phone: businessPhone })}</span>
+              </span>
+            )}
           </li>
         </ol>
         <button type="button" onClick={onAgain} className="mt-6 block w-full text-center font-semibold text-brand">

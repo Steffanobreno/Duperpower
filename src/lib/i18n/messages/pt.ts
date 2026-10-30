@@ -156,6 +156,10 @@ export const pt: Messages = {
   "Sign agreement": "Assinar o contrato",
 
   "Yay! Your booking request was sent. 🎉": "Oba! Seu pedido de agendamento foi enviado. 🎉",
+  "Yay! You're booked. 🎉": "Oba! Seu horário está marcado. 🎉",
+  Booked: "Marcado",
+  "See you then!": "Até lá!",
+  "We'll text you a reminder before the visit. Questions? Text us at {phone}.": "Vamos mandar um lembrete por mensagem antes da visita. Dúvidas? Mande uma mensagem para {phone}.",
   "Request sent": "Pedido enviado",
   "Waiting for confirmation": "Aguardando confirmação",
   "We'll text you as soon as it's confirmed. Questions? Text us at {phone}.":
@@ -237,4 +241,17 @@ export const pt: Messages = {
   "Download PDF": "Baixar PDF",
   Share: "Compartilhar",
   "Preparing…": "Preparando…",
+
+  // New client form
+  "Thank you! We got your info. 🐾": "Obrigado! Recebemos suas informações. 🐾",
+  "Want to pick a time now?": "Quer escolher um horário agora?",
+  "Book a visit": "Agendar uma visita",
+  "New client form": "Formulário de novo cliente",
+  "Tell us about you and your pets, so we're ready for the first visit.": "Conte sobre você e seus pets, para estarmos prontos na primeira visita.",
+  "I agree to receive text messages about my appointments.": "Aceito receber mensagens de texto sobre meus agendamentos.",
+  "Your pets": "Seus pets",
+  "Anything we should know? (health, behavior, coat)": "Algo que devemos saber? (saúde, comportamento, pelagem)",
+  "Send": "Enviar",
+  "Please check the ZIP code.": "Confira o CEP (ZIP code).",
+  "Please add your pet's name.": "Escreva o nome do seu pet.",
 };

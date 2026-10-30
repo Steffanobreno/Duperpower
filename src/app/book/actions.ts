@@ -163,7 +163,7 @@ export type BookingRequest = {
   website: string; // honeypot: people never see this field
 };
 
-export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; when?: string }> {
+export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string }> {
   const b = await getPublicBusiness();
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
@@ -217,6 +217,9 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
     where a.business_id = ${b.id} and a.source = 'online' and c.phone = ${phone} and a.created_at > now() - interval '1 day'`;
   if (recent >= 3) return { error: "You already sent a few requests today. We'll be in touch soon!" };
 
+  // Automation (Settings → Online booking): some requests book themselves.
+  const [{ auto_accept }] = await sql<{ auto_accept: string }[]>`select auto_accept from businesses where id = ${b.id}`;
+  const accepted = auto_accept === "all" || (auto_accept === "returning" && !!existing);
   const newPetPhotos: { petId: string; photo: string }[] = [];
   let appointmentId: string;
   try {
@@ -246,7 +249,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
       const moved = existing && !useFile ? `New address given online: ${address}, ${city}, CA ${zip}.` : null;
       const [appt] = await tx`
         insert into appointments (business_id, client_id, staff_id, start_at, end_at, status, source, address_line, zip, notes)
-        values (${b.id}, ${clientId}, ${b.staff_id}, ${start}, ${end}, 'requested', 'online', ${visitAddress}, ${zip},
+        values (${b.id}, ${clientId}, ${b.staff_id}, ${start}, ${end}, ${accepted ? "unconfirmed" : "requested"}, 'online', ${visitAddress}, ${zip},
                 ${[moved, notes].filter(Boolean).join("\n") || null})
         returning id`;
 
@@ -287,17 +290,20 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   // The booking went through: it's no longer an abandoned one.
   await sql`update booking_drafts set completed_at = now()
             where business_id = ${b.id} and phone = ${phone} and completed_at is null`;
-  await notifyAppointment(appointmentId, "request_received");
+  await notifyAppointment(appointmentId, accepted ? "booked" : "request_received");
   const when = `${dayLabel(start, b.timezone)} ${timeLabel(start, b.timezone)}`;
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   const who = existing ? `${existing.first_name} (existing client)` : `${firstName} ${lastName} (new client)`;
+  const pets = input.pets.map((p) => p.name).join(" & ");
   await notifyOwner(
     b.id,
-    `New booking request: ${input.pets.map((p) => p.name).join(" & ")}, ${when}`,
-    `${who}, ${input.phone}, asked for ${when}.\nAccept or decline: ${appUrl}/requests`,
-    "/requests",
+    accepted ? `New booking (booked automatically): ${pets}, ${when}` : `New booking request: ${pets}, ${when}`,
+    accepted
+      ? `${who}, ${input.phone}, booked ${when}.\nSee it: ${appUrl}/appointments/${appointmentId}`
+      : `${who}, ${input.phone}, asked for ${when}.\nAccept or decline: ${appUrl}/requests`,
+    accepted ? `/appointments/${appointmentId}` : "/requests",
   );
-  return { ok: true, when: `${dayLabel(start, b.timezone)} at ${timeLabel(start, b.timezone)}` };
+  return { ok: true, accepted, when: `${dayLabel(start, b.timezone)} at ${timeLabel(start, b.timezone)}` };
 }
 
 export type DraftStep = "phone" | "contact" | "address" | "times" | "review";

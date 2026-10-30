@@ -3,7 +3,10 @@ import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { Card, Field, Input, Page, PageHeader } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
-import { saveBookingSettingsAction } from "../actions";
+import { saveAutoAcceptAction, saveBookingSettingsAction } from "../actions";
+import QRCode from "qrcode";
+import { logoUrl } from "@/lib/business-logo";
+import { QrCard } from "./qr-card";
 import { SimpleForm } from "../forms";
 
 export const metadata: Metadata = { title: "Online booking" };
@@ -13,10 +16,14 @@ export default async function BookingSettingsPage() {
   const [b] = await sql`
     select online_booking_enabled, buffer_minutes, max_cluster_miles::float8 as max_cluster_miles,
            service_radius_miles::float8 as service_radius_miles, min_notice_hours, booking_days_ahead,
-           cancellation_hours, start_zip, slot_minutes
+           cancellation_hours, start_zip, slot_minutes, auto_accept, name
     from businesses where id = ${staff.businessId}`;
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const bookUrl = `${appUrl}/book`;
+  const [svg, logo] = await Promise.all([
+    QRCode.toString(bookUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0b1f3a", light: "#ffffff" } }),
+    logoUrl(staff.businessId),
+  ]);
   const embed = `<iframe src="${bookUrl}" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`;
   return (
     <>
@@ -26,6 +33,33 @@ export default async function BookingSettingsPage() {
           <h2 className="font-bold">Your booking page</h2>
           <CopyField label="Link for the Book Now button" value={bookUrl} />
           <CopyField label="Or embed it inside a page of your site" value={embed} />
+          <CopyField label="New client form (pet and contact info, no booking)" value={`${appUrl}/intake`} />
+        </Card>
+        <Card className="space-y-3">
+          <h2 className="font-bold">QR code</h2>
+          <p className="text-sm text-muted">Put it on the van, flyers or business cards. Clients scan it to book.</p>
+          <QrCard svg={svg} name={b.name} logo={logo} url={bookUrl} />
+        </Card>
+        <Card className="space-y-3">
+          <h2 className="font-bold">Automation</h2>
+          <SimpleForm action={saveAutoAcceptAction}>
+            <fieldset className="space-y-2">
+              <legend className="mb-1 text-sm font-medium">When a client books online</legend>
+              {([
+                ["none", "I accept or decline each request", "The time is held until you answer."],
+                ["returning", "Book clients I already know right away", "New clients still wait for you."],
+                ["all", "Book everyone right away", "Every online booking goes straight on the calendar."],
+              ] as const).map(([value, title, text]) => (
+                <label key={value} className="flex items-start gap-3 rounded-xl border border-line p-3 has-[:checked]:border-brand has-[:checked]:bg-brand-soft">
+                  <input type="radio" name="auto_accept" value={value} defaultChecked={b.auto_accept === value} className="mt-1 h-4 w-4" />
+                  <span>
+                    <span className="block font-semibold">{title}</span>
+                    <span className="block text-sm text-muted">{text}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          </SimpleForm>
         </Card>
         <Card>
           <SimpleForm action={saveBookingSettingsAction}>
@@ -63,6 +97,7 @@ export default async function BookingSettingsPage() {
         </Card>
         <p className="text-center text-xs text-muted">
           Requests show up in Today and in Requests. They hold the time until you accept or decline.
+          Bookings made right away show up on the calendar, and you get a notification.
         </p>
       </Page>
     </>

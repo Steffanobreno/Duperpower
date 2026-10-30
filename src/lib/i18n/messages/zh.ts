@@ -154,6 +154,10 @@ export const zh: Messages = {
   "Sign agreement": "签署协议",
 
   "Yay! Your booking request was sent. 🎉": "太好了！您的预约申请已发送。🎉",
+  "Yay! You're booked. 🎉": "太好了！预约成功。🎉",
+  Booked: "已预约",
+  "See you then!": "到时见！",
+  "We'll text you a reminder before the visit. Questions? Text us at {phone}.": "我们会在上门前发短信提醒您。有问题？请发短信至 {phone}。",
   "Request sent": "申请已发送",
   "Waiting for confirmation": "等待确认",
   "We'll text you as soon as it's confirmed. Questions? Text us at {phone}.": "确认后我们会立即发短信通知您。有问题？请发短信至 {phone}。",
@@ -230,4 +234,17 @@ export const zh: Messages = {
   "Download PDF": "下载 PDF",
   Share: "分享",
   "Preparing…": "准备中…",
+
+  // New client form
+  "Thank you! We got your info. 🐾": "谢谢！我们已收到您的信息。🐾",
+  "Want to pick a time now?": "现在就选个时间吗？",
+  "Book a visit": "预约上门",
+  "New client form": "新客户登记表",
+  "Tell us about you and your pets, so we're ready for the first visit.": "请告诉我们您和您宠物的情况，方便我们为第一次上门做好准备。",
+  "I agree to receive text messages about my appointments.": "我同意接收有关预约的短信。",
+  "Your pets": "您的宠物",
+  "Anything we should know? (health, behavior, coat)": "有什么需要我们注意的吗？（健康、性格、毛发）",
+  "Send": "提交",
+  "Please check the ZIP code.": "请检查邮政编码。",
+  "Please add your pet's name.": "请填写宠物的名字。",
 };

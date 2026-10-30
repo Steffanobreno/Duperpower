@@ -164,6 +164,10 @@ export const es: Messages = {
 
   // Sent
   "Yay! Your booking request was sent. 🎉": "¡Listo! Tu solicitud de cita fue enviada. 🎉",
+  "Yay! You're booked. 🎉": "¡Listo! Tu cita está reservada. 🎉",
+  Booked: "Reservada",
+  "See you then!": "¡Nos vemos!",
+  "We'll text you a reminder before the visit. Questions? Text us at {phone}.": "Te enviaremos un recordatorio antes de la visita. ¿Preguntas? Escríbenos al {phone}.",
   "Request sent": "Solicitud enviada",
   "Waiting for confirmation": "Esperando confirmación",
   "We'll text you as soon as it's confirmed. Questions? Text us at {phone}.":
@@ -248,4 +252,17 @@ export const es: Messages = {
   "Download PDF": "Descargar PDF",
   Share: "Compartir",
   "Preparing…": "Preparando…",
+
+  // New client form
+  "Thank you! We got your info. 🐾": "¡Gracias! Recibimos tu información. 🐾",
+  "Want to pick a time now?": "¿Quieres elegir un horario ahora?",
+  "Book a visit": "Reservar una visita",
+  "New client form": "Formulario para nuevos clientes",
+  "Tell us about you and your pets, so we're ready for the first visit.": "Cuéntanos sobre ti y tus mascotas, para estar listos en la primera visita.",
+  "I agree to receive text messages about my appointments.": "Acepto recibir mensajes de texto sobre mis citas.",
+  "Your pets": "Tus mascotas",
+  "Anything we should know? (health, behavior, coat)": "¿Algo que debamos saber? (salud, comportamiento, pelaje)",
+  "Send": "Enviar",
+  "Please check the ZIP code.": "Revisa el código postal.",
+  "Please add your pet's name.": "Escribe el nombre de tu mascota.",
 };

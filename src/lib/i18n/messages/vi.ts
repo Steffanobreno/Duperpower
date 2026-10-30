@@ -154,6 +154,10 @@ export const vi: Messages = {
   "Sign agreement": "Ký thỏa thuận",
 
   "Yay! Your booking request was sent. 🎉": "Tuyệt! Yêu cầu đặt lịch đã được gửi. 🎉",
+  "Yay! You're booked. 🎉": "Tuyệt! Bạn đã đặt lịch thành công. 🎉",
+  Booked: "Đã đặt lịch",
+  "See you then!": "Hẹn gặp bạn!",
+  "We'll text you a reminder before the visit. Questions? Text us at {phone}.": "Chúng tôi sẽ nhắn tin nhắc bạn trước buổi hẹn. Có câu hỏi? Nhắn tin cho chúng tôi theo số {phone}.",
   "Request sent": "Đã gửi yêu cầu",
   "Waiting for confirmation": "Đang chờ xác nhận",
   "We'll text you as soon as it's confirmed. Questions? Text us at {phone}.": "Chúng tôi sẽ nhắn tin ngay khi xác nhận. Có thắc mắc? Nhắn tin tới {phone}.",
@@ -230,4 +234,17 @@ export const vi: Messages = {
   "Download PDF": "Tải PDF",
   Share: "Chia sẻ",
   "Preparing…": "Đang chuẩn bị…",
+
+  // New client form
+  "Thank you! We got your info. 🐾": "Cảm ơn bạn! Chúng tôi đã nhận được thông tin. 🐾",
+  "Want to pick a time now?": "Bạn muốn chọn giờ ngay bây giờ không?",
+  "Book a visit": "Đặt lịch hẹn",
+  "New client form": "Phiếu thông tin khách hàng mới",
+  "Tell us about you and your pets, so we're ready for the first visit.": "Hãy cho chúng tôi biết về bạn và thú cưng, để chúng tôi sẵn sàng cho lần đầu đến.",
+  "I agree to receive text messages about my appointments.": "Tôi đồng ý nhận tin nhắn về lịch hẹn của mình.",
+  "Your pets": "Thú cưng của bạn",
+  "Anything we should know? (health, behavior, coat)": "Có điều gì chúng tôi cần biết không? (sức khỏe, tính cách, bộ lông)",
+  "Send": "Gửi",
+  "Please check the ZIP code.": "Vui lòng kiểm tra mã ZIP.",
+  "Please add your pet's name.": "Vui lòng nhập tên thú cưng.",
 };
