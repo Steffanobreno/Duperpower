@@ -128,6 +128,14 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
             <p className="text-xs text-muted">Tap one to book right after that visit.</p>
           </section>
         )}
+        {pets.length > 0 && (
+          <Link href={`/calendar?view=day&date=${date}&pick=book&client=${client.id}`}
+            className="card flex items-center gap-3 px-4 py-3 font-semibold text-brand">
+            <span aria-hidden>📅</span>
+            <span className="flex-1">Pick the day and time on the calendar</span>
+            <span aria-hidden>›</span>
+          </Link>
+        )}
         {pets.length === 0 ? (
           <Empty title="This client has no pets yet">
             <ButtonLink href={`/clients/${client.id}/pets/new`} className="mt-2">Add a pet</ButtonLink>

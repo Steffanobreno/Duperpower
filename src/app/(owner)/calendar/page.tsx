@@ -7,7 +7,8 @@ import { sql } from "@/lib/db";
 import { addDaysYmd, dayLabel, dayRangeUtc, hm, isYmd, money, timeLabel, todayYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
-import { SlotButton } from "./slot-button";
+import { SlotButton, type Pick } from "./slot-button";
+import { Swipe } from "@/components/swipe";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 
@@ -67,8 +68,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const [y, m] = date.split("-").map(Number);
   const monthEnd = `${date.slice(0, 7)}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0")}`;
   const gridDays = Math.ceil((Math.round((utcNoon(monthEnd).getTime() - utcNoon(gridStart).getTime()) / 86_400_000) + 1) / 7) * 7;
-  const [from, count] =
-    view === "day" ? [date, 1] : view === "month" ? [gridStart, gridDays] : [monday(date), 7];
+  // The day view loads its whole week too, for the dots on the week strip.
+  const [from, count] = view === "month" ? [gridStart, gridDays] : [monday(date), 7];
 
   // ?groomer= shows one groomer's visits and blocks; without it, everyone's.
   const groomer = typeof sp.groomer === "string" && /^[0-9a-f-]{36}$/.test(sp.groomer) ? sp.groomer : null;
@@ -82,12 +83,14 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   ]);
   const appts = groomer ? all.filter((a) => a.staff_id === groomer) : all;
   const multi = groomers.length > 1;
-  const q = groomer ? `&groomer=${groomer}` : "";
+  const choosing = await pickFor(staff, sp);
+  const q = (groomer ? `&groomer=${groomer}` : "") + (choosing?.q ?? "");
   const hoursOf = (d: string) => hours.find((h) => h.weekday === weekdayOf(d)) ?? null;
   const onDay = (d: string) => appts.filter((a) => ymd(a.start_at, tz) === d);
   const blocksOn = (d: string) => blocks.filter((t) => clip(t, d, tz));
 
-  const step = view === "day" ? 1 : view === "month" ? null : 7;
+  // The arrows turn a week at a time (in the day view too); swiping the day turns one day.
+  const step = view === "month" ? null : 7;
   const shift = (n: number) => {
     if (step) return addDaysYmd(date, n * step);
     const d = new Date(Date.UTC(y, m - 1 + n, 1));
@@ -114,11 +117,29 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         <DayNav base={base} prev={shift(-1)} next={shift(1)} today={today} label={label}
           isToday={view === "day" ? date === today : view === "month" ? date.slice(0, 7) === today.slice(0, 7) : monday(date) === monday(today)} />
 
-        <GroomerFilter groomers={groomers} current={groomer} href={(g) => `/calendar?view=${view}&date=${date}${g ? `&groomer=${g}` : ""}`} />
+        <GroomerFilter groomers={groomers} current={groomer} href={(g) => `/calendar?view=${view}&date=${date}${g ? `&groomer=${g}` : ""}${choosing?.q ?? ""}`} />
 
-        {(view === "day" || view === "agenda") && <WeekStrip date={date} today={today} view={view} q={q} />}
+        {choosing && (
+          <div className="sticky top-16 z-10 flex items-center gap-3 rounded-2xl border border-brand bg-brand-soft px-4 py-3">
+            <p className="min-w-0 flex-1 text-sm">
+              <span className="block font-bold text-brand-strong">{choosing.title}</span>
+              <span className="text-muted">{view === "day" ? "Tap a free time to pick it." : "Open the Day view to pick a time."}</span>
+            </p>
+            <Link href={choosing.cancel} className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-sm font-semibold">Cancel</Link>
+          </div>
+        )}
 
-        {view === "day" && <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} multi={multi} groomer={groomer} />}
+        {(view === "day" || view === "agenda") && (
+          <WeekStrip date={date} today={today} view={view} q={q}
+            dots={(d) => onDay(d).filter((a) => !HIDDEN.includes(a.status)).length} />
+        )}
+
+        {view === "day" && (
+          <Swipe prev={`${base}date=${addDaysYmd(date, -1)}`} next={`${base}date=${addDaysYmd(date, 1)}`}>
+            <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} multi={multi} groomer={groomer}
+              pick={choosing?.pick ?? null} />
+          </Swipe>
+        )}
         {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} />}
         {view === "month" && (
           <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d)} />
@@ -129,21 +150,66 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   );
 }
 
-function WeekStrip({ date, today, view, q }: { date: string; today: string; view: View; q: string }) {
+/** The week's days; a dot for each visit (up to 3). Swipe it to turn the week. */
+function WeekStrip({ date, today, view, q, dots }: { date: string; today: string; view: View; q: string; dots: (d: string) => number }) {
   const start = monday(date);
+  const weekHref = (n: number) => `/calendar?view=${view}&date=${addDaysYmd(date, 7 * n)}${q}`;
   return (
-    <div className="grid grid-cols-7 text-center">
-      {Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i)).map((d) => (
-        <Link key={d} href={`/calendar?view=${view}&date=${d}${q}`} aria-current={d === date ? "date" : undefined} className="flex flex-col items-center gap-1 py-1">
-          <span className="text-xs font-semibold text-muted">{fmt(d, { weekday: "narrow" })}</span>
-          <span className={`flex h-9 w-9 items-center justify-center rounded-full font-semibold ${
-            d === date ? "bg-brand text-white" : d === today ? "ring-2 ring-brand text-brand" : ""}`}>
-            {Number(d.slice(8))}
-          </span>
-        </Link>
-      ))}
-    </div>
+    <Swipe prev={weekHref(-1)} next={weekHref(1)} className="grid grid-cols-7 text-center">
+      {Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i)).map((d) => {
+        const n = dots(d);
+        return (
+          <Link key={d} href={`/calendar?view=${view}&date=${d}${q}`} aria-current={d === date ? "date" : undefined}
+            aria-label={`${fmt(d, { weekday: "long", month: "long", day: "numeric" })}${n ? `, ${n} visit${n > 1 ? "s" : ""}` : ""}`}
+            className="flex flex-col items-center gap-1 py-1">
+            <span className="text-xs font-semibold text-muted">{fmt(d, { weekday: "narrow" })}</span>
+            <span className={`flex h-9 w-9 items-center justify-center rounded-full font-semibold ${
+              d === date ? "bg-brand text-white" : d === today ? "ring-2 ring-brand text-brand" : ""}`}>
+              {Number(d.slice(8))}
+            </span>
+            <span aria-hidden className="flex h-1.5 gap-0.5">
+              {Array.from({ length: Math.min(n, 3) }, (_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-success" />)}
+            </span>
+          </Link>
+        );
+      })}
+    </Swipe>
   );
+}
+
+/**
+ * ?pick=move&appt=<id> (move a visit) or ?pick=book&client=<id> (book a client again):
+ * the day view then shows the schedule and turns a tap on a free time into that choice.
+ */
+async function pickFor(staff: Awaited<ReturnType<typeof requireStaff>>, sp: Record<string, string | string[] | undefined>) {
+  const uuid = (v: unknown) => (typeof v === "string" && /^[0-9a-f-]{36}$/.test(v) ? v : null);
+  if (sp.pick === "move" && uuid(sp.appt)) {
+    const [a] = await sql<{ id: string; client: string; minutes: number }[]>`
+      select a.id, trim(c.first_name || ' ' || c.last_name) as client,
+             (extract(epoch from a.end_at - a.start_at) / 60)::int as minutes
+      from appointments a join clients c on c.id = a.client_id
+      where a.id = ${uuid(sp.appt)} and a.business_id = ${staff.businessId}`;
+    if (!a) return null;
+    return {
+      q: `&pick=move&appt=${a.id}`,
+      title: `Moving ${a.client}'s visit (${a.minutes >= 60 ? `${Math.floor(a.minutes / 60)}h${a.minutes % 60 ? ` ${a.minutes % 60}min` : ""}` : `${a.minutes}min`})`,
+      cancel: `/appointments/${a.id}`,
+      pick: { verb: "Move to", href: `/appointments/${a.id}?move=1&` },
+    };
+  }
+  if (sp.pick === "book" && uuid(sp.client)) {
+    const [c] = await sql<{ id: string; client: string }[]>`
+      select id, trim(first_name || ' ' || last_name) as client from clients
+      where id = ${uuid(sp.client)} and business_id = ${staff.businessId}`;
+    if (!c) return null;
+    return {
+      q: `&pick=book&client=${c.id}`,
+      title: `Booking ${c.client}`,
+      cancel: `/clients/${c.id}`,
+      pick: { verb: "Book at", href: `/appointments/new?client=${c.id}&` },
+    };
+  }
+  return null;
 }
 
 /** Places overlapping visits side by side: each gets a lane and the lane count of its cluster. */
@@ -180,9 +246,9 @@ function span(appts: AppointmentListItem[], tz: string, hours: { start: string; 
   return { first: Math.floor(first / 60) * 60, last: Math.ceil(last / 60) * 60 };
 }
 
-function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer }: {
+function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick }: {
   date: string; appts: AppointmentListItem[]; blocks: TimeOff[]; hours: { start: string; end: string } | null; tz: string;
-  multi: boolean; groomer: string | null;
+  multi: boolean; groomer: string | null; pick: Pick | null;
 }) {
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
   // All-day blocks sit above the hours, like all-day events on a phone calendar; the rest share the lanes.
@@ -229,7 +295,7 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer }: {
           const time = `${String(min / 60).padStart(2, "0")}:00`;
           const at = zonedToUtc(date, time, tz);
           return (
-            <SlotButton key={min} date={date} time={time} groomer={groomer} label={`${dayLabel(at, tz)} · ${timeLabel(at, tz)}`}
+            <SlotButton key={min} date={date} time={time} groomer={groomer} label={`${dayLabel(at, tz)} · ${timeLabel(at, tz)}`} pick={pick}
               className={`absolute inset-x-0 flex border-t border-line text-left ${off ? "bg-bg/70" : "hover:bg-brand-soft/40"}`}
               style={{ top: top(min), height: PX }}>
               <span className="w-14 shrink-0 pl-2 pt-1 text-xs font-semibold text-muted">

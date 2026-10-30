@@ -7,7 +7,7 @@ import { getInvoiceForAppointment } from "@/lib/data/invoices";
 import { smsTextFor } from "@/lib/messaging";
 import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
-import { addDaysYmd, hm, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd } from "@/lib/format";
+import { addDaysYmd, hm, isYmd, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd, zonedToUtc } from "@/lib/format";
 import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@/components/ui";
 import { Calendar, Card as Card2, Chat, Check, ChevronDown, ChevronRight, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { NEXT_STATUS } from "@/lib/appointment-status";
@@ -87,7 +87,15 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
   const rebookWeeks = Math.round(rebookDays / 7);
   const canChange = !closed && appt.status !== "completed";
-  const canMove = ["requested", "unconfirmed", "confirmed"].includes(appt.status); // not once on the way
+  // Any visit that isn't cancelled can move; a finished one just gets its time corrected (no text to the client).
+  const canMove = !closed;
+  const finishedMove = ["en_route", "in_progress", "completed"].includes(appt.status);
+  const day = ymd(appt.start_at, tz);
+  // Moving and booking again open the calendar on that day, to see the schedule and tap a free time.
+  const moveHref = `/calendar?view=day&date=${day}&pick=move&appt=${id}`;
+  const bookAgainHref = `/calendar?view=day&date=${nextDate}&pick=book&client=${c.id}`;
+  const picked = sp.move === "1" && isYmd(sp.date) && typeof sp.time === "string" && /^\d{2}:\d{2}$/.test(sp.time)
+    ? { date: sp.date, time: sp.time } : null;
   const pillar = "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 text-xs font-semibold text-brand hover:bg-brand-soft";
 
   return (
@@ -95,6 +103,15 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
       <PageHeader title="Appointment" back={`/today?date=${ymd(appt.start_at, tz)}`} />
       <Page>
         {sp.booked === "1" && <Notice kind="success">Appointment booked.</Notice>}
+        {picked && canMove && (
+          <section className="card space-y-3 border-2 border-brand p-4" aria-label="Move this visit">
+            <p className="font-bold">
+              Move to {longDayLabel(zonedToUtc(picked.date, picked.time, tz), tz)} at {timeLabel(zonedToUtc(picked.date, picked.time, tz), tz)}?
+            </p>
+            <RescheduleForm action={rescheduleAction.bind(null, id)} date={picked.date} time={picked.time} notify={!finishedMove} primary />
+            <Link href={moveHref} className="block text-center text-sm font-semibold text-brand">Pick another time</Link>
+          </section>
+        )}
         {sp.conflict === "1" && <Notice kind="error">Another appointment already uses that time.</Notice>}
         {appt.reschedule_requested_at && (
           <div className="rounded-2xl border border-warn bg-warn-soft px-4 py-3 text-warn">
@@ -145,9 +162,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
             <a href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className={pillar}><Van size={22} />On my way</a>
           )}
-          {canMove && <a href="#reschedule" className={pillar}><Calendar size={22} />Reschedule</a>}
+          {canMove && <Link href={moveHref} className={pillar}><Calendar size={22} />Reschedule</Link>}
           {canChange && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
-          <Link href={`/appointments/new?client=${c.id}&date=${nextDate}&time=${hm(appt.start_at, tz)}`} className={pillar}>
+          <Link href={bookAgainHref} className={pillar}>
             <Plus size={22} />Book again
           </Link>
           {canChange && (
@@ -174,7 +191,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
               <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}</p>
             </div>
-            {canMove && <a href="#reschedule" aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></a>}
+            {canMove && <Link href={moveHref} aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></Link>}
           </div>
           {(groomers.length > 1 || appt.staff_id !== staff.staffId) && groomer && (
             <div className="card space-y-2 px-4 py-3">
@@ -293,12 +310,14 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         {canMove && (
           <section className="scroll-mt-20 space-y-2" id="reschedule">
             <h2 className="section-label">Reschedule</h2>
-            <Card>
-              <RescheduleForm
-                action={rescheduleAction.bind(null, id)}
-                date={ymd(appt.start_at, tz)}
-                time={hm(appt.start_at, tz)}
-              />
+            <Card className="space-y-3">
+              <Link href={moveHref} className="block rounded-xl bg-brand py-3 text-center font-bold text-white">📅 Pick a time on the calendar</Link>
+              <details>
+                <summary className="cursor-pointer text-sm font-semibold text-muted">Or type the date and time</summary>
+                <div className="pt-3">
+                  <RescheduleForm action={rescheduleAction.bind(null, id)} date={day} time={hm(appt.start_at, tz)} notify={!finishedMove} />
+                </div>
+              </details>
             </Card>
           </section>
         )}

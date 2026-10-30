@@ -184,9 +184,11 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
   if (!isYmd(date) || !/^\d{2}:\d{2}$/.test(time)) return { error: "Pick a date and a start time." };
   const [appt] = await sql`select start_at, end_at, zip, staff_id, status from appointments where id = ${appointmentId} and business_id = ${me.businessId}`;
   if (!appt) return { error: "Appointment not found." };
-  if (!["requested", "unconfirmed", "confirmed"].includes(appt.status)) {
-    return { error: "This visit already started or is closed. Book a new one instead." };
+  if (["cancelled", "no_show", "declined"].includes(appt.status)) {
+    return { error: "This visit is closed. Restore it first, or book a new one." };
   }
+  // A visit that started or is done keeps its status: this only corrects when it happened.
+  const booked = ["requested", "unconfirmed", "confirmed"].includes(appt.status);
   const staff = asGroomer(me, appt.staff_id);
   const startAt = zonedToUtc(date, time, staff.timezone);
   const endAt = new Date(startAt.getTime() + (appt.end_at.getTime() - appt.start_at.getTime()));
@@ -198,14 +200,16 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
     if (warning) return { warning };
   }
   try {
-    await sql`update appointments set start_at = ${startAt}, end_at = ${endAt}, status = 'unconfirmed', confirmed_at = null,
+    await sql`update appointments set start_at = ${startAt}, end_at = ${endAt},
+                status = case when ${booked} then 'unconfirmed' else status end,
+                confirmed_at = case when ${booked} then null else confirmed_at end,
                 reschedule_requested_at = null, reschedule_note = null
               where id = ${appointmentId} and business_id = ${staff.businessId}`;
   } catch (e) {
     if (isExclusionViolation(e)) return { error: "You already have an appointment at that time. Pick another time." };
     throw e;
   }
-  if (form.get("notify") === "on") await notifyAppointment(appointmentId, "booked");
+  if (booked && form.get("notify") === "on") await notifyAppointment(appointmentId, "booked");
   revalidatePath("/today");
   revalidatePath("/calendar");
   redirect(`/appointments/${appointmentId}`);
