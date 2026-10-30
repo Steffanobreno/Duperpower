@@ -22,6 +22,8 @@ export async function saveServiceAction(serviceId: string | null, _: FormState, 
   const description = String(form.get("description") ?? "").trim() || null;
   const active = form.get("active") === "on";
   const online = form.get("online_bookable") === "on";
+  const rawColor = String(form.get("color") ?? "");
+  const color = /^#[0-9a-f]{6}$/i.test(rawColor) ? rawColor : null;
   if (!name) return { error: "Give the service a name." };
   if (!Number.isInteger(duration) || duration < 0 || duration > 600) return { error: "Duration must be 0 to 600 minutes." };
   if (price === null) return { error: "Enter a price, like 129 or 129.00." };
@@ -30,14 +32,14 @@ export async function saveServiceAction(serviceId: string | null, _: FormState, 
     await sql`
       update services set name = ${name}, kind = ${kind}, category = ${category}, size_class = ${size_class},
         duration_min = ${duration}, price_cents = ${price}, description = ${description},
-        active = ${active}, online_bookable = ${online}
+        active = ${active}, online_bookable = ${online}, color = ${color}
       where id = ${serviceId} and business_id = ${staff.businessId}`;
   } else {
     await sql`
       insert into services (business_id, name, kind, category, size_class, duration_min, price_cents, description,
-                            active, online_bookable, sort_order)
+                            active, online_bookable, color, sort_order)
       values (${staff.businessId}, ${name}, ${kind}, ${category}, ${size_class}, ${duration}, ${price}, ${description},
-              ${active}, ${online},
+              ${active}, ${online}, ${color},
               (select coalesce(max(sort_order), 0) + 1 from services where business_id = ${staff.businessId}))`;
   }
   revalidatePath("/settings/services");

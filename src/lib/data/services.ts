@@ -14,12 +14,13 @@ export type ServiceRow = {
   online_bookable: boolean;
   sort_order: number;
   active: boolean;
+  color: string | null;
 };
 
 export async function listServices(staff: StaffContext, { includeInactive = false } = {}) {
   return sql<ServiceRow[]>`
     select id, name, kind, category, size_class, description, duration_min, price_cents,
-           online_bookable, sort_order, active
+           online_bookable, sort_order, active, color
     from services
     where business_id = ${staff.businessId} and (${includeInactive} or active)
     order by kind, sort_order, name`;

@@ -7,6 +7,7 @@ import { sql } from "@/lib/db";
 import { addDaysYmd, dayLabel, dayRangeUtc, hm, isYmd, money, timeLabel, todayYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { closedDays } from "@/lib/data/closed";
+import { calendarView, type CalendarView } from "@/lib/data/calendar-view";
 import { DayNav } from "@/components/day-nav";
 import { SlotButton, type Pick } from "./slot-button";
 import { Swipe } from "@/components/swipe";
@@ -46,6 +47,12 @@ function clip(t: TimeOff, d: string, tz: string) {
 }
 const blockTitle = (t: TimeOff) => t.reason || "Blocked";
 
+/** The left bar of a visit: by status (default), by groomer or by the first service. */
+function bar(a: AppointmentListItem, view: CalendarView) {
+  const color = view.color_by === "staff" ? a.staff_color : view.color_by === "service" ? a.service_color : null;
+  return color ? { className: "", style: { borderLeftColor: color } } : { className: STATUS_BAR[a.status] ?? "border-l-muted", style: {} };
+}
+
 const STATUS_BAR: Record<string, string> = {
   requested: "border-l-warn",
   unconfirmed: "border-l-danger",
@@ -83,6 +90,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
     listGroomers(staff, { activeOnly: true }),
     closedDays(staff.businessId, from, addDaysYmd(from, count - 1)),
   ]);
+  const look = await calendarView(staff.businessId);
   const appts = groomer ? all.filter((a) => a.staff_id === groomer) : all;
   const multi = groomers.length > 1;
   const choosing = await pickFor(staff, sp);
@@ -140,10 +148,10 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         {view === "day" && (
           <Swipe prev={`${base}date=${addDaysYmd(date, -1)}`} next={`${base}date=${addDaysYmd(date, 1)}`}>
             <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} multi={multi} groomer={groomer}
-              pick={choosing?.pick ?? null} />
+              pick={choosing?.pick ?? null} view={look} />
           </Swipe>
         )}
-        {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} />}
+        {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} view={look} />}
         {view === "month" && (
           <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} />
         )}
@@ -241,24 +249,26 @@ function lanes(list: { id: string; s: number; e: number }[]) {
   return out;
 }
 
-function span(appts: AppointmentListItem[], tz: string, hours: { start: string; end: string } | null, extra: { s: number; e: number }[] = []) {
+function span(appts: AppointmentListItem[], tz: string, hours: { start: string; end: string } | null, extra: { s: number; e: number }[] = [],
+  view?: CalendarView) {
   const mins = appts.flatMap((a) => [toMin(hm(a.start_at, tz)), Math.min(toMin(hm(a.end_at, tz)) || 1440, 1440)])
     .concat(extra.filter((x) => x.e - x.s < 1440).flatMap((x) => [x.s, x.e]));
-  const first = Math.min(hours ? toMin(hours.start) : 7 * 60, ...mins);
-  const last = Math.max(hours ? toMin(hours.end) : 19 * 60, ...mins);
+  // The hours set in Calendar look come first; then the working hours; visits outside them still show.
+  const first = Math.min(view?.view_start ? toMin(view.view_start) : hours ? toMin(hours.start) : 7 * 60, ...mins);
+  const last = Math.max(view?.view_end ? toMin(view.view_end) : hours ? toMin(hours.end) : 19 * 60, ...mins);
   return { first: Math.floor(first / 60) * 60, last: Math.ceil(last / 60) * 60 };
 }
 
-function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick }: {
+function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick, view }: {
   date: string; appts: AppointmentListItem[]; blocks: TimeOff[]; hours: { start: string; end: string } | null; tz: string;
-  multi: boolean; groomer: string | null; pick: Pick | null;
+  multi: boolean; groomer: string | null; pick: Pick | null; view: CalendarView;
 }) {
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
   // All-day blocks sit above the hours, like all-day events on a phone calendar; the rest share the lanes.
   const clipped = blocks.map((t) => ({ t, ...clip(t, date, tz)! }));
   const allDay = clipped.filter((b) => b.s === 0 && b.e === 1440).map((b) => b.t);
   const cut = clipped.filter((b) => !(b.s === 0 && b.e === 1440));
-  const { first, last } = span(visible, tz, hours, cut);
+  const { first, last } = span(visible, tz, hours, cut, view);
   const PX = 72; // pixels per hour
   const top = (min: number) => ((min - first) / 60) * PX;
   const placed = visible.map((a) => {
@@ -325,10 +335,12 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick }: {
         })}
         {placed.map(({ a, s, e }) => {
           const l = lane.get(a.id)!;
+          const b = bar(a, view);
           return (
             <Link key={a.id} href={`/appointments/${a.id}`}
-              className={`absolute overflow-hidden rounded-xl border border-l-4 border-line bg-surface p-2 text-xs shadow-sm hover:shadow-md ${STATUS_BAR[a.status] ?? "border-l-muted"}`}
+              className={`absolute overflow-hidden rounded-xl border border-l-4 border-line bg-surface p-2 text-xs shadow-sm hover:shadow-md ${b.className}`}
               style={{
+                ...b.style,
                 top: top(s) + 1, height: Math.max(top(e) - top(s) - 2, 28),
                 left: `calc(3.5rem + (100% - 4rem) * ${l.lane / l.of})`, width: `calc((100% - 4rem) / ${l.of} - 4px)`,
               }}>
@@ -338,10 +350,15 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick }: {
               </div>
               <div className="truncate text-sm font-bold">
                 {multi && <span aria-label={a.staff_name} title={a.staff_name} className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: a.staff_color }} />}
-                {a.series_id && <span aria-label="Repeats" className="text-success">↻ </span>}{a.client_name}
+                {a.series_id && <span aria-label="Repeats" className="text-success">↻ </span>}{view.show_client ? a.client_name : a.pets.map((p) => p.name).join(", ")}
               </div>
-              <div className="truncate text-muted">{a.pets.map((p) => `${p.name} · ${p.services.join(", ")}`).join(" | ")}</div>
-              <div className="truncate text-muted">{a.address_line}</div>
+              {(view.show_pets || view.show_services) && (
+                <div className="truncate text-muted">
+                  {a.pets.map((p) => [view.show_pets && p.name, view.show_services && p.services.join(", ")].filter(Boolean).join(" · ")).join(" | ")}
+                </div>
+              )}
+              {view.show_address && <div className="truncate text-muted">{a.address_line}</div>}
+              {view.show_notes && a.notes && <div className="truncate italic text-muted">{a.notes}</div>}
             </Link>
           );
         })}
@@ -350,15 +367,15 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick }: {
   );
 }
 
-function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz }: {
+function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz, view }: {
   start: string; today: string; appts: AppointmentListItem[]; blocksOn: (d: string) => TimeOff[];
-  hoursOf: (d: string) => { start: string; end: string } | null; tz: string;
+  hoursOf: (d: string) => { start: string; end: string } | null; tz: string; view: CalendarView;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i));
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
   const allHours = days.map(hoursOf).filter((h): h is { start: string; end: string } => !!h);
   const { first, last } = span(visible, tz, allHours.length
-    ? { start: allHours.map((h) => h.start).sort()[0], end: allHours.map((h) => h.end).sort().at(-1)! } : null);
+    ? { start: allHours.map((h) => h.start).sort()[0], end: allHours.map((h) => h.end).sort().at(-1)! } : null, [], view);
   const PX = 52;
   const top = (min: number) => ((min - first) / 60) * PX;
   return (
@@ -413,11 +430,12 @@ function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz }: {
               })}
               {list.map(({ a, s, e }) => {
                 const l = lane.get(a.id)!;
+                const b = bar(a, view);
                 return (
                   <Link key={a.id} href={`/appointments/${a.id}`} title={`${timeLabel(a.start_at, tz)} ${a.client_name}`}
-                    className={`absolute overflow-hidden rounded-md border-l-[3px] bg-navy px-0.5 py-0.5 text-[10px] leading-tight text-white ${STATUS_BAR[a.status] ?? ""}`}
-                    style={{ top: top(s) + 1, height: Math.max(top(e) - top(s) - 2, 18), left: `${(l.lane / l.of) * 100}%`, width: `calc(${100 / l.of}% - 2px)` }}>
-                    <span className="block font-bold">{a.client_name.split(" ")[0]}</span>
+                    className={`absolute overflow-hidden rounded-md border-l-[3px] bg-navy px-0.5 py-0.5 text-[10px] leading-tight text-white ${b.className}`}
+                    style={{ ...b.style, top: top(s) + 1, height: Math.max(top(e) - top(s) - 2, 18), left: `${(l.lane / l.of) * 100}%`, width: `calc(${100 / l.of}% - 2px)` }}>
+                    <span className="block font-bold">{view.show_client ? a.client_name.split(" ")[0] : a.pets[0]?.name}</span>
                     <span className="block opacity-80">{a.pets.map((p) => p.name).join(", ")}</span>
                   </Link>
                 );

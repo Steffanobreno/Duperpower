@@ -17,6 +17,7 @@ export type ServiceValues = {
   description: string | null;
   active: boolean;
   online_bookable: boolean;
+  color?: string | null;
 };
 
 export function ServiceForm({ action, initial, categories }: { action: Action; initial?: ServiceValues; categories: string[] }) {
@@ -68,6 +69,9 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
       </div>
       <Field label="Description (optional)">
         <Textarea name="description" defaultValue={initial?.description ?? ""} />
+      </Field>
+      <Field label="Calendar color" hint="Used when the calendar is colored by service.">
+        <Input type="color" name="color" defaultValue={initial?.color ?? "#2563eb"} className="h-11 w-20 p-1" />
       </Field>
       <label className="flex items-center gap-3 text-sm">
         <input type="checkbox" name="active" defaultChecked={initial?.active ?? true} className="h-4 w-4" />

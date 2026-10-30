@@ -26,6 +26,8 @@ export type AppointmentListItem = {
   staff_id: string;
   staff_name: string;
   staff_color: string;
+  /** The color of the visit's first service, for "color by service". */
+  service_color: string | null;
 };
 
 const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<AppointmentListItem[]>`
@@ -44,7 +46,10 @@ const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<Appointm
          coalesce((select sum(s.price_cents) from appointment_pets ap
                    join appointment_services s on s.appointment_pet_id = ap.id
                    where ap.appointment_id = a.id), 0)::int as total_cents,
-         exists (select 1 from invoices i where i.appointment_id = a.id and i.status = 'closed') as paid
+         exists (select 1 from invoices i where i.appointment_id = a.id and i.status = 'closed') as paid,
+         (select sv.color from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
+          join services sv on sv.id = s.service_id
+          where ap.appointment_id = a.id and sv.color is not null order by s.created_at limit 1) as service_color
   from appointments a
   join clients c on c.id = a.client_id
   join staff st on st.id = a.staff_id
