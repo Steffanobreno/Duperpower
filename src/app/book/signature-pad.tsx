@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useT } from "@/components/i18n";
 
 // Sign with a finger (or mouse). Reports the drawing as a PNG data URL after each stroke,
 // or null once cleared.
 export function SignaturePad({ onChange }: { onChange: (png: string | null) => void }) {
+  const { t } = useT();
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const inked = useRef(false);
@@ -31,7 +33,7 @@ export function SignaturePad({ onChange }: { onChange: (png: string | null) => v
       <div className="relative">
         <canvas
           ref={canvas}
-          aria-label="Draw your signature here"
+          aria-label={t("Draw your signature here")}
           className="h-40 w-full touch-none rounded-2xl border-2 border-dashed border-line bg-bg"
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
@@ -58,7 +60,7 @@ export function SignaturePad({ onChange }: { onChange: (png: string | null) => v
           }}
         />
         <span className="pointer-events-none absolute bottom-3 left-4 right-4 border-t border-muted/40 pt-1 text-xs text-muted">
-          Sign above
+          {t("Sign above")}
         </span>
       </div>
       <button
@@ -71,7 +73,7 @@ export function SignaturePad({ onChange }: { onChange: (png: string | null) => v
           onChange(null);
         }}
       >
-        Clear signature
+        {t("Clear signature")}
       </button>
     </div>
   );

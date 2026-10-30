@@ -5,8 +5,8 @@ import { useState } from "react";
  * Sends the receipt PDF through the phone's share sheet (Messages, WhatsApp, Mail…), or
  * downloads it where sharing files isn't possible.
  */
-export function ShareReceiptButton({ pdfUrl, fileName, className, children }: {
-  pdfUrl: string; fileName: string; className?: string; children: React.ReactNode;
+export function ShareReceiptButton({ pdfUrl, fileName, className, children, busyLabel = "Preparing…" }: {
+  pdfUrl: string; fileName: string; className?: string; children: React.ReactNode; busyLabel?: string;
 }) {
   const [busy, setBusy] = useState(false);
   return (
@@ -35,7 +35,7 @@ export function ShareReceiptButton({ pdfUrl, fileName, className, children }: {
         }
       }}
     >
-      {busy ? "Preparing…" : children}
+      {busy ? busyLabel : children}
     </button>
   );
 }

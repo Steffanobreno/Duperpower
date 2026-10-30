@@ -2,15 +2,18 @@
 import { useState } from "react";
 import type { DaySlots } from "@/lib/booking";
 import { ChevronLeft, ChevronRight } from "@/components/icons";
+import { useT } from "@/components/i18n";
 
 // A month grid. Days with open times are tappable and show green dots (two for a day with
 // plenty of room, one when only a time or two is left); other days are greyed out.
 // Dates are yyyy-MM-dd strings in the business time zone, so all math here is in UTC.
 
-const WEEK = ["S", "M", "T", "W", "T", "F", "S"];
 const monthOf = (ymd: string) => ymd.slice(0, 7);
-const monthName = (ym: string) =>
-  new Date(`${ym}-15T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+const monthName = (ym: string, locale: string) =>
+  new Date(`${ym}-15T12:00:00Z`).toLocaleDateString(locale, { month: "long", year: "numeric", timeZone: "UTC" });
+// Sunday to Saturday, in the client's language ("S M T…", "D L M…", "日 一 二…").
+const weekLetters = (locale: string) =>
+  Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2026, 1, 1 + i, 12)).toLocaleDateString(locale, { weekday: "narrow", timeZone: "UTC" }));
 const shiftMonth = (ym: string, by: number) => {
   const d = new Date(`${ym}-15T12:00:00Z`);
   d.setUTCMonth(d.getUTCMonth() + by);
@@ -28,6 +31,7 @@ export function MonthCalendar({
   selected: string | null;
   onSelect: (date: string) => void;
 }) {
+  const { t, locale } = useT();
   const open = new Map(days.map((d) => [d.date, d.times.length]));
   const near = new Set(days.filter((d) => d.near).map((d) => d.date)); // the van is already close by
   const first = days[0]?.date ?? today;
@@ -46,18 +50,18 @@ export function MonthCalendar({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-lg font-bold" aria-live="polite">{monthName(month)}</h3>
+        <h3 className="text-lg font-bold" aria-live="polite">{monthName(month, locale)}</h3>
         <div className="flex items-center gap-2">
-          <button type="button" className={navButton} aria-label="Previous month" disabled={month <= monthOf(today)} onClick={() => setMonth(shiftMonth(month, -1))}>
+          <button type="button" className={navButton} aria-label={t("Previous month")} disabled={month <= monthOf(today)} onClick={() => setMonth(shiftMonth(month, -1))}>
             <ChevronLeft />
           </button>
-          <button type="button" className={navButton} aria-label="Next month" disabled={month >= monthOf(last)} onClick={() => setMonth(shiftMonth(month, 1))}>
+          <button type="button" className={navButton} aria-label={t("Next month")} disabled={month >= monthOf(last)} onClick={() => setMonth(shiftMonth(month, 1))}>
             <ChevronRight />
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-y-2 text-center" role="group" aria-label={monthName(month)}>
-        {WEEK.map((w, i) => (
+      <div className="grid grid-cols-7 gap-y-2 text-center" role="group" aria-label={monthName(month, locale)}>
+        {weekLetters(locale).map((w, i) => (
           <span key={i} className="pb-1 text-xs font-semibold text-muted" aria-hidden>
             {w}
           </span>
@@ -66,14 +70,16 @@ export function MonthCalendar({
           if (!date) return <span key={i} />;
           const n = open.get(date) ?? 0;
           const isSelected = date === selected;
-          const label = new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+          const label = new Date(`${date}T12:00:00Z`).toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
           return (
             <div key={date} className="flex justify-center">
               <button
                 type="button"
                 disabled={!n}
                 aria-pressed={isSelected}
-                aria-label={n ? `${label}, ${n} open ${n === 1 ? "time" : "times"}${near.has(date) ? ", we're in your area" : ""}` : `${label}, no open times`}
+                aria-label={n
+                  ? (n === 1 ? t("{day}, 1 open time", { day: label }) : t("{day}, {n} open times", { day: label, n })) + (near.has(date) ? t(", we're in your area") : "")
+                  : t("{day}, no open times", { day: label })}
                 onClick={() => onSelect(date)}
                 className={`flex h-12 w-12 flex-col items-center justify-center rounded-full text-[15px] font-semibold transition-colors ${
                   isSelected

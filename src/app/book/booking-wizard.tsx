@@ -9,6 +9,8 @@ import {
   ArrowLeft, Camera, Check, Close, Dog, Hourglass, Pencil, Pin, Plus, Search, Sign,
 } from "@/components/icons";
 import { MonthCalendar } from "./month-calendar";
+import { useT } from "@/components/i18n";
+import type { T } from "@/lib/i18n";
 import { SignaturePad } from "./signature-pad";
 import {
   availabilityAction,
@@ -76,8 +78,10 @@ export function BookingWizard({
   agreementTitle,
   agreement,
   initialPhone = "",
+  timezone,
 }: {
   initialPhone?: string; // from the "finish booking" link
+  timezone: string; // the business's, for showing open times
   services: Service[];
   businessName: string;
   businessPhone: string;
@@ -102,6 +106,12 @@ export function BookingWizard({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { t, locale, serverMessage } = useT();
+  const sizeName = (size: string) => t(SIZES.find((x) => x.value === size)?.label.split(" (")[0] ?? "");
+  /** The time of an open slot in the client's language ("10:00 AM", "上午10:00"). */
+  const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", timeZone: timezone });
+  const dayOf = (ymd: string, long = false) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(locale,
+    long ? { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" } : { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
   const step = history.at(-1)!;
   const go = (s: Step) => {
@@ -134,7 +144,7 @@ export function BookingWizard({
     startTransition(async () => {
       setError(null);
       const res = await lookupClientAction(phone);
-      if (res.error || res.known === undefined) return setError(res.error ?? "Something went wrong. Please try again.");
+      if (res.error || res.known === undefined) return setError(res.error ? serverMessage(res.error) : t("Something went wrong. Please try again."));
       setWho(res);
       // Remember how far they got, for the "finish booking" message (best effort).
       void trackDraftAction({ phone, step: "phone" });
@@ -180,7 +190,7 @@ export function BookingWizard({
         })),
       });
       const res = await availabilityAction({ phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
-      if (res.error) return setError(res.error);
+      if (res.error) return setError(serverMessage(res.error));
       setDays(res.days ?? []);
       // Start on a day we're already nearby, when there is one.
       setDay((res.days?.find((d) => d.near) ?? res.days?.[0])?.date ?? null);
@@ -204,9 +214,9 @@ export function BookingWizard({
         signature: signed?.name ?? "",
         signatureDrawing: signed?.drawing,
       });
-      if (res.error) setError(res.error);
+      if (res.error) setError(serverMessage(res.error));
       else {
-        setDone(res.when ?? "your chosen time");
+        setDone(t("{date} at {time}", { date: dayOf(day ?? "", true), time: timeOf(start) }));
         window.scrollTo({ top: 0 });
       }
     });
@@ -231,7 +241,7 @@ export function BookingWizard({
   const header = (title: string, sub?: ReactNode) => (
     <div className="mb-6">
       {history.length > 1 && (
-        <button type="button" onClick={back} aria-label="Back" className="-ml-2 mb-3 flex h-10 w-10 items-center justify-center rounded-full hover:bg-bg">
+        <button type="button" onClick={back} aria-label={t("Back")} className="-ml-2 mb-3 flex h-10 w-10 items-center justify-center rounded-full hover:bg-bg">
           <ArrowLeft size={24} />
         </button>
       )}
@@ -246,20 +256,20 @@ export function BookingWizard({
         <StepCard flush>
           <div className="px-4 pt-4">
             {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
-            <img src="/van.jpg" alt="The Woofers Dog Spa grooming van" width={900} height={507} className="mx-auto w-full max-w-sm" />
+            <img src="/van.jpg" alt={t("The Woofers Dog Spa grooming van")} width={900} height={507} className="mx-auto w-full max-w-sm" />
           </div>
           <div className="p-5 pt-2 sm:p-7 sm:pt-2">
-          <h1 className="text-[32px] font-extrabold leading-tight tracking-tight">Welcome!</h1>
+          <h1 className="text-[32px] font-extrabold leading-tight tracking-tight">{t("Welcome!")}</h1>
           <p className="mt-2 text-muted">
-            Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we&apos;ll bring the spa to you. 🐾
+            {t("Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾")}
           </p>
           <label className="mt-7 block">
-            <span className="mb-2 block font-bold">Start with your phone number</span>
+            <span className="mb-2 block font-bold">{t("Start with your phone number")}</span>
             <input
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              aria-label="Mobile phone"
+              aria-label={t("Mobile phone")}
               placeholder="(650) 555-0123"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -267,10 +277,10 @@ export function BookingWizard({
               className={inputClass}
             />
           </label>
-          <p className="mt-2 text-sm text-muted">Been here before? We&apos;ll find your pets and address, so you don&apos;t type them again.</p>
+          <p className="mt-2 text-sm text-muted">{t("Been here before? We'll find your pets and address, so you don't type them again.")}</p>
           {errorBox}
           <BigButton disabled={pending || digits(phone).length < 10} onClick={lookup} className="mt-6">
-            {pending ? "One moment…" : "Next"}
+            {pending ? t("One moment…") : t("Next")}
           </BigButton>
           </div>
         </StepCard>
@@ -279,21 +289,21 @@ export function BookingWizard({
     case "about":
       return (
         <StepCard>
-          {header("About you", "Welcome! It looks like your first visit with us.")}
+          {header(t("About you"), t("Welcome! It looks like your first visit with us."))}
           <div className="space-y-5">
             <div>
-              <span className={labelClass}>Your name</span>
+              <span className={labelClass}>{t("Your name")}</span>
               <div className="grid grid-cols-2 gap-3">
-                <input aria-label="First name" placeholder="First" autoComplete="given-name" className={inputClass}
+                <input aria-label={t("First name")} placeholder={t("First")} autoComplete="given-name" className={inputClass}
                   value={contact.firstName} onChange={(e) => setContact({ ...contact, firstName: e.target.value })} />
-                <input aria-label="Last name" placeholder="Last" autoComplete="family-name" className={inputClass}
+                <input aria-label={t("Last name")} placeholder={t("Last")} autoComplete="family-name" className={inputClass}
                   value={contact.lastName} onChange={(e) => setContact({ ...contact, lastName: e.target.value })} />
               </div>
             </div>
             <label className="block">
-              <span className={labelClass}>Email address</span>
-              <span className="-mt-1 mb-2 block text-sm text-muted">We send your confirmation and reminders here (and a link to finish, if you stop halfway).</span>
-              <input type="email" aria-label="Email" placeholder="you@example.com" autoComplete="email" className={inputClass}
+              <span className={labelClass}>{t("Email address")}</span>
+              <span className="-mt-1 mb-2 block text-sm text-muted">{t("We send your confirmation and reminders here (and a link to finish, if you stop halfway).")}</span>
+              <input type="email" aria-label={t("Email")} placeholder="you@example.com" autoComplete="email" className={inputClass}
                 value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} />
             </label>
           </div>
@@ -302,12 +312,12 @@ export function BookingWizard({
             className="mt-8"
             disabled={!contact.firstName.trim() || !contact.lastName.trim() || !contact.email.trim()}
             onClick={() => {
-              if (!/^\S+@\S+\.\S+$/.test(contact.email.trim())) return setError("Please check your email address.");
+              if (!/^\S+@\S+\.\S+$/.test(contact.email.trim())) return setError(t("Please check your email address."));
               void trackDraftAction({ phone, step: "contact", firstName: contact.firstName, lastName: contact.lastName, email: contact.email });
               go({ name: "address" });
             }}
           >
-            Continue
+            {t("Continue")}
           </BigButton>
         </StepCard>
       );
@@ -315,32 +325,32 @@ export function BookingWizard({
     case "address":
       return (
         <StepCard>
-          {header(known ? `Welcome back, ${known.firstName}!` : "Where should we park the van?",
-            known ? "Where should we park the van this time?" : "We groom in our van right outside your door.")}
+          {header(known ? t("Welcome back, {name}!", { name: known.firstName }) : t("Where should we park the van?"),
+            known ? t("Where should we park the van this time?") : t("We groom in our van right outside your door."))}
           {known?.hasAddress && (
-            <div className="mb-4 space-y-3" role="radiogroup" aria-label="Address">
+            <div className="mb-4 space-y-3" role="radiogroup" aria-label={t("Address")}>
               <ChoiceCard selected={useFileAddress} onClick={() => setUseFileAddress(true)} icon={<Pin />}
-                title="Same address as last time" sub={known.city ? `in ${known.city}` : "the address we have on file"} />
+                title={t("Same address as last time")} sub={known.city ? t("in {city}", { city: known.city }) : t("the address we have on file")} />
               <ChoiceCard selected={!useFileAddress} onClick={() => setUseFileAddress(false)} icon={<Plus />}
-                title="Somewhere else" sub="Type the new address" />
+                title={t("Somewhere else")} sub={t("Type the new address")} />
             </div>
           )}
           {!fileAddress && (
             <div className="space-y-4">
               <label className="block">
-                <span className={labelClass}>Street address</span>
-                <input aria-label="Street address" autoComplete="street-address" placeholder="123 Main St" className={inputClass}
+                <span className={labelClass}>{t("Street address")}</span>
+                <input aria-label={t("Street address")} autoComplete="street-address" placeholder="123 Main St" className={inputClass}
                   value={address.address} onChange={(e) => setAddress({ ...address, address: e.target.value })} />
               </label>
               <div className="grid grid-cols-[1fr_8rem] gap-3">
                 <label className="block">
-                  <span className={labelClass}>City</span>
-                  <input aria-label="City" autoComplete="address-level2" placeholder="San Mateo" className={inputClass}
+                  <span className={labelClass}>{t("City")}</span>
+                  <input aria-label={t("City")} autoComplete="address-level2" placeholder="San Mateo" className={inputClass}
                     value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} />
                 </label>
                 <label className="block">
-                  <span className={labelClass}>ZIP code</span>
-                  <input aria-label="ZIP code" inputMode="numeric" maxLength={5} autoComplete="postal-code" placeholder="94401" className={inputClass}
+                  <span className={labelClass}>{t("ZIP code")}</span>
+                  <input aria-label={t("ZIP code")} inputMode="numeric" maxLength={5} autoComplete="postal-code" placeholder="94401" className={inputClass}
                     value={address.zip} onChange={(e) => setAddress({ ...address, zip: digits(e.target.value) })} />
                 </label>
               </div>
@@ -352,7 +362,7 @@ export function BookingWizard({
             disabled={!fileAddress && (!address.address.trim() || !address.city.trim() || address.zip.length !== 5)}
             onClick={afterAddress}
           >
-            Continue
+            {t("Continue")}
           </BigButton>
         </StepCard>
       );
@@ -360,7 +370,7 @@ export function BookingWizard({
     case "pets":
       return (
         <StepCard>
-          {header("Who are we grooming?", "Pick one or more pets.")}
+          {header(t("Who are we grooming?"), t("Pick one or more pets."))}
           <div className="space-y-3">
             {pets.map((p) => (
               <div key={p.key} className="relative">
@@ -370,11 +380,11 @@ export function BookingWizard({
                   onClick={() => updatePet(p.key, { on: !p.on })}
                   icon={p.photo ? <PetAvatar photo={p.photo} /> : <Dog size={26} />}
                   title={p.name}
-                  sub={[p.breed, p.size ? SIZES.find((s) => s.value === p.size)?.label : null].filter(Boolean).join(" · ") || "Dog"}
+                  sub={[p.breed, p.size ? sizeName(p.size) : null].filter(Boolean).join(" · ") || t("Dog")}
                 />
                 {!p.petId && (
                   <button type="button" className="absolute right-14 top-1/2 -translate-y-1/2 rounded-full p-2 text-muted hover:bg-bg"
-                    aria-label={`Edit ${p.name}`} onClick={() => { setDraft(p); go({ name: "newpet" }); }}>
+                    aria-label={t("Edit {name}", { name: p.name })} onClick={() => { setDraft(p); go({ name: "newpet" }); }}>
                     <Pencil size={18} />
                   </button>
                 )}
@@ -386,13 +396,13 @@ export function BookingWizard({
                 onClick={() => { setDraft(blankPet()); go({ name: "newpet" }); }}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line py-4 font-semibold text-brand hover:border-brand"
               >
-                <Plus size={18} /> {pets.length ? "Add another pet" : "Add a pet"}
+                <Plus size={18} /> {pets.length ? t("Add another pet") : t("Add a pet")}
               </button>
             )}
           </div>
           {errorBox}
           <BigButton className="mt-8" disabled={chosen.length === 0 || chosen.length > 4} onClick={() => go({ name: "service", i: 0 })}>
-            Continue to service
+            {t("Continue to service")}
           </BigButton>
         </StepCard>
       );
@@ -400,23 +410,23 @@ export function BookingWizard({
     case "newpet":
       return (
         <StepCard>
-          {header(draft.name.trim() ? draft.name : "Tell us about your pet")}
+          {header(draft.name.trim() ? draft.name : t("Tell us about your pet"))}
           <div className="space-y-6">
             <div>
-              <span className={labelClass}>Type</span>
-              <span className="inline-flex rounded-full bg-brand px-7 py-2.5 font-semibold text-on-brand">Dog</span>
+              <span className={labelClass}>{t("Type")}</span>
+              <span className="inline-flex rounded-full bg-brand px-7 py-2.5 font-semibold text-on-brand">{t("Dog")}</span>
             </div>
             <BreedSearch value={draft.breed} onChange={(breed) => setDraft({ ...draft, breed })} />
             <label className="block">
-              <span className={labelClass}>Name</span>
-              <input aria-label="Pet's name" autoComplete="off" placeholder="Your pet's name" className={inputClass}
+              <span className={labelClass}>{t("Name")}</span>
+              <input aria-label={t("Pet's name")} autoComplete="off" placeholder={t("Your pet's name")} className={inputClass}
                 value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </label>
             <SizePicker value={draft.size} onChange={(size) => setDraft({ ...draft, size, mainId: "" })} />
           </div>
           {errorBox}
           <BigButton className="mt-8" disabled={!draft.name.trim() || !draft.size} onClick={saveDraft}>
-            Save {draft.name.trim() || "pet"}
+            {t("Save {name}", { name: draft.name.trim() || t("pet") })}
           </BigButton>
         </StepCard>
       );
@@ -426,8 +436,8 @@ export function BookingWizard({
       if (!pet) return null;
       return (
         <StepCard>
-          {header("Select a service")}
-          <PetTabs pets={chosen} current={step.i} hint="Select service" />
+          {header(t("Select a service"))}
+          <PetTabs pets={chosen} current={step.i} hint={t("Select service")} />
           {!pet.sizeKnown && (
             <div className="mb-6">
               <SizePicker value={pet.size} onChange={(size) => updatePet(pet.key, { size, mainId: "" })} />
@@ -435,17 +445,17 @@ export function BookingWizard({
           )}
           {pet.size ? (
             <ServiceList
-              title={`Services for ${pet.name}`}
+              title={t("Services for {name}", { name: pet.name })}
               services={services.filter((s) => s.kind === "service" && (!s.size_class || s.size_class === pet.size)).map((s) => forPet(pet, s))}
               selected={pet.mainId}
               onSelect={(mainId) => updatePet(pet.key, { mainId })}
             />
           ) : (
-            <p className="rounded-2xl bg-bg px-4 py-3 text-sm text-muted">Pick {pet.name}&apos;s size to see the prices.</p>
+            <p className="rounded-2xl bg-bg px-4 py-3 text-sm text-muted">{t("Pick {name}'s size to see the prices.", { name: pet.name })}</p>
           )}
           {errorBox}
           <BigButton className="mt-8" disabled={!pet.mainId} onClick={() => go({ name: "extras", i: step.i })}>
-            Continue
+            {t("Continue")}
           </BigButton>
         </StepCard>
       );
@@ -459,29 +469,29 @@ export function BookingWizard({
       const isLast = step.i === chosen.length - 1;
       return (
         <StepCard>
-          {header("Additional pet info")}
-          <PetTabs pets={chosen} current={step.i} hint="Add info" />
+          {header(t("Additional pet info"))}
+          <PetTabs pets={chosen} current={step.i} hint={t("Add info")} />
           <div className="space-y-7">
             {demat && (
               <div>
-                <span className={labelClass}>Does {pet.name} need dematting or a shave-down? ({price(forPet(pet, demat).price_cents)})</span>
-                <div className="flex gap-3" role="radiogroup" aria-label="Dematting">
+                <span className={labelClass}>{t("Does {name} need dematting or a shave-down? ({price})", { name: pet.name, price: price(forPet(pet, demat).price_cents) })}</span>
+                <div className="flex gap-3" role="radiogroup" aria-label={t("Dematting")}>
                   {[true, false].map((v) => (
                     <button key={String(v)} type="button" role="radio" aria-checked={pet.matted === v}
                       onClick={() => updatePet(pet.key, { matted: v })}
                       className={`min-w-28 rounded-full border-2 px-6 py-3 font-semibold ${
                         pet.matted === v ? "border-brand bg-brand-soft text-brand-strong" : "border-line"
                       }`}>
-                      {v ? "Yes" : "No"}
+                      {v ? t("Yes") : t("No")}
                     </button>
                   ))}
                 </div>
-                <p className="mt-2 text-sm text-muted">Not sure? Pick “No”. We&apos;ll check the coat when we arrive.</p>
+                <p className="mt-2 text-sm text-muted">{t("Not sure? Pick “No”. We'll check the coat when we arrive.")}</p>
               </div>
             )}
             {extras.length > 0 && (
               <div>
-                <span className={labelClass}>Extras (optional)</span>
+                <span className={labelClass}>{t("Extras (optional)")}</span>
                 <div className="space-y-2">
                   {extras.map((a) => {
                     const on = pet.extraIds.includes(a.id);
@@ -499,7 +509,7 @@ export function BookingWizard({
                   })}
                 </div>
                 {included.length > 0 && (
-                  <p className="mt-2 text-sm text-muted">Always included: {included.map((a) => a.name.replace(/\s*\(.*\)$/, "")).join(", ")}.</p>
+                  <p className="mt-2 text-sm text-muted">{t("Always included: {list}.", { list: included.map((a) => a.name.replace(/\s*\(.*\)$/, "")).join(", ") })}</p>
                 )}
               </div>
             )}
@@ -511,7 +521,7 @@ export function BookingWizard({
             disabled={pending || (!!demat && pet.matted === null)}
             onClick={() => (isLast ? findTimes() : go({ name: "service", i: step.i + 1 }))}
           >
-            {pending ? "Finding open times…" : `Confirm info for ${pet.name}`}
+            {pending ? t("Finding open times…") : t("Confirm info for {name}", { name: pet.name })}
           </BigButton>
         </StepCard>
       );
@@ -519,42 +529,42 @@ export function BookingWizard({
 
     case "time": {
       const selected = days.find((d) => d.date === day);
-      const am = selected?.times.filter((t) => t.label.endsWith("AM")) ?? [];
-      const pm = selected?.times.filter((t) => t.label.endsWith("PM")) ?? [];
+      const am = selected?.times.filter((x) => x.label.endsWith("AM")) ?? [];
+      const pm = selected?.times.filter((x) => x.label.endsWith("PM")) ?? [];
       const picked = selected?.times.find((t) => t.value === start);
       return (
         <StepCard>
-          {header("Select a time", <>Your visit takes about {minutesLabel(minutes)}. The time is when we arrive.</>)}
+          {header(t("Select a time"), t("Your visit takes about {duration}. The time is when we arrive.", { duration: minutesLabel(minutes) }))}
           {days.some((d) => d.near) && (
             <div className="mb-5 rounded-2xl bg-success-soft p-4">
-              <p className="font-bold text-success">🚐 We&apos;re already in your area on</p>
+              <p className="font-bold text-success">{t("🚐 We're already in your area on")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {days.filter((d) => d.near).slice(0, 6).map((d) => (
                   <button key={d.date} type="button" aria-pressed={day === d.date} onClick={() => { setDay(d.date); setStart(null); }}
                     className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold ${day === d.date ? "border-success bg-success text-white" : "border-success/40 bg-surface"}`}>
-                    {d.label}
+                    {dayOf(d.date)}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-sm text-muted">These days are easiest for us, so they fill up first.</p>
+              <p className="mt-2 text-sm text-muted">{t("These days are easiest for us, so they fill up first.")}</p>
             </div>
           )}
           <MonthCalendar days={days} today={today} selected={day} onSelect={(d) => { setDay(d); setStart(null); }} />
           {selected && (
-            <div className="mt-7 space-y-5" role="group" aria-label="Open times">
+            <div className="mt-7 space-y-5" role="group" aria-label={t("Open times")}>
               {selected.times.some((t) => t.best) && (
-                <p className="text-sm text-muted">⭐ Best times: we&apos;re right around the corner then.</p>
+                <p className="text-sm text-muted">{t("⭐ Best times: we're right around the corner then.")}</p>
               )}
-              {[["Morning", am], ["Afternoon", pm]].map(([label, list]) =>
+              {[[t("Morning"), am], [t("Afternoon"), pm]].map(([label, list]) =>
                 (list as typeof am).length ? (
                   <div key={label as string}>
                     <p className="mb-2 text-sm font-bold uppercase tracking-wide text-muted">{label as string}</p>
                     <div className="flex flex-wrap gap-2">
-                      {(list as typeof am).map((t) => (
-                        <button key={t.value} type="button" aria-pressed={start === t.value}
-                          onClick={() => { setStart(t.value); setSheet("time"); }}
-                          className={`rounded-full border-2 px-5 py-3 font-semibold ${start === t.value ? "border-brand bg-brand text-on-brand" : "border-line hover:border-brand"}`}>
-                          {t.best && "⭐ "}{t.label.toLowerCase()}
+                      {(list as typeof am).map((slot) => (
+                        <button key={slot.value} type="button" aria-pressed={start === slot.value}
+                          onClick={() => { setStart(slot.value); setSheet("time"); }}
+                          className={`rounded-full border-2 px-5 py-3 font-semibold ${start === slot.value ? "border-brand bg-brand text-on-brand" : "border-line hover:border-brand"}`}>
+                          {slot.best && "⭐ "}{timeOf(slot.value)}
                         </button>
                       ))}
                     </div>
@@ -564,13 +574,13 @@ export function BookingWizard({
             </div>
           )}
           {sheet === "time" && selected && picked && (
-            <Sheet title={`${picked.label.toLowerCase()}, ${longDate(selected.date)}`} sub={inDays(today, selected.date)} onClose={() => setSheet(null)}>
+            <Sheet title={`${timeOf(picked.value)}, ${dayOf(selected.date, true)}`} sub={inDays(t, today, selected.date)} onClose={() => setSheet(null)}>
               <Summary
-                place={fileAddress ? `Address on file${known?.city ? ` in ${known.city}` : ""}` : `${address.address}, ${address.city}, CA ${address.zip}`}
+                place={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${address.address}, ${address.city}, CA ${address.zip}`}
                 pets={chosen.map((p) => ({ name: p.name, services: serviceIdsOf(p).map((id) => byId.get(id)?.name ?? "") }))}
                 total={total}
               />
-              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ phone, step: "review", start: start ?? undefined }); go({ name: "review" }); }}>Continue</BigButton>
+              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ phone, step: "review", start: start ?? undefined }); go({ name: "review" }); }}>{t("Continue")}</BigButton>
             </Sheet>
           )}
         </StepCard>
@@ -580,21 +590,17 @@ export function BookingWizard({
     case "review":
       return (
         <StepCard>
-          {header(known ? "Almost done" : "Personal info")}
+          {header(known ? t("Almost done") : t("Personal info"))}
           <dl className="divide-y divide-line rounded-2xl border border-line">
-            <InfoRow label="Name" value={known ? known.firstName : `${contact.firstName} ${contact.lastName}`.trim()} />
-            <InfoRow label="Phone" value={phone} />
-            {!known && contact.email && <InfoRow label="Email" value={contact.email} />}
-            <InfoRow label="Address"
-              value={fileAddress ? `Address on file${known?.city ? ` in ${known.city}` : ""}` : `${address.address}, ${address.city}, CA ${address.zip}`} />
-            <InfoRow label="When"
-              value={(() => {
-                const d = days.find((x) => x.date === day);
-                const t = d?.times.find((x) => x.value === start);
-                return d && t ? `${longDate(d.date)} at ${t.label.toLowerCase()}` : "";
-              })()} />
+            <InfoRow label={t("Name")} value={known ? known.firstName : `${contact.firstName} ${contact.lastName}`.trim()} />
+            <InfoRow label={t("Phone")} value={phone} />
+            {!known && contact.email && <InfoRow label={t("Email")} value={contact.email} />}
+            <InfoRow label={t("Address")}
+              value={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${address.address}, ${address.city}, CA ${address.zip}`} />
+            <InfoRow label={t("When")}
+              value={day && start ? t("{date} at {time}", { date: dayOf(day, true), time: timeOf(start) }) : ""} />
             <div className="px-4 py-3">
-              <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Pets and services</dt>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{t("Pets and services")}</dt>
               <dd>
                 <ul className="mt-1 space-y-1">
                   {chosen.map((p) => (
@@ -607,14 +613,14 @@ export function BookingWizard({
               </dd>
             </div>
             <p className="flex justify-between rounded-b-2xl bg-bg px-4 py-3 text-lg font-bold">
-              <span>Estimated total</span>
+              <span>{t("Estimated total")}</span>
               <span>{price(total)}</span>
             </p>
           </dl>
 
-          <h2 className="mb-2 mt-8 text-xl font-extrabold">Additional info</h2>
-          <textarea aria-label="Anything we should know? (optional)" rows={3} className={inputClass}
-            placeholder="Gate code, parking, nervous with the dryer…"
+          <h2 className="mb-2 mt-8 text-xl font-extrabold">{t("Additional info")}</h2>
+          <textarea aria-label={t("Anything we should know? (optional)")} rows={3} className={inputClass}
+            placeholder={t("Gate code, parking, nervous with the dryer…")}
             value={contact.notes} onChange={(e) => setContact({ ...contact, notes: e.target.value })} />
           {/* Hidden from people; bots fill it in. */}
           <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
@@ -627,14 +633,14 @@ export function BookingWizard({
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-bg px-4 py-4">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-5 w-5 accent-[var(--color-brand)]" />
             <span>
-              <span className="block font-semibold">Text me about my appointments</span>
-              <span className="block text-sm text-muted">Confirmations and reminders from {businessName}. Msg &amp; data rates may apply. Tell us anytime to stop.</span>
+              <span className="block font-semibold">{t("Text me about my appointments")}</span>
+              <span className="block text-sm text-muted">{t("Confirmations and reminders from {business}. Msg & data rates may apply. Tell us anytime to stop.", { business: businessName })}</span>
             </span>
           </label>
 
           {mustSign && (
             <>
-              <h2 className="mb-2 mt-8 text-xl font-extrabold">Agreement</h2>
+              <h2 className="mb-2 mt-8 text-xl font-extrabold">{t("Agreement")}</h2>
               <button type="button" onClick={() => setSheet("agreement")}
                 className="flex w-full items-center gap-4 rounded-2xl border border-line px-4 py-4 text-left hover:border-brand">
                 <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-bg">
@@ -646,9 +652,9 @@ export function BookingWizard({
                   )}
                 </span>
                 <span>
-                  <span className="block font-bold">{agreementTitle ?? "Service agreement"}</span>
+                  <span className="block font-bold">{agreementTitle ?? t("Service agreement")}</span>
                   <span className={`block text-sm font-medium ${signed ? "text-success" : "text-brand"}`}>
-                    {signed ? `Signed by ${signed.name}` : "Read and sign"}
+                    {signed ? t("Signed by {name}", { name: signed.name }) : t("Read and sign")}
                   </span>
                 </span>
               </button>
@@ -656,13 +662,13 @@ export function BookingWizard({
           )}
           {errorBox}
           <BigButton className="mt-8" disabled={pending || (mustSign && !signed)} onClick={submit}>
-            {pending ? "Sending…" : "Submit booking request"}
+            {pending ? t("Sending…") : t("Submit booking request")}
           </BigButton>
           <p className="mt-3 text-center text-xs text-muted">
-            This is a request: we&apos;ll text you to confirm. The final price can change for matting or behavior.
+            {t("This is a request: we'll text you to confirm. The final price can change for matting or behavior.")}
           </p>
           {sheet === "agreement" && agreement && (
-            <AgreementSheet agreement={agreement} title={agreementTitle ?? "Service agreement"}
+            <AgreementSheet agreement={agreement} title={agreementTitle ?? t("Service agreement")}
               onClose={() => setSheet(null)} onSigned={(s) => { setSigned(s); setSheet(null); }} />
           )}
         </StepCard>
@@ -687,7 +693,8 @@ function BigButton({ className = "", ...props }: React.ComponentProps<"button">)
 }
 
 function PricePill({ cents }: { cents: number }) {
-  const label = cents === 0 ? "Free" : price(cents);
+  const { t } = useT();
+  const label = cents === 0 ? t("Free") : price(cents);
   return <span className="shrink-0 rounded-full bg-bg px-3 py-1.5 font-bold">{label}</span>;
 }
 
@@ -723,6 +730,7 @@ function PetAvatar({ photo }: { photo: string }) {
 }
 
 function PetTabs({ pets, current, hint }: { pets: Pet[]; current: number; hint: string }) {
+  const { t } = useT();
   return (
     <div className="-mx-1 mb-6 flex gap-3 overflow-x-auto px-1 pb-1">
       {pets.map((p, i) => (
@@ -735,7 +743,7 @@ function PetTabs({ pets, current, hint }: { pets: Pet[]; current: number; hint: 
           </span>
           <span>
             <span className="block font-bold">{p.name}</span>
-            <span className={`block text-sm ${i < current ? "text-success" : "text-brand"}`}>{i < current ? "Done" : hint}</span>
+            <span className={`block text-sm ${i < current ? "text-success" : "text-brand"}`}>{i < current ? t("Done") : hint}</span>
           </span>
         </div>
       ))}
@@ -744,21 +752,22 @@ function PetTabs({ pets, current, hint }: { pets: Pet[]; current: number; hint: 
 }
 
 function SizePicker({ value, onChange }: { value: string; onChange: (size: string) => void }) {
+  const { t } = useT();
   return (
     <div>
-      <span className="block font-semibold">Size</span>
-      <span className="block text-sm text-muted">Measured along the back, from the neck to the base of the tail.</span>
+      <span className="block font-semibold">{t("Size")}</span>
+      <span className="block text-sm text-muted">{t("Measured along the back, from the neck to the base of the tail.")}</span>
       {/* eslint-disable-next-line @next/next/no-img-element -- static chart */}
-      <img src="/size-chart.jpg" alt="Size chart: Small 12 inches or less, Medium 12 to 16, Large 16 to 20, X-Large 20 inches or up"
+      <img src="/size-chart.jpg" alt={t("Size chart: Small 12 inches or less, Medium 12 to 16, Large 16 to 20, X-Large 20 inches or up")}
         width={900} height={304} className="my-3 w-full" />
-      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Size">
+      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("Size")}>
         {SIZES.map((s) => {
           const [name, inches] = s.label.replace(")", "").split(" (");
           return (
-            <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={s.label}
+            <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={`${t(name)} (${inches})`}
               onClick={() => onChange(s.value)}
               className={`rounded-2xl border-2 px-3 py-3 text-left ${value === s.value ? "border-brand bg-brand-soft" : "border-line"}`}>
-              <span className="block font-bold">{name}</span>
+              <span className="block font-bold">{t(name)}</span>
               <span className="block text-sm text-muted">{inches}</span>
             </button>
           );
@@ -769,6 +778,7 @@ function SizePicker({ value, onChange }: { value: string; onChange: (size: strin
 }
 
 function BreedSearch({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const q = value.trim().toLowerCase();
   const matches = q
@@ -780,10 +790,10 @@ function BreedSearch({ value, onChange }: { value: string; onChange: (v: string)
   return (
     <div className="relative">
       <label className="block">
-        <span className={labelClass}>Breed</span>
+        <span className={labelClass}>{t("Breed")}</span>
         <span className="relative block">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
-          <input aria-label="Breed" autoComplete="off" placeholder="Search breed (or Mixed)" className={`${inputClass} pl-12`}
+          <input aria-label={t("Breed")} autoComplete="off" placeholder={t("Search breed (or Mixed)")} className={`${inputClass} pl-12`}
             role="combobox" aria-expanded={open && matches.length > 0 && !exact} aria-controls="breed-list"
             value={value} onFocus={() => setOpen(true)} onChange={(e) => { onChange(e.target.value); setOpen(true); }}
             onBlur={() => setTimeout(() => setOpen(false), 150)} />
@@ -808,6 +818,7 @@ function BreedSearch({ value, onChange }: { value: string; onChange: (v: string)
 function ServiceList({
   title, services, selected, onSelect,
 }: { title: string; services: Service[]; selected: string; onSelect: (id: string) => void }) {
+  const { t } = useT();
   const categories = [...new Set(services.map((s) => s.category).filter((c): c is string => !!c))];
   const [category, setCategory] = useState<string | null>(null);
   const [details, setDetails] = useState<string | null>(null);
@@ -816,16 +827,16 @@ function ServiceList({
     <div>
       <h2 className="mb-3 text-xl font-extrabold">{title}</h2>
       {categories.length > 1 && (
-        <div className="mb-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Category">
+        <div className="mb-4 flex flex-wrap gap-2" role="radiogroup" aria-label={t("Category")}>
           {[null, ...categories].map((c) => (
             <button key={c ?? "all"} type="button" role="radio" aria-checked={category === c} onClick={() => setCategory(c)}
               className={`rounded-full border px-4 py-2 text-sm font-semibold ${category === c ? "border-navy bg-navy text-white" : "border-line"}`}>
-              {c ?? "All"}
+              {c ?? t("All")}
             </button>
           ))}
         </div>
       )}
-      <div className="space-y-3" role="radiogroup" aria-label="Service">
+      <div className="space-y-3" role="radiogroup" aria-label={t("Service")}>
         {shown.map((s) => (
           <div key={s.id}
             className={`rounded-2xl border-2 transition-colors ${selected === s.id ? "border-brand bg-brand-soft" : "border-line hover:border-brand/50"}`}>
@@ -841,7 +852,7 @@ function ServiceList({
               {s.description && (
                 <button type="button" className="text-sm font-semibold text-brand" aria-expanded={details === s.id}
                   onClick={() => setDetails(details === s.id ? null : s.id)}>
-                  {details === s.id ? "Hide details" : "Show details"}
+                  {details === s.id ? t("Hide details") : t("Show details")}
                 </button>
               )}
               {details === s.id && <p className="mt-1 whitespace-pre-line text-sm text-muted">{s.description}</p>}
@@ -854,26 +865,27 @@ function ServiceList({
 }
 
 function PhotoPicker({ name, photo, onPhoto }: { name: string; photo?: string; onPhoto: (dataUrl: string | undefined) => void }) {
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
   return (
     <div>
-      <span className={labelClass}>Photo of {name} (optional)</span>
+      <span className={labelClass}>{t("Photo of {name} (optional)", { name })}</span>
       <div className="flex items-center gap-4">
         <label className="relative flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-bg text-muted hover:bg-brand-soft">
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element -- local preview of the picked file
-            <img src={photo} alt="Your pet" className="h-full w-full object-cover" />
+            <img src={photo} alt={t("Your pet")} className="h-full w-full object-cover" />
           ) : (
             <span className="flex flex-col items-center gap-1 text-xs font-semibold">
               <Camera size={28} />
-              {busy ? "Loading…" : "Add photo"}
+              {busy ? t("Loading…") : t("Add photo")}
             </span>
           )}
           <input
             type="file"
             accept="image/*"
             className="sr-only"
-            aria-label={`Photo of ${name}`}
+            aria-label={t("Photo of {name}", { name })}
             onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -890,16 +902,17 @@ function PhotoPicker({ name, photo, onPhoto }: { name: string; photo?: string; o
         </label>
         {photo && (
           <button type="button" className="text-sm font-semibold text-danger" onClick={() => onPhoto(undefined)}>
-            Remove photo
+            {t("Remove photo")}
           </button>
         )}
       </div>
-      <p className="mt-2 text-sm text-muted">Helps us recognize {name} and plan the groom.</p>
+      <p className="mt-2 text-sm text-muted">{t("Helps us recognize {name} and plan the groom.", { name })}</p>
     </div>
   );
 }
 
 function Sheet({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: ReactNode }) {
+  const { t } = useT();
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-navy/50 animate-fade sm:items-center" onClick={onClose}>
       <div
@@ -914,7 +927,7 @@ function Sheet({ title, sub, onClose, children }: { title: string; sub?: string;
             <h2 id="sheet-title" className="text-xl font-extrabold">{title}</h2>
             {sub && <p className="text-brand">{sub}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="-mr-2 rounded-full p-2 hover:bg-bg">
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="-mr-2 rounded-full p-2 hover:bg-bg">
             <Close size={24} />
           </button>
         </div>
@@ -925,6 +938,7 @@ function Sheet({ title, sub, onClose, children }: { title: string; sub?: string;
 }
 
 function Summary({ place, pets, total }: { place: string; pets: { name: string; services: string[] }[]; total: number }) {
+  const { t } = useT();
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4 rounded-2xl border border-line px-4 py-4">
@@ -941,7 +955,7 @@ function Summary({ place, pets, total }: { place: string; pets: { name: string; 
         </div>
       ))}
       <p className="flex justify-between px-1 text-lg font-bold">
-        <span>Estimated total</span>
+        <span>{t("Estimated total")}</span>
         <span>{price(total)}</span>
       </p>
     </div>
@@ -960,35 +974,37 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function AgreementSheet({
   agreement, title, onClose, onSigned,
 }: { agreement: ReactNode; title: string; onClose: () => void; onSigned: (s: { name: string; drawing: string }) => void }) {
+  const { t } = useT();
   const [name, setName] = useState("");
   const [drawing, setDrawing] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
   return (
     <Sheet title={title} onClose={onClose}>
-      <div className="max-h-[40dvh] overflow-y-auto rounded-2xl border border-line bg-bg p-4" tabIndex={0} aria-label="Service agreement">
+      <div className="max-h-[40dvh] overflow-y-auto rounded-2xl border border-line bg-bg p-4" tabIndex={0} aria-label={t("Service agreement")}>
         {agreement}
       </div>
       <label className="mt-4 flex items-start gap-3">
         <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-5 w-5 accent-[var(--color-brand)]" />
-        <span>I have read and agree to the service agreement.</span>
+        <span>{t("I have read and agree to the service agreement.")}</span>
       </label>
       <label className="mt-4 block">
-        <span className={labelClass}>Your full name</span>
-        <input aria-label="Type your full name to sign" autoComplete="name" className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
+        <span className={labelClass}>{t("Your full name")}</span>
+        <input aria-label={t("Type your full name to sign")} autoComplete="name" className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
       </label>
       <div className="mt-4">
-        <span className={labelClass}>Signature</span>
+        <span className={labelClass}>{t("Signature")}</span>
         <SignaturePad onChange={setDrawing} />
       </div>
       <BigButton className="mt-6" disabled={!agreed || name.trim().length < 3 || !drawing}
         onClick={() => drawing && onSigned({ name: name.trim(), drawing })}>
-        Sign agreement
+        {t("Sign agreement")}
       </BigButton>
     </Sheet>
   );
 }
 
 function Submitted({ when, pets, businessPhone, onAgain }: { when: string; pets: string[]; businessPhone: string; onAgain: () => void }) {
+  const { t } = useT();
   return (
     <StepCard flush>
       <div className="px-4 pt-4" aria-hidden>
@@ -996,35 +1012,33 @@ function Submitted({ when, pets, businessPhone, onAgain }: { when: string; pets:
         <img src="/van.jpg" alt="" width={900} height={507} className="mx-auto w-full max-w-sm" />
       </div>
       <div className="p-6 sm:p-8">
-        <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">Yay! Your booking request was sent. 🎉</h1>
+        <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">{t("Yay! Your booking request was sent. 🎉")}</h1>
         <p className="mt-2 text-muted">
           {pets.join(" & ")}, {when}.
         </p>
         <ol className="mt-6 rounded-2xl border border-line p-5">
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success text-white"><Check size={16} strokeWidth={3} /></span>
-            <span className="font-bold">Request sent</span>
+            <span className="font-bold">{t("Request sent")}</span>
           </li>
           <li aria-hidden className="ml-3.5 h-6 border-l-2 border-dashed border-line" />
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bg"><Hourglass size={16} /></span>
             <span>
-              <span className="block font-bold">Waiting for confirmation</span>
-              <span className="block text-sm text-muted">We&apos;ll text you as soon as it&apos;s confirmed. Questions? Text us at {businessPhone}.</span>
+              <span className="block font-bold">{t("Waiting for confirmation")}</span>
+              <span className="block text-sm text-muted">{t("We'll text you as soon as it's confirmed. Questions? Text us at {phone}.", { phone: businessPhone })}</span>
             </span>
           </li>
         </ol>
         <button type="button" onClick={onAgain} className="mt-6 block w-full text-center font-semibold text-brand">
-          Book another appointment
+          {t("Book another appointment")}
         </button>
       </div>
     </StepCard>
   );
 }
 
-const longDate = (ymd: string) =>
-  new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
-const inDays = (today: string, ymd: string) => {
+const inDays = (t: T, today: string, ymd: string) => {
   const n = Math.round((Date.parse(`${ymd}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
-  return n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`;
+  return n === 0 ? t("today") : n === 1 ? t("tomorrow") : t("in {n} days", { n });
 };
