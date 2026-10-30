@@ -247,4 +247,9 @@ export const tl: Messages = {
   "Send": "Ipadala",
   "Please check the ZIP code.": "Pakisuri ang ZIP code.",
   "Please add your pet's name.": "Pakilagay ang pangalan ng alaga mo.",
+
+  // Sign link
+  "Thank you! You signed the service agreement.": "Salamat! Napirmahan mo na ang kasunduan sa serbisyo.",
+  "Please read and sign our service agreement.": "Pakibasa at pirmahan ang aming kasunduan sa serbisyo.",
+  "Please tick the box and type your full name to sign.": "Pakilagyan ng check ang kahon at i-type ang buong pangalan mo para pumirma.",
 };

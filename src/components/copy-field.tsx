@@ -33,3 +33,17 @@ export function CopyField({ label, value, multiline = false }: { label: string; 
     </div>
   );
 }
+
+/** Just a Copy button for a value that isn't shown (a link to send). */
+export function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button type="button" onClick={async () => {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }} className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">
+      {copied ? "Copied" : label}
+    </button>
+  );
+}

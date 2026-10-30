@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CopyButton } from "@/components/copy-field";
+import { emailSignLinkAction } from "../actions";
 import { clientTagsFor, petCodesFor } from "@/lib/data/options";
 import { PetCodeChips, TagChips } from "@/components/chips";
 import { requireStaff } from "@/lib/auth";
@@ -19,7 +21,8 @@ import { activeAgreement, currentSignature } from "@/lib/agreement";
 
 export const metadata: Metadata = { title: "Client" };
 
-export default async function ClientPage({ params }: PageProps<"/clients/[id]">) {
+export default async function ClientPage({ params, searchParams }: PageProps<"/clients/[id]">) {
+  const sp = await searchParams;
   const staff = await requireStaff();
   const { id } = await params;
   if (!isUuid(id)) notFound();
@@ -42,6 +45,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
   ]);
   const ownPriceCount = (petId: string) => [...ownPrices.values()].filter((r) => r.pet_id === petId).length;
   const signature = agreement ? await currentSignature(agreement, id) : null;
+  const signUrl = `${(process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "")}/s/${client.sign_token}`;
   const address = fullAddress(client);
   const tz = staff.timezone;
   // Soonest upcoming first, then the past, most recent first.
@@ -163,7 +167,21 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted">Agreement not signed yet (they&apos;ll be asked on their confirm link).</p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted">Agreement not signed yet (they&apos;ll be asked on their confirm link).</p>
+                <div className="flex flex-wrap gap-2">
+                  <a href={`sms:${client.phone}?&body=${encodeURIComponent(`Hi ${client.first_name}! Please sign our service agreement here: ${signUrl}`)}`}
+                    className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">Text sign link</a>
+                  {client.email && (
+                    <form action={emailSignLinkAction.bind(null, id)}>
+                      <button type="submit" className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">Email sign link</button>
+                    </form>
+                  )}
+                  <CopyButton value={signUrl} label="Copy link" />
+                </div>
+                {sp.signLink === "sent" && <p role="status" className="text-sm text-success">Sign link emailed.</p>}
+                {sp.signLink === "failed" && <p role="alert" className="text-sm text-danger">The email didn&apos;t go out. Check the email setup in Texts and email.</p>}
+              </div>
             ))}
           {client.imported_last_service_at && history.length === 0 && (
             <p className="text-sm text-muted">Last visit in the old app: {dayLabel(client.imported_last_service_at, tz)}</p>

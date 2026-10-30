@@ -247,4 +247,9 @@ export const vi: Messages = {
   "Send": "Gửi",
   "Please check the ZIP code.": "Vui lòng kiểm tra mã ZIP.",
   "Please add your pet's name.": "Vui lòng nhập tên thú cưng.",
+
+  // Sign link
+  "Thank you! You signed the service agreement.": "Cảm ơn bạn! Bạn đã ký thỏa thuận dịch vụ.",
+  "Please read and sign our service agreement.": "Vui lòng đọc và ký thỏa thuận dịch vụ của chúng tôi.",
+  "Please tick the box and type your full name to sign.": "Vui lòng đánh dấu vào ô và nhập họ tên đầy đủ để ký.",
 };

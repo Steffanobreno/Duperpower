@@ -254,4 +254,9 @@ export const pt: Messages = {
   "Send": "Enviar",
   "Please check the ZIP code.": "Confira o CEP (ZIP code).",
   "Please add your pet's name.": "Escreva o nome do seu pet.",
+
+  // Sign link
+  "Thank you! You signed the service agreement.": "Obrigado! Você assinou o contrato de serviço.",
+  "Please read and sign our service agreement.": "Leia e assine nosso contrato de serviço.",
+  "Please tick the box and type your full name to sign.": "Marque a caixa e digite seu nome completo para assinar.",
 };

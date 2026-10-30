@@ -247,4 +247,9 @@ export const zh: Messages = {
   "Send": "提交",
   "Please check the ZIP code.": "请检查邮政编码。",
   "Please add your pet's name.": "请填写宠物的名字。",
+
+  // Sign link
+  "Thank you! You signed the service agreement.": "谢谢！您已签署服务协议。",
+  "Please read and sign our service agreement.": "请阅读并签署我们的服务协议。",
+  "Please tick the box and type your full name to sign.": "请勾选方框并输入您的全名以签署。",
 };

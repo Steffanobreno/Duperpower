@@ -57,6 +57,8 @@ async function findClient(b: PublicBusiness, phone: string) {
 async function mustSignFor(b: PublicBusiness, clientId: string | null) {
   const agreement = await activeAgreement(b.id);
   if (!agreement?.required_online) return { agreement: null, mustSign: false };
+  // "Sign on every booking": always; otherwise once a year (and again after an important change).
+  if (agreement.sign_every_booking) return { agreement, mustSign: true };
   const signed = clientId ? await currentSignature(agreement, clientId) : null;
   return { agreement, mustSign: !signed };
 }

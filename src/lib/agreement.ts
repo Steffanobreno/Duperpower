@@ -3,11 +3,11 @@ import { headers } from "next/headers";
 import type { TransactionSql } from "postgres";
 import { sql } from "./db";
 
-export type Agreement = { id: string; title: string; body: string; version: number; required_online: boolean };
+export type Agreement = { id: string; title: string; body: string; version: number; required_online: boolean; sign_every_booking: boolean };
 
 export async function activeAgreement(businessId: string) {
   const [a] = await sql<Agreement[]>`
-    select id, title, body, version, required_online from agreements
+    select id, title, body, version, required_online, sign_every_booking from agreements
     where business_id = ${businessId} and active order by created_at desc limit 1`;
   return a ?? null;
 }

@@ -265,4 +265,9 @@ export const es: Messages = {
   "Send": "Enviar",
   "Please check the ZIP code.": "Revisa el código postal.",
   "Please add your pet's name.": "Escribe el nombre de tu mascota.",
+
+  // Sign link
+  "Thank you! You signed the service agreement.": "¡Gracias! Firmaste el contrato de servicio.",
+  "Please read and sign our service agreement.": "Lee y firma nuestro contrato de servicio.",
+  "Please tick the box and type your full name to sign.": "Marca la casilla y escribe tu nombre completo para firmar.",
 };

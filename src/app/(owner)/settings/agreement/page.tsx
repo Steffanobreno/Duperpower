@@ -22,7 +22,8 @@ export default async function AgreementPage() {
       <Page>
         <p className="text-sm text-muted">
           Clients sign by typing their name: when they book online, and on their confirm link if they haven&apos;t signed in
-          the last 12 months. {agreement && `Version ${agreement.version}: signed by ${signed} client${signed === 1 ? "" : "s"}.`}
+          the last 12 months. To ask a client to sign without booking, use “Send to sign” on their profile.{" "}
+          {agreement && `Version ${agreement.version}: signed by ${signed} client${signed === 1 ? "" : "s"}.`}
         </p>
         <Card>
           <SimpleForm action={saveAgreementAction}>
@@ -35,6 +36,10 @@ export default async function AgreementPage() {
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" name="required_online" defaultChecked={agreement?.required_online ?? true} className="h-4 w-4" />
               Clients must sign it to book online
+            </label>
+            <label className="flex items-start gap-3 text-sm">
+              <input type="checkbox" name="sign_every_booking" defaultChecked={agreement?.sign_every_booking ?? false} className="mt-1 h-4 w-4" />
+              <span>Sign on every online booking (instead of once a year)</span>
             </label>
             <label className="flex items-start gap-3 text-sm">
               <input type="checkbox" name="resign" className="mt-1 h-4 w-4" />

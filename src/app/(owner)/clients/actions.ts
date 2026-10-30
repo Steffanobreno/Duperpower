@@ -6,6 +6,7 @@ import { isUniqueViolation, sql } from "@/lib/db";
 import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { geocode } from "@/lib/maps";
 import { savePetPhoto } from "@/lib/pet-photos";
+import { sendEmail } from "@/lib/email";
 
 export type FormState = { error?: string } | undefined;
 
@@ -310,4 +311,25 @@ export async function setPetCodesAction(clientId: string, petId: string, form: F
                select ${petId}, id from pet_codes where business_id = ${staff.businessId} and id = any(${ids})`;
   });
   revalidatePath(`/clients/${clientId}`, "layout");
+}
+
+/** Emails the client the link to sign the service agreement. */
+export async function emailSignLinkAction(clientId: string) {
+  const staff = await requireStaff();
+  const [c] = await sql`select c.first_name, c.email, c.sign_token, b.name as business from clients c join businesses b on b.id = c.business_id
+                        where c.id = ${clientId} and c.business_id = ${staff.businessId}`;
+  let result = "failed";
+  if (c?.email) {
+    const url = `${(process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "")}/s/${c.sign_token}`;
+    try {
+      await sendEmail({
+        to: c.email,
+        subject: `Please sign the service agreement from ${c.business}`,
+        text: `Hi ${c.first_name}! Please read and sign our service agreement here:\n${url}\n\nThank you!\n${c.business}`,
+        fromName: c.business,
+      });
+      result = "sent";
+    } catch {}
+  }
+  redirect(`/clients/${clientId}?signLink=${result}`);
 }

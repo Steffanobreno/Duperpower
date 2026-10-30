@@ -63,11 +63,11 @@ export function serviceAreas(businessId: string) {
 /** Checks the ZIP against the service area. Returns an error message, or null when fine. */
 export async function zipProblem(b: PublicBusiness, zip: string) {
   if (!zipInfo(zip)) return "We couldn't find that ZIP code. Please check it, or text us to book.";
-  const outside = "Sorry, that address is outside our service area. Text us and we'll see what we can do.";
   const miles = b.start_zip ? zipMiles(b.start_zip, zip) : null;
-  if (miles != null && miles > b.service_radius_miles) return outside;
-  const areas = await serviceAreas(b.id);
-  if (areas.length && !areas.some((a) => a.zip_codes.includes(zip))) return outside;
+  const areas = miles != null && miles > b.service_radius_miles ? [] : await serviceAreas(b.id);
+  if ((miles != null && miles > b.service_radius_miles) || (areas.length && !areas.some((a) => a.zip_codes.includes(zip)))) {
+    return "Sorry, that address is outside our service area. Text us and we'll see what we can do.";
+  }
   return null;
 }
 

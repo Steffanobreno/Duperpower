@@ -19,6 +19,7 @@ export type ClientRow = {
   referral_source: string | null;
   sms_consent_at: Date | null;
   imported_last_service_at: Date | null;
+  sign_token: string;
   sms_opted_out_at: Date | null;
   archived_at: Date | null;
   online_booking_blocked: boolean;

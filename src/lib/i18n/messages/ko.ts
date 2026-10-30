@@ -247,4 +247,9 @@ export const ko: Messages = {
   "Send": "보내기",
   "Please check the ZIP code.": "우편번호를 확인해 주세요.",
   "Please add your pet's name.": "반려동물 이름을 입력해 주세요.",
+
+  // Sign link
+  "Thank you! You signed the service agreement.": "감사합니다! 서비스 약관에 서명하셨어요.",
+  "Please read and sign our service agreement.": "서비스 약관을 읽고 서명해 주세요.",
+  "Please tick the box and type your full name to sign.": "체크박스를 선택하고 성함을 입력해 서명해 주세요.",
 };
