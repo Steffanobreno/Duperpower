@@ -8,6 +8,7 @@ import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
 import { notifyAppointment } from "@/lib/messaging";
 import { NEXT_STATUS } from "@/lib/appointment-status";
+import { forPet, petPrices } from "@/lib/data/pet-prices";
 import { asGroomer, ownGroomer } from "@/lib/data/staff";
 
 export type FormState = { error?: string; warning?: string } | undefined;
@@ -88,10 +89,13 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
     where business_id = ${staff.businessId} and active and id = any(${serviceIds})`;
   const byId = new Map(services.map((s) => [s.id, s]));
   if (serviceIds.some((id) => !byId.has(id))) return { error: "One of the services is no longer available." };
+  // A pet's own price and time for a service win over the standard ones.
+  const ownPrices = await petPrices(petIds);
+  const svcFor = (petId: string, sid: string) => forPet(ownPrices, petId, byId.get(sid)!);
 
   // Pets are groomed one after the other, so the visit lasts the sum of all services.
   // The groomer may adjust the estimate on the form ("duration"); otherwise it's the services' total.
-  const servicesMin = picks.flatMap((p) => p.serviceIds).reduce((sum, id) => sum + byId.get(id)!.duration_min, 0);
+  const servicesMin = picks.flatMap((p) => p.serviceIds.map((sid) => svcFor(p.petId, sid))).reduce((sum, s) => sum + s.duration_min, 0);
   const typed = Number(form.get("duration"));
   const totalMin = Number.isInteger(typed) && typed >= 15 && typed <= 720 ? typed : servicesMin;
   const startAt = zonedToUtc(date, time, staff.timezone);
@@ -120,7 +124,7 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
       for (const pick of picks) {
         const [ap] = await tx`insert into appointment_pets (appointment_id, pet_id) values (${appt.id}, ${pick.petId}) returning id`;
         for (const sid of pick.serviceIds) {
-          const s = byId.get(sid)!;
+          const s = svcFor(pick.petId, sid);
           const minutes = Math.max(s.duration_min + delta, 0);
           delta -= minutes - s.duration_min;
           await tx`insert into appointment_services (appointment_pet_id, service_id, name, price_cents, duration_min)

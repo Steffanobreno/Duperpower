@@ -6,7 +6,15 @@ import { minutesLabel, money, sizeLabel } from "@/lib/format";
 import { Dog } from "@/components/icons";
 import type { FormState } from "./actions";
 
-type Pet = { id: string; name: string; breed: string | null; size_class: string | null; vaccineAlert?: string | null };
+type Pet = {
+  id: string;
+  name: string;
+  breed: string | null;
+  size_class: string | null;
+  vaccineAlert?: string | null;
+  /** This pet's own prices: service id → price and (optionally) time. */
+  prices?: Record<string, { price_cents: number; duration_min: number | null }>;
+};
 type Service = {
   id: string;
   name: string;
@@ -44,13 +52,19 @@ export function BookingForm({
   const mains = services.filter((s) => s.kind === "service");
   const addons = services.filter((s) => s.kind === "addon");
   const byId = new Map(services.map((s) => [s.id, s]));
+  /** The service as this pet gets it: its own price and time when it has one. */
+  const forPet = (pet: Pet, s: Service) => {
+    const own = pet.prices?.[s.id];
+    return own ? { ...s, price_cents: own.price_cents, duration_min: own.duration_min ?? s.duration_min, own: true } : { ...s, own: false };
+  };
 
   let minutes = 0;
   let cents = 0;
   for (const pet of pets) {
     if (!chosen[pet.id]) continue;
     for (const id of [main[pet.id], ...(extras[pet.id] ?? [])]) {
-      const s = id ? byId.get(id) : undefined;
+      const found = id ? byId.get(id) : undefined;
+      const s = found && forPet(pet, found);
       if (s) {
         minutes += s.duration_min;
         cents += s.price_cents;
@@ -103,17 +117,17 @@ export function BookingForm({
                       Choose a service
                     </option>
                     <optgroup label={pet.size_class ? `For ${sizeLabel(pet.size_class)}` : "Services"}>
-                      {fits.map((s) => (
+                      {fits.map((x) => forPet(pet, x)).map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} — {money(s.price_cents)} · {minutesLabel(s.duration_min)}
+                          {s.name} — {money(s.price_cents)}{s.own ? ` (${pet.name}'s price)` : ""} · {minutesLabel(s.duration_min)}
                         </option>
                       ))}
                     </optgroup>
                     {others.length > 0 && (
                       <optgroup label="Other sizes">
-                        {others.map((s) => (
+                        {others.map((x) => forPet(pet, x)).map((s) => (
                           <option key={s.id} value={s.id}>
-                            {s.name} — {money(s.price_cents)}
+                            {s.name} — {money(s.price_cents)}{s.own ? ` (${pet.name}'s price)` : ""}
                           </option>
                         ))}
                       </optgroup>
@@ -126,7 +140,7 @@ export function BookingForm({
                       Add-ons{extras[pet.id]?.length ? ` (${extras[pet.id].length})` : ""}
                     </summary>
                     <ul className="mt-2 space-y-1">
-                      {addons.map((a) => {
+                      {addons.map((x) => forPet(pet, x)).map((a) => {
                         const list = extras[pet.id] ?? [];
                         return (
                           <li key={a.id}>
@@ -145,7 +159,7 @@ export function BookingForm({
                                 className="h-5 w-5 accent-[var(--color-brand)]"
                               />
                               <span className="flex-1">{a.name}</span>
-                              <span className="text-muted">{money(a.price_cents)}</span>
+                              <span className={a.own ? "font-semibold text-brand" : "text-muted"}>{money(a.price_cents)}</span>
                             </label>
                           </li>
                         );

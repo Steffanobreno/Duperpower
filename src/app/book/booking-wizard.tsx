@@ -47,6 +47,14 @@ type Pet = {
   extraIds: string[];
   matted: boolean | null;
   photo?: string;
+  /** The pet's own prices on file (service id → price and time), for clients we know. */
+  prices?: Record<string, { price_cents: number; duration_min: number | null }>;
+};
+
+/** The service as this pet gets it: its own price and time when it has one. */
+const forPet = (pet: Pet, s: Service): Service => {
+  const own = pet.prices?.[s.id];
+  return own ? { ...s, price_cents: own.price_cents, duration_min: own.duration_min ?? s.duration_min } : s;
 };
 type Step =
   | { name: "phone" | "about" | "address" | "pets" | "newpet" | "time" | "review" }
@@ -116,7 +124,7 @@ export function BookingWizard({
   const requests: PetRequest[] = chosen.map((p) => ({
     petId: p.petId, name: p.name, breed: p.breed, size: p.size, serviceIds: serviceIdsOf(p), photo: p.photo,
   }));
-  const lines = chosen.flatMap((p) => serviceIdsOf(p).map((id) => byId.get(id)).filter((s): s is Service => !!s));
+  const lines = chosen.flatMap((p) => serviceIdsOf(p).map((id) => byId.get(id)).filter((s): s is Service => !!s).map((s) => forPet(p, s)));
   const total = lines.reduce((s, x) => s + x.price_cents, 0);
   const minutes = lines.reduce((s, x) => s + x.duration_min, 0);
   const mustSign = !!agreement && !!who?.mustSign;
@@ -133,7 +141,7 @@ export function BookingWizard({
       if (res.known) {
         setPets(res.pets.map((p) => ({
           key: p.id, petId: p.id, on: res.pets.length === 1, name: p.name, breed: p.breed ?? "", size: p.size ?? "",
-          sizeKnown: !!p.size, mainId: "", extraIds: [], matted: null,
+          sizeKnown: !!p.size, mainId: "", extraIds: [], matted: null, prices: p.prices,
         })));
         setUseFileAddress(res.hasAddress);
         go({ name: "address" });
@@ -428,7 +436,7 @@ export function BookingWizard({
           {pet.size ? (
             <ServiceList
               title={`Services for ${pet.name}`}
-              services={services.filter((s) => s.kind === "service" && (!s.size_class || s.size_class === pet.size))}
+              services={services.filter((s) => s.kind === "service" && (!s.size_class || s.size_class === pet.size)).map((s) => forPet(pet, s))}
               selected={pet.mainId}
               onSelect={(mainId) => updatePet(pet.key, { mainId })}
             />
@@ -446,7 +454,7 @@ export function BookingWizard({
     case "extras": {
       const pet = chosen[step.i];
       if (!pet) return null;
-      const extras = services.filter((s) => s.kind === "addon" && s.id !== demat?.id && (s.price_cents > 0 || s.duration_min > 0));
+      const extras = services.filter((s) => s.kind === "addon" && s.id !== demat?.id && (s.price_cents > 0 || s.duration_min > 0)).map((s) => forPet(pet, s));
       const included = services.filter((s) => s.kind === "addon" && s.price_cents === 0 && s.duration_min === 0);
       const isLast = step.i === chosen.length - 1;
       return (
@@ -456,7 +464,7 @@ export function BookingWizard({
           <div className="space-y-7">
             {demat && (
               <div>
-                <span className={labelClass}>Does {pet.name} need dematting or a shave-down? ({price(demat.price_cents)})</span>
+                <span className={labelClass}>Does {pet.name} need dematting or a shave-down? ({price(forPet(pet, demat).price_cents)})</span>
                 <div className="flex gap-3" role="radiogroup" aria-label="Dematting">
                   {[true, false].map((v) => (
                     <button key={String(v)} type="button" role="radio" aria-checked={pet.matted === v}

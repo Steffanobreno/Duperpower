@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getPet } from "@/lib/data/clients";
 import { Card, Page, PageHeader } from "@/components/ui";
-import { addVaccineAction, deleteVaccineAction, savePetAction, setPetPassedAction } from "../../../actions";
+import { addVaccineAction, deletePetPriceAction, deleteVaccineAction, savePetAction, savePetPriceAction, setPetPassedAction } from "../../../actions";
+import { listServices } from "@/lib/data/services";
+import { petPrices } from "@/lib/data/pet-prices";
+import { PetPriceForm } from "./price-form";
 import { listVaccines, SOON_DAYS, VACCINE_NAMES } from "@/lib/data/vaccines";
-import { addDaysYmd, todayYmd } from "@/lib/format";
+import { addDaysYmd, minutesLabel, money, todayYmd } from "@/lib/format";
 import { VaccineForm } from "./vaccine-form";
 import { PetPhotoUpload } from "../../../pet-photo-upload";
 import { PetPhoto } from "@/components/pet-photo";
@@ -16,8 +19,15 @@ export const metadata: Metadata = { title: "Edit pet" };
 export default async function EditPetPage({ params }: PageProps<"/clients/[id]/pets/[petId]">) {
   const staff = await requireStaff();
   const { id, petId } = await params;
-  const [pet, vaccines] = await Promise.all([getPet(staff, petId), listVaccines(staff, petId)]);
+  const [pet, vaccines, services, own] = await Promise.all([
+    getPet(staff, petId), listVaccines(staff, petId), listServices(staff), petPrices([petId]),
+  ]);
   if (!pet || pet.client_id !== id) notFound();
+  const serviceById = new Map(services.map((s) => [s.id, s]));
+  const custom = [...own.values()].filter((r) => serviceById.has(r.service_id));
+  // Services for this pet's size first, then add-ons.
+  const priceOptions = services.filter((s) => s.kind === "addon" || !s.size_class || !pet.size_class || s.size_class === pet.size_class)
+    .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "service" ? -1 : 1));
   const today = todayYmd(staff.timezone);
   const soon = addDaysYmd(today, SOON_DAYS);
   const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
@@ -31,6 +41,38 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
         </Card>
         <Card>
           <PetForm action={savePetAction.bind(null, id, petId)} initial={pet} />
+        </Card>
+        <Card className="space-y-3" id="prices">
+          <div>
+            <h2 className="font-bold">{pet.name}&apos;s prices</h2>
+            <p className="text-sm text-muted">
+              A price just for {pet.name} (and, if you like, the time it takes). Booking uses it instead of the usual price, in the app and online.
+            </p>
+          </div>
+          {custom.length > 0 && (
+            <ul className="divide-y divide-line text-sm">
+              {custom.map((r) => {
+                const s = serviceById.get(r.service_id)!;
+                return (
+                  <li key={r.service_id} className="flex items-center justify-between gap-3 py-2">
+                    <span className="min-w-0">
+                      <span className="block font-semibold">{s.name}</span>
+                      <span className="block text-xs text-muted">
+                        Usually {money(s.price_cents)}{r.duration_min != null ? ` · ${minutesLabel(r.duration_min)} for ${pet.name}` : ""}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="font-bold text-brand">{money(r.price_cents)}</span>
+                      <form action={deletePetPriceAction.bind(null, id, petId, r.service_id)}>
+                        <button type="submit" aria-label={`Remove ${pet.name}'s price for ${s.name}`} className="text-xs font-semibold text-danger">Remove</button>
+                      </form>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <PetPriceForm action={savePetPriceAction.bind(null, id, petId)} petName={pet.name} options={priceOptions} />
         </Card>
         <Card className="space-y-3">
           <h2 className="font-bold">Vaccines</h2>

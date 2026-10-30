@@ -6,6 +6,7 @@ import { normalizePhone, phoneLabel, SIZES, ymd, dayLabel, timeLabel } from "@/l
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
 import { activeAgreement, currentSignature, recordSignature, signatureImage } from "@/lib/agreement";
 import { bytesFromDataUrl, savePetPhoto } from "@/lib/pet-photos";
+import { forPet, petPrices } from "@/lib/data/pet-prices";
 
 // The public booking page. Clients identify themselves with their mobile number: a known
 // number brings up their pets and the address on file, so they don't type anything again.
@@ -26,7 +27,8 @@ export type KnownClient = {
   firstName: string;
   city: string | null;
   hasAddress: boolean;
-  pets: { id: string; name: string; breed: string | null; size: string | null }[];
+  pets: { id: string; name: string; breed: string | null; size: string | null;
+          prices?: Record<string, { price_cents: number; duration_min: number | null }> }[];
   mustSign: boolean;
 };
 export type LookupResult = { error?: string } & (KnownClient | { known: false; mustSign: boolean } | { known?: undefined });
@@ -70,21 +72,35 @@ export async function lookupClientAction(rawPhone: string): Promise<LookupResult
   if (!c) return { known: false, mustSign: (await mustSignFor(b, null)).mustSign };
   const pets = await sql<{ id: string; name: string; breed: string | null; size: string | null }[]>`
     select id, name, breed, size_class as size from pets where client_id = ${c.id} and deceased_at is null order by name`;
+  const own = await petPrices(pets.map((p) => p.id));
   return {
     known: true,
     firstName: c.first_name,
     city: c.city,
     hasAddress: !!(c.address_line && c.zip),
-    pets,
+    pets: pets.map((p) => ({
+      ...p,
+      prices: Object.fromEntries([...own.values()].filter((r) => r.pet_id === p.id)
+        .map((r) => [r.service_id, { price_cents: r.price_cents, duration_min: r.duration_min }])),
+    })),
     mustSign: (await mustSignFor(b, c.id)).mustSign,
   };
 }
 
-/** Validates the pets and services picked on the page and returns their total length. */
-async function priceAndLength(businessId: string, pets: PetRequest[]) {
+/**
+ * Validates the pets and services picked on the page and returns their total length.
+ * `phone` is the client's: their pets' own prices and times count, nobody else's.
+ */
+async function priceAndLength(b: PublicBusiness, pets: PetRequest[], phone: string | null) {
   if (!Array.isArray(pets) || pets.length === 0 || pets.length > 4) return { error: "Choose between 1 and 4 pets." } as const;
-  const services = await onlineServices(businessId);
+  const services = await onlineServices(b.id);
   const byId = new Map(services.map((s) => [s.id, s]));
+  const client = phone ? await findClient(b, phone) : null;
+  const askedIds = pets.map((p) => p.petId).filter((x): x is string => !!x);
+  const ownIds = client && askedIds.length
+    ? (await sql<{ id: string }[]>`select id from pets where client_id = ${client.id} and id = any(${askedIds})`).map((r) => r.id)
+    : [];
+  const prices = await petPrices(ownIds);
   let minutes = 0;
   for (const p of pets) {
     if (!String(p.name ?? "").trim()) return { error: "Each pet needs a name." } as const;
@@ -95,10 +111,10 @@ async function priceAndLength(businessId: string, pets: PetRequest[]) {
       const s = byId.get(id);
       if (!s) return { error: "One of the services is no longer available. Please refresh the page." } as const;
       if (s.size_class && s.size_class !== p.size) return { error: `That service doesn't match ${p.name}'s size.` } as const;
-      minutes += s.duration_min;
+      minutes += forPet(prices, p.petId, s).duration_min;
     }
   }
-  return { minutes, byId } as const;
+  return { minutes, byId, prices } as const;
 }
 
 /** The ZIP to plan around: the address on file for a known client, or the one typed in. */
@@ -121,7 +137,7 @@ export async function availabilityAction(input: {
   const zip = await zipFor(b, normalizePhone(input.phone), input.useFileAddress, input.zip);
   const problem = zipProblem(b, zip);
   if (problem) return { error: problem };
-  const checked = await priceAndLength(b.id, input.pets);
+  const checked = await priceAndLength(b, input.pets, normalizePhone(input.phone));
   if ("error" in checked) return { error: checked.error };
   const days = await findSlots(b, zip, checked.minutes);
   if (days.length === 0) return { error: "No open times in your area right now. Please text us and we'll fit you in." };
@@ -172,7 +188,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   const problem = zipProblem(b, zip);
   if (problem) return { error: problem };
 
-  const checked = await priceAndLength(b.id, input.pets);
+  const checked = await priceAndLength(b, input.pets, phone);
   if ("error" in checked) return { error: checked.error };
   if (existing) {
     const ids = input.pets.map((p) => p.petId).filter((x): x is string => !!x);
@@ -250,7 +266,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
         }
         const [ap] = await tx`insert into appointment_pets (appointment_id, pet_id) values (${appt.id}, ${petId}) returning id`;
         for (const sid of p.serviceIds) {
-          const s = checked.byId.get(sid)!;
+          const s = forPet(checked.prices, p.petId, checked.byId.get(sid)!);
           await tx`insert into appointment_services (appointment_pet_id, service_id, name, price_cents, duration_min)
                    values (${ap.id}, ${s.id}, ${s.name}, ${s.price_cents}, ${s.duration_min})`;
         }

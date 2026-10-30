@@ -8,6 +8,7 @@ import { Chat, Phone } from "@/components/icons";
 import { methodLabel } from "@/lib/payment-methods";
 import { dayLabel, isUuid, money, phoneLabel, sizeLabel, timeLabel, todayYmd } from "@/lib/format";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
+import { petPrices } from "@/lib/data/pet-prices";
 import { sql } from "@/lib/db";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { addNoteAction, deleteClientAction, deleteNoteAction, setClientControlAction } from "../actions";
@@ -31,7 +32,11 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
     sql<{ id: string; name: string }[]>`select id, name from pets where client_id = ${id} and deceased_at is not null order by name`,
   ]);
   if (!client) notFound();
-  const vaccines = await vaccineAlerts(staff, pets.map((p) => p.id), todayYmd(staff.timezone));
+  const [vaccines, ownPrices] = await Promise.all([
+    vaccineAlerts(staff, pets.map((p) => p.id), todayYmd(staff.timezone)),
+    petPrices(pets.map((p) => p.id)),
+  ]);
+  const ownPriceCount = (petId: string) => [...ownPrices.values()].filter((r) => r.pet_id === petId).length;
   const signature = agreement ? await currentSignature(agreement, id) : null;
   const address = fullAddress(client);
   const tz = staff.timezone;
@@ -175,6 +180,11 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
                         <div key={v.name} className={`text-xs font-semibold ${v.expired ? "text-danger" : "text-warn"}`}>💉 {alertText(v)}</div>
                       ))}
                       {p.behavior && <div className="mt-1 text-sm text-warn">{p.behavior}</div>}
+                      {ownPriceCount(p.id) > 0 && (
+                        <div className="text-xs font-semibold text-brand">
+                          {ownPriceCount(p.id)} price{ownPriceCount(p.id) > 1 ? "s" : ""} just for {p.name}
+                        </div>
+                      )}
                     </div>
                   </Link>
                 </li>

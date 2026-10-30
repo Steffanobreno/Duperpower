@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getAppointment } from "@/lib/data/appointments";
 import { listServices } from "@/lib/data/services";
+import { petPrices } from "@/lib/data/pet-prices";
 import { sql } from "@/lib/db";
 import { Notice, Page, PageHeader } from "@/components/ui";
 import { ServicesEditor } from "./services-editor";
@@ -18,6 +19,10 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
     sql`select id from invoices where appointment_id = ${id} and business_id = ${staff.businessId}`,
   ]);
   if (!appt) notFound();
+  const own = await petPrices(appt.pets.map((p) => p.pet_id));
+  const ownPricesOf = (petId: string) =>
+    Object.fromEntries([...own.values()].filter((r) => r.pet_id === petId)
+      .map((r) => [r.service_id, { priceCents: r.price_cents, minutes: r.duration_min }]));
   return (
     <>
       <PageHeader title="Edit services" back={`/appointments/${id}`} />
@@ -33,6 +38,7 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
               appointmentPetId: p.appointment_pet_id,
               name: p.name,
               size: p.size_class,
+              ownPrices: ownPricesOf(p.pet_id),
               lines: p.services.map((s) => ({ id: s.id, serviceId: s.service_id, name: s.name, priceCents: s.price_cents, minutes: s.duration_min })),
             }))}
             catalog={services.map((s) => ({

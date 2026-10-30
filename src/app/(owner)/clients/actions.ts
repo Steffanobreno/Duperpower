@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
-import { normalizePhone, SIZES } from "@/lib/format";
+import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { geocode } from "@/lib/maps";
 import { savePetPhoto } from "@/lib/pet-photos";
 
@@ -222,6 +222,41 @@ export async function deleteVaccineAction(clientId: string, petId: string, vacci
   const staff = await requireStaff();
   await sql`delete from vaccines v using pets p, clients c
             where v.id = ${vaccineId} and p.id = v.pet_id and c.id = p.client_id and c.business_id = ${staff.businessId}`;
+  revalidatePath(`/clients/${clientId}/pets/${petId}`);
+  revalidatePath(`/clients/${clientId}`);
+}
+
+/** The pet's own price (and optionally time) for a service; booking uses it instead of the usual one. */
+export async function savePetPriceAction(clientId: string, petId: string, _: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const serviceId = String(form.get("service_id") ?? "");
+  const price = parseMoney(form.get("price"));
+  const minutesText = String(form.get("minutes") ?? "").trim();
+  const minutes = minutesText === "" ? null : Number(minutesText);
+  if (!serviceId) return { error: "Choose the service." };
+  if (price == null) return { error: "Type the price, like 165 or 165.50." };
+  if (minutes != null && (!Number.isInteger(minutes) || minutes < 0 || minutes > 600)) {
+    return { error: "Time is in minutes, like 150 (or leave it empty)." };
+  }
+  const [ok] = await sql`
+    insert into pet_service_prices (pet_id, service_id, price_cents, duration_min)
+    select p.id, s.id, ${price}, ${minutes}
+    from pets p join clients c on c.id = p.client_id, services s
+    where p.id = ${petId} and c.business_id = ${staff.businessId} and s.id = ${serviceId} and s.business_id = ${staff.businessId}
+    on conflict (pet_id, service_id) do update set price_cents = excluded.price_cents,
+      duration_min = excluded.duration_min, updated_at = now()
+    returning pet_id`;
+  if (!ok) return { error: "Pet or service not found." };
+  revalidatePath(`/clients/${clientId}/pets/${petId}`);
+  revalidatePath(`/clients/${clientId}`);
+  return undefined;
+}
+
+export async function deletePetPriceAction(clientId: string, petId: string, serviceId: string) {
+  const staff = await requireStaff();
+  await sql`delete from pet_service_prices x using pets p, clients c
+            where x.pet_id = ${petId} and x.service_id = ${serviceId}
+              and p.id = x.pet_id and c.id = p.client_id and c.business_id = ${staff.businessId}`;
   revalidatePath(`/clients/${clientId}/pets/${petId}`);
   revalidatePath(`/clients/${clientId}`);
 }

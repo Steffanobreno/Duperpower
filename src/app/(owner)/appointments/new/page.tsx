@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { clientHistory, fullName, getClient, listClients, listPets } from "@/lib/data/clients";
 import { listServices } from "@/lib/data/services";
+import { petPrices } from "@/lib/data/pet-prices";
 import { dayLabel, isYmd, phoneLabel, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Input, Page, PageHeader } from "@/components/ui";
 import { createAppointmentAction } from "../actions";
@@ -77,7 +78,13 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
     nearbyDays(staff, client.zip),
   ]);
   const count = (status: string) => history.filter((a) => a.status === status).length;
-  const vaccines = await vaccineAlerts(staff, pets.map((p) => p.id), date);
+  const [vaccines, ownPrices] = await Promise.all([
+    vaccineAlerts(staff, pets.map((p) => p.id), date),
+    petPrices(pets.map((p) => p.id)),
+  ]);
+  const pricesOf = (petId: string) =>
+    Object.fromEntries([...ownPrices.values()].filter((r) => r.pet_id === petId)
+      .map((r) => [r.service_id, { price_cents: r.price_cents, duration_min: r.duration_min }]));
   return (
     <>
       <PageHeader title={`Book ${fullName(client)}`} back={`/clients/${client.id}`} />
@@ -128,7 +135,11 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
         ) : (
           <BookingForm
             action={createAppointmentAction.bind(null, client.id)}
-            pets={pets.map((p) => ({ ...p, vaccineAlert: vaccines.filter((v) => v.pet_id === p.id).map(alertText).join(" · ") || null }))}
+            pets={pets.map((p) => ({
+              ...p,
+              vaccineAlert: vaccines.filter((v) => v.pet_id === p.id).map(alertText).join(" · ") || null,
+              prices: pricesOf(p.id),
+            }))}
             services={services}
             defaultDate={date}
             defaultTime={time}

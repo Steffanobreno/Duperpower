@@ -7,7 +7,14 @@ import { minutesLabel, money } from "@/lib/format";
 import { saveServicesAction, type ServiceLine } from "../../actions";
 
 type Line = { key: string; id?: string; serviceId: string; name: string; priceCents: number; minutes: number };
-type Pet = { appointmentPetId: string; name: string; size: string | null; lines: Omit<Line, "key">[] };
+type Pet = {
+  appointmentPetId: string;
+  name: string;
+  size: string | null;
+  lines: Omit<Line, "key">[];
+  /** This pet's own prices: service id → price and (optionally) time. */
+  ownPrices?: Record<string, { priceCents: number; minutes: number | null }>;
+};
 type CatalogItem = { id: string; name: string; kind: "service" | "addon"; size: string | null; priceCents: number; minutes: number };
 
 let nextKey = 0;
@@ -52,7 +59,11 @@ export function ServicesEditor({
     <div className="space-y-5">
       {pets.map((p) => {
         const lines = state[p.appointmentPetId];
-        const options = catalog.filter((c) => !c.size || !p.size || c.size === p.size);
+        // The catalog as this pet gets it: its own price and time when it has one.
+        const options = catalog.filter((c) => !c.size || !p.size || c.size === p.size).map((c) => {
+          const own = p.ownPrices?.[c.id];
+          return own ? { ...c, priceCents: own.priceCents, minutes: own.minutes ?? c.minutes } : c;
+        });
         return (
           <section key={p.appointmentPetId} className="space-y-2">
             <h2 className="section-label">{p.name}</h2>
@@ -94,7 +105,7 @@ export function ServicesEditor({
               <Plus size={18} />
               <select aria-label={`Add a service for ${p.name}`} className="w-0 min-w-0 flex-1 truncate bg-transparent font-semibold outline-none" value=""
                 onChange={(e) => {
-                  const c = catalog.find((x) => x.id === e.target.value);
+                  const c = options.find((x) => x.id === e.target.value);
                   if (!c) return;
                   setState({ ...state, [p.appointmentPetId]: [...lines, { key: `k${nextKey++}`, serviceId: c.id, name: c.name, priceCents: c.priceCents, minutes: c.minutes }] });
                 }}>
