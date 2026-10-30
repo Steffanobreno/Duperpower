@@ -5,7 +5,8 @@ import { listRange, type AppointmentListItem } from "@/lib/data/appointments";
 import { listTimeOff, type TimeOff } from "@/lib/data/time-off";
 import { sql } from "@/lib/db";
 import { addDaysYmd, dayLabel, dayRangeUtc, hm, isYmd, money, timeLabel, todayYmd, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
-import { ButtonLink, Page, PageHeader, StatusBadge } from "@/components/ui";
+import { ButtonLink, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
+import { closedDays } from "@/lib/data/closed";
 import { DayNav } from "@/components/day-nav";
 import { SlotButton, type Pick } from "./slot-button";
 import { Swipe } from "@/components/swipe";
@@ -73,13 +74,14 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
   // ?groomer= shows one groomer's visits and blocks; without it, everyone's.
   const groomer = typeof sp.groomer === "string" && /^[0-9a-f-]{36}$/.test(sp.groomer) ? sp.groomer : null;
-  const [all, blocks, hours, groomers] = await Promise.all([
+  const [all, blocks, hours, groomers, closed] = await Promise.all([
     listRange(staff, from, count),
     listTimeOff(staff, from, count, groomer),
     sql<{ weekday: number; start: string; end: string }[]>`
       select weekday, to_char(start_time, 'HH24:MI') as start, to_char(end_time, 'HH24:MI') as end
       from working_hours where staff_id = ${groomer ?? staff.staffId}`,
     listGroomers(staff, { activeOnly: true }),
+    closedDays(staff.businessId, from, addDaysYmd(from, count - 1)),
   ]);
   const appts = groomer ? all.filter((a) => a.staff_id === groomer) : all;
   const multi = groomers.length > 1;
@@ -134,6 +136,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
             dots={(d) => onDay(d).filter((a) => !HIDDEN.includes(a.status)).length} />
         )}
 
+        {view === "day" && closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
         {view === "day" && (
           <Swipe prev={`${base}date=${addDaysYmd(date, -1)}`} next={`${base}date=${addDaysYmd(date, 1)}`}>
             <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} multi={multi} groomer={groomer}
@@ -142,9 +145,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         )}
         {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} />}
         {view === "month" && (
-          <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d)} />
+          <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} />
         )}
-        {view === "agenda" && <Agenda start={monday(date)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d)} tz={tz} />}
+        {view === "agenda" && <Agenda start={monday(date)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} tz={tz} />}
       </Page>
     </>
   );

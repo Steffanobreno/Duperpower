@@ -7,6 +7,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { LOCALES } from "@/lib/i18n";
 import { Button, ButtonLink, Card, Field, Input, Notice } from "@/components/ui";
 import { AgreementText } from "@/components/agreement-text";
+import { logoUrl } from "@/lib/business-logo";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { Calendar, Dog } from "@/components/icons";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
@@ -53,14 +54,16 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
   const tz = a.timezone;
   const phone = phoneLabel(a.phone);
   const open = ["requested", "unconfirmed", "confirmed"].includes(a.status);
-  const [agreement, calendar] = await Promise.all([
+  const [agreement, calendar, logo] = await Promise.all([
     a.status === "unconfirmed" ? activeAgreement(a.business_id) : null,
     clientEvent({ token }),
+    logoUrl(a.business_id),
   ]);
   const mustSign = agreement ? !(await currentSignature(agreement, a.client_id)) : false;
 
   return (
-    <ClientShell phone={a.phone} phoneLabel={phone} website={a.website_url} i18n={{ lang, t }}>
+    <ClientShell phone={a.phone} phoneLabel={phone} website={a.website_url} i18n={{ lang, t }}
+      brand={{ name: a.business, logo }}>
       <StepCard className="space-y-4">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">{t("Hi {name}!", { name: a.first_name })}</h1>
         <div className="space-y-3 rounded-2xl border border-line p-4">

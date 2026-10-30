@@ -7,6 +7,7 @@ import { phoneLabel, todayYmd } from "@/lib/format";
 import { BookingWizard } from "./booking-wizard";
 import { getI18n } from "@/lib/i18n/server";
 import { I18nProvider } from "@/components/i18n";
+import { logoUrl } from "@/lib/business-logo";
 
 export const metadata: Metadata = { title: "Book a visit", robots: { index: true } };
 export const dynamic = "force-dynamic";
@@ -16,12 +17,13 @@ export default async function BookPage({ searchParams }: PageProps<"/book">) {
   const b = await getPublicBusiness();
   if (!b) return null;
   const { embed, phone: resumePhone, lang: langParam } = await searchParams;
-  const [services, agreement, { lang, messages, t }] = await Promise.all([
-    onlineServices(b.id), activeAgreement(b.id), getI18n(langParam),
+  const [services, agreement, { lang, messages, t }, logo] = await Promise.all([
+    onlineServices(b.id), activeAgreement(b.id), getI18n(langParam), logoUrl(b.id),
   ]);
   const phone = phoneLabel(b.phone);
   return (
-    <ClientShell phone={b.phone} phoneLabel={phone} website={b.website_url} bare={embed === "1"} i18n={{ lang, t }}>
+    <ClientShell phone={b.phone} phoneLabel={phone} website={b.website_url} bare={embed === "1"} i18n={{ lang, t }}
+      brand={{ name: b.name, logo }}>
       {b.online_booking_enabled ? (
         <I18nProvider lang={lang} messages={messages}>
           <BookingWizard

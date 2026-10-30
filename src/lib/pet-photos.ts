@@ -4,7 +4,7 @@ import { sql } from "./db";
 const MAX_BYTES = 1_500_000;
 
 /** Detects the real image type from the first bytes; anything else is rejected. */
-function sniff(b: Uint8Array): "image/jpeg" | "image/png" | "image/webp" | null {
+export function sniff(b: Uint8Array): "image/jpeg" | "image/png" | "image/webp" | null {
   if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
   if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
   const ascii = (from: number, to: number) => String.fromCharCode(...b.slice(from, to));

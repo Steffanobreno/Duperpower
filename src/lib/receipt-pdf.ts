@@ -4,6 +4,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import type { Receipt } from "./data/receipts";
 import { money } from "./format";
 import { RECEIPT_LOGO_PNG_BASE64 } from "./receipt-logo";
+import { logoBytes } from "./business-logo";
 
 // Receipts as a PDF, one per page (US Letter): logo, business, receipt number, client, times,
 // services by pet, totals and payments. Built here on the server with pdf-lib.
@@ -63,7 +64,10 @@ function draw(page: PDFPage, fonts: Fonts, logo: PDFImage, r: Receipt) {
     y -= 12;
   };
 
-  page.drawImage(logo, { x: (W - 80) / 2, y: y - 76, width: 80, height: 76 });
+  // Fit the logo in an 80×76 box, keeping its shape.
+  const scale = Math.min(80 / logo.width, 76 / logo.height);
+  const lw = logo.width * scale, lh = logo.height * scale;
+  page.drawImage(logo, { x: (W - lw) / 2, y: y - 76 + (76 - lh) / 2, width: lw, height: lh });
   y -= 96;
   center(r.business.name, 15, fonts.bold);
   y -= 16;
@@ -129,7 +133,11 @@ export async function receiptsPdf(receipts: Receipt[], title = "Receipts"): Prom
   doc.setTitle(safe(title));
   doc.setCreator("Woofers Dog Spa");
   const fonts = { regular: await doc.embedFont(StandardFonts.Helvetica), bold: await doc.embedFont(StandardFonts.HelveticaBold) };
-  const logo = await doc.embedPng(Buffer.from(RECEIPT_LOGO_PNG_BASE64, "base64"));
+  // The business's own logo when it has one (all receipts here are from one business).
+  const own = receipts[0] ? await logoBytes(receipts[0].business.id) : null;
+  const logo = own
+    ? await (own.type === "image/png" ? doc.embedPng(own.data) : doc.embedJpg(own.data))
+    : await doc.embedPng(Buffer.from(RECEIPT_LOGO_PNG_BASE64, "base64"));
   for (const r of receipts) draw(doc.addPage([W, H]), fonts, logo, r);
   if (receipts.length === 0) {
     const page = doc.addPage([W, H]);

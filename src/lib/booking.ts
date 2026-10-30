@@ -2,10 +2,12 @@ import "server-only";
 import { sql } from "./db";
 import { addDaysYmd, dayRangeUtc, dayLabel, timeLabel, todayYmd, weekdayOf, zonedToUtc } from "./format";
 import { zipInfo, zipMiles } from "./geo/zip";
+import { closedDays } from "./data/closed";
 
 // Online booking: which times a client may request. Rules, in order:
 // 1. the ZIP is in California and within the service radius of the van's start ZIP;
-// 2. inside working hours, with at least `min_notice_hours` notice, on the start-time grid (see below);
+// 2. on a day the business is open (not a closed date or holiday), inside working hours,
+//    with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. on a day that already has visits, every one of them is within `max_cluster_miles`.
 // Days when the van is already close by (NEAR_MILES) are marked, and on them the times right
@@ -78,7 +80,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   const rangeStart = dayRangeUtc(firstDay, tz).start;
   const rangeEnd = dayRangeUtc(addDaysYmd(firstDay, days - 1), tz).end;
 
-  const [hours, busy, timeOff] = await Promise.all([
+  const [hours, busy, timeOff, closed] = await Promise.all([
     sql<{ weekday: number; start: string; end: string }[]>`
       select weekday, to_char(start_time, 'HH24:MI') as start, to_char(end_time, 'HH24:MI') as end
       from working_hours where staff_id = ${b.staff_id}`,
@@ -88,6 +90,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
         and start_at < ${rangeEnd} and end_at > ${rangeStart}`,
     sql<{ start_at: Date; end_at: Date }[]>`
       select start_at, end_at from time_off where staff_id = ${b.staff_id} and start_at < ${rangeEnd} and end_at > ${rangeStart}`,
+    closedDays(b.id, firstDay, addDaysYmd(firstDay, days - 1)),
   ]);
 
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
@@ -98,7 +101,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
 
   for (let i = 0; i < days; i++) {
     const date = addDaysYmd(firstDay, i);
-    if (date < today) continue;
+    if (date < today || closed.has(date)) continue;
     const h = hours.find((x) => x.weekday === weekdayOf(date));
     if (!h) continue;
     const { start: dayStart, end: dayEnd } = dayRangeUtc(date, tz);

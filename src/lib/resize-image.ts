@@ -1,5 +1,5 @@
 // Browser only: shrinks a photo from the phone (often 4–8 MB) to about 100 KB before upload.
-export async function resizeImage(file: File, maxSide = 900, quality = 0.82): Promise<Blob> {
+export async function resizeImage(file: File, maxSide = 900, quality = 0.82, type = "image/jpeg"): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
@@ -8,7 +8,7 @@ export async function resizeImage(file: File, maxSide = 900, quality = 0.82): Pr
   canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
   return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read that photo."))), "image/jpeg", quality),
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not read that photo."))), type, quality),
   );
 }
 

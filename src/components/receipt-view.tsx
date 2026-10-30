@@ -13,9 +13,14 @@ export function ReceiptView({ r, t = (s) => s, locale = "en-US" }: { r: Receipt;
   return (
     <div className="space-y-4">
       <div className="text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-        <img src="/logo.png" alt="" width={400} height={380} className="mx-auto h-20 w-auto" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- small logo */}
+        <img src={r.business.logo ?? "/logo.png"} alt="" width={400} height={380} className="mx-auto h-20 w-auto" />
         <p className="mt-2 text-lg font-extrabold">{r.business.name}</p>
+        {(r.business.address || r.business.phone) && (
+          <p className="text-xs text-muted">
+            {[r.business.phone?.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3"), r.business.address].filter(Boolean).join(" · ")}
+          </p>
+        )}
         <h1 className="mt-3 text-2xl font-extrabold">{t("Receipt #{number}", { number: r.number })}</h1>
         <p className={`mt-1 text-sm font-bold ${r.open ? "text-danger" : "text-success"}`}>{r.open ? t("Balance due") : t("Paid · Thank you!")}</p>
       </div>

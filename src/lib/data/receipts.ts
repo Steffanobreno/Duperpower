@@ -11,7 +11,7 @@ export type Receipt = {
   number: string; // "1001"
   token: string;
   open: boolean;
-  business: { name: string; phone: string | null; address: string | null; timezone: string };
+  business: { id: string; name: string; phone: string | null; address: string | null; timezone: string; logo: string | null };
   client: { id: string; name: string; email: string | null; phone: string | null };
   checkedIn: Date | null;
   checkedOut: Date | null;
@@ -35,13 +35,17 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
   const [r] = await sql<{
     id: string; receipt_no: number; public_token: string; status: string; subtotal_cents: number; discount_cents: number;
     tax_cents: number; tip_cents: number; total_cents: number; paid_cents: number; created_at: Date; receipt_emailed_at: Date | null;
-    business: string; business_phone: string | null; business_address: string | null; timezone: string;
+    business_id: string; business: string; business_phone: string | null; business_address: string | null; timezone: string;
+    logo_v: string | null;
     client_id: string; first_name: string; last_name: string; email: string | null; phone: string | null;
     checked_in_at: Date | null; checked_out_at: Date | null; start_at: Date | null;
   }[]>`
     select i.id, i.receipt_no, i.public_token, i.status, i.subtotal_cents, i.discount_cents, i.tax_cents, i.tip_cents,
            i.total_cents, i.paid_cents, i.created_at, i.receipt_emailed_at,
-           b.name as business, b.phone as business_phone, b.mailing_address as business_address, b.timezone,
+           b.id as business_id, b.name as business, b.phone as business_phone, b.timezone,
+           coalesce(nullif(concat_ws(', ', b.address_line, b.city, nullif(concat_ws(' ', b.state, b.zip), '')), ''),
+                    b.mailing_address) as business_address,
+           (select extract(epoch from l.updated_at)::bigint::text from business_logos l where l.business_id = b.id) as logo_v,
            c.id as client_id, c.first_name, c.last_name, c.email, c.phone,
            coalesce(a.checked_in_at, i.checked_in_at) as checked_in_at,
            coalesce(a.checked_out_at, i.checked_out_at) as checked_out_at, a.start_at
@@ -74,7 +78,10 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
     number: String(r.receipt_no),
     token: r.public_token,
     open: r.status === "open",
-    business: { name: r.business, phone: r.business_phone, address: r.business_address, timezone: r.timezone },
+    business: {
+      id: r.business_id, name: r.business, phone: r.business_phone, address: r.business_address, timezone: r.timezone,
+      logo: r.logo_v ? `/logo/${r.business_id}?v=${r.logo_v}` : null,
+    },
     client: { id: r.client_id, name: `${r.first_name} ${r.last_name}`.trim(), email: r.email, phone: r.phone },
     checkedIn: r.checked_in_at,
     checkedOut: r.checked_out_at,

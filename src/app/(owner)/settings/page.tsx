@@ -1,24 +1,57 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
-import { Button, Page, PageHeader } from "@/components/ui";
-import { logoutAction } from "@/app/login/actions";
+import { Page, PageHeader } from "@/components/ui";
+import { SettingsList, type SettingsGroup } from "./settings-list";
 
 export const metadata: Metadata = { title: "Settings" };
 
-const LINKS = [
-  { href: "/settings/services", title: "Services and prices", text: "Packages, add-ons, prices and times" },
-  { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
-  { href: "/settings/team", title: "Team", text: "Groomers, their colors and who does each visit" },
-  { href: "/settings/business", title: "Business", text: "Name, phone and booking link" },
-  { href: "/settings/booking", title: "Online booking", text: "Booking page link, distance and notice rules" },
-  { href: "/settings/notifications", title: "Notifications", text: "Pop-ups on your phone for new bookings, cancellations and reschedules" },
-  { href: "/settings/messages", title: "Texts and email", text: "iPhone texts, email and the message texts" },
-  { href: "/settings/calendar", title: "Google Calendar", text: "See every visit in your Google Calendar" },
-  { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
-  { href: "/settings/import", title: "Import and export clients", text: "Bring in your client list, or download a backup (CSV)" },
-  { href: "/settings/backups", title: "Backups", text: "A weekly copy of everything on your Google Drive" },
-  { href: "/settings/agreement", title: "Service agreement", text: "The terms clients sign" },
+const GROUPS: SettingsGroup[] = [
+  {
+    title: "Basic settings",
+    links: [
+      { href: "/settings/account", title: "Account", text: "Your name, login email, password and devices" },
+      { href: "/settings/business", title: "Business", text: "Name, logo, phone, address, links and time zone" },
+      { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
+      { href: "/settings/closed", title: "Closed dates and holidays", text: "Vacations and holidays with no bookings" },
+      { href: "/settings/services", title: "Services and prices", text: "Packages, add-ons, prices and times" },
+      { href: "/settings/team", title: "Team", text: "Groomers, their colors and who does each visit" },
+    ],
+  },
+  {
+    title: "Clients and pets",
+    links: [
+      { href: "/settings/lists", title: "Client and pet options", text: "Tags, referral sources, pet codes, breeds, sizes, vaccines, coats" },
+      { href: "/settings/import", title: "Import and export clients", text: "Bring in your client list, or download a backup (CSV)" },
+      { href: "/settings/agreement", title: "Service agreement", text: "The terms clients sign" },
+    ],
+  },
+  {
+    title: "Calendar",
+    links: [
+      { href: "/settings/calendar-view", title: "Calendar look", text: "What each visit shows, hours shown and colors" },
+      { href: "/settings/calendar", title: "Google Calendar", text: "See every visit in your Google Calendar" },
+    ],
+  },
+  {
+    title: "Communication",
+    links: [
+      { href: "/settings/messages", title: "Texts and email", text: "Reminders, updates, receipts: each one on or off, and its text" },
+      { href: "/settings/notifications", title: "Notifications", text: "Pop-ups on your phone for new bookings, cancellations and reschedules" },
+    ],
+  },
+  {
+    title: "Online booking",
+    links: [
+      { href: "/settings/booking", title: "Online booking", text: "Booking page, QR code, auto-accept, distance and notice rules" },
+      { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
+    ],
+  },
+  {
+    title: "Safety",
+    links: [
+      { href: "/settings/backups", title: "Backups", text: "A weekly copy of everything on your Google Drive" },
+    ],
+  },
 ];
 
 export default async function SettingsPage() {
@@ -30,22 +63,7 @@ export default async function SettingsPage() {
         <p className="text-sm text-muted">
           {staff.businessName} · logged in as {staff.staffName}
         </p>
-        <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-          {LINKS.map((l) => (
-            <li key={l.href}>
-              <Link href={l.href} className="flex items-center gap-3 px-4 py-3 hover:bg-bg">
-                <div className="flex-1">
-                  <div className="font-semibold">{l.title}</div>
-                  <div className="text-sm text-muted">{l.text}</div>
-                </div>
-                <span aria-hidden className="text-muted">›</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <form action={logoutAction}>
-          <Button type="submit" kind="secondary" className="w-full">Log out</Button>
-        </form>
+        <SettingsList groups={GROUPS} />
       </Page>
     </>
   );

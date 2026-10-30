@@ -13,6 +13,7 @@ export function ClientShell({
   website,
   bare = false,
   i18n,
+  brand,
   children,
 }: {
   phone: string | null;
@@ -21,6 +22,8 @@ export function ClientShell({
   bare?: boolean;
   /** The client's language: shows the language menu and translates the frame. */
   i18n?: { lang: Lang; t: T };
+  /** The business's own logo and name; without a logo, the Woofers artwork. */
+  brand?: { name: string; logo: string | null };
   children: ReactNode;
 }) {
   const t: T = i18n?.t ?? ((s) => s);
@@ -34,9 +37,17 @@ export function ClientShell({
     <>
       <header className="sticky top-0 z-20 bg-navy">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
-          <a href={website ?? "#"} aria-label="Woofers Dog Spa home" className="shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-            <img src="/logo-light.png" alt="Woofers Dog Spa" width={594} height={160} className="h-11 w-auto" />
+          <a href={website ?? "#"} aria-label={`${brand?.name ?? "Woofers Dog Spa"} home`} className="flex min-w-0 items-center gap-2">
+            {brand?.logo ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- small logo */}
+                <img src={brand.logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full bg-white object-contain p-0.5" />
+                <span className="truncate font-extrabold text-white">{brand.name}</span>
+              </>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- small static logo
+              <img src="/logo-light.png" alt={brand?.name ?? "Woofers Dog Spa"} width={594} height={160} className="h-11 w-auto" />
+            )}
           </a>
           {phone && (
             <a
@@ -51,8 +62,12 @@ export function ClientShell({
       <main lang={i18n?.lang} className="mx-auto w-full max-w-lg flex-1 px-3 py-5">{picker}{children}</main>
       <footer className="bg-navy-deep text-white/75">
         <div className="mx-auto max-w-lg space-y-4 px-5 py-8 text-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-          <img src="/logo-light.png" alt="" width={594} height={160} className="h-12 w-auto" />
+          {brand?.logo ? (
+            <p className="text-lg font-extrabold text-white">{brand.name}</p>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- small static logo
+            <img src="/logo-light.png" alt="" width={594} height={160} className="h-12 w-auto" />
+          )}
           <p>{t("Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.")}</p>
           {phone && (
             <a href={`tel:${phone}`} className="flex items-center gap-2 text-white">

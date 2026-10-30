@@ -5,6 +5,8 @@ import { requireStaff } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
 import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { sendEmail } from "@/lib/email";
+import { saveLogo } from "@/lib/business-logo";
+import { TIMEZONES } from "@/lib/timezones";
 
 export type FormState = { error?: string; saved?: boolean } | undefined;
 
@@ -88,25 +90,52 @@ export async function saveHoursAction(_: FormState, form: FormData): Promise<For
 
 export async function saveBusinessAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  const name = String(form.get("name") ?? "").trim();
+  const text = (k: string, max = 200) => String(form.get(k) ?? "").trim().slice(0, max) || null;
+  const name = text("name", 80);
   const rawPhone = String(form.get("phone") ?? "").trim();
   const phone = rawPhone ? normalizePhone(rawPhone) : null;
   const slug = String(form.get("booking_slug") ?? "").trim().toLowerCase();
-  const ownerName = String(form.get("owner_name") ?? "").trim();
+  const timezone = String(form.get("timezone") ?? "");
+  const zip = text("zip", 10);
+  const links = {
+    website_url: text("website_url"), facebook_url: text("facebook_url"), instagram_url: text("instagram_url"),
+    yelp_url: text("yelp_url"), google_url: text("google_url"),
+  };
   if (!name) return { error: "The business needs a name." };
   if (rawPhone && !phone) return { error: "Enter a 10-digit US phone number." };
   if (!/^[a-z0-9-]{3,40}$/.test(slug)) return { error: "The booking link can use letters, numbers and dashes (3 to 40)." };
+  if (!TIMEZONES.some(([z]) => z === timezone)) return { error: "Pick a time zone." };
+  if (zip && !/^\d{5}$/.test(zip)) return { error: "The ZIP code has 5 digits." };
+  for (const url of Object.values(links)) if (url && !/^https?:\/\/\S+$/.test(url)) return { error: "Links must start with https://" };
   try {
-    await sql.begin(async (tx) => {
-      await tx`update businesses set name = ${name}, phone = ${phone}, booking_slug = ${slug} where id = ${staff.businessId}`;
-      if (ownerName) await tx`update staff set name = ${ownerName} where id = ${staff.staffId}`;
-    });
+    await sql`
+      update businesses set name = ${name}, phone = ${phone}, booking_slug = ${slug}, timezone = ${timezone},
+        address_line = ${text("address_line")}, city = ${text("city", 60)}, state = ${text("state", 20)}, zip = ${zip},
+        website_url = ${links.website_url}, facebook_url = ${links.facebook_url}, instagram_url = ${links.instagram_url},
+        yelp_url = ${links.yelp_url}, google_url = ${links.google_url}
+      where id = ${staff.businessId}`;
   } catch (e) {
     if (isUniqueViolation(e)) return { error: "That booking link is taken." };
     throw e;
   }
-  revalidatePath("/settings");
+  revalidatePath("/", "layout");
   return { saved: true };
+}
+
+export async function saveLogoAction(form: FormData): Promise<{ error?: string }> {
+  const staff = await requireStaff();
+  const file = form.get("logo");
+  if (!(file instanceof Blob)) return { error: "Pick a picture." };
+  const error = await saveLogo(staff.businessId, new Uint8Array(await file.arrayBuffer()));
+  if (error) return { error };
+  revalidatePath("/", "layout");
+  return {};
+}
+
+export async function removeLogoAction() {
+  const staff = await requireStaff();
+  await sql`delete from business_logos where business_id = ${staff.businessId}`;
+  revalidatePath("/", "layout");
 }
 
 export async function saveBookingSettingsAction(_: FormState, form: FormData): Promise<FormState> {

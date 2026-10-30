@@ -18,7 +18,8 @@ export default async function ClientReceiptPage({ params, searchParams }: PagePr
   const r = await getReceipt({ token });
   if (!r) notFound();
   return (
-    <ClientShell phone={r.business.phone} phoneLabel={phoneLabel(r.business.phone)} website={null} i18n={{ lang, t }}>
+    <ClientShell phone={r.business.phone} phoneLabel={phoneLabel(r.business.phone)} website={null} i18n={{ lang, t }}
+      brand={{ name: r.business.name, logo: r.business.logo }}>
       <StepCard>
         <ReceiptView r={r} t={t} locale={LOCALES[lang]} />
         <div className="mt-6 grid grid-cols-2 gap-2">

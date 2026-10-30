@@ -120,37 +120,6 @@ export function HoursForm({ action, hours }: { action: Action; hours: { weekday:
   );
 }
 
-export function BusinessForm({
-  action,
-  initial,
-}: {
-  action: Action;
-  initial: { name: string; phone: string; booking_slug: string; owner_name: string };
-}) {
-  const [state, formAction, pending] = useActionState(action, undefined);
-  return (
-    <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
-      {state?.saved && <Notice kind="success">Saved.</Notice>}
-      <Field label="Business name">
-        <Input name="name" defaultValue={initial.name} required />
-      </Field>
-      <Field label="Your name">
-        <Input name="owner_name" defaultValue={initial.owner_name} />
-      </Field>
-      <Field label="Business phone" hint="Shown in texts to clients.">
-        <Input name="phone" type="tel" defaultValue={initial.phone} />
-      </Field>
-      <Field label="Booking link" hint="Used for the online booking page later.">
-        <Input name="booking_slug" defaultValue={initial.booking_slug} required />
-      </Field>
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Saving…" : "Save"}
-      </Button>
-    </ActionForm>
-  );
-}
-
 /** A settings form whose fields are passed as children; shows "Saved" or the error. */
 export function SimpleForm({
   action,

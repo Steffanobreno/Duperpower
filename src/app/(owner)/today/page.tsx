@@ -5,7 +5,7 @@ import { sql } from "@/lib/db";
 import { listDay } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
 import { addDaysYmd, isYmd, longDayLabel, money, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
-import { ButtonLink, Empty, Page, PageHeader, StatusBadge } from "@/components/ui";
+import { ButtonLink, Empty, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
 import { RouteMap } from "@/components/route-map";
@@ -13,6 +13,7 @@ import { locateStops } from "@/lib/geocode";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
+import { closedDays } from "@/lib/data/closed";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -22,12 +23,13 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const tz = staff.timezone;
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
-  const [day, [{ requests }], groomers] = await Promise.all([
+  const [day, [{ requests }], groomers, closed] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
       where business_id = ${staff.businessId} and status = 'requested' and start_at > now()`,
     listGroomers(staff, { activeOnly: true }),
+    closedDays(staff.businessId, date, date),
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.
   const groomer = sp.groomer === "all" ? null
@@ -58,6 +60,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         action={<ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>}
       />
       <Page>
+        {closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
         {requests > 0 && (
           <ButtonLink href="/requests" kind="secondary" className="w-full border-warn bg-warn-soft text-warn">
             {requests} booking request{requests > 1 ? "s" : ""} waiting
