@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { listClosedDates } from "@/lib/data/closed";
 import { todayYmd } from "@/lib/format";
@@ -14,7 +14,7 @@ const dateLabel = (d: string) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export default async function ClosedPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const today = todayYmd(staff.timezone);
   const year = Number(today.slice(0, 4));
   const [dates, [b]] = await Promise.all([

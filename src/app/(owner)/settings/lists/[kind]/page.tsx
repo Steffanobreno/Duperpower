@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { allOptions, isOptionKind, OPTION_KINDS } from "@/lib/data/options";
 import { Card, Empty, Page, PageHeader } from "@/components/ui";
 import { addOptionAction, deleteOptionAction, moveOptionAction, renameOptionAction } from "../actions";
@@ -9,7 +9,7 @@ import { AddOption, OptionRow } from "../list-editor";
 export const metadata: Metadata = { title: "Client and pet options" };
 
 export default async function OptionListPage({ params }: PageProps<"/settings/lists/[kind]">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const { kind } = await params;
   if (!isOptionKind(kind)) notFound();
   const info = OPTION_KINDS[kind];

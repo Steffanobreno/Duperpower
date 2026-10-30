@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emailHtml, type EmailDetails } from "@/lib/email";
 import { emailDetails, render, type Trigger } from "@/lib/messaging";
@@ -22,7 +22,7 @@ const TRIGGERS: { trigger: Trigger; label: string }[] = [
 // Shows an email exactly as a client gets it, filled in with the latest visit
 // (or a made-up one when there are no visits yet).
 export default async function EmailPreviewPage({ searchParams }: PageProps<"/settings/messages/preview">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const sp = await searchParams;
   const trigger = TRIGGERS.find((t) => t.trigger === sp.trigger)?.trigger ?? "request_received";
   const [b] = await sql`select name, phone, website_url, review_url, now() + interval '3 days' as sample_at

@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { isYmd, zonedToUtc } from "@/lib/format";
 import { recalcInvoice } from "@/lib/data/invoices";
@@ -26,7 +26,7 @@ export type NewReceipt = {
  * counts in Finance & reports, and it gets a receipt number, link and PDF like any other.
  */
 export async function createReceiptAction(input: NewReceipt): Promise<{ error?: string } | undefined> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const [client] = await sql`select id from clients where id = ${input.clientId} and business_id = ${staff.businessId}`;
   if (!client) return { error: "Choose the client." };
   if (!Array.isArray(input.lines) || input.lines.length === 0 || input.lines.length > 40) return { error: "Add at least one service." };
@@ -73,7 +73,7 @@ export async function createReceiptAction(input: NewReceipt): Promise<{ error?: 
 
 /** "Email receipt" for a receipt from the generator. */
 export async function emailStandaloneReceiptAction(invoiceId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const result = await emailReceipt(staff.businessId, invoiceId);
   revalidatePath(`/receipts/${invoiceId}`);
   redirect(`/receipts/${invoiceId}?receipt=${result}`);

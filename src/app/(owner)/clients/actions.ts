@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
 import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { geocode } from "@/lib/maps";
@@ -242,7 +242,7 @@ export async function deleteVaccineAction(clientId: string, petId: string, vacci
 
 /** The pet's own price (and optionally time) for a service; booking uses it instead of the usual one. */
 export async function savePetPriceAction(clientId: string, petId: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const serviceId = String(form.get("service_id") ?? "");
   const price = parseMoney(form.get("price"));
   const minutesText = String(form.get("minutes") ?? "").trim();
@@ -267,7 +267,7 @@ export async function savePetPriceAction(clientId: string, petId: string, _: For
 }
 
 export async function deletePetPriceAction(clientId: string, petId: string, serviceId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   await sql`delete from pet_service_prices x using pets p, clients c
             where x.pet_id = ${petId} and x.service_id = ${serviceId}
               and p.id = x.pet_id and c.id = p.client_id and c.business_id = ${staff.businessId}`;
@@ -280,7 +280,7 @@ export async function deletePetPriceAction(clientId: string, petId: string, serv
  * Messages already sent stay in the log without the name. Can't be undone.
  */
 export async function deleteClientAction(clientId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("delete");
   await sql.begin(async (tx) => {
     const [c] = await tx`select id from clients where id = ${clientId} and business_id = ${staff.businessId} for update`;
     if (!c) return;

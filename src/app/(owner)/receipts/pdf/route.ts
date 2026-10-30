@@ -7,6 +7,7 @@ import { receiptsPdf } from "@/lib/receipt-pdf";
 export async function GET(req: Request) {
   const staff = await getStaff();
   if (!staff) return new Response("Not logged in", { status: 401 });
+  if (!staff.can.payments) return new Response("Not allowed", { status: 403 });
   const sp = new URL(req.url).searchParams;
   const from = sp.get("from") ?? "";
   const to = sp.get("to") ?? "";

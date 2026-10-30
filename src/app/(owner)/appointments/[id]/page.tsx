@@ -205,7 +205,8 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ background: groomer.color }} />
                 <span className="flex-1"><span className="text-sm text-muted">Groomer</span> <span className="font-semibold">{groomer.name}</span></span>
               </div>
-              {otherGroomers.length > 0 && !["completed", "cancelled", "no_show", "declined"].includes(appt.status) && (
+              {/* Finished visits too, so payroll credits whoever really did it. */}
+              {otherGroomers.length > 0 && staff.can.all_appointments && !["cancelled", "no_show", "declined"].includes(appt.status) && (
                 <form action={assignGroomerAction.bind(null, id)} className="flex gap-2">
                   <select name="staff_id" aria-label="Give to" className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm">
                     {otherGroomers.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}

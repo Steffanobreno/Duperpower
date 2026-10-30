@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
 import { isOptionKind } from "@/lib/data/options";
 import type { FormState } from "../actions";
@@ -8,7 +8,7 @@ import type { FormState } from "../actions";
 const refresh = () => revalidatePath("/", "layout");
 
 export async function addOptionAction(kind: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   if (!isOptionKind(kind)) return { error: "Unknown list." };
   const label = String(form.get("label") ?? "").trim().replace(/\s+/g, " ");
   if (!label || label.length > 60) return { error: "Type a name (up to 60 letters)." };
@@ -25,7 +25,7 @@ export async function addOptionAction(kind: string, _: FormState, form: FormData
 }
 
 export async function renameOptionAction(id: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const label = String(form.get("label") ?? "").trim().replace(/\s+/g, " ");
   if (!label || label.length > 60) return { error: "Type a name (up to 60 letters)." };
   try {
@@ -56,14 +56,14 @@ export async function renameOptionAction(id: string, _: FormState, form: FormDat
 }
 
 export async function deleteOptionAction(id: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   await sql`delete from option_lists where id = ${id} and business_id = ${staff.businessId}`;
   refresh();
 }
 
 /** Swaps an item with its neighbor. Works for list items and pet codes. */
 export async function moveOptionAction(table: "option_lists" | "pet_codes", id: string, direction: "up" | "down") {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   await sql.begin(async (tx) => {
     const t = tx(table);
     const rows = table === "option_lists"
@@ -84,7 +84,7 @@ export async function moveOptionAction(table: "option_lists" | "pet_codes", id: 
 const COLOR = /^#[0-9a-f]{6}$/i;
 
 export async function savePetCodeAction(id: string | null, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const label = String(form.get("label") ?? "").trim();
   const description = String(form.get("description") ?? "").trim().slice(0, 120) || null;
   const color = String(form.get("color") ?? "");
@@ -108,7 +108,7 @@ export async function savePetCodeAction(id: string | null, _: FormState, form: F
 }
 
 export async function deletePetCodeAction(id: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   await sql`delete from pet_codes where id = ${id} and business_id = ${staff.businessId}`;
   refresh();
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { listServices } from "@/lib/data/services";
 import { todayYmd } from "@/lib/format";
@@ -9,7 +9,7 @@ import { ReceiptGenerator } from "./receipt-generator";
 export const metadata: Metadata = { title: "New receipt" };
 
 export default async function NewReceiptPage({ searchParams }: PageProps<"/receipts/new">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const sp = await searchParams;
   const [clients, pets, services, own] = await Promise.all([
     sql<{ id: string; name: string; email: string | null }[]>`

@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emailConfigured, sendMany } from "@/lib/email";
 import { phoneLabel, zonedToUtc } from "@/lib/format";
@@ -14,14 +14,14 @@ export type CampaignState = { error?: string; saved?: boolean; sent?: string } |
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 async function own(id: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   if (!/^[0-9a-f-]{36}$/.test(id)) return { staff, c: null };
   const [c] = await sql`select * from campaigns where id = ${id} and business_id = ${staff.businessId}`;
   return { staff, c: c ?? null };
 }
 
 export async function createCampaignAction(templateKey: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   const t = templateByKey(templateKey) ?? templateByKey("blank")!;
   const [c] = await sql`
     insert into campaigns (business_id, name, template, subject, preheader, banner, headline, body, button_label, filters)
@@ -53,7 +53,7 @@ export async function saveCampaignAction(id: string, _: CampaignState, form: For
 
 /** How many clients the filters reach, with a few names (live, while filtering). */
 export async function countAudienceAction(raw: Filters) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   const people = await audience(staff.businessId, cleanFilters(raw));
   const emails = new Set(people.map((p) => p.email));
   return { count: emails.size, sample: people.slice(0, 8).map((p) => `${p.first_name} ${p.last_name}`.trim()) };
@@ -155,13 +155,13 @@ export async function deleteCampaignAction(id: string) {
 }
 
 export async function setMarketingReminderAction(on: boolean) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   await sql`update businesses set marketing_reminder = ${on} where id = ${staff.businessId}`;
   revalidatePath("/marketing");
 }
 
 export async function saveMailingAddressAction(_: CampaignState, form: FormData): Promise<CampaignState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   const address = String(form.get("mailing_address") ?? "").trim().slice(0, 200);
   if (address && address.length < 10) return { error: "Write the full address (street or PO box, city, state, ZIP)." };
   await sql`update businesses set mailing_address = ${address || null} where id = ${staff.businessId}`;

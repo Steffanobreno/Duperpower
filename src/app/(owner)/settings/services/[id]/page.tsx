@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getService, listServices } from "@/lib/data/services";
 import { Card, Page, PageHeader } from "@/components/ui";
 import { saveServiceAction } from "../../actions";
@@ -9,7 +9,7 @@ import { ServiceForm } from "../../forms";
 export const metadata: Metadata = { title: "Edit service" };
 
 export default async function EditServicePage({ params }: PageProps<"/settings/services/[id]">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const { id } = await params;
   const [service, all] = await Promise.all([getService(staff, id), listServices(staff, { includeInactive: true })]);
   if (!service) notFound();

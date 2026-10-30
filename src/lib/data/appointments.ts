@@ -134,6 +134,8 @@ export async function getAppointment(staff: StaffContext, id: string) {
         where ap.appointment_id = a.id), '[]'::json) as pets
     from appointments a join clients c on c.id = a.client_id
     where a.id = ${id} and a.business_id = ${staff.businessId}`;
+  // Without "see every groomer's visits", only their own.
+  if (row && !staff.can.all_appointments && row.staff_id !== staff.staffId) return null;
   return row ?? null;
 }
 

@@ -80,7 +80,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const [from, count] = view === "month" ? [gridStart, gridDays] : [monday(date), 7];
 
   // ?groomer= shows one groomer's visits and blocks; without it, everyone's.
-  const groomer = typeof sp.groomer === "string" && /^[0-9a-f-]{36}$/.test(sp.groomer) ? sp.groomer : null;
+  const groomer = !staff.can.all_appointments ? staff.staffId
+    : typeof sp.groomer === "string" && /^[0-9a-f-]{36}$/.test(sp.groomer) ? sp.groomer : null;
   const [all, blocks, hours, groomers, closed] = await Promise.all([
     listRange(staff, from, count),
     listTimeOff(staff, from, count, groomer),
@@ -127,7 +128,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         <DayNav base={base} prev={shift(-1)} next={shift(1)} today={today} label={label}
           isToday={view === "day" ? date === today : view === "month" ? date.slice(0, 7) === today.slice(0, 7) : monday(date) === monday(today)} />
 
-        <GroomerFilter groomers={groomers} current={groomer} href={(g) => `/calendar?view=${view}&date=${date}${g ? `&groomer=${g}` : ""}${choosing?.q ?? ""}`} />
+        <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer} href={(g) => `/calendar?view=${view}&date=${date}${g ? `&groomer=${g}` : ""}${choosing?.q ?? ""}`} />
 
         {choosing && (
           <div className="sticky top-16 z-10 flex items-center gap-3 rounded-2xl border border-brand bg-brand-soft px-4 py-3">

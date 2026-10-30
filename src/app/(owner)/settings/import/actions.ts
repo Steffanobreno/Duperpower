@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { parseClientsCsv } from "@/lib/import/clients-csv";
 import { writeClients, type ImportReport } from "@/lib/import/write-clients";
@@ -8,7 +8,7 @@ import { writeClients, type ImportReport } from "@/lib/import/write-clients";
 export type ImportState = { error?: string; report?: ImportReport & { skipped: string[] } } | undefined;
 
 export async function importClientsAction(_: ImportState, form: FormData): Promise<ImportState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose the CSV file first." };
   if (file.size > 5_000_000) return { error: "That file is too big (over 5 MB)." };

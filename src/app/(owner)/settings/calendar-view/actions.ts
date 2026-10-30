@@ -1,11 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { FormState } from "../actions";
 
 export async function saveCalendarViewAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const on = (k: string) => form.get(k) === "on";
   const time = (k: string) => {
     const v = String(form.get(k) ?? "");

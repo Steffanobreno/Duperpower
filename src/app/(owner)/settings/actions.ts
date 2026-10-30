@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
 import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { sendEmail } from "@/lib/email";
@@ -11,7 +11,7 @@ import { TIMEZONES } from "@/lib/timezones";
 export type FormState = { error?: string; saved?: boolean } | undefined;
 
 export async function saveServiceAction(serviceId: string | null, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const name = String(form.get("name") ?? "").trim();
   const kind = form.get("kind") === "addon" ? "addon" : "service";
   const category = String(form.get("category") ?? "").trim() || (kind === "addon" ? "Add-on" : null);
@@ -47,7 +47,7 @@ export async function saveServiceAction(serviceId: string | null, _: FormState, 
 }
 
 export async function moveServiceAction(serviceId: string, direction: "up" | "down") {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   // Swap sort_order with the neighbor in the same kind and category.
   await sql.begin(async (tx) => {
     const [me] = await tx`select id, kind, category, sort_order from services
@@ -68,7 +68,7 @@ export async function moveServiceAction(serviceId: string, direction: "up" | "do
 }
 
 export async function saveHoursAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const rows: { weekday: number; start: string; end: string }[] = [];
   for (let d = 0; d < 7; d++) {
     if (form.get(`open:${d}`) !== "on") continue;
@@ -91,7 +91,7 @@ export async function saveHoursAction(_: FormState, form: FormData): Promise<For
 }
 
 export async function saveBusinessAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const text = (k: string, max = 200) => String(form.get(k) ?? "").trim().slice(0, max) || null;
   const name = text("name", 80);
   const rawPhone = String(form.get("phone") ?? "").trim();
@@ -125,7 +125,7 @@ export async function saveBusinessAction(_: FormState, form: FormData): Promise<
 }
 
 export async function saveLogoAction(form: FormData): Promise<{ error?: string }> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const file = form.get("logo");
   if (!(file instanceof Blob)) return { error: "Pick a picture." };
   const error = await saveLogo(staff.businessId, new Uint8Array(await file.arrayBuffer()));
@@ -135,13 +135,13 @@ export async function saveLogoAction(form: FormData): Promise<{ error?: string }
 }
 
 export async function removeLogoAction() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   await sql`delete from business_logos where business_id = ${staff.businessId}`;
   revalidatePath("/", "layout");
 }
 
 export async function saveBookingSettingsAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const num = (k: string) => Number(String(form.get(k) ?? "").trim());
   const buffer = num("buffer_minutes");
   const miles = num("max_cluster_miles");
@@ -170,7 +170,7 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
 }
 
 export async function saveAutoAcceptAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const value = String(form.get("auto_accept"));
   if (!["none", "returning", "all"].includes(value)) return { error: "Pick one." };
   await sql`update businesses set auto_accept = ${value} where id = ${staff.businessId}`;
@@ -179,7 +179,7 @@ export async function saveAutoAcceptAction(_: FormState, form: FormData): Promis
 }
 
 export async function saveMessagingSettingsAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const text = (k: string) => String(form.get(k) ?? "").trim() || null;
   const email = text("email");
   const review = text("review_url");
@@ -192,7 +192,7 @@ export async function saveMessagingSettingsAction(_: FormState, form: FormData):
 }
 
 export async function saveTemplateAction(templateId: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const body = String(form.get("body") ?? "").trim();
   const subject = String(form.get("email_subject") ?? "").trim() || null;
   if (!body) return { error: "The message can't be empty." };
@@ -211,7 +211,7 @@ export async function saveTemplateAction(templateId: string, _: FormState, form:
 }
 
 export async function saveDeliveryAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const before = Number(form.get("arrival_before_min"));
   const after = Number(form.get("arrival_after_min"));
   if (![before, after].every((n) => Number.isInteger(n) && n >= 0 && n <= 240)) return { error: "The arrival window is 0 to 240 minutes each way." };
@@ -223,13 +223,13 @@ export async function saveDeliveryAction(_: FormState, form: FormData): Promise<
 }
 
 export async function newDeviceKeyAction() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   await sql`update businesses set device_key = encode(gen_random_bytes(24), 'hex') where id = ${staff.businessId}`;
   revalidatePath("/settings/messages");
 }
 
 export async function saveAgreementAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const title = String(form.get("title") ?? "").trim();
   const body = String(form.get("body") ?? "").trim();
   if (!title || body.length < 20) return { error: "The agreement needs a title and its text." };
@@ -248,14 +248,14 @@ export async function saveAgreementAction(_: FormState, form: FormData): Promise
 }
 
 export async function setAutoMessagesAction(on: boolean) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   await sql`update businesses set auto_messages_enabled = ${on} where id = ${staff.businessId}`;
   revalidatePath("/settings/messages");
 }
 
 /** Sends a sample email to the owner's own address, to check the Gmail setup. */
 export async function sendTestEmailAction(): Promise<FormState & { sentTo?: string }> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [b] = await sql`select name, email from businesses where id = ${staff.businessId}`;
   const to = b?.email || process.env.GMAIL_USER;
   if (!to) return { error: "Add your email above first." };
@@ -278,7 +278,7 @@ export async function sendTestEmailAction(): Promise<FormState & { sentTo?: stri
  * the text goes out from the owner's own number: proof the whole chain works.
  */
 export async function queueTestTextAction(_: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const phone = normalizePhone(form.get("phone"));
   if (!phone) return { error: "Enter a 10-digit mobile number." };
   const [b] = await sql`select name from businesses where id = ${staff.businessId}`;

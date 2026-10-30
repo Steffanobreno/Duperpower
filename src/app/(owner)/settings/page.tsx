@@ -54,6 +54,17 @@ const GROUPS: SettingsGroup[] = [
   },
 ];
 
+// Without the "Change settings" permission: just their own account and phone notifications.
+const MINE: SettingsGroup[] = [
+  {
+    title: "Your settings",
+    links: [
+      { href: "/settings/account", title: "Account", text: "Your name, login email, password and devices" },
+      { href: "/settings/notifications", title: "Notifications", text: "Pop-ups on your phone for new bookings, cancellations and reschedules" },
+    ],
+  },
+];
+
 export default async function SettingsPage() {
   const staff = await requireStaff();
   return (
@@ -63,7 +74,7 @@ export default async function SettingsPage() {
         <p className="text-sm text-muted">
           {staff.businessName} · logged in as {staff.staffName}
         </p>
-        <SettingsList groups={GROUPS} />
+        <SettingsList groups={staff.can.settings ? GROUPS : MINE} />
       </Page>
     </>
   );

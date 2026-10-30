@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { listPetCodes } from "@/lib/data/options";
 import { Card, Empty, Page, PageHeader } from "@/components/ui";
 import { deletePetCodeAction, moveOptionAction, savePetCodeAction } from "../actions";
@@ -9,7 +9,7 @@ import { PetCodeRow } from "./code-row";
 export const metadata: Metadata = { title: "Pet codes" };
 
 export default async function PetCodesPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const codes = await listPetCodes(staff.businessId);
   return (
     <>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emailConfigured } from "@/lib/email";
 import { TestEmailButton } from "./test-email";
@@ -30,7 +30,7 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
 const ORDER = Object.keys(TEMPLATE_INFO);
 
 export default async function MessagesSettingsPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [b] = await sql`select email, phone, review_url, website_url, device_key, auto_messages_enabled,
                                 arrival_before_min, arrival_after_min, receipt_email_enabled from businesses where id = ${staff.businessId}`;
   const [[waiting], [lastPickup]] = await Promise.all([

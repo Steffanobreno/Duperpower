@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { listReceipts } from "@/lib/data/receipts";
 import { addDaysYmd, dayLabel, isYmd, money, todayYmd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Input, Page, PageHeader } from "@/components/ui";
@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Receipts" };
 
 // Every paid receipt in a period: open one, or download them all as one PDF.
 export default async function ReceiptsPage({ searchParams }: PageProps<"/receipts">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const sp = await searchParams;
   const today = todayYmd(staff.timezone);
   const from = isYmd(sp.from) ? sp.from : `${today.slice(0, 7)}-01`;

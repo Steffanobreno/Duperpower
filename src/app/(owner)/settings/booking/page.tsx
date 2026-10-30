@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { Card, Field, Input, Page, PageHeader } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
@@ -12,7 +12,7 @@ import { SimpleForm } from "../forms";
 export const metadata: Metadata = { title: "Online booking" };
 
 export default async function BookingSettingsPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [b] = await sql`
     select online_booking_enabled, buffer_minutes, max_cluster_miles::float8 as max_cluster_miles,
            service_radius_miles::float8 as service_radius_miles, min_notice_hours, booking_days_ahead,

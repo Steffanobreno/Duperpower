@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { calendarView } from "@/lib/data/calendar-view";
 import { Card, Field, Input, Page, PageHeader, Select } from "@/components/ui";
 import { SimpleForm } from "../forms";
@@ -17,7 +17,7 @@ const SHOW = [
 ] as const;
 
 export default async function CalendarViewPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const v = await calendarView(staff.businessId);
   return (
     <>

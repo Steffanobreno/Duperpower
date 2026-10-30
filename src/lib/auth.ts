@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { sql } from "./db";
+import { ALL_PERMISSIONS, DEFAULT_PERMISSIONS, type Permission, type Role } from "./permissions";
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 const COOKIE = "wds_session";
@@ -96,6 +97,9 @@ export type StaffContext = {
   businessPhone: string | null;
   timezone: string;
   bookingSlug: string;
+  role: Role;
+  /** What this person may do (the owner: everything). */
+  can: Record<Permission, boolean>;
 };
 
 /** The logged-in staff member, or null. Cached per request. */
@@ -103,13 +107,16 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   const [row] = await sql`
-    select s.id as staff_id, s.name as staff_name, b.id as business_id, b.name as business_name,
-           b.phone as business_phone, b.timezone, b.booking_slug
+    select s.id as staff_id, s.name as staff_name, s.role, b.id as business_id, b.name as business_name,
+           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded
     from sessions se
     join staff s on s.user_id = se.user_id and s.active
     join businesses b on b.id = s.business_id
     where se.token_hash = ${hashToken(token)} and se.expires_at > now()`;
   if (!row) return null;
+  if (!row.roles_seeded) await seedRoles(row.business_id);
+  const allowed = row.role === "owner" ? new Set<string>(ALL_PERMISSIONS)
+    : new Set((await sql`select perm from role_permissions where business_id = ${row.business_id} and role = ${row.role}`).map((r) => r.perm as string));
   return {
     staffId: row.staff_id,
     staffName: row.staff_name,
@@ -118,8 +125,32 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
     businessPhone: row.business_phone,
     timezone: row.timezone,
     bookingSlug: row.booking_slug,
+    role: row.role,
+    can: Object.fromEntries(ALL_PERMISSIONS.map((p) => [p, allowed.has(p)])) as Record<Permission, boolean>,
   };
 });
+
+async function seedRoles(businessId: string) {
+  await sql.begin(async (tx) => {
+    const [b] = await tx`update businesses set roles_seeded = true where id = ${businessId} and not roles_seeded returning id`;
+    if (!b) return;
+    for (const [role, perms] of Object.entries(DEFAULT_PERMISSIONS)) {
+      for (const perm of perms) {
+        await tx`insert into role_permissions (business_id, role, perm) values (${businessId}, ${role}, ${perm}) on conflict do nothing`;
+      }
+    }
+  });
+}
+
+/**
+ * Like requireStaff, for pages and actions that need a permission. Without it, the person
+ * lands on Today with a note.
+ */
+export async function requirePermission(perm: Permission): Promise<StaffContext> {
+  const staff = await requireStaff();
+  if (!staff.can[perm]) redirect("/today?denied=1");
+  return staff;
+}
 
 /** Every owner page and action calls this first. All queries then filter by businessId. */
 export async function requireStaff(): Promise<StaffContext> {
@@ -163,4 +194,34 @@ export async function logoutOthers(staffId: string) {
   const token = (await cookies()).get(COOKIE)?.value;
   await sql`delete from sessions where user_id = (select user_id from staff where id = ${staffId})
             and token_hash <> ${token ? hashToken(token) : ""}`;
+}
+
+/** Gives a team member a login (or a new password). False when another login uses that email. */
+export async function setStaffLogin(businessId: string, staffId: string, email: string, password: string) {
+  const address = email.trim().toLowerCase();
+  return sql.begin(async (tx) => {
+    const [s] = await tx`select user_id from staff where id = ${staffId} and business_id = ${businessId}`;
+    if (!s) return false;
+    const [taken] = await tx`select id from users where email = ${address} and id is distinct from ${s.user_id}`;
+    if (taken) return false;
+    const hash = await hashPassword(password);
+    if (s.user_id) {
+      await tx`update users set email = ${address}, password_hash = ${hash}, updated_at = now() where id = ${s.user_id}`;
+      await tx`delete from sessions where user_id = ${s.user_id}`;
+    } else {
+      const [u] = await tx`insert into users (email, password_hash) values (${address}, ${hash}) returning id`;
+      await tx`update staff set user_id = ${u.id} where id = ${staffId}`;
+    }
+    return true;
+  });
+}
+
+/** Takes a team member's login away (they are logged out everywhere). */
+export async function removeStaffLogin(businessId: string, staffId: string) {
+  await sql.begin(async (tx) => {
+    const [s] = await tx`select user_id from staff where id = ${staffId} and business_id = ${businessId} and role <> 'owner'`;
+    if (!s?.user_id) return;
+    await tx`update staff set user_id = null where id = ${staffId}`;
+    await tx`delete from users where id = ${s.user_id}`;
+  });
 }

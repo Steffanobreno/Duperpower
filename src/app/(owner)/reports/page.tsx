@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { report, type Group } from "@/lib/data/reports";
 import { addDaysYmd, isYmd, money, todayYmd, weekdayOf } from "@/lib/format";
 import { methodLabel } from "@/lib/payment-methods";
@@ -45,7 +45,7 @@ const bucketLabel = (d: string, g: Group) =>
 const days = (from: string, to: string) => Math.round((utc(to).getTime() - utc(from).getTime()) / 86_400_000) + 1;
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("reports");
   const sp = await searchParams;
   const today = todayYmd(staff.timezone);
   const custom = isYmd(sp.from) && isYmd(sp.to) && sp.from <= sp.to;
@@ -62,7 +62,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
 
   return (
     <>
-      <PageHeader title="Reports" />
+      <PageHeader title="Reports" action={<Link href="/reports/payroll" className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">Payroll</Link>} />
       <Page>
         <nav aria-label="Period" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {PERIODS.map((p) => (

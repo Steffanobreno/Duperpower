@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { activeAgreement } from "@/lib/agreement";
 import { sql } from "@/lib/db";
 import { Card, Field, Input, Page, PageHeader, Textarea } from "@/components/ui";
@@ -10,7 +10,7 @@ import { SimpleForm } from "../forms";
 export const metadata: Metadata = { title: "Service agreement" };
 
 export default async function AgreementPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const agreement = await activeAgreement(staff.businessId);
   const [{ signed }] = agreement
     ? await sql`select count(distinct client_id)::int as signed from agreement_signatures

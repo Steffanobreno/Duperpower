@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireStaff, type StaffContext } from "@/lib/auth";
+import { requireStaff, type StaffContext, requirePermission } from "@/lib/auth";
 import { isExclusionViolation, sql } from "@/lib/db";
 import type { TransactionSql } from "postgres";
 import { hm, isYmd, timeLabel, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
@@ -258,7 +258,7 @@ async function syncInvoiceServices(tx: TransactionSql, appointmentId: string, in
 }
 
 export async function startCheckoutAction(appointmentId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   await openInvoice(staff, appointmentId);
   redirect(`/appointments/${appointmentId}/checkout`);
 }
@@ -273,7 +273,7 @@ async function editableInvoice(staff: StaffContext, appointmentId: string) {
  * percent of the services when it ends with "%" (worked out now and saved as dollars).
  */
 export async function addInvoiceItemAction(appointmentId: string, form: FormData) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const invoiceId = await editableInvoice(staff, appointmentId);
   if (!invoiceId) return;
   const kind = ["discount", "fee", "tax"].includes(String(form.get("kind"))) ? String(form.get("kind")) : "fee";
@@ -319,7 +319,7 @@ export async function saveVisitTimesAction(appointmentId: string, form: FormData
 }
 
 export async function removeInvoiceItemAction(appointmentId: string, itemId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const invoiceId = await editableInvoice(staff, appointmentId);
   if (!invoiceId) return;
   await sql.begin(async (tx) => {
@@ -330,7 +330,7 @@ export async function removeInvoiceItemAction(appointmentId: string, itemId: str
 }
 
 export async function recordPaymentAction(appointmentId: string, _: FormState, form: FormData): Promise<FormState> {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const invoiceId = await editableInvoice(staff, appointmentId);
   if (!invoiceId) return { error: "This checkout is already closed." };
   const method = String(form.get("method") ?? "");
@@ -375,7 +375,7 @@ async function emailReceiptWhenClosed(staff: StaffContext, appointmentId: string
 
 /** "Email receipt" on a finished order: sends it now (again, if asked). */
 export async function emailReceiptAction(appointmentId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
   const result = inv ? await emailReceipt(staff.businessId, inv.id) : "failed";
   revalidatePath(`/appointments/${appointmentId}/checkout`);
@@ -384,7 +384,7 @@ export async function emailReceiptAction(appointmentId: string) {
 
 /** Finishes the order when nothing is left to collect (a free visit, or paid in full already). */
 export async function closeInvoiceAction(appointmentId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   await sql.begin(async (tx) => {
     await tx`update invoices set status = 'closed', closed_at = now()
              where appointment_id = ${appointmentId} and business_id = ${staff.businessId}
@@ -400,7 +400,7 @@ export async function closeInvoiceAction(appointmentId: string) {
 }
 
 export async function reopenInvoiceAction(appointmentId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   await sql`update invoices set status = 'open', closed_at = null
             where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
   revalidatePath(`/appointments/${appointmentId}/checkout`);
@@ -480,7 +480,7 @@ export async function saveServicesAction(appointmentId: string, lines: ServiceLi
 
 /** Gives the visit to another groomer (same time), when they're free then. */
 export async function assignGroomerAction(appointmentId: string, form: FormData) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("all_appointments");
   const to = await ownGroomer(staff, form.get("staff_id"));
   if (!to) return;
   const [busy] = await sql`
@@ -502,7 +502,7 @@ export async function assignGroomerAction(appointmentId: string, form: FormData)
 
 /** Removes a payment typed by mistake; the bill opens again if it's no longer covered. */
 export async function deletePaymentAction(appointmentId: string, paymentId: string) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   await sql.begin(async (tx) => {
     const [p] = await tx`
       select p.invoice_id from payments p join invoices i on i.id = p.invoice_id

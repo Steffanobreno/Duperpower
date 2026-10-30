@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { backupScript } from "@/lib/backup-script";
 import { ButtonLink, Card, Notice, Page, PageHeader } from "@/components/ui";
@@ -8,7 +8,7 @@ import { CopyField } from "@/components/copy-field";
 export const metadata: Metadata = { title: "Backups" };
 
 export default async function BackupsPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [b] = await sql<{ backup_key: string; backup_at: Date | null; stale: boolean }[]>`
     select backup_key, backup_at, coalesce(backup_at < now() - interval '8 days', true) as stale
     from businesses where id = ${staff.businessId}`;

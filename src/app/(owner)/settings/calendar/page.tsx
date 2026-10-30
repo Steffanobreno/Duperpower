@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
@@ -8,7 +8,7 @@ import { googleCalendarScript } from "@/lib/google-calendar-script";
 export const metadata: Metadata = { title: "Google Calendar" };
 
 export default async function CalendarSettingsPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [b] = await sql`select device_key, name, calendar_synced_at from businesses where id = ${staff.businessId}`;
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const feed = `${appUrl}/api/device/calendar?key=${b.device_key}`;

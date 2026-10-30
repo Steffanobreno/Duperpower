@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { GROOMER_COLORS, listGroomers } from "@/lib/data/staff";
 import { phoneLabel } from "@/lib/format";
+import { ROLES, type Role } from "@/lib/permissions";
 import { Card, Page, PageHeader } from "@/components/ui";
 import { ChevronRight } from "@/components/icons";
 import { addGroomerAction } from "./actions";
@@ -11,7 +12,7 @@ import { GroomerForm } from "./groomer-form";
 export const metadata: Metadata = { title: "Team" };
 
 export default async function TeamPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const team = await listGroomers(staff);
   return (
     <>
@@ -27,7 +28,7 @@ export default async function TeamPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{g.name}</span>
                   <span className="block truncate text-sm text-muted">
-                    {g.role === "owner" ? "Owner" : g.active ? "Groomer" : "Not active"}{g.phone ? ` · ${phoneLabel(g.phone)}` : ""}
+                    {!g.active && g.role !== "owner" ? "Not active" : ROLES[g.role as Role]}{g.phone ? ` · ${phoneLabel(g.phone)}` : ""}
                   </span>
                 </span>
                 <ChevronRight size={20} className="text-muted" />
@@ -43,9 +44,26 @@ export default async function TeamPage() {
           </p>
           <GroomerForm action={addGroomerAction} colors={GROOMER_COLORS} submit="Add groomer" />
         </Card>
+        <ul className="card divide-y divide-line overflow-hidden">
+          {[
+            ["/settings/team/roles", "Roles and permissions", "What admins and groomers can see and do when they log in"],
+            ["/settings/team/clock", "Clock in and out", "Track hours for hourly pay"],
+            ["/reports/payroll", "Payroll", "Commission, tips and hours for any dates"],
+          ].map(([href, title, text]) => (
+            <li key={href}>
+              <Link href={href} className="flex items-center gap-3 px-4 py-3 hover:bg-bg">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{title}</span>
+                  <span className="block text-sm text-muted">{text}</span>
+                </span>
+                <ChevronRight size={20} className="text-muted" />
+              </Link>
+            </li>
+          ))}
+        </ul>
         <p className="px-1 text-xs text-muted">
-          For now groomers don&apos;t log in: you book and manage their visits. Online booking requests come to you, and you can
-          assign them to anyone.
+          Give someone a login on their page to let them log in on their own phone. Online booking requests come to you, and you
+          can assign them to anyone.
         </p>
       </Page>
     </>

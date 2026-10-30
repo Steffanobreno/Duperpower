@@ -2,6 +2,7 @@ import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { TabBar } from "@/components/tab-bar";
 import { SideMenu } from "@/components/side-menu";
+import { logoUrl } from "@/lib/business-logo";
 
 export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   const staff = await requireStaff();
@@ -12,8 +13,9 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       {children}
-      <TabBar />
-      <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} />
+      <TabBar can={staff.can} />
+      <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} role={staff.role} can={staff.can}
+        logo={await logoUrl(staff.businessId)} />
     </>
   );
 }

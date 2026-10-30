@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { logoUrl } from "@/lib/business-logo";
 import { sql } from "@/lib/db";
 import { phoneLabel } from "@/lib/format";
@@ -18,7 +18,7 @@ type Business = {
 };
 
 export default async function BusinessPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [[b], logo] = await Promise.all([
     sql<Business[]>`select name, phone, booking_slug, timezone, address_line, city, state, zip,
                            website_url, facebook_url, instagram_url, yelp_url, google_url

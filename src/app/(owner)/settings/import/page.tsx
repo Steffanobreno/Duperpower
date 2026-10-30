@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { ButtonLink, Card, Page, PageHeader } from "@/components/ui";
 import { ImportForm } from "./import-form";
 
 export const metadata: Metadata = { title: "Import and export clients" };
 
 export default async function ImportPage() {
-  await requireStaff();
+  await requirePermission("settings");
   return (
     <>
       <PageHeader title="Import and export" back="/settings" />

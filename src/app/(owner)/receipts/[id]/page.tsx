@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getReceipt } from "@/lib/data/receipts";
 import { Card, Page, PageHeader } from "@/components/ui";
 import { ReceiptView } from "@/components/receipt-view";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Receipt" };
 
 // A receipt from the receipt generator (finished orders show theirs on the order).
 export default async function ReceiptPage({ params, searchParams }: PageProps<"/receipts/[id]">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("payments");
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();

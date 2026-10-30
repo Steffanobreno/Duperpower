@@ -113,8 +113,12 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
           <h2 className="font-bold">Profile</h2>
           <dl className="grid grid-cols-[6rem_1fr] gap-x-3 gap-y-2 text-sm">
             <dt className="text-muted">Phone</dt>
-            <dd><PhoneLink phone={client.phone} label={phoneLabel(client.phone)} className="font-semibold text-brand" /></dd>
-            {client.email && (
+            <dd>
+              {staff.can.client_contact
+                ? <PhoneLink phone={client.phone} label={phoneLabel(client.phone)} className="font-semibold text-brand" />
+                : <span className="text-muted">Hidden · use Call or Text above</span>}
+            </dd>
+            {client.email && staff.can.client_contact && (
               <>
                 <dt className="text-muted">Email</dt>
                 <dd className="break-all"><a href={`mailto:${client.email}`} className="font-semibold text-brand">{client.email}</a></dd>

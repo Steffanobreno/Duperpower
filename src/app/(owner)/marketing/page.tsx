@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emailsLeftToday, lastSentByTemplate } from "@/lib/data/marketing";
 import { dayLabel, timeLabel, todayYmd } from "@/lib/format";
@@ -19,7 +19,7 @@ const STATUS: Record<string, { label: string; className: string }> = {
 };
 
 export default async function MarketingPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   const tz = staff.timezone;
   const [[b], campaigns, left, lastSent] = await Promise.all([
     sql<{ mailing_address: string | null; marketing_reminder: boolean }[]>`

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { allOptions, listPetCodes, OPTION_KINDS, type OptionKind } from "@/lib/data/options";
 import { Page, PageHeader } from "@/components/ui";
 
@@ -12,7 +12,7 @@ const ROWS: { title: string; links: (OptionKind | "pet-codes")[] }[] = [
 ];
 
 export default async function ListsPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const [lists, codes] = await Promise.all([allOptions(staff.businessId), listPetCodes(staff.businessId)]);
   return (
     <>

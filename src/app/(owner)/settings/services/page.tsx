@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { groupByCategory, listServices } from "@/lib/data/services";
 import { minutesLabel, money } from "@/lib/format";
 import { ButtonLink, Page, PageHeader } from "@/components/ui";
@@ -9,7 +9,7 @@ import { moveServiceAction } from "../actions";
 export const metadata: Metadata = { title: "Services" };
 
 export default async function ServicesPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("settings");
   const services = await listServices(staff, { includeInactive: true });
   return (
     <>

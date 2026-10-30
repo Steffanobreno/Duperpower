@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { lastSentByTemplate } from "@/lib/data/marketing";
 import { todayYmd } from "@/lib/format";
 import { MARKETING_TEMPLATES, nextDate, suggestions, type MarketingTemplate } from "@/lib/marketing-templates";
@@ -12,7 +12,7 @@ const fmt = (d: string, o: Intl.DateTimeFormatOptions = { weekday: "short", mont
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", ...o });
 
 export default async function NewCampaignPage() {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   const today = todayYmd(staff.timezone);
   const lastSent = await lastSentByTemplate(staff.businessId, staff.timezone);
   const days = (d: string) => Math.round((Date.parse(`${d}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);

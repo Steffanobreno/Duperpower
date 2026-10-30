@@ -71,7 +71,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
                       {c.pet_names ? <span className="font-medium">{c.pet_names}</span> : <span className="text-muted">No pets yet</span>}
                       {c.pet_breeds && <span className="text-muted"> · {c.pet_breeds}</span>}
                     </span>
-                    <span className="block truncate text-xs text-muted">{[phoneLabel(c.phone), c.city ?? fullAddress(c)].filter(Boolean).join(" · ")}</span>
+                    <span className="block truncate text-xs text-muted">{[staff.can.client_contact && phoneLabel(c.phone), c.city ?? fullAddress(c)].filter(Boolean).join(" · ")}</span>
                   </span>
                 </Link>
               </li>

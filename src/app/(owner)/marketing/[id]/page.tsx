@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireStaff } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { audience, cleanFilters, clientCities } from "@/lib/data/marketing";
 import { dayLabel, isUuid, phoneLabel, timeLabel, todayYmd } from "@/lib/format";
@@ -27,7 +27,7 @@ const STEPS = [
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 export default async function CampaignPage({ params, searchParams }: PageProps<"/marketing/[id]">) {
-  const staff = await requireStaff();
+  const staff = await requirePermission("marketing");
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const sp = await searchParams;

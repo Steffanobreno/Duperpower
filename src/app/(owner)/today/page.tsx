@@ -14,6 +14,7 @@ import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { closedDays } from "@/lib/data/closed";
+import { toggleClockAction } from "../clock-actions";
 import { petCodesFor } from "@/lib/data/options";
 import { PetCodeChips } from "@/components/chips";
 
@@ -33,8 +34,13 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     listGroomers(staff, { activeOnly: true }),
     closedDays(staff.businessId, date, date),
   ]);
+  const [clock] = await sql<{ enabled: boolean; since: Date | null }[]>`
+    select b.clock_enabled as enabled,
+           (select e.in_at from clock_entries e where e.staff_id = ${staff.staffId} and e.out_at is null) as since
+    from businesses b where b.id = ${staff.businessId}`;
   // A route is one groomer's day: yours unless another one (or all) is picked.
-  const groomer = sp.groomer === "all" ? null
+  // Without "see every groomer's visits", only their own route.
+  const groomer = !staff.can.all_appointments ? staff.staffId : sp.groomer === "all" ? null
     : groomers.some((g) => g.id === sp.groomer) ? (sp.groomer as string)
       : groomers.length > 1 ? staff.staffId : null;
   const all = groomer ? day.filter((a) => a.staff_id === groomer) : day;
@@ -63,13 +69,22 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         action={<ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>}
       />
       <Page>
+        {clock.enabled && date === today && (
+          <form action={toggleClockAction} className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-2.5 shadow-[var(--shadow-card)]">
+            <span className="text-sm">{clock.since ? <>Clocked in since <strong>{timeLabel(clock.since, tz)}</strong></> : "Not clocked in"}</span>
+            <button type="submit" className={`rounded-full px-4 py-2 text-sm font-bold ${clock.since ? "bg-navy text-white" : "bg-success text-white"}`}>
+              {clock.since ? "Clock out" : "Clock in"}
+            </button>
+          </form>
+        )}
+        {sp.denied && <Notice kind="warn">Your role can&apos;t open that page. Ask the owner if you need it.</Notice>}
         {closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
         {requests > 0 && (
           <ButtonLink href="/requests" kind="secondary" className="w-full border-warn bg-warn-soft text-warn">
             {requests} booking request{requests > 1 ? "s" : ""} waiting
           </ButtonLink>
         )}
-        <GroomerFilter groomers={groomers} current={groomer}
+        <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
           href={(g) => `/today?date=${date}&groomer=${g ?? "all"}`} />
         <DayNav
           base={`/today?groomer=${groomer ?? "all"}&`}
