@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext } from "@/lib/auth";
 import { isExclusionViolation, sql } from "@/lib/db";
+import type { TransactionSql } from "postgres";
 import { hm, isYmd, timeLabel, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
@@ -232,18 +233,27 @@ async function openInvoice(staff: StaffContext, appointmentId: string) {
     if (!appt) throw new Error("Appointment not found");
     const [inv] = await tx`insert into invoices (business_id, appointment_id, client_id)
                            values (${staff.businessId}, ${appointmentId}, ${appt.client_id}) returning id`;
-    await tx`
-      insert into invoice_items (invoice_id, kind, description, amount_cents)
-      select ${inv.id}, case when sv.kind = 'addon' then 'addon' else 'service' end, p.name || ': ' || s.name, s.price_cents
-      from appointment_pets ap
-      join pets p on p.id = ap.pet_id
-      join appointment_services s on s.appointment_pet_id = ap.id
-      join services sv on sv.id = s.service_id
-      where ap.appointment_id = ${appointmentId}
-      order by p.name, s.created_at`;
-    await recalcInvoice(tx, inv.id);
+    await syncInvoiceServices(tx, appointmentId, inv.id);
     return inv.id as string;
   });
+}
+
+/**
+ * Puts the visit's services on its bill (again), keeping discounts, charges, taxes and
+ * payments. Called when the bill is made and whenever the services or prices change.
+ */
+async function syncInvoiceServices(tx: TransactionSql, appointmentId: string, invoiceId: string) {
+  await tx`delete from invoice_items where invoice_id = ${invoiceId} and kind in ('service', 'addon')`;
+  await tx`
+    insert into invoice_items (invoice_id, kind, description, amount_cents)
+    select ${invoiceId}, case when sv.kind = 'addon' then 'addon' else 'service' end, p.name || ': ' || s.name, s.price_cents
+    from appointment_pets ap
+    join pets p on p.id = ap.pet_id
+    join appointment_services s on s.appointment_pet_id = ap.id
+    join services sv on sv.id = s.service_id
+    where ap.appointment_id = ${appointmentId}
+    order by p.name, s.created_at`;
+  await recalcInvoice(tx, invoiceId);
 }
 
 export async function startCheckoutAction(appointmentId: string) {
@@ -353,6 +363,22 @@ export async function recordPaymentAction(appointmentId: string, _: FormState, f
   return undefined;
 }
 
+/** Finishes the order when nothing is left to collect (a free visit, or paid in full already). */
+export async function closeInvoiceAction(appointmentId: string) {
+  const staff = await requireStaff();
+  await sql.begin(async (tx) => {
+    await tx`update invoices set status = 'closed', closed_at = now()
+             where appointment_id = ${appointmentId} and business_id = ${staff.businessId}
+               and status = 'open' and paid_cents >= total_cents`;
+    await tx`update appointments set status = 'completed', checked_out_at = coalesce(checked_out_at, now()),
+               checked_in_at = coalesce(checked_in_at, start_at)
+             where id = ${appointmentId} and business_id = ${staff.businessId} and status <> 'completed'`;
+  });
+  revalidatePath(`/appointments/${appointmentId}`);
+  revalidatePath(`/appointments/${appointmentId}/checkout`);
+  revalidatePath("/today");
+}
+
 export async function reopenInvoiceAction(appointmentId: string) {
   const staff = await requireStaff();
   await sql`update invoices set status = 'open', closed_at = null
@@ -366,15 +392,15 @@ export type ServiceLine = { id?: string; appointmentPetId: string; serviceId: st
 
 /**
  * Replaces the services of a visit (after the client booked online, a dog may take less or
- * more time, or need an extra). The visit's end moves with the total time. Not allowed once
- * checkout started: prices are then changed on the bill.
+ * more time, or need an extra). The visit's end moves with the total time. Works at and after
+ * checkout too: the bill follows, and a paid bill opens again if it now asks for more.
  */
 export async function saveServicesAction(appointmentId: string, lines: ServiceLine[]): Promise<{ error?: string; warning?: string } | undefined> {
   const staff = await requireStaff();
   const [appt] = await sql`select id, start_at, status, staff_id from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
   if (!appt) return { error: "Appointment not found." };
-  const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId}`;
-  if (inv) return { error: "Checkout already started. Change prices on the bill instead." };
+  if (["cancelled", "no_show", "declined"].includes(appt.status)) return { error: "This visit is closed. Restore it first." };
+  const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
   if (!Array.isArray(lines) || lines.length === 0 || lines.length > 40) return { error: "Keep at least one service." };
   for (const l of lines) {
     if (!Number.isInteger(l.priceCents) || l.priceCents < 0 || l.priceCents > 1_000_000) return { error: "Check the prices." };
@@ -415,12 +441,17 @@ export async function saveServicesAction(appointmentId: string, lines: ServiceLi
         }
       }
       await tx`update appointments set end_at = ${endAt} where id = ${appointmentId}`;
+      if (inv) {
+        await syncInvoiceServices(tx, appointmentId, inv.id);
+        await tx`update invoices set status = 'open', closed_at = null where id = ${inv.id} and paid_cents < total_cents`;
+      }
     });
   } catch (e) {
     if (isExclusionViolation(e)) return { error: "With that length it runs into another online booking. Shorten it or move one visit." };
     throw e;
   }
   revalidatePath(`/appointments/${appointmentId}`);
+  revalidatePath(`/appointments/${appointmentId}/checkout`);
   revalidatePath("/today");
   revalidatePath("/calendar");
   const warning = await overlapWarning(asGroomer(staff, appt.staff_id), appt.start_at, endAt, appointmentId);

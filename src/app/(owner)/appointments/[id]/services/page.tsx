@@ -16,7 +16,7 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
   const [appt, services, [invoice]] = await Promise.all([
     getAppointment(staff, id),
     listServices(staff),
-    sql`select id from invoices where appointment_id = ${id} and business_id = ${staff.businessId}`,
+    sql<{ status: string }[]>`select status from invoices where appointment_id = ${id} and business_id = ${staff.businessId}`,
   ]);
   if (!appt) notFound();
   const own = await petPrices(appt.pets.map((p) => p.pet_id));
@@ -27,25 +27,28 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
     <>
       <PageHeader title="Edit services" back={`/appointments/${id}`} />
       <Page>
-        {invoice ? (
-          <Notice kind="info">Checkout already started for this visit. Change prices on the bill instead.</Notice>
-        ) : (
-          <ServicesEditor
-            appointmentId={id}
-            startIso={appt.start_at.toISOString()}
-            timezone={staff.timezone}
-            pets={appt.pets.map((p) => ({
-              appointmentPetId: p.appointment_pet_id,
-              name: p.name,
-              size: p.size_class,
-              ownPrices: ownPricesOf(p.pet_id),
-              lines: p.services.map((s) => ({ id: s.id, serviceId: s.service_id, name: s.name, priceCents: s.price_cents, minutes: s.duration_min })),
-            }))}
-            catalog={services.map((s) => ({
-              id: s.id, name: s.name, kind: s.kind, size: s.size_class, priceCents: s.price_cents, minutes: s.duration_min,
-            }))}
-          />
+        {invoice && (
+          <Notice kind="info">
+            {invoice.status === "closed"
+              ? "This visit is paid. If the new total is higher, the bill opens again so you can collect the rest."
+              : "Changes update this visit's bill."}
+          </Notice>
         )}
+        <ServicesEditor
+          appointmentId={id}
+          startIso={appt.start_at.toISOString()}
+          timezone={staff.timezone}
+          pets={appt.pets.map((p) => ({
+            appointmentPetId: p.appointment_pet_id,
+            name: p.name,
+            size: p.size_class,
+            ownPrices: ownPricesOf(p.pet_id),
+            lines: p.services.map((s) => ({ id: s.id, serviceId: s.service_id, name: s.name, priceCents: s.price_cents, minutes: s.duration_min })),
+          }))}
+          catalog={services.map((s) => ({
+            id: s.id, name: s.name, kind: s.kind, size: s.size_class, priceCents: s.price_cents, minutes: s.duration_min,
+          }))}
+        />
       </Page>
     </>
   );

@@ -29,7 +29,7 @@ const PRIMARY: Record<string, { to: string; label: string } | undefined> = {
   unconfirmed: { to: "en_route", label: "I'm on the way" },
   confirmed: { to: "en_route", label: "I'm on the way" },
   en_route: { to: "in_progress", label: "Check in" },
-  in_progress: { to: "completed", label: "Finish and check out" },
+  in_progress: { to: "completed", label: "Finish order" },
 };
 
 const TRIGGER_LABEL: Record<string, string> = {
@@ -87,6 +87,8 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
   const rebookWeeks = Math.round(rebookDays / 7);
   const canChange = !closed && appt.status !== "completed";
+  // Services and prices can change until the visit is cancelled, even after checkout (the bill follows).
+  const canEditServices = !closed;
   // Any visit that isn't cancelled can move; a finished one just gets its time corrected (no text to the client).
   const canMove = !closed;
   const finishedMove = ["en_route", "in_progress", "completed"].includes(appt.status);
@@ -163,7 +165,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             <a href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className={pillar}><Van size={22} />On my way</a>
           )}
           {canMove && <Link href={moveHref} className={pillar}><Calendar size={22} />Reschedule</Link>}
-          {canChange && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
+          {canEditServices && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
           <Link href={bookAgainHref} className={pillar}>
             <Plus size={22} />Book again
           </Link>
@@ -229,7 +231,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         <section className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="section-label">Pets and services</h2>
-            {canChange && <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">Edit</Link>}
+            {canEditServices && <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">Edit</Link>}
           </div>
           {appt.pets.map((p) => (
             <div key={p.appointment_pet_id} className="card divide-y divide-line">
@@ -355,15 +357,15 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               </form>
             ) : paid ? (
               <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-success py-3.5 text-center text-base font-bold text-white">
-                See receipt
+                Order finished · See receipt
               </Link>
             ) : checkout ? (
               <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-danger py-3.5 text-center text-base font-bold text-white">
-                Charge now {money(Math.max(checkout.invoice.total_cents - checkout.invoice.paid_cents, 0))}
+                Collect payment {money(Math.max(checkout.invoice.total_cents - checkout.invoice.paid_cents, 0))}
               </Link>
             ) : (
               <form action={startCheckoutAction.bind(null, id)}>
-                <button type="submit" className="w-full rounded-2xl bg-danger py-3.5 text-base font-bold text-white">Charge now {money(total)}</button>
+                <button type="submit" className="w-full rounded-2xl bg-danger py-3.5 text-base font-bold text-white">Collect payment {money(total)}</button>
               </form>
             )}
           </div>

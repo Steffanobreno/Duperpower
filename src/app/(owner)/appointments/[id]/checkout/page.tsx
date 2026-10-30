@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getAppointment } from "@/lib/data/appointments";
@@ -9,6 +10,7 @@ import { dayLabel, money, timeLabel } from "@/lib/format";
 import { Button, Input, Notice, Page, PageHeader } from "@/components/ui";
 import {
   addInvoiceItemAction,
+  closeInvoiceAction,
   recordPaymentAction,
   removeInvoiceItemAction,
   reopenInvoiceAction,
@@ -61,9 +63,16 @@ export default async function CheckoutPage({ params }: PageProps<"/appointments/
 
   return (
     <>
-      <PageHeader title={`Invoice #${invoice.number}`} back={`/appointments/${id}`} />
+      <PageHeader title={open ? "Finish order" : `Receipt #${invoice.number}`} back={`/appointments/${id}`} />
       <Page>
-        {!open && <Notice kind="success">Paid in full. Thank you!</Notice>}
+        {!open && <Notice kind="success">Order finished · Paid in full. Thank you!</Notice>}
+        {open && (
+          <ol className="grid grid-cols-3 gap-1 text-center text-xs font-semibold" aria-label="Steps">
+            <li className="rounded-full bg-success-soft py-1.5 text-success">1 · Services</li>
+            <li className={`rounded-full py-1.5 ${balance > 0 ? "bg-brand text-white" : "bg-success-soft text-success"}`}>2 · Payment</li>
+            <li className="rounded-full bg-bg py-1.5 text-muted">3 · Receipt</li>
+          </ol>
+        )}
 
         <details className="card px-4 py-3">
           <summary className="flex cursor-pointer list-none items-center justify-between text-sm">
@@ -84,6 +93,10 @@ export default async function CheckoutPage({ params }: PageProps<"/appointments/
           </form>
         </details>
 
+        <div className="flex items-center justify-between px-1">
+          <h2 className="section-label">Services</h2>
+          <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">Edit services &amp; prices</Link>
+        </div>
         <section className="card divide-y divide-line">
           {[...byPet.entries()].map(([pet, list]) => (
             <div key={pet || "visit"} className="px-4 py-3">
@@ -135,10 +148,24 @@ export default async function CheckoutPage({ params }: PageProps<"/appointments/
         </section>
 
         {open && balance > 0 && (
-          <section className="card px-4 py-5">
-            <PaymentForm action={recordPaymentAction.bind(null, id)} balanceCents={balance}
-              serviceCents={serviceAfterDiscount} clientName={fullName(appt.client)} />
+          <section className="space-y-2" aria-label="Collect payment">
+            <h2 className="section-label px-1">Collect payment</h2>
+            <div className="card px-4 py-5">
+              <PaymentForm action={recordPaymentAction.bind(null, id)} balanceCents={balance}
+                serviceCents={serviceAfterDiscount} clientName={fullName(appt.client)} />
+            </div>
+            <Link href={`/appointments/${id}`} className="block py-2 text-center text-sm font-semibold text-muted">
+              The client will pay later (leave it unpaid)
+            </Link>
           </section>
+        )}
+
+        {open && balance === 0 && (
+          <form action={closeInvoiceAction.bind(null, id)}>
+            <Button type="submit" className="w-full py-3.5 text-base">
+              {invoice.total_cents === 0 ? "Finish order (nothing to charge)" : "Finish order"}
+            </Button>
+          </form>
         )}
 
         {payments.length > 0 && (

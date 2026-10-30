@@ -107,7 +107,7 @@ step("Today shows the stop and the Google Maps route link");
 await page.goto(apptUrl);
 // Booked = on the day: the client confirms from the reminder, the owner never has to.
 await page.locator("summary", { hasText: "Not confirmed" }).waitFor();
-for (const label of ["I'm on the way", "Check in", "Finish and check out"]) {
+for (const label of ["I'm on the way", "Check in", "Finish order"]) {
   await page.getByRole("button", { name: label }).click();
   await page.waitForLoadState("networkidle");
 }
