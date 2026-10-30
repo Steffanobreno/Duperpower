@@ -135,7 +135,7 @@ export async function availabilityAction(input: {
   const b = await getPublicBusiness();
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   const zip = await zipFor(b, normalizePhone(input.phone), input.useFileAddress, input.zip);
-  const problem = zipProblem(b, zip);
+  const problem = await zipProblem(b, zip);
   if (problem) return { error: problem };
   const checked = await priceAndLength(b, input.pets, normalizePhone(input.phone));
   if ("error" in checked) return { error: checked.error };
@@ -185,7 +185,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: "Please check your email address." };
   if (!useFile && (!address || !city)) return { error: "Please enter your street address and city." };
   const zip = useFile ? existing!.zip! : String(input.zip ?? "").trim();
-  const problem = zipProblem(b, zip);
+  const problem = await zipProblem(b, zip);
   if (problem) return { error: problem };
 
   const checked = await priceAndLength(b, input.pets, phone);

@@ -8,7 +8,7 @@ import { ROLES } from "@/lib/permissions";
 import { Card, Field, Input, Page, PageHeader, Select } from "@/components/ui";
 import { ConfirmButton } from "@/components/confirm-button";
 import { SimpleForm } from "../../forms";
-import { removeLoginAction, saveLoginAction, savePayAction, saveRoleAction, updateGroomerAction } from "../actions";
+import { removeLoginAction, saveLoginAction, savePayAction, saveRoleAction, saveVanAction, updateGroomerAction } from "../actions";
 import { GroomerForm } from "../groomer-form";
 
 export const metadata: Metadata = { title: "Team member" };
@@ -16,6 +16,7 @@ export const metadata: Metadata = { title: "Team member" };
 type Member = {
   name: string; role: "owner" | "admin" | "groomer"; color: string; phone: string | null; email: string | null; active: boolean;
   login: string | null; commission_pct: number; tips_pct: number; hourly_cents: number;
+  van_name: string | null; van_plate: string | null; start_address: string | null; end_address: string | null;
 };
 
 export default async function GroomerPage({ params }: PageProps<"/settings/team/[id]">) {
@@ -24,7 +25,8 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const [g] = await sql<Member[]>`
     select s.name, s.role, s.color, s.phone, s.email, s.active, u.email as login,
-           s.commission_pct::float8 as commission_pct, s.tips_pct::float8 as tips_pct, s.hourly_cents
+           s.commission_pct::float8 as commission_pct, s.tips_pct::float8 as tips_pct, s.hourly_cents,
+           s.van_name, s.van_plate, s.start_address, s.end_address
     from staff s left join users u on u.id = s.user_id
     where s.id = ${id} and s.business_id = ${staff.businessId}`;
   if (!g) notFound();
@@ -75,6 +77,24 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
                 )}
               </>
             )}
+          </Card>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="section-label">Van and route</h2>
+          <Card>
+            <SimpleForm action={saveVanAction.bind(null, id)} submitLabel="Save van and route">
+              <div className="grid grid-cols-[1fr_8rem] gap-3">
+                <Field label="Van"><Input name="van_name" defaultValue={g.van_name ?? ""} placeholder="Ford Transit 2019" /></Field>
+                <Field label="License plate"><Input name="van_plate" defaultValue={g.van_plate ?? ""} /></Field>
+              </div>
+              <Field label="Day starts at" hint="The route on Today starts here (home, where the van parks…).">
+                <Input name="start_address" defaultValue={g.start_address ?? ""} placeholder="123 Main St, San Mateo, CA" autoComplete="off" />
+              </Field>
+              <Field label="Day ends at" hint="Leave empty to end at the last visit.">
+                <Input name="end_address" defaultValue={g.end_address ?? ""} placeholder="Same as the start" autoComplete="off" />
+              </Field>
+            </SimpleForm>
           </Card>
         </section>
 

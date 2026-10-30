@@ -28,3 +28,9 @@ export function zipMiles(a: string | null | undefined, b: string | null | undefi
   const zb = zipInfo(b);
   return za && zb ? milesBetween(za, zb) : null;
 }
+
+/** Every ZIP code of a California city (by name, any case). */
+export function zipsInCity(city: string) {
+  const name = city.trim().toLowerCase();
+  return Object.entries(table).filter(([, e]) => e[2].toLowerCase() === name).map(([z]) => z).sort();
+}

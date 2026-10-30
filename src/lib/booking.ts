@@ -5,8 +5,10 @@ import { zipInfo, zipMiles } from "./geo/zip";
 import { closedDays } from "./data/closed";
 
 // Online booking: which times a client may request. Rules, in order:
-// 1. the ZIP is in California and within the service radius of the van's start ZIP;
-// 2. on a day the business is open (not a closed date or holiday), inside working hours,
+// 1. the ZIP is in California, within the service radius of the van's start ZIP and, when
+//    service areas are set, inside one of them;
+// 2. on a day the business is open (not a closed date or holiday) and, when service areas are
+//    set, a weekday the client's area is served; inside working hours,
 //    with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. on a day that already has visits, every one of them is within `max_cluster_miles`.
@@ -50,13 +52,22 @@ export async function onlineServices(businessId: string) {
     order by kind, sort_order, name`;
 }
 
+export type ServiceArea = { id: string; name: string; color: string; zip_codes: string[]; weekdays: number[] };
+
+/** The business's service areas (Settings → Service areas). None = the radius alone decides. */
+export function serviceAreas(businessId: string) {
+  return sql<ServiceArea[]>`select id, name, color, zip_codes, weekdays::int[] as weekdays from service_areas
+                            where business_id = ${businessId} order by name`;
+}
+
 /** Checks the ZIP against the service area. Returns an error message, or null when fine. */
-export function zipProblem(b: PublicBusiness, zip: string) {
+export async function zipProblem(b: PublicBusiness, zip: string) {
   if (!zipInfo(zip)) return "We couldn't find that ZIP code. Please check it, or text us to book.";
+  const outside = "Sorry, that address is outside our service area. Text us and we'll see what we can do.";
   const miles = b.start_zip ? zipMiles(b.start_zip, zip) : null;
-  if (miles != null && miles > b.service_radius_miles) {
-    return "Sorry, that address is outside our service area. Text us and we'll see what we can do.";
-  }
+  if (miles != null && miles > b.service_radius_miles) return outside;
+  const areas = await serviceAreas(b.id);
+  if (areas.length && !areas.some((a) => a.zip_codes.includes(zip))) return outside;
   return null;
 }
 
@@ -80,7 +91,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   const rangeStart = dayRangeUtc(firstDay, tz).start;
   const rangeEnd = dayRangeUtc(addDaysYmd(firstDay, days - 1), tz).end;
 
-  const [hours, busy, timeOff, closed] = await Promise.all([
+  const [hours, busy, timeOff, closed, areas] = await Promise.all([
     sql<{ weekday: number; start: string; end: string }[]>`
       select weekday, to_char(start_time, 'HH24:MI') as start, to_char(end_time, 'HH24:MI') as end
       from working_hours where staff_id = ${b.staff_id}`,
@@ -91,7 +102,10 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     sql<{ start_at: Date; end_at: Date }[]>`
       select start_at, end_at from time_off where staff_id = ${b.staff_id} and start_at < ${rangeEnd} and end_at > ${rangeStart}`,
     closedDays(b.id, firstDay, addDaysYmd(firstDay, days - 1)),
+    serviceAreas(b.id),
   ]);
+  // With service areas, only the weekdays the client's area is served.
+  const areaDays = areas.length ? new Set(areas.filter((a) => a.zip_codes.includes(zip)).flatMap((a) => a.weekdays)) : null;
 
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
   const buffer = b.buffer_minutes * 60_000;
@@ -101,7 +115,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
 
   for (let i = 0; i < days; i++) {
     const date = addDaysYmd(firstDay, i);
-    if (date < today || closed.has(date)) continue;
+    if (date < today || closed.has(date) || (areaDays && !areaDays.has(weekdayOf(date)))) continue;
     const h = hours.find((x) => x.weekday === weekdayOf(date));
     if (!h) continue;
     const { start: dayStart, end: dayEnd } = dayRangeUtc(date, tz);

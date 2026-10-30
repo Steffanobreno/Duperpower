@@ -14,7 +14,7 @@ const GROUPS: SettingsGroup[] = [
       { href: "/settings/hours", title: "Working hours", text: "Days and hours you take appointments" },
       { href: "/settings/closed", title: "Closed dates and holidays", text: "Vacations and holidays with no bookings" },
       { href: "/settings/services", title: "Services and prices", text: "Packages, add-ons, prices and times" },
-      { href: "/settings/team", title: "Team", text: "Groomers, their colors and who does each visit" },
+      { href: "/settings/team", title: "Team", text: "Groomers, logins, roles, vans, pay and clock in/out" },
     ],
   },
   {
@@ -43,6 +43,7 @@ const GROUPS: SettingsGroup[] = [
     title: "Online booking",
     links: [
       { href: "/settings/booking", title: "Online booking", text: "Booking page, QR code, auto-accept, distance and notice rules" },
+      { href: "/settings/areas", title: "Service areas", text: "ZIP codes and cities you serve, and which days" },
       { href: "/requests", title: "Booking requests", text: "Accept or decline online requests" },
     ],
   },

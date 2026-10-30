@@ -132,3 +132,14 @@ export async function deleteClockEntryAction(id: string) {
   await sql`delete from clock_entries e using staff s where s.id = e.staff_id and s.business_id = ${staff.businessId} and e.id = ${id}`;
   revalidatePath("/settings/team/clock");
 }
+
+export async function saveVanAction(id: string, _: TeamState, form: FormData): Promise<TeamState> {
+  const staff = await requirePermission("settings");
+  const text = (k: string, max: number) => String(form.get(k) ?? "").trim().slice(0, max) || null;
+  await sql`update staff set van_name = ${text("van_name", 60)}, van_plate = ${text("van_plate", 20)},
+              start_address = ${text("start_address", 200)}, end_address = ${text("end_address", 200)}
+            where id = ${id} and business_id = ${staff.businessId}`;
+  revalidatePath(`/settings/team/${id}`);
+  revalidatePath("/today");
+  return { saved: true };
+}

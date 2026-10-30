@@ -58,7 +58,13 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       time: `${timeLabel(s.start_at, tz)} – ${timeLabel(s.end_at, tz)}`, done: s.status === "completed",
     }));
   const dropped = all.filter((a) => ["cancelled", "no_show"].includes(a.status));
-  const route = routeUrl(stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })));
+  // The route starts (and ends, when set) where the groomer's day does: Settings → Team → Van and route.
+  const [ends] = await sql<{ start_address: string | null; end_address: string | null }[]>`
+    select start_address, end_address from staff where id = ${groomer ?? staff.staffId}`;
+  const route = routeUrl(
+    [...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })), ...(ends?.end_address ? [{ address: ends.end_address }] : [])],
+    ends?.start_address ? { address: ends.start_address } : null,
+  );
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
 
