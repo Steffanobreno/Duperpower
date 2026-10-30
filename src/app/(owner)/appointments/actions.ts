@@ -8,6 +8,7 @@ import { hm, isYmd, timeLabel, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
 import { recalcInvoice } from "@/lib/data/invoices";
 import { notifyAppointment } from "@/lib/messaging";
+import { emailReceipt } from "@/lib/receipt-email";
 import { NEXT_STATUS } from "@/lib/appointment-status";
 import { forPet, petPrices } from "@/lib/data/pet-prices";
 import { asGroomer, ownGroomer } from "@/lib/data/staff";
@@ -357,10 +358,27 @@ export async function recordPaymentAction(appointmentId: string, _: FormState, f
                checked_in_at = coalesce(checked_in_at, start_at)
              where id = ${appointmentId} and business_id = ${staff.businessId} and status <> 'completed'`;
   });
+  await emailReceiptWhenClosed(staff, appointmentId);
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath(`/appointments/${appointmentId}/checkout`);
   revalidatePath("/today");
   return undefined;
+}
+
+/** Once an order is finished (paid in full), the client gets the receipt by email, once. */
+async function emailReceiptWhenClosed(staff: StaffContext, appointmentId: string) {
+  const [inv] = await sql`select id from invoices
+                          where appointment_id = ${appointmentId} and business_id = ${staff.businessId} and status = 'closed'`;
+  if (inv) await emailReceipt(staff.businessId, inv.id, { onlyOnce: true });
+}
+
+/** "Email receipt" on a finished order: sends it now (again, if asked). */
+export async function emailReceiptAction(appointmentId: string) {
+  const staff = await requireStaff();
+  const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
+  const result = inv ? await emailReceipt(staff.businessId, inv.id) : "failed";
+  revalidatePath(`/appointments/${appointmentId}/checkout`);
+  redirect(`/appointments/${appointmentId}/checkout?receipt=${result}`);
 }
 
 /** Finishes the order when nothing is left to collect (a free visit, or paid in full already). */
@@ -374,6 +392,7 @@ export async function closeInvoiceAction(appointmentId: string) {
                checked_in_at = coalesce(checked_in_at, start_at)
              where id = ${appointmentId} and business_id = ${staff.businessId} and status <> 'completed'`;
   });
+  await emailReceiptWhenClosed(staff, appointmentId);
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath(`/appointments/${appointmentId}/checkout`);
   revalidatePath("/today");

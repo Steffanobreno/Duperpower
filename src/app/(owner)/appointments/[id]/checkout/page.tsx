@@ -11,21 +11,26 @@ import { Button, Input, Notice, Page, PageHeader } from "@/components/ui";
 import {
   addInvoiceItemAction,
   closeInvoiceAction,
+  emailReceiptAction,
   recordPaymentAction,
   removeInvoiceItemAction,
   reopenInvoiceAction,
   saveVisitTimesAction,
   startCheckoutAction, deletePaymentAction } from "../../actions";
 import { PaymentForm } from "../../payment-form";
+import { getReceipt } from "@/lib/data/receipts";
+import { ReceiptActions } from "@/components/receipt-actions";
+
 
 export const metadata: Metadata = { title: "Invoice" };
 
 // The bill of one visit: check-in and check-out times, services by pet, discounts, service
 // charges or taxes, tips, what was paid and what is still due.
 
-export default async function CheckoutPage({ params }: PageProps<"/appointments/[id]/checkout">) {
+export default async function CheckoutPage({ params, searchParams }: PageProps<"/appointments/[id]/checkout">) {
   const staff = await requireStaff();
   const { id } = await params;
+  const sp = await searchParams;
   const appt = await getAppointment(staff, id);
   if (!appt) notFound();
   const data = await getInvoiceForAppointment(staff, id);
@@ -45,6 +50,7 @@ export default async function CheckoutPage({ params }: PageProps<"/appointments/
   }
 
   const { invoice, items, payments } = data;
+  const receipt = invoice.status === "closed" ? await getReceipt({ invoiceId: invoice.id, businessId: staff.businessId }) : null;
   const open = invoice.status === "open";
   const balance = Math.max(invoice.total_cents - invoice.paid_cents, 0);
   const services = items.filter((i) => !["discount", "tax", "fee"].includes(i.kind));
@@ -196,6 +202,10 @@ export default async function CheckoutPage({ params }: PageProps<"/appointments/
               ))}
             </ul>
           </section>
+        )}
+
+        {!open && receipt && (
+          <ReceiptActions r={receipt} emailAction={emailReceiptAction.bind(null, id)} result={typeof sp.receipt === "string" ? sp.receipt : undefined} />
         )}
 
         {!open && (
