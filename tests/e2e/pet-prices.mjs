@@ -15,7 +15,6 @@ const step = (msg) => console.log(`✓ ${msg}`);
 const fail = (msg) => {
   throw new Error(msg);
 };
-const button = (name) => page.getByRole("button", { name, exact: true });
 
 await page.goto(`${BASE}/login`);
 await page.fill('input[name="email"]', "owner@example.com");
