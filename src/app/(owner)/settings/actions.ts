@@ -192,10 +192,23 @@ export async function saveTemplateAction(templateId: string, _: FormState, form:
   const time = String(form.get("send_at_time") ?? "");
   await sql`
     update message_templates set body = ${body}, email_subject = ${subject}, enabled = ${form.get("enabled") === "on"},
+      send_sms = ${form.get("send_sms") === "on"}, send_email = ${form.get("send_email") === "on"},
       offset_days = coalesce(${days === null ? null : Number(days)}::int, offset_days),
       offset_minutes = coalesce(${minutes === null ? null : Number(minutes)}::int, offset_minutes),
       send_at_time = coalesce(${/^\d{2}:\d{2}$/.test(time) ? time : null}::time, send_at_time)
     where id = ${templateId} and business_id = ${staff.businessId}`;
+  revalidatePath("/settings/messages");
+  return { saved: true };
+}
+
+export async function saveDeliveryAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const before = Number(form.get("arrival_before_min"));
+  const after = Number(form.get("arrival_after_min"));
+  if (![before, after].every((n) => Number.isInteger(n) && n >= 0 && n <= 240)) return { error: "The arrival window is 0 to 240 minutes each way." };
+  await sql`update businesses set arrival_before_min = ${before}, arrival_after_min = ${after},
+              receipt_email_enabled = ${form.get("receipt_email_enabled") === "on"}
+            where id = ${staff.businessId}`;
   revalidatePath("/settings/messages");
   return { saved: true };
 }

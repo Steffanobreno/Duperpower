@@ -8,7 +8,7 @@ import { TestTextForm } from "./test-text";
 import { phoneLabel } from "@/lib/format";
 import { Button, Card, Field, Input, Notice, Page, PageHeader, Textarea } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
-import { newDeviceKeyAction, saveMessagingSettingsAction, saveTemplateAction, setAutoMessagesAction } from "../actions";
+import { newDeviceKeyAction, saveDeliveryAction, saveMessagingSettingsAction, saveTemplateAction, setAutoMessagesAction } from "../actions";
 import { SimpleForm } from "../forms";
 
 export const metadata: Metadata = { title: "Texts and email" };
@@ -17,7 +17,8 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
   booked: { title: "Booking confirmation", when: "When you book a visit or accept a request" },
   request_received: { title: "Request received", when: "When a client sends a request online" },
   request_declined: { title: "Request declined", when: "When you decline an online request" },
-  reminder: { title: "Appointment reminder", when: "Days before the visit, at a set time" },
+  reminder: { title: "1st reminder", when: "Days before the visit, at a set time" },
+  reminder_2: { title: "2nd reminder", when: "Another reminder closer to the visit (ex. the day before)" },
   confirmed: { title: "Confirmed", when: "When the client taps Confirm on their link" },
   cancelled: { title: "Cancelled", when: "When the visit is cancelled" },
   on_my_way: { title: "On my way", when: "You send it with the button on the appointment" },
@@ -30,16 +31,18 @@ const ORDER = Object.keys(TEMPLATE_INFO);
 
 export default async function MessagesSettingsPage() {
   const staff = await requireStaff();
-  const [b] = await sql`select email, phone, review_url, website_url, device_key, auto_messages_enabled from businesses where id = ${staff.businessId}`;
+  const [b] = await sql`select email, phone, review_url, website_url, device_key, auto_messages_enabled,
+                                arrival_before_min, arrival_after_min, receipt_email_enabled from businesses where id = ${staff.businessId}`;
   const [[waiting], [lastPickup]] = await Promise.all([
     sql<{ n: number }[]>`select count(*)::int as n from messages where business_id = ${staff.businessId} and channel = 'sms' and status = 'queued'`,
     sql<{ at: Date | null }[]>`select max(sent_at) as at from messages where business_id = ${staff.businessId} and channel = 'sms' and status = 'handed_off'`,
   ]);
   const templates = await sql<
     { id: string; trigger: string; body: string; email_subject: string | null; enabled: boolean;
-      offset_days: number | null; offset_minutes: number | null; send_at_time: string | null }[]
+      offset_days: number | null; offset_minutes: number | null; send_at_time: string | null; send_sms: boolean; send_email: boolean }[]
   >`
-    select id, trigger, body, email_subject, enabled, offset_days, offset_minutes, to_char(send_at_time, 'HH24:MI') as send_at_time
+    select id, trigger, body, email_subject, enabled, offset_days, offset_minutes, to_char(send_at_time, 'HH24:MI') as send_at_time,
+           send_sms, send_email
     from message_templates where business_id = ${staff.businessId}`;
   templates.sort((x, y) => ORDER.indexOf(x.trigger) - ORDER.indexOf(y.trigger));
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -109,6 +112,28 @@ export default async function MessagesSettingsPage() {
           </SimpleForm>
         </Card>
 
+        <Card className="space-y-3">
+          <h2 className="font-bold">Arrival window and receipts</h2>
+          <SimpleForm action={saveDeliveryAction}>
+            <p className="text-sm text-muted">
+              A mobile groomer can&apos;t promise the minute. With 0 before and 45 after, a 10:00 AM visit reads
+              “10:00 AM – 10:45 AM” in texts and emails.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Minutes before">
+                <Input name="arrival_before_min" type="number" min={0} max={240} step={5} defaultValue={b.arrival_before_min} />
+              </Field>
+              <Field label="Minutes after">
+                <Input name="arrival_after_min" type="number" min={0} max={240} step={5} defaultValue={b.arrival_after_min} />
+              </Field>
+            </div>
+            <label className="flex items-center gap-3 text-sm">
+              <input type="checkbox" name="receipt_email_enabled" defaultChecked={b.receipt_email_enabled} className="h-4 w-4" />
+              Email the receipt when an order is paid in full
+            </label>
+          </SimpleForm>
+        </Card>
+
         <section className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <h2 className="font-bold">Message texts</h2>
@@ -124,7 +149,16 @@ export default async function MessagesSettingsPage() {
               <details key={t.id} className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
                 <summary className="cursor-pointer">
                   <span className="font-semibold">{info.title}</span>
-                  {!t.enabled && <span className="ml-2 text-xs text-muted">(off)</span>}
+                  {t.enabled ? (
+                    t.trigger !== "on_my_way" && (
+                      <span className="ml-2 inline-flex gap-1 align-middle">
+                        {t.send_sms && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">SMS</span>}
+                        {t.send_email && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">Email</span>}
+                      </span>
+                    )
+                  ) : (
+                    <span className="ml-2 rounded-full bg-bg px-2 py-0.5 text-[11px] font-semibold text-muted">Off</span>
+                  )}
                   <span className="block text-xs text-muted">{info.when}</span>
                 </summary>
                 <div className="mt-3">
@@ -133,17 +167,27 @@ export default async function MessagesSettingsPage() {
                       <input type="checkbox" name="enabled" defaultChecked={t.enabled} className="h-4 w-4" />
                       Send this message
                     </label>
+                    {t.trigger !== "on_my_way" && (
+                      <div className="flex gap-4 text-sm">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" name="send_sms" defaultChecked={t.send_sms} className="h-4 w-4" /> Text (SMS)
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" name="send_email" defaultChecked={t.send_email} className="h-4 w-4" /> Email
+                        </label>
+                      </div>
+                    )}
                     {t.trigger === "vaccine_due" && (
                       <Field label="Days before it expires">
                         <Input name="offset_days" type="number" min={1} max={90} defaultValue={t.offset_days ?? 30} />
                       </Field>
                     )}
-                    {t.trigger === "reminder" && (
+                    {(t.trigger === "reminder" || t.trigger === "reminder_2") && (
                       <Field label="Days before the visit">
                         <Input name="offset_days" type="number" min={0} max={14} defaultValue={t.offset_days ?? 2} />
                       </Field>
                     )}
-                    {(t.trigger === "reminder" || t.trigger === "rebook" || t.trigger === "vaccine_due") && (
+                    {(t.trigger === "reminder" || t.trigger === "reminder_2" || t.trigger === "rebook" || t.trigger === "vaccine_due") && (
                       <Field label="Send at">
                         <Input name="send_at_time" type="time" defaultValue={t.send_at_time ?? "10:00"} />
                       </Field>

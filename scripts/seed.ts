@@ -68,6 +68,14 @@ const templates = [
     body: "From {business}, {client}, your next appointment is coming up on {date} at {time}. Please confirm or cancel here: {link}",
   },
   {
+    trigger: "reminder_2",
+    offset_days: 1,
+    send_at_time: "10:00",
+    enabled: false,
+    email_subject: "See you tomorrow, {date}",
+    body: "Hi {client}! See you tomorrow, {date}, at {time} for {pet}'s grooming with {business}. Need to change it? {link}",
+  },
+  {
     trigger: "confirmed",
     email_subject: "Appointment confirmed",
     body: "Thank you, {client}! Your appointment on {date} at {time} is confirmed. See you then! 🐾",
@@ -157,9 +165,9 @@ async function main() {
 
     for (const t of templates) {
       await tx`insert into message_templates (business_id, trigger, body, email_subject, offset_days, offset_minutes,
-                                             send_at_time, only_if_unconfirmed)
+                                             send_at_time, only_if_unconfirmed, enabled)
                values (${biz.id}, ${t.trigger}, ${t.body}, ${t.email_subject ?? null}, ${t.offset_days ?? null},
-                       ${t.offset_minutes ?? null}, ${t.send_at_time ?? null}, ${t.only_if_unconfirmed ?? false})`;
+                       ${t.offset_minutes ?? null}, ${t.send_at_time ?? null}, ${t.only_if_unconfirmed ?? false}, ${t.enabled ?? true})`;
     }
   });
   console.log("seeded Woofers Dog Spa");

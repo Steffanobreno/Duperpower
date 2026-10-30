@@ -22,6 +22,7 @@ export type Trigger =
   | "request_received"
   | "request_declined"
   | "reminder"
+  | "reminder_2"
   | "confirmed"
   | "cancelled"
   | "on_my_way"
@@ -37,6 +38,8 @@ export type Template = {
   offset_minutes: number | null;
   send_at_time: string | null;
   only_if_unconfirmed: boolean;
+  send_sms: boolean;
+  send_email: boolean;
 };
 
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -48,7 +51,7 @@ export function render(text: string, vars: Record<string, string | number | null
 async function template(businessId: string, trigger: Trigger) {
   const [t] = await sql<Template[]>`
     select body, email_subject, offset_days, offset_minutes, to_char(send_at_time, 'HH24:MI') as send_at_time,
-           only_if_unconfirmed
+           only_if_unconfirmed, send_sms, send_email
     from message_templates where business_id = ${businessId} and trigger = ${trigger} and enabled
     limit 1`;
   return t ?? null;
@@ -72,13 +75,15 @@ type ApptContext = {
   sms_ok: boolean;
   pets: string | null;
   source: string;
+  arrival_before_min: number;
+  arrival_after_min: number;
 };
 
 /** Client-level context: their last visit date from the old app, all their pets. */
 async function clientContext(clientId: string, lastVisit: Date) {
   const [row] = await sql<Omit<ApptContext, "id" | "start_at" | "status" | "public_token" | "source">[]>`
     select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
-           c.id as client_id, c.first_name, c.phone, c.email,
+           b.arrival_before_min, b.arrival_after_min, c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
            (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = c.id and p.deceased_at is null) as pets
     from clients c join businesses b on b.id = c.business_id
@@ -95,6 +100,7 @@ async function appointmentContext(appointmentId: string) {
   const [row] = await sql<ApptContext[]>`
     select a.id, a.business_id, a.start_at, a.status, a.public_token, a.source,
            b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
+           b.arrival_before_min, b.arrival_after_min,
            c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
            (select string_agg(p.name, ' & ' order by p.name) from appointment_pets ap
@@ -109,6 +115,13 @@ async function appointmentContext(appointmentId: string) {
 export const bookingUrl = (b: { website_url: string | null }) => b.website_url ?? `${appUrl()}/book`;
 export const appointmentLink = (token: string) => `${appUrl()}/a/${token}`;
 
+/** "10:00 AM", or with an arrival window "10:00 AM – 10:45 AM". */
+export function arrivalTime(start: Date, tz: string, before: number, after: number) {
+  const at = (d: Date) => formatInTimeZone(d, tz, "h:mm a");
+  if (!before && !after) return at(start);
+  return `${at(new Date(start.getTime() - before * 60_000))} – ${at(new Date(start.getTime() + after * 60_000))}`;
+}
+
 function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
   return {
     business: c.business_name,
@@ -116,7 +129,7 @@ function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
     client: c.first_name,
     pet: c.pets ?? "your pet",
     date: formatInTimeZone(c.start_at, c.timezone, "EEE, MMM d"),
-    time: formatInTimeZone(c.start_at, c.timezone, "h:mm a"),
+    time: arrivalTime(c.start_at, c.timezone, c.arrival_before_min ?? 0, c.arrival_after_min ?? 0),
     link: c.public_token ? appointmentLink(c.public_token) : bookingUrl(c),
     booking_url: bookingUrl(c),
     review_url: c.review_url ?? "",
@@ -128,7 +141,7 @@ function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
 async function enqueue(c: ApptContext, trigger: Trigger, t: Template, dedupe: string, extra?: Record<string, string | number>) {
   const vars = varsFor(c, extra);
   const body = render(t.body, vars);
-  if (c.sms_ok) {
+  if (c.sms_ok && t.send_sms) {
     await sql`
       insert into messages (business_id, client_id, appointment_id, direction, channel, to_phone, body,
                             template_trigger, status, dedupe_key)
@@ -136,7 +149,7 @@ async function enqueue(c: ApptContext, trigger: Trigger, t: Template, dedupe: st
               ${`${dedupe}:sms`})
       on conflict (dedupe_key) do nothing`;
   }
-  if (c.email) {
+  if (c.email && t.send_email) {
     const subject = render(t.email_subject ?? `${c.business_name}`, vars);
     await sql`
       insert into messages (business_id, client_id, appointment_id, direction, channel, to_email, subject, body,
@@ -179,9 +192,10 @@ export async function queueDueMessages(businessId: string) {
   const today = todayYmd(tz);
   const nowLocal = hm(new Date(), tz);
 
-  // 1. Appointment reminders, N days before, from the set time of day.
-  const reminder = await template(businessId, "reminder");
-  if (reminder && nowLocal >= (reminder.send_at_time ?? "00:00")) {
+  // 1. Appointment reminders (the first and the second), N days before, from the set time of day.
+  for (const trigger of ["reminder", "reminder_2"] as const) {
+    const reminder = await template(businessId, trigger);
+    if (!reminder || nowLocal < (reminder.send_at_time ?? "00:00")) continue;
     const { start, end } = dayRangeUtc(addDaysYmd(today, reminder.offset_days ?? 1), tz);
     const statuses = reminder.only_if_unconfirmed ? ["unconfirmed"] : ["unconfirmed", "confirmed"];
     const due = await sql<{ id: string }[]>`
@@ -190,7 +204,7 @@ export async function queueDueMessages(businessId: string) {
         and (${on} or source = 'online')`;
     for (const a of due) {
       const c = await appointmentContext(a.id);
-      if (c) await enqueue(c, "reminder", reminder, `reminder:${c.id}:${c.start_at.getTime()}`);
+      if (c) await enqueue(c, trigger, reminder, `${trigger}:${c.id}:${c.start_at.getTime()}`);
     }
   }
 
@@ -282,6 +296,7 @@ const HEADINGS: Partial<Record<Trigger, string>> = {
   request_received: "Your request",
   booked: "You're booked!",
   reminder: "Your next visit",
+  reminder_2: "See you soon",
   confirmed: "Confirmed",
   cancelled: "Cancelled visit",
   request_declined: "Your request",
@@ -293,8 +308,10 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
   if (!heading) return null;
   const [a] = await sql<{ start_at: Date; end_at: Date; status: string; address_line: string | null; public_token: string;
                          timezone: string; phone: string | null; cancellation_hours: number; total: number;
+                         arrival_before_min: number; arrival_after_min: number;
                          pets: { name: string; services: { name: string; price_cents: number }[] }[] }[]>`
     select a.start_at, a.end_at, a.status, a.address_line, a.public_token, b.timezone, b.phone, b.cancellation_hours,
+      b.arrival_before_min, b.arrival_after_min,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
                 where ap.appointment_id = a.id), 0)::int as total,
       coalesce((select json_agg(json_build_object('name', p.name, 'services',
@@ -305,16 +322,16 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
   if (!a) return null;
   const price = (c: number) => (c === 0 ? "Included" : money(c).replace(/\.00$/, ""));
   const live = !["cancelled", "declined", "no_show"].includes(a.status);
-  const calendar = ["booked", "confirmed", "reminder"].includes(trigger) ? await clientEvent({ id: appointmentId }) : null;
+  const calendar = ["booked", "confirmed", "reminder", "reminder_2"].includes(trigger) ? await clientEvent({ id: appointmentId }) : null;
   return {
     heading,
     badge:
       trigger === "request_received" || a.status === "requested"
         ? "Waiting for confirmation"
-        : ["booked", "reminder"].includes(trigger) && a.status === "unconfirmed"
+        : ["booked", "reminder", "reminder_2"].includes(trigger) && a.status === "unconfirmed"
           ? "Please confirm"
           : null,
-    when: `${formatInTimeZone(a.start_at, a.timezone, "EEEE, MMMM d")} · ${formatInTimeZone(a.start_at, a.timezone, "h:mm a")}`,
+    when: `${formatInTimeZone(a.start_at, a.timezone, "EEEE, MMMM d")} · ${arrivalTime(a.start_at, a.timezone, a.arrival_before_min, a.arrival_after_min)}`,
     address: a.address_line,
     pets: a.pets.map((p) => ({ name: p.name, services: p.services.map((s) => ({ name: s.name, price: price(s.price_cents) })) })),
     total: a.total ? price(a.total) : "",
