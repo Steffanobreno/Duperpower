@@ -105,12 +105,14 @@ await shot("S02-today-route");
 step("Today shows the stop and the Google Maps route link");
 
 await page.goto(apptUrl);
-for (const label of ["Mark as confirmed", "I'm on the way", "Check in", "Finish and check out"]) {
+// Booked = on the day: the client confirms from the reminder, the owner never has to.
+await page.locator("summary", { hasText: "Not confirmed" }).waitFor();
+for (const label of ["I'm on the way", "Check in", "Finish and check out"]) {
   await page.getByRole("button", { name: label }).click();
   await page.waitForLoadState("networkidle");
 }
 await page.waitForURL(/\/checkout/);
-step("status moved confirmed → on the way → grooming → done");
+step("status moved booked (not confirmed) → on the way → grooming → done");
 
 // A one-time 10% discount and a $5 service charge, then removed, so the bill stays $194.
 await page.getByText("+ Add a discount").click();

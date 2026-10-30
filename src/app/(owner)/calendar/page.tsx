@@ -47,7 +47,7 @@ const blockTitle = (t: TimeOff) => t.reason || "Blocked";
 const STATUS_BAR: Record<string, string> = {
   requested: "border-l-warn",
   unconfirmed: "border-l-danger",
-  confirmed: "border-l-brand",
+  confirmed: "border-l-success",
   en_route: "border-l-sky",
   in_progress: "border-l-success",
   completed: "border-l-success",

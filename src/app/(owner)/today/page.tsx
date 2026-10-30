@@ -46,7 +46,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       id: s.id, n, lat: s.lat!, lng: s.lng!, name: s.client_name,
       time: `${timeLabel(s.start_at, tz)} – ${timeLabel(s.end_at, tz)}`, done: s.status === "completed",
     }));
-  const dropped = all.length - stops.length;
+  const dropped = all.filter((a) => ["cancelled", "no_show"].includes(a.status));
   const route = routeUrl(stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })));
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
@@ -150,10 +150,23 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
             </ol>
           </>
         )}
-        {dropped > 0 && (
-          <p className="text-center text-sm text-muted">
-            {dropped} cancelled or no-show not shown. <Link href={`/calendar?date=${date}`} className="underline">See all</Link>
-          </p>
+        {/* Off the route but still here, so a visit never just disappears: tap to see or restore it. */}
+        {dropped.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="section-label">Cancelled or no-show</h2>
+            <ul className="card divide-y divide-line overflow-hidden">
+              {dropped.map((s) => (
+                <li key={s.id}>
+                  <Link href={`/appointments/${s.id}`} className="flex items-center gap-3 px-4 py-3 text-muted">
+                    <span className="w-16 shrink-0 text-sm font-semibold">{timeLabel(s.start_at, tz)}</span>
+                    <span className="min-w-0 flex-1 truncate">{s.client_name}</span>
+                    <StatusBadge status={s.status} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="text-center text-xs text-muted">Marked by mistake? Open it and tap Restore.</p>
+          </section>
         )}
       </Page>
     </>
