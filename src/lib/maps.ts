@@ -167,3 +167,39 @@ export async function dayRoute(places: Place[]): Promise<DayRoute | null> {
             on conflict (key) do update set minutes = excluded.minutes, polyline = excluded.polyline, created_at = now()`;
   return { minutes, path: decodePolyline(polyline) };
 }
+
+export type BestOrder = {
+  /** The stops' indices (0-based, among the stops passed) in the best order. */
+  order: number[];
+  /** Driving minutes along the best order: origin → first stop, …, last stop → destination. */
+  minutes: number[];
+};
+
+/**
+ * The order of the day's stops with the least driving, from `origin` to `destination`
+ * (Routes API with optimizeWaypointOrder; up to 25 stops). Null without the key or on error.
+ */
+export async function bestOrder(origin: Place, stops: Place[], destination: Place): Promise<BestOrder | null> {
+  if (!key() || stops.length < 2 || stops.length > 25) return null;
+  const data = await call<{ routes?: { legs?: { duration?: string }[]; optimizedIntermediateWaypointIndex?: number[] }[] }>(
+    endpoint("routes.googleapis.com", "/directions/v2:computeRoutes"),
+    {
+      method: "POST",
+      fieldMask: "routes.legs.duration,routes.optimizedIntermediateWaypointIndex",
+      body: JSON.stringify({
+        origin: waypoint(origin),
+        destination: waypoint(destination),
+        intermediates: stops.map(waypoint),
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_UNAWARE",
+        optimizeWaypointOrder: true,
+      }),
+    },
+  );
+  const route = data?.routes?.[0];
+  const order = route?.optimizedIntermediateWaypointIndex;
+  const legs = route?.legs;
+  if (!order || order.length !== stops.length || !legs || legs.length !== stops.length + 1) return null;
+  if ([...order].sort((a, b) => a - b).some((v, i) => v !== i)) return null;
+  return { order, minutes: legs.map((l) => Math.round(Number(String(l.duration ?? "0s").replace("s", "")) / 60)) };
+}

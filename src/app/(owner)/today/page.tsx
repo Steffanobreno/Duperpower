@@ -11,7 +11,8 @@ import { RouteMap } from "@/components/route-map";
 import { DayMap, type DayStop } from "@/components/day-map";
 import { MonthStrip, WeekStrip, monthGridStart, shiftMonth } from "@/components/week-strip";
 import { locateStops } from "@/lib/geocode";
-import { dayRoute } from "@/lib/maps";
+import { bestOrder, dayRoute, googleMapsOn } from "@/lib/maps";
+import { applyRouteOrderAction } from "./route-actions";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
@@ -98,6 +99,15 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     [...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })), ...(ends?.end_address ? [{ address: ends.end_address }] : [])],
     ends?.start_address ? { address: ends.start_address } : null,
   );
+  // "Find the best order": only for a day not started yet, from where the day starts
+  // (and back to where it ends, or home).
+  const canOptimize = googleMapsOn() && stops.length >= 2 && stops.every((s) => ["requested", "unconfirmed", "confirmed"].includes(s.status));
+  const optimizing = canOptimize && sp.optimize === "1" && !!ends?.start_address;
+  const stopPlace = (s: (typeof stops)[number]) => ({ address: s.address_line, lat: s.lat, lng: s.lng });
+  const [best, now] = optimizing ? await Promise.all([
+    bestOrder({ address: ends!.start_address }, stops.map(stopPlace), { address: ends!.end_address ?? ends!.start_address }),
+    dayRoute([{ address: ends!.start_address }, ...stops.map(stopPlace), { address: ends!.end_address ?? ends!.start_address }]),
+  ]) : [null, null];
   const legs = road?.minutes ?? null;
   const driveTo = (i: number) => (legs ? legs[i + (ends?.start_address ? 1 : 0) - 1] ?? null : null);
   const driving = legs?.reduce((a, b) => a + b, 0) ?? null;
@@ -195,6 +205,60 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                 className="rounded-full px-3 py-1 font-semibold text-muted">Agenda</Link>
             </nav>
           </div>
+        )}
+
+        {sp.reordered === "1" && <Notice kind="success">The visits are in the new order, with their new times.</Notice>}
+        {canOptimize && sp.optimize !== "1" && (
+          <Link href={q({ optimize: "1" })}
+            className="flex items-center justify-center gap-2 rounded-full border border-[#d4af37] bg-surface py-2 text-sm font-bold text-brand">
+            🧭 Find the best order
+          </Link>
+        )}
+        {sp.optimize === "1" && canOptimize && (
+          <section aria-label="Best order" className="card space-y-3 border-[#d4af37] p-4">
+            {!ends?.start_address ? (
+              <p className="text-sm">Set where your day starts (Settings → Team → your name → Van and route) to find the best order.</p>
+            ) : !best || !now ? (
+              <p className="text-sm">Google couldn&apos;t work out the route right now. Try again in a minute.</p>
+            ) : (() => {
+              const before = now.minutes.reduce((a, b) => a + b, 0);
+              const after = best.minutes.reduce((a, b) => a + b, 0);
+              const same = best.order.every((v, i) => v === i);
+              const ordered = best.order.map((i) => stops[i]);
+              if (same || after >= before) return <p className="font-semibold">✅ Your order is already the best one ({minutesLabel(before)} of driving).</p>;
+              return (
+                <>
+                  <p className="font-bold">🧭 This order saves {minutesLabel(before - after)} of driving</p>
+                  <p className="text-sm text-muted">{minutesLabel(before)} now → {minutesLabel(after)}, from the start of your day and back.</p>
+                  <ol className="space-y-1 text-sm">
+                    {ordered.map((s, i) => (
+                      <li key={s.id} className="flex gap-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">{i + 1}</span>
+                        <span className="min-w-0 flex-1 truncate"><strong>{s.client_name}</strong>{s.city && <span className="text-muted"> · {s.city}</span>}</span>
+                        <span className="shrink-0 text-muted">🚐 {best.minutes[i]}min</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <a href={routeUrl([...ordered.map(stopPlace), ...(ends.end_address ? [{ address: ends.end_address }] : [])], { address: ends.start_address }) ?? "#"}
+                    target="_blank" rel="noopener" className="block rounded-full border-2 border-brand py-2 text-center text-sm font-bold text-brand">
+                    Open this route in Google Maps ↗
+                  </a>
+                  <form action={applyRouteOrderAction.bind(null, date)} className="space-y-2">
+                    <input type="hidden" name="order" value={ordered.map((s) => s.id).join(",")} />
+                    <input type="hidden" name="drive" value={best.minutes.slice(0, ordered.length).join(",")} />
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" /> Text the clients their new time
+                    </label>
+                    <button type="submit" className="w-full rounded-full bg-brand py-2.5 text-sm font-bold text-white">
+                      Use this order (moves the times)
+                    </button>
+                  </form>
+                </>
+              );
+            })()}
+            {sp.clash === "1" && <Notice kind="error">Another visit is in the way of a new time. Move it first, or open the route in Google Maps only.</Notice>}
+            <Link href={q({ optimize: "" })} className="block text-center text-sm font-semibold text-muted">Close</Link>
+          </section>
         )}
 
         {stops.length === 0 ? (

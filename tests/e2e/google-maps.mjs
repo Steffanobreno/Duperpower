@@ -104,6 +104,36 @@ await owner.getByText("30min", { exact: true }).waitFor();
 if (SHOTS) await owner.screenshot({ path: `${SHOTS}/M02-today-driving.png`, fullPage: true });
 step("Today: 10 min from home, 20 min back, 30 min driving in total; the Google map draws the road path");
 
+// "Find the best order": two visits on another day; the fake Google says the reverse order is
+// best (5 min per leg instead of 10, 20…), and "Use this order" moves the times.
+{
+  const dbx = postgres(process.env.DATABASE_URL);
+  const [{ client: maria }] = await dbx`select id as client from clients where first_name = 'Maria'`;
+  const day = new Date(Date.parse(`${DATE}T12:00:00Z`) + 7 * 86_400_000).toISOString().slice(0, 10);
+  const ids = [];
+  for (const time of ["09:00", "13:00"]) {
+    await owner.goto(`${BASE}/appointments/new?client=${maria}&date=${day}&time=${time}`);
+    const sel = owner.locator('select[name^="svc:"]');
+    await sel.selectOption(await sel.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));
+    await owner.getByLabel(/Send the confirmation/).uncheck();
+    await owner.getByRole("button", { name: "Book appointment" }).click();
+    await owner.waitForURL(/\?booked=1/);
+    ids.push(owner.url().split("/").pop().split("?")[0]);
+  }
+  await owner.goto(`${BASE}/today?date=${day}`);
+  await owner.getByRole("link", { name: "🧭 Find the best order" }).click();
+  await owner.getByText(/This order saves/).waitFor();
+  if (SHOTS) await owner.screenshot({ path: `${SHOTS}/M03-best-order.png` });
+  await owner.getByRole("button", { name: "Use this order (moves the times)" }).click();
+  await owner.waitForURL(/reordered=1/);
+  const rows = await dbx`select id, to_char(start_at at time zone 'America/Los_Angeles', 'HH24:MI') as t from appointments where id = any(${ids})`;
+  const at = Object.fromEntries(rows.map((r) => [r.id, r.t]));
+  await dbx.end();
+  if (at[ids[1]] !== "09:00") fail(`the 1 PM visit should now start the day at 9:00, is ${at[ids[1]]}`);
+  if (at[ids[0]] <= "09:00") fail(`the 9 AM visit should now come after, is ${at[ids[0]]}`);
+  step(`best order: the visits swap (now 9:00 and ${at[ids[0]]}), the drive saved shown first`);
+}
+
 await browser.close();
 if (errors.length) {
   console.error("Browser errors:\n" + errors.join("\n"));
