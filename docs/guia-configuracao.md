@@ -197,3 +197,21 @@ Sem a chave, tudo continua funcionando como antes.
    Trigger deploy** para valer.
 
 A chave fica só no servidor (nunca aparece para o cliente). Não mande a chave por mensagem.
+
+## 13. E-mail pelo seu domínio com Resend (opcional, grátis até 3.000 por mês)
+
+Com o Resend, os e-mails saem de um endereço do seu domínio (ex.: `contato@woofersdogspa.com`) e caem
+menos no spam. As respostas dos clientes continuam chegando no seu Gmail. Sem o Resend, o app continua
+mandando pelo Gmail (passo 3).
+
+1. Crie a conta em **resend.com** (plano Free, sem cartão).
+2. **Domains → Add domain** → `woofersdogspa.com`. O Resend mostra 3 ou 4 registros (TXT/MX/CNAME).
+3. Crie esses registros onde o domínio `woofersdogspa.com` é gerenciado (DNS) e volte em **Verify**.
+   Pode levar de alguns minutos a algumas horas.
+4. **API Keys → Create API key** (permissão *Sending access*).
+5. No Netlify: **Environment variables**:
+   - `RESEND_API_KEY` = a chave
+   - `EMAIL_FROM` = o endereço que o cliente vê, ex.: `contato@woofersdogspa.com`
+   Deixe `GMAIL_USER` como está: é para onde vão as respostas dos clientes.
+6. **Deploys → Trigger deploy**. Em Settings → Texts and email aparece "Messages go out from … (through
+   Resend)". Toque em **Send a test email** para conferir.

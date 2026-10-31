@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { emailConfigured } from "@/lib/email";
+import { emailConfigured, emailSender } from "@/lib/email";
 import { TestEmailButton } from "./test-email";
 import { TestTextForm } from "./test-text";
 import { phoneLabel } from "@/lib/format";
@@ -93,11 +93,14 @@ export default async function MessagesSettingsPage() {
           <h2 className="font-bold">Email</h2>
           {emailConfigured() ? (
             <>
-              <Notice kind="success">Email is on. Messages go out from {process.env.GMAIL_USER}.</Notice>
+              <Notice kind="success">
+                Email is on. Messages go out from {emailSender()}
+                {process.env.RESEND_API_KEY ? " (through Resend)" : " (through Gmail)"}.
+              </Notice>
               <TestEmailButton />
             </>
           ) : (
-            <Notice kind="warn">Email is off. Add the Gmail address and app password to the server settings.</Notice>
+            <Notice kind="warn">Email is off. Add the Resend key (or the Gmail address and app password) to the server settings.</Notice>
           )}
           <SimpleForm action={saveMessagingSettingsAction}>
             <Field label="Your email for new requests and cancellations">
