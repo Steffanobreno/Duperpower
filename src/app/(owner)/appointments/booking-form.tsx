@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
@@ -191,7 +192,7 @@ export function BookingForm({
         )}
         <div className="grid grid-cols-2 gap-3 px-4 py-4">
           <Field label="Date">
-            <Input type="date" name="date" defaultValue={defaultDate} required />
+            <DateField name="date" defaultValue={defaultDate} required />
           </Field>
           <Field label="Start time">
             <Input type="time" name="time" defaultValue={defaultTime} step={900} required />

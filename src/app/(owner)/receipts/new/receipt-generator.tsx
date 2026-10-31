@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { useMemo, useState, useTransition } from "react";
 import { Button, Field, Input, Notice, Select } from "@/components/ui";
 import { Close, Plus } from "@/components/icons";
@@ -123,7 +124,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
       {client && (
         <section className="card space-y-3 p-4">
           <h2 className="font-bold">3. When and how they paid</h2>
-          <Field label="Date of the visit"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+          <Field label="Date of the visit"><DateField value={date} onChange={setDate} /></Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Check-in"><Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} /></Field>
             <Field label="Check-out"><Input type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} /></Field>

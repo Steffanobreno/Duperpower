@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Notice } from "@/components/ui";
@@ -17,8 +18,8 @@ export function VaccineForm({ action, names }: {
         <datalist id="vaccine-names">{names.map((n) => <option key={n} value={n} />)}</datalist>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Expires"><Input type="date" name="expires_on" required /></Field>
-        <Field label="Given (optional)"><Input type="date" name="given_on" /></Field>
+        <Field label="Expires"><DateField name="expires_on" required /></Field>
+        <Field label="Given (optional)"><DateField name="given_on" /></Field>
       </div>
       <Button type="submit" kind="secondary" disabled={pending} className="w-full">{pending ? "Saving…" : "Add vaccine"}</Button>
     </ActionForm>

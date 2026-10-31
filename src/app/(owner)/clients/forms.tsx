@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
@@ -194,7 +195,7 @@ export function PetForm({
           </Select>
         </Field>
         <Field label="Birthday">
-          <Input name="birth_date" type="date" defaultValue={initial?.birth_date ?? ""} />
+          <DateField name="birth_date" defaultValue={initial?.birth_date ?? ""} />
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">

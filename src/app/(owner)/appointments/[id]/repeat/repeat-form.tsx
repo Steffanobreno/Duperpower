@@ -1,8 +1,9 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Card, Field, Input, Notice, Select } from "@/components/ui";
+import { Button, Card, Field, Notice, Select } from "@/components/ui";
 import { MAX_VISITS, repeatDates, ruleLabel, type RepeatRule } from "@/lib/repeat";
 import type { RepeatState } from "../../repeat-actions";
 
@@ -108,7 +109,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, initial, repe
             </div>
           ) : (
             <Field label="Last day">
-              <Input type="date" name="until" min={first} value={until} onChange={(e) => setUntil(e.target.value)} required />
+              <DateField name="until" min={first} value={until} onChange={setUntil} required />
             </Field>
           )}
         </Card>

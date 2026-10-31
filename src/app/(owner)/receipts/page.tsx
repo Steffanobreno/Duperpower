@@ -1,9 +1,10 @@
+import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { listReceipts } from "@/lib/data/receipts";
 import { addDaysYmd, dayLabel, isYmd, money, todayYmd, zonedToUtc } from "@/lib/format";
-import { ButtonLink, Empty, Input, Page, PageHeader } from "@/components/ui";
+import { ButtonLink, Empty, Page, PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Receipts" };
 
@@ -21,8 +22,8 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/receipt
       <PageHeader title="Receipts" action={<ButtonLink href="/receipts/new">New receipt</ButtonLink>} />
       <Page>
         <form className="card grid grid-cols-[1fr_1fr_auto] items-end gap-2 p-3">
-          <label className="text-xs font-semibold text-muted">From<Input type="date" name="from" defaultValue={from} /></label>
-          <label className="text-xs font-semibold text-muted">To<Input type="date" name="to" defaultValue={to} /></label>
+          <label className="text-xs font-semibold text-muted">From<DateField name="from" defaultValue={from} /></label>
+          <label className="text-xs font-semibold text-muted">To<DateField name="to" defaultValue={to} /></label>
           <button type="submit" className="rounded-xl bg-navy px-4 py-2.5 font-semibold text-white">Show</button>
         </form>
         <div className="flex items-center justify-between px-1 text-sm">

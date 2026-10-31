@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Requests" };
 
 export default async function RequestsPage() {
   const staff = await requireStaff();
-  const rows = await sql<
+  const [rows, reschedules, drafts] = await Promise.all([sql<
     { id: string; start_at: Date; client: string; phone: string; address_line: string | null; notes: string | null;
       pets: string | null; total_cents: number; created_at: Date; new_client: boolean }[]
   >`
@@ -25,15 +25,17 @@ export default async function RequestsPage() {
         where ap.appointment_id = a.id), 0)::int as total_cents
     from appointments a join clients c on c.id = a.client_id
     where a.business_id = ${staff.businessId} and a.status = 'requested' and a.start_at > now() -- past ones expired
-    order by a.start_at`;
-  const reschedules = await sql<{ id: string; start_at: Date; client: string; phone: string; reschedule_note: string | null }[]>`
+    order by a.start_at`,
+  sql<{ id: string; start_at: Date; client: string; phone: string; reschedule_note: string | null }[]>`
     select a.id, a.start_at, a.reschedule_note, trim(c.first_name || ' ' || c.last_name) as client, c.phone
     from appointments a join clients c on c.id = a.client_id
     where a.business_id = ${staff.businessId} and a.reschedule_requested_at is not null
       and a.status in ('requested', 'unconfirmed', 'confirmed') and a.start_at > now()
-    order by a.reschedule_requested_at`;
+    order by a.reschedule_requested_at`,
+  listDrafts(staff, null, 14),
+  ]);
   // Started booking online and haven't booked yet (whether or not they got the message).
-  const waiting = (await listDrafts(staff, null, 14)).filter((d) => d.status !== "recovered").length;
+  const waiting = drafts.filter((d) => d.status !== "recovered").length;
   const tz = staff.timezone;
   return (
     <>

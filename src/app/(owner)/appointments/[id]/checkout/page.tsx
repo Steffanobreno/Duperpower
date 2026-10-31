@@ -31,9 +31,8 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
   const staff = await requireStaff();
   const { id } = await params;
   const sp = await searchParams;
-  const appt = await getAppointment(staff, id);
+  const [appt, data] = await Promise.all([getAppointment(staff, id), getInvoiceForAppointment(staff, id)]);
   if (!appt) notFound();
-  const data = await getInvoiceForAppointment(staff, id);
   const tz = staff.timezone;
 
   if (!data) {

@@ -1,3 +1,4 @@
+import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -60,10 +61,10 @@ export default async function ClosedPage() {
             <SimpleForm action={addClosedDatesAction} submitLabel="Add closed dates" savedLabel="Added.">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="First day">
-                  <Input type="date" name="start_date" min={today} required />
+                  <DateField name="start_date" min={today} required />
                 </Field>
                 <Field label="Last day">
-                  <Input type="date" name="end_date" min={today} />
+                  <DateField name="end_date" min={today} />
                 </Field>
               </div>
               <Field label="Reason (optional)" hint="Only you see it.">

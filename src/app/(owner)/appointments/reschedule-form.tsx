@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Notice } from "@/components/ui";
@@ -25,7 +26,7 @@ export function RescheduleForm({
       {state?.error && <Notice kind="error">{state.error}</Notice>}
       <div className="grid grid-cols-2 gap-3">
         <Field label="New date">
-          <Input type="date" name="date" defaultValue={date} required />
+          <DateField name="date" defaultValue={date} required />
         </Field>
         <Field label="New time">
           <Input type="time" name="time" defaultValue={time} step={900} required />

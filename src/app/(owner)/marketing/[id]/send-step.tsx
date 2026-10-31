@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
@@ -52,7 +53,7 @@ export function SendStep({ count, ownerEmail, today, sendTest, sendNow, schedule
         {later?.error && <Notice kind="error">{later.error}</Notice>}
         <ActionForm action={laterAction} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Day"><Input type="date" name="date" min={today} defaultValue={today} required /></Field>
+            <Field label="Day"><DateField name="date" min={today} defaultValue={today} required /></Field>
             <Field label="Time"><Input type="time" name="time" step={900} defaultValue="09:00" required /></Field>
           </div>
           <Button type="submit" kind="secondary" className="w-full" disabled={scheduling}>{scheduling ? "Saving…" : "Schedule"}</Button>

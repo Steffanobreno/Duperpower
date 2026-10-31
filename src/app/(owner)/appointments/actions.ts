@@ -1,4 +1,5 @@
 "use server";
+import { inBackground } from "@/lib/background";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext, requirePermission } from "@/lib/auth";
@@ -373,7 +374,7 @@ async function emailReceiptWhenClosed(staff: StaffContext, appointmentId: string
   const [inv] = await sql`select i.id from invoices i join businesses b on b.id = i.business_id
                           where i.appointment_id = ${appointmentId} and i.business_id = ${staff.businessId}
                             and i.status = 'closed' and b.receipt_email_enabled`;
-  if (inv) await emailReceipt(staff.businessId, inv.id, { onlyOnce: true });
+  if (inv) await inBackground(() => emailReceipt(staff.businessId, inv.id, { onlyOnce: true }));
 }
 
 /** "Email receipt" on a finished order: sends it now (again, if asked). */

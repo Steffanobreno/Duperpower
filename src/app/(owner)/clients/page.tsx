@@ -5,7 +5,8 @@ import { clientCounts, fullAddress, fullName, listClients } from "@/lib/data/cli
 import { phoneLabel } from "@/lib/format";
 import { clientTagsFor, optionLabels } from "@/lib/data/options";
 import { TagChips } from "@/components/chips";
-import { ButtonLink, Empty, Input, Notice, Page, PageHeader } from "@/components/ui";
+import { ButtonLink, Empty, Notice, Page, PageHeader } from "@/components/ui";
+import { ClientFinder } from "@/components/client-finder";
 
 export const metadata: Metadata = { title: "Clients" };
 
@@ -24,12 +25,6 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
     <>
       <PageHeader title="Clients" action={<ButtonLink href="/clients/new">New client</ButtonLink>} />
       <Page>
-        <form role="search">
-          {inactive && <input type="hidden" name="show" value="inactive" />}
-          <label className="sr-only" htmlFor="q">Search clients</label>
-          {tag && <input type="hidden" name="tag" value={tag} />}
-          <Input id="q" name="q" type="search" defaultValue={q} placeholder="Search by name, phone or pet" className="rounded-full px-5" />
-        </form>
         {tagList.length > 0 && (
           <nav aria-label="Filter by tag" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
             {["", ...tagList].map((t) => (
@@ -54,9 +49,13 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
             {q ? "Try part of the name, the phone number or the pet's name." : "Add your first client to start booking."}
           </Empty>
         ) : (
+          <ClientFinder initialQuery={q} form={<>
+            {inactive && <input type="hidden" name="show" value="inactive" />}
+            {tag && <input type="hidden" name="tag" value={tag} />}
+          </>}>
           <ul className="space-y-2">
             {clients.map((c) => (
-              <li key={c.id}>
+              <li key={c.id} data-letter={c.first_name} data-search={[fullName(c), c.phone, c.pet_names, c.pet_breeds, c.city].filter(Boolean).join(" ")}>
                 <Link href={`/clients/${c.id}`} className="card flex items-center gap-3 px-4 py-3 hover:bg-bg">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
                     {(c.first_name[0] ?? "") + (c.last_name?.[0] ?? "")}
@@ -77,6 +76,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
               </li>
             ))}
           </ul>
+          </ClientFinder>
         )}
       </Page>
     </>

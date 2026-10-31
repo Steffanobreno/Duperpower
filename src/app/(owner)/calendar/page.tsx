@@ -82,7 +82,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   // ?groomer= shows one groomer's visits and blocks; without it, everyone's.
   const groomer = !staff.can.all_appointments ? staff.staffId
     : typeof sp.groomer === "string" && /^[0-9a-f-]{36}$/.test(sp.groomer) ? sp.groomer : null;
-  const [all, blocks, hours, groomers, closed] = await Promise.all([
+  const [all, blocks, hours, groomers, closed, look, choosing] = await Promise.all([
     listRange(staff, from, count),
     listTimeOff(staff, from, count, groomer),
     sql<{ weekday: number; start: string; end: string }[]>`
@@ -90,11 +90,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       from working_hours where staff_id = ${groomer ?? staff.staffId}`,
     listGroomers(staff, { activeOnly: true }),
     closedDays(staff.businessId, from, addDaysYmd(from, count - 1)),
+    calendarView(staff.businessId),
+    pickFor(staff, sp),
   ]);
-  const look = await calendarView(staff.businessId);
   const appts = groomer ? all.filter((a) => a.staff_id === groomer) : all;
   const multi = groomers.length > 1;
-  const choosing = await pickFor(staff, sp);
   const q = (groomer ? `&groomer=${groomer}` : "") + (choosing?.q ?? "");
   const hoursOf = (d: string) => hours.find((h) => h.weekday === weekdayOf(d)) ?? null;
   const onDay = (d: string) => appts.filter((a) => ymd(a.start_at, tz) === d);
@@ -159,11 +159,20 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
               pick={choosing?.pick ?? null} view={look} />
           </Swipe>
         )}
-        {view === "week" && <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} view={look} />}
-        {view === "month" && (
-          <MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} />
+        {/* Week, month and agenda turn a page with a sideways swipe too (the arrows do the same). */}
+        {view === "week" && (
+          <Swipe prev={`${base}date=${shift(-1)}`} next={`${base}date=${shift(1)}`}>
+            <WeekGrid start={monday(date)} today={today} appts={appts} blocksOn={blocksOn} hoursOf={hoursOf} tz={tz} view={look} />
+          </Swipe>
         )}
-        {view === "agenda" && <Agenda start={monday(date)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} tz={tz} />}
+        {view === "month" && (
+          <Swipe prev={`${base}date=${shift(-1)}`} next={`${base}date=${shift(1)}`}><MonthGrid start={gridStart} count={gridDays} month={date.slice(0, 7)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} /></Swipe>
+        )}
+        {view === "agenda" && (
+          <Swipe prev={`${base}date=${shift(-1)}`} next={`${base}date=${shift(1)}`}>
+            <Agenda start={monday(date)} today={today} onDay={onDay} blocksOn={blocksOn} working={(d) => !!hoursOf(d) && !closed.has(d)} tz={tz} />
+          </Swipe>
+        )}
       </Page>
     </>
   );

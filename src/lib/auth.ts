@@ -108,15 +108,20 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   if (!token) return null;
   const [row] = await sql`
     select s.id as staff_id, s.name as staff_name, s.role, b.id as business_id, b.name as business_name,
-           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded
+           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded,
+           -- In the same trip: what this role may do (the owner may do everything).
+           array(select rp.perm from role_permissions rp where rp.business_id = b.id and rp.role = s.role) as perms
     from sessions se
     join staff s on s.user_id = se.user_id and s.active
     join businesses b on b.id = s.business_id
     where se.token_hash = ${hashToken(token)} and se.expires_at > now()`;
   if (!row) return null;
-  if (!row.roles_seeded) await seedRoles(row.business_id);
-  const allowed = row.role === "owner" ? new Set<string>(ALL_PERMISSIONS)
-    : new Set((await sql`select perm from role_permissions where business_id = ${row.business_id} and role = ${row.role}`).map((r) => r.perm as string));
+  let perms = row.perms as string[];
+  if (!row.roles_seeded) {
+    await seedRoles(row.business_id);
+    perms = (await sql`select perm from role_permissions where business_id = ${row.business_id} and role = ${row.role}`).map((r) => r.perm as string);
+  }
+  const allowed = row.role === "owner" ? new Set<string>(ALL_PERMISSIONS) : new Set(perms);
   return {
     staffId: row.staff_id,
     staffName: row.staff_name,

@@ -49,18 +49,24 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const tz = staff.timezone;
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
-  const [day, [{ requests }], groomers, closed] = await Promise.all([
+  // Everything that only needs the date, in one go (each trip to the database costs time).
+  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
       where business_id = ${staff.businessId} and status = 'requested' and start_at > now()`,
     listGroomers(staff, { activeOnly: true }),
     closedDays(staff.businessId, date, date),
+    sql<{ enabled: boolean; since: Date | null }[]>`
+      select b.clock_enabled as enabled,
+             (select e.in_at from clock_entries e where e.staff_id = ${staff.staffId} and e.out_at is null) as since
+      from businesses b where b.id = ${staff.businessId}`,
+    // Where each groomer's day starts and ends: Settings → Team → Van and route.
+    sql<{ id: string; start_address: string | null; end_address: string | null }[]>`
+      select id, start_address, end_address from staff where business_id = ${staff.businessId}`,
+    // Dots: visits on each day of the month grid around the date (it contains the date's week).
+    listRange(staff, monthGridStart(date), 42),
   ]);
-  const [clock] = await sql<{ enabled: boolean; since: Date | null }[]>`
-    select b.clock_enabled as enabled,
-           (select e.in_at from clock_entries e where e.staff_id = ${staff.staffId} and e.out_at is null) as since
-    from businesses b where b.id = ${staff.businessId}`;
   // A route is one groomer's day: yours unless another one (or all) is picked.
   // Without "see every groomer's visits", only their own route.
   const groomer = !staff.can.all_appointments ? staff.staffId : sp.groomer === "all" ? null
@@ -68,10 +74,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       : groomers.length > 1 ? staff.staffId : null;
   const all = groomer ? day.filter((a) => a.staff_id === groomer) : day;
   const stops = all.filter((a) => !["cancelled", "no_show"].includes(a.status));
-  const [vaccines, , codes] = await Promise.all([
+  const ends = routeEnds.find((e) => e.id === (groomer ?? staff.staffId));
+  // Driving minutes from Google (only with its key): from the day's start to stop 1, between
+  // stops, and from the last stop to the day's end. The stops are placed on the map first.
+  const [vaccines, codes, road] = await Promise.all([
     vaccineAlerts(staff, stops.flatMap((s) => s.pets.map((p) => p.id)), date),
-    locateStops(stops),
     petCodesFor(stops.flatMap((s) => s.pets.map((p) => p.id))),
+    locateStops(stops).then(() => stops.length === 0 ? null : dayRoute([
+      ...(ends?.start_address ? [{ address: ends.start_address }] : []),
+      ...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })),
+      ...(ends?.end_address ? [{ address: ends.end_address }] : []),
+    ])),
   ]);
   const pins = stops
     .map((s, i) => ({ s, n: i + 1 }))
@@ -81,28 +94,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       time: `${timeLabel(s.start_at, tz)} – ${timeLabel(s.end_at, tz)}`, done: s.status === "completed",
     }));
   const dropped = all.filter((a) => ["cancelled", "no_show"].includes(a.status));
-  // The route starts (and ends, when set) where the groomer's day does: Settings → Team → Van and route.
-  const [ends] = await sql<{ start_address: string | null; end_address: string | null }[]>`
-    select start_address, end_address from staff where id = ${groomer ?? staff.staffId}`;
   const route = routeUrl(
     [...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })), ...(ends?.end_address ? [{ address: ends.end_address }] : [])],
     ends?.start_address ? { address: ends.start_address } : null,
   );
-  // Driving minutes from Google (only with its key): from the day's start to stop 1, between
-  // stops, and from the last stop to the day's end.
-  const road = stops.length === 0 ? null : await dayRoute([
-    ...(ends?.start_address ? [{ address: ends.start_address }] : []),
-    ...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })),
-    ...(ends?.end_address ? [{ address: ends.end_address }] : []),
-  ]);
   const legs = road?.minutes ?? null;
   const driveTo = (i: number) => (legs ? legs[i + (ends?.start_address ? 1 : 0) - 1] ?? null : null);
   const driving = legs?.reduce((a, b) => a + b, 0) ?? null;
   const view = sp.view === "list" ? "list" : "map";
   // The dates on top: one week, or the whole month when opened (▾).
   const monthOpen = sp.cal === "1";
-  // Dots: visits on each day of the month grid around the date (it contains the date's week).
-  const shown = (await listRange(staff, monthGridStart(date), 42))
+  const shown = month
     .filter((a) => (!groomer || a.staff_id === groomer) && !["cancelled", "no_show"].includes(a.status));
   const dotsOn = (d: string) => shown.filter((a) => ymd(a.start_at, tz) === d).length;
   const q = (extra: Record<string, string>) => {

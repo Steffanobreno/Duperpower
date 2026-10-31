@@ -1,4 +1,5 @@
 "use client";
+import { DateField } from "@/components/date-field";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Input, Notice } from "@/components/ui";
@@ -38,7 +39,7 @@ export function ClockRow({ id, name, date, inT, outT }: { id: string; name: stri
       {state?.error && <Notice kind="error">{state.error}</Notice>}
       <ActionForm action={action} className="space-y-2">
         <div className="grid grid-cols-3 gap-2">
-          <Input type="date" name="date" defaultValue={date} aria-label="Day" />
+          <DateField name="date" defaultValue={date} label="Day" />
           <Input type="time" name="in" defaultValue={inT} aria-label="Clock in" />
           <Input type="time" name="out" defaultValue={outT} aria-label="Clock out" />
         </div>

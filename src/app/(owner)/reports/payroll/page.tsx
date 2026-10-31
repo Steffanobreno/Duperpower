@@ -1,3 +1,4 @@
+import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -48,8 +49,8 @@ export default async function PayrollPage({ searchParams }: PageProps<"/reports/
       <PageHeader title="Payroll" back="/reports" />
       <Page>
         <form className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-          <label className="text-sm">From<input type="date" name="from" defaultValue={from} className="mt-1 block w-full rounded-xl border border-line bg-surface px-2 py-2" /></label>
-          <label className="text-sm">To<input type="date" name="to" defaultValue={to} className="mt-1 block w-full rounded-xl border border-line bg-surface px-2 py-2" /></label>
+          <label className="text-sm">From<DateField name="from" defaultValue={from} className="mt-1" /></label>
+          <label className="text-sm">To<DateField name="to" defaultValue={to} className="mt-1" /></label>
           <Button type="submit" kind="secondary">Show</Button>
         </form>
         {shown.length ? shown.map((r) => {

@@ -1,3 +1,4 @@
+import { inBackground } from "./background";
 import "server-only";
 import { formatInTimeZone } from "date-fns-tz";
 import { sql } from "./db";
@@ -171,7 +172,7 @@ export async function notifyAppointment(appointmentId: string, trigger: Trigger)
   if (!t) return;
   // Keyed on the start time, so a rescheduled visit gets a fresh "booked" message.
   await enqueue(c, trigger, t, `${trigger}:${c.id}:${c.start_at.getTime()}`);
-  await sendQueuedEmails(c.business_id);
+  await inBackground(() => sendQueuedEmails(c.business_id));
 }
 
 /** The text the owner sends by hand from the phone (e.g. "on my way"), filled in. */
