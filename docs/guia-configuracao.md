@@ -198,6 +198,19 @@ Sem a chave, tudo continua funcionando como antes.
 
 A chave fica só no servidor (nunca aparece para o cliente). Não mande a chave por mensagem.
 
+**O desenho do mapa do Google na tela Today** (sem isso, o app usa o mapa grátis OpenStreetMap):
+
+7. **APIs e serviços → Biblioteca** → ative **Maps JavaScript API**.
+8. **Credenciais → Criar credenciais → Chave de API**. Nome: `Woofers mapa`.
+   - **Restrições do aplicativo** → **Sites** → adicione o endereço do app, ex.: `https://SEU-APP.netlify.app/*`
+     (e o seu domínio, se tiver um).
+   - **Restrições de API** → marque só **Maps JavaScript API** → **Salvar**.
+9. No Netlify: **Environment variables** → `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` = essa chave nova.
+   **Não marque "Contains secret values"**: essa chave aparece no navegador (é assim que o Google
+   funciona; ela só vale no seu site). → **Deploys → Trigger deploy**.
+
+Se a chave estiver errada ou o site não estiver na lista, o app volta sozinho para o mapa grátis.
+
 ## 13. E-mail pelo seu domínio com Resend (opcional, grátis até 3.000 por mês)
 
 Com o Resend, os e-mails saem de um endereço do seu domínio (ex.: `contato@woofersdogspa.com`) e caem

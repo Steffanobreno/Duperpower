@@ -150,7 +150,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         {sp.denied && <Notice kind="warn">Your role can&apos;t open that page. Ask the owner if you need it.</Notice>}
         {closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
         {requests > 0 && (
-          <GoldBanner href="/requests" count={requests} icon="bell" action="Review"
+          <GoldBanner href="/requests" count={requests} icon="bell" action="Review" compact={view !== "list"}
             title={`${requests} booking request${requests > 1 ? "s" : ""} waiting`} text="Tap to accept or decline" />
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}

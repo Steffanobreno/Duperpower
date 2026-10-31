@@ -1,5 +1,6 @@
 // Google Maps, end to end, against the fake Google server (dev server started with
-// GOOGLE_MAPS_SERVER_KEY and GOOGLE_MAPS_TEST_URL). Run after slice.mjs.
+// GOOGLE_MAPS_SERVER_KEY, GOOGLE_MAPS_TEST_URL, NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY and
+// NEXT_PUBLIC_GOOGLE_MAPS_SCRIPT_URL=<fake>/maps/api/js). Run after slice.mjs.
 // Booking page: typing "1 Main" suggests addresses; picking one fills street, city and ZIP ·
 // the owner's client form does the same · Today shows driving times between stops.
 // Needs DATABASE_URL (to find the visit's day). Usage: node tests/e2e/google-maps.mjs [baseUrl] [screenshotDir]
@@ -88,9 +89,11 @@ await owner.getByLabel(/Day ends at/).fill("100 Home St, San Mateo, CA");
 await owner.getByRole("button", { name: "Save van and route" }).click();
 await owner.getByText("Saved.").first().waitFor();
 await owner.goto(`${BASE}/today?date=${DATE}`);
-// The map view: the road path (solid line), not the dashed straight line.
-await owner.locator("path.leaflet-interactive:not([stroke-dasharray])").first().waitFor();
-if (await owner.locator("path.leaflet-interactive[stroke-dasharray]").count()) fail("the dashed straight line should be replaced by the road path");
+// The map view is Google's (the fake Maps JavaScript API), with the road path, not the dashed line.
+await owner.locator("[data-fake-google-map] .gmap-pin").first().waitFor();
+if ((await owner.locator(".leaflet-container").count()) !== 0) fail("the map should be Google's, not OpenStreetMap");
+if ((await owner.locator('.gmap-line[data-dashed="0"]').count()) !== 1) fail("the road path should be drawn as a solid line");
+if (!(await owner.locator(".gmap-pin").first().getAttribute("data-icon")).includes("#f97316")) fail("the first visit's pin should be highlighted");
 await owner.getByText("🚐 10min drive").first().waitFor();
 // The list view: every leg and the day's total.
 await owner.goto(`${BASE}/today?date=${DATE}&view=list`);
@@ -99,7 +102,7 @@ await owner.getByText("🚐 10min drive from the start").waitFor();
 await owner.getByText("🚐 20min drive back to the end of the day").waitFor();
 await owner.getByText("30min", { exact: true }).waitFor();
 if (SHOTS) await owner.screenshot({ path: `${SHOTS}/M02-today-driving.png`, fullPage: true });
-step("Today: 10 min from home, 20 min back, 30 min driving in total; the map draws the road path");
+step("Today: 10 min from home, 20 min back, 30 min driving in total; the Google map draws the road path");
 
 await browser.close();
 if (errors.length) {

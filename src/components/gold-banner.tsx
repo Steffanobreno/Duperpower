@@ -9,9 +9,25 @@ const ICONS = {
  * Navy and gold: for what is money waiting for an answer (booking requests, unfinished
  * online bookings). A gold badge with the count, two lines of text and a gold button.
  */
-export function GoldBanner({ href, count, title, text, action, icon }: {
+export function GoldBanner({ href, count, title, text, action, icon, compact = false }: {
   href: string; count: number; title: string; text: string; action: string; icon: keyof typeof ICONS;
+  /** One slim line (Today, where the map needs the room). */
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <Link href={href}
+        className="group flex items-center gap-2.5 rounded-full border border-[#d4af37]/70 bg-gradient-to-r from-[#0b1f3a] via-[#12305a] to-[#0b1f3a] py-1 pl-1 pr-1 shadow-[0_3px_10px_rgb(11_31_58/0.3)]">
+        <span aria-hidden className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f7e7a1] via-[#d4af37] to-[#a8811f] text-[#0b1f3a]">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d={ICONS[icon]} /></svg>
+        </span>
+        <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-white">{title}</span>
+        <span className="shrink-0 rounded-full bg-gradient-to-r from-[#f7e7a1] to-[#d4af37] px-3 py-1 text-xs font-bold text-[#0b1f3a] transition-transform group-active:scale-95">
+          {action} ›
+        </span>
+      </Link>
+    );
+  }
   return (
     <Link href={href}
       className="group flex items-center gap-3 rounded-2xl border border-[#d4af37]/70 bg-gradient-to-br from-[#0b1f3a] via-[#12305a] to-[#0b1f3a] px-4 py-3 shadow-[0_6px_20px_rgb(11_31_58/0.35),inset_0_1px_0_rgb(255_255_255/0.08)]">

@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import "leaflet/dist/leaflet.css";
+import { drawDayMap, type MapEngine } from "./map-engines";
 import { setStatusAction } from "@/app/(owner)/appointments/actions";
 
 // The groomer's day as a map with the visits as cards along the bottom (MoeGo-style).
 // Swiping the cards moves to the next visit and centers its pin; tapping a pin shows its card.
-// OpenStreetMap tiles through Leaflet; the road path comes from Google when it's set up.
+// Google Maps when its browser key is set, else OpenStreetMap (see map-engines.ts).
 
 export type DayStop = {
   id: string;
@@ -28,18 +29,18 @@ export type DayStop = {
   alerts: string[]; // "💉 Biscuit: Rabies expired Oct 29"
 };
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
 export function DayMap({ stops, path, route, compact = false }: {
   stops: DayStop[]; path?: [number, number][]; route?: string | null;
   /** Smaller, when the whole month is open above it. */
   compact?: boolean;
 }) {
+  const outer = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const rail = useRef<HTMLDivElement>(null);
-  const markers = useRef<Map<string, import("leaflet").Marker>>(new Map());
-  const mapRef = useRef<import("leaflet").Map | null>(null);
+  const engine = useRef<MapEngine | null>(null);
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
   const [active, setActive] = useState(0);
+  const [height, setHeight] = useState<number | null>(null);
   const key = JSON.stringify(stops.map((s) => [s.id, s.lat, s.lng])) + (path?.length ?? 0);
 
   const show = (i: number, smooth = true) => {
@@ -47,46 +48,39 @@ export function DayMap({ stops, path, route, compact = false }: {
     card?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", inline: "center", block: "nearest" });
   };
 
-  // The map, its pins and the route.
+  // Fill the screen from the map's top down to the tab bar, so the cards are never under it.
+  useEffect(() => {
+    if (compact) return;
+    const fit = () => {
+      const el = outer.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const nav = document.querySelector<HTMLElement>('nav[aria-label="Main"]');
+      const navTop = nav && getComputedStyle(nav).position === "fixed" ? nav.getBoundingClientRect().top : window.innerHeight;
+      setHeight(Math.max(380, Math.floor(navTop - top)));
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [compact]);
+
+  // The map, its pins and the route (Google Maps when its key is set, OpenStreetMap otherwise).
+  // One drawing at a time: a redraw waits until the previous map is drawn and removed.
   useEffect(() => {
     let cancelled = false;
-    let map: import("leaflet").Map | undefined;
-    (async () => {
-      const L = await import("leaflet");
+    let drawn: MapEngine | undefined;
+    const run = queue.current.then(async () => {
       if (cancelled || !box.current) return;
-      map = L.map(box.current, { zoomControl: false });
-      mapRef.current = map;
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(map);
-      map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
-      const placed = stops.filter((s) => s.lat != null && s.lng != null);
-      const points = placed.map((s) => L.latLng(s.lat!, s.lng!));
-      if (path && path.length > 1) L.polyline(path, { color: "#0a84cc", weight: 4, opacity: 0.85 }).addTo(map);
-      else if (points.length > 1) L.polyline(points, { color: "#0a84cc", weight: 3, dashArray: "8 8", opacity: 0.9 }).addTo(map);
-      markers.current.clear();
-      for (const s of placed) {
-        const icon = L.divIcon({
-          className: "",
-          iconSize: [32, 40],
-          iconAnchor: [16, 40],
-          html: `<div class="route-pin" data-stop="${esc(s.id)}"><span>${s.n}</span></div>`,
-        });
-        const m = L.marker([s.lat!, s.lng!], { icon, title: `${s.n}. ${s.client}`, keyboard: false })
-          .on("click", () => show(stops.indexOf(s)))
-          .addTo(map);
-        markers.current.set(s.id, m);
-      }
-      const all = path && path.length > 1 ? [...points, ...path.map(([a, b]) => L.latLng(a, b))] : points;
-      if (all.length === 1) map.setView(all[0], 14);
-      else if (all.length) map.fitBounds(L.latLngBounds(all), { padding: [40, 40], paddingBottomRight: [40, 200] });
-      else map.setView([37.56, -122.32], 10);
-    })();
+      const d = await drawDayMap({ box: box.current, stops, path, onPin: (i) => show(i) });
+      if (cancelled) return d.destroy();
+      drawn = engine.current = d;
+      d.focus(stops[active]);
+    });
+    queue.current = run.catch(() => {});
     return () => {
       cancelled = true;
-      map?.remove();
-      mapRef.current = null;
+      drawn?.destroy();
+      engine.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- redraw only when the stops or the path change
   }, [key]);
@@ -109,15 +103,13 @@ export function DayMap({ stops, path, route, compact = false }: {
   }, []);
 
   useEffect(() => {
-    const s = stops[active];
-    for (const [id, m] of markers.current) m.getElement()?.querySelector(".route-pin")?.classList.toggle("route-pin-active", id === s?.id);
-    if (s?.lat != null && s.lng != null && mapRef.current) mapRef.current.panTo([s.lat, s.lng], { animate: true });
+    engine.current?.focus(stops[active]);
   }, [active, stops]);
 
   return (
     // Fills the screen between the week and the tab bar.
-    <div className="relative isolate z-0 overflow-hidden"
-      style={compact ? { height: 330 } : { height: "calc(100dvh - 22rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
+    <div ref={outer} className="relative isolate z-0 overflow-hidden"
+      style={compact ? { height: 330 } : { height: height ?? "calc(100dvh - 18rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
       <div ref={box} className="absolute inset-0" role="img" aria-label="Map of the day's visits" />
       {route && (
         <a href={route} target="_blank" rel="noopener"

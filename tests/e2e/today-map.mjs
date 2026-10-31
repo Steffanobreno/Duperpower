@@ -44,7 +44,10 @@ const cards = page.getByRole("list", { name: "Visits" }).getByRole("listitem");
 if ((await cards.count()) !== 3) fail(`3 cards expected, got ${await cards.count()}`);
 await page.getByRole("link", { name: /visits?$/ }).first().waitFor(); // week strip day with dots
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/D01-today-map.png` });
-step("Today opens as a map with the week on top and three visit cards");
+const gap = await page.evaluate(() =>
+  document.querySelector('nav[aria-label="Main"]').getBoundingClientRect().top - document.querySelector('[aria-label="Visits"]').getBoundingClientRect().bottom);
+if (gap < 0) fail(`the cards are ${-gap}px under the tab bar`);
+step("Today opens as a map with the week on top and three visit cards, all above the tab bar");
 
 // Swipe to the second card: its pin is highlighted.
 const pinOf = (n) => page.locator(".route-pin", { hasText: String(n) });
