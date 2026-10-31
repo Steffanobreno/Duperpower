@@ -149,9 +149,25 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         {sp.denied && <Notice kind="warn">Your role can&apos;t open that page. Ask the owner if you need it.</Notice>}
         {closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
         {requests > 0 && (
-          <ButtonLink href="/requests" kind="secondary" className="w-full border-warn bg-warn-soft text-warn">
-            {requests} booking request{requests > 1 ? "s" : ""} waiting
-          </ButtonLink>
+          // Navy and gold: the one thing on Today that is new money waiting for an answer.
+          <Link href="/requests"
+            className="group flex items-center gap-3 rounded-2xl border border-[#d4af37]/70 bg-gradient-to-br from-[#0b1f3a] via-[#12305a] to-[#0b1f3a] px-4 py-3 shadow-[0_6px_20px_rgb(11_31_58/0.35),inset_0_1px_0_rgb(255_255_255/0.08)]">
+            <span aria-hidden className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f7e7a1] via-[#d4af37] to-[#a8811f] text-[#0b1f3a] shadow-[0_0_14px_rgb(212_175_55/0.55)]">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" /></svg>
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-extrabold text-[#0b1f3a] ring-2 ring-[#d4af37]">
+                {requests}
+              </span>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-white">
+                {requests} booking request{requests > 1 ? "s" : ""} waiting
+              </span>
+              <span className="block text-sm text-[#e9d38a]">Tap to accept or decline</span>
+            </span>
+            <span className="shrink-0 rounded-full bg-gradient-to-r from-[#f7e7a1] to-[#d4af37] px-3 py-1.5 text-sm font-bold text-[#0b1f3a] transition-transform group-active:scale-95">
+              Review ›
+            </span>
+          </Link>
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
           href={(g) => `/today?date=${date}&groomer=${g ?? "all"}${view === "list" ? "&view=list" : ""}`} />
