@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { TabBar } from "@/components/tab-bar";
 import { SideMenu } from "@/components/side-menu";
 import { AppLock } from "@/components/app-lock";
+import { OfflineSupport } from "@/components/offline-support";
 
 export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   const staff = await requireStaff();
@@ -17,6 +18,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       {lock && <AppLock />}
+      <OfflineSupport />
       {children}
       <TabBar can={staff.can} />
       <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} role={staff.role} can={staff.can}
