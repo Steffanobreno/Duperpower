@@ -14,7 +14,9 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-page.on("console", (m) => m.type() === "error" && errors.push(`${m.text()} ${m.location()?.url ?? ""}`.trim()));
+// Map images come from OpenStreetMap over the internet; a test machine without it can't load them.
+page.on("console", (m) => m.type() === "error" && !/tile\.openstreetmap\.org/.test(m.location()?.url ?? "")
+  && errors.push(`${m.text()} ${m.location()?.url ?? ""}`.trim()));
 const shot = (name) => page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true, caret: "initial" });
 const step = (msg) => console.log(`✓ ${msg}`);
 
