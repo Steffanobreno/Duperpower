@@ -131,7 +131,20 @@ step("Today: 10 min from home, 20 min back, 30 min driving in total; the Google 
   await dbx.end();
   if (at[ids[1]] !== "09:00") fail(`the 1 PM visit should now start the day at 9:00, is ${at[ids[1]]}`);
   if (at[ids[0]] <= "09:00") fail(`the 9 AM visit should now come after, is ${at[ids[0]]}`);
-  step(`best order: the visits swap (now 9:00 and ${at[ids[0]]}), the drive saved shown first`);
+  // "On my way" with the arrival time from the phone's location (the fake says 10 min).
+  await owner.context().grantPermissions(["geolocation"]);
+  await owner.context().setGeolocation({ latitude: 37.55, longitude: -122.3 });
+  await owner.goto(`${BASE}/appointments/${ids[0]}`);
+  await owner.evaluate(() => { window.__sms = null; window.__woofersSms = (u) => (window.__sms = u); });
+  await owner.getByRole("button", { name: "On my way" }).click();
+  await owner.waitForFunction(() => window.__sms);
+  const sms = decodeURIComponent(await owner.evaluate(() => window.__sms));
+  if (!/about 10 min \(around \d{1,2}:\d{2} [AP]M\)/.test(sms)) fail(`the text should carry the arrival time: ${sms}`);
+  const dby = postgres(process.env.DATABASE_URL);
+  const [{ status }] = await dby`select status from appointments where id = ${ids[0]}`;
+  await dby.end();
+  if (status !== "en_route") fail(`the visit should be on the way, is ${status}`);
+  step(`best order: the visits swap (now 9:00 and ${at[ids[0]]}), the drive saved shown first; “On my way” texts “about 10 min” and marks it on the way`);
 }
 
 await browser.close();

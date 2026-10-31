@@ -203,3 +203,23 @@ export async function bestOrder(origin: Place, stops: Place[], destination: Plac
   if ([...order].sort((a, b) => a - b).some((v, i) => v !== i)) return null;
   return { order, minutes: legs.map((l) => Math.round(Number(String(l.duration ?? "0s").replace("s", "")) / 60)) };
 }
+
+/** Driving minutes from where the groomer is now to a place, with today's traffic. Null without the key. */
+export async function driveMinutesFrom(from: { lat: number; lng: number }, to: Place): Promise<number | null> {
+  if (!key() || (!to.address && (to.lat == null || to.lng == null))) return null;
+  const data = await call<{ routes?: { duration?: string }[] }>(
+    endpoint("routes.googleapis.com", "/directions/v2:computeRoutes"),
+    {
+      method: "POST",
+      fieldMask: "routes.duration",
+      body: JSON.stringify({
+        origin: waypoint(from),
+        destination: waypoint(to),
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+      }),
+    },
+  );
+  const d = data?.routes?.[0]?.duration;
+  return d ? Math.max(1, Math.round(Number(d.replace("s", "")) / 60)) : null;
+}

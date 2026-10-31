@@ -144,7 +144,7 @@ export default async function MessagesSettingsPage() {
           </div>
           <p className="px-1 text-xs text-muted">
             You can use {"{client}"}, {"{pet}"}, {"{date}"}, {"{time}"}, {"{link}"} (confirm or cancel page), {"{booking_url}"},{" "}
-            {"{business}"}, {"{business_phone}"}, {"{days}"}, {"{review_url}"}, and in the vaccine message {"{vaccine}"} and {"{expires}"}.
+            {"{business}"}, {"{business_phone}"}, {"{days}"}, {"{review_url}"}, in the vaccine message {"{vaccine}"} and {"{expires}"}, and in On my way {"{eta}"} (the arrival time worked out from where your phone is; without it, the time is added at the end).
           </p>
           {templates.map((t) => {
             const info = TEMPLATE_INFO[t.trigger] ?? { title: t.trigger, when: "" };

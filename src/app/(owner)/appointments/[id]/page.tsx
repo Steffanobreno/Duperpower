@@ -19,6 +19,7 @@ import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { RescheduleForm } from "../reschedule-form";
 import { ReschedulePlanner } from "./reschedule-planner";
+import { OnMyWayButton } from "@/components/on-my-way";
 import { PetPhoto } from "@/components/pet-photo";
 import { ConfirmButton } from "@/components/confirm-button";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
@@ -170,7 +171,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             <span className={`${pillar} opacity-40`}><Pin size={22} />No address</span>
           )}
           {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
-            <a href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className={pillar}><Van size={22} />On my way</a>
+            <OnMyWayButton appointmentId={id} phone={c.phone} text={onMyWay} markEnRoute={appt.status !== "en_route"} className={pillar}>
+              <Van size={22} />On my way
+            </OnMyWayButton>
           )}
           {canMove && <Link href={planHref} className={pillar}><Calendar size={22} />Reschedule</Link>}
           {canEditServices && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
