@@ -11,6 +11,7 @@ import { recalcInvoice } from "@/lib/data/invoices";
 import { notifyAppointment } from "@/lib/messaging";
 import { emailReceipt } from "@/lib/receipt-email";
 import { NEXT_STATUS } from "@/lib/appointment-status";
+import { bookedFromWaitlist } from "@/lib/data/waitlist";
 import { forPet, petPrices } from "@/lib/data/pet-prices";
 import { asGroomer, ownGroomer } from "@/lib/data/staff";
 
@@ -141,8 +142,10 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
     throw e;
   }
   if (form.get("notify") === "on") await notifyAppointment(id, "booked");
+  await bookedFromWaitlist(staff.businessId, clientId, date);
   revalidatePath("/today");
   revalidatePath("/calendar");
+  revalidatePath("/waitlist");
   redirect(`/appointments/${id}?booked=1`);
 }
 

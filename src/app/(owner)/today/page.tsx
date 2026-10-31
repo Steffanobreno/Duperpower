@@ -21,6 +21,7 @@ import { toggleClockAction } from "../clock-actions";
 import { petCodesFor } from "@/lib/data/options";
 import { PetCodeChips } from "@/components/chips";
 import { GoldBanner } from "@/components/gold-banner";
+import { waitlistOpenings } from "@/lib/data/waitlist";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -51,7 +52,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
   // Everything that only needs the date, in one go (each trip to the database costs time).
-  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month] = await Promise.all([
+  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
@@ -67,6 +68,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       select id, start_address, end_address from staff where business_id = ${staff.businessId}`,
     // Dots: visits on each day of the month grid around the date (it contains the date's week).
     listRange(staff, monthGridStart(date), 42),
+    // Spots that opened for someone on the waitlist.
+    waitlistOpenings(staff),
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.
   // Without "see every groomer's visits", only their own route.
@@ -164,6 +167,10 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         {requests > 0 && (
           <GoldBanner href="/requests" count={requests} icon="bell" action="Review" compact={view !== "list"}
             title={`${requests} booking request${requests > 1 ? "s" : ""} waiting`} text="Tap to accept or decline" />
+        )}
+        {openings.length > 0 && (
+          <GoldBanner href="/waitlist" count={new Set(openings.map((o) => o.entry_id)).size} icon="bell" action="See" compact={view !== "list"}
+            title={`A spot opened · ${new Set(openings.map((o) => o.entry_id)).size} on the waitlist`} text="Text or book them" />
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
           href={(g) => `/today?date=${date}&groomer=${g ?? "all"}${view === "list" ? "&view=list" : ""}`} />
