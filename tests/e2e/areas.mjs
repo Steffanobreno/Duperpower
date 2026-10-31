@@ -97,7 +97,7 @@ await owner.getByLabel("Van", { exact: true }).fill("Ford Transit 2019");
 await owner.getByLabel(/Day starts at/).fill("100 Home St, San Mateo, CA");
 await owner.getByRole("button", { name: "Save van and route" }).click();
 await owner.getByText("Saved.").first().waitFor();
-const date = new Date(Date.now() + 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+const date = process.env.VISIT_DATE ?? new Date(Date.now() + 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
 await owner.goto(`${BASE}/today?date=${date}`);
 const href = await owner.locator('a[href*="google.com/maps/dir"]').filter({ hasText: /route/i }).first().getAttribute("href");
 if (!href || !new URL(href).searchParams.get("origin")?.includes("100 Home St")) fail(`route should start at home: ${href}`);
