@@ -19,6 +19,12 @@ const localToday = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+// The last tap on the page (when and where), to tell a tap on a field's label from typing.
+let lastTap = { at: -Infinity, on: null as EventTarget | null };
+if (typeof window !== "undefined") {
+  document.addEventListener("pointerdown", (e) => (lastTap = { at: performance.now(), on: e.target }), true);
+}
+
 export function DateField({ name, defaultValue, value, onChange, min, max, required, id, label, placeholder = "Pick a day", className = "" }: {
   name?: string; defaultValue?: string; value?: string; onChange?: (v: string) => void;
   min?: string; max?: string; required?: boolean; id?: string; placeholder?: string; className?: string;
@@ -27,10 +33,17 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
 }) {
   const [own, setOwn] = useState(defaultValue ?? "");
   const v = value ?? own;
-  const set = (d: string) => {
+  // The real input isn't controlled by React (a re-render would wipe what was just typed into
+  // it); picking a day writes to it directly.
+  const input = useRef<HTMLInputElement>(null);
+  const set = (d: string, fromInput = false) => {
+    if (!fromInput && input.current) input.current.value = d;
     if (value === undefined) setOwn(d);
     onChange?.(d);
   };
+  useEffect(() => {
+    if (value !== undefined && input.current && input.current.value !== value) input.current.value = value;
+  }, [value]);
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const pop = useRef<HTMLDivElement>(null);
@@ -63,8 +76,16 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
     <div ref={box} className={`relative ${className}`}>
       {/* The real field (first, so a wrapping <label> names it): it carries the value in the form and
           can still be typed into; tapping the label focuses it, which opens the calendar. */}
-      <input type="date" name={name} value={v} onChange={(e) => set(e.target.value)} min={min} max={max} required={required}
-        aria-label={label} tabIndex={-1} className="sr-only" onFocus={() => !open && toggle()} />
+      <input ref={input} type="date" name={name} defaultValue={v} onChange={(e) => set(e.target.value, true)} min={min} max={max} required={required}
+        aria-label={label} tabIndex={-1} className="sr-only" onFocus={(e) => {
+          // A tap on the label: show our calendar instead of the phone's picker. (Typing into the
+          // field, as a keyboard or a test does, just types.)
+          const label = e.currentTarget.closest("label");
+          if (label && lastTap.on instanceof Node && label.contains(lastTap.on) && performance.now() - lastTap.at < 800) {
+            e.currentTarget.blur();
+            if (!open) toggle();
+          }
+        }} />
       <button type="button" id={id} aria-expanded={open} onClick={toggle}
         className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2.5 text-left text-ink focus:border-brand focus:outline-none">
         <span className={`min-w-0 truncate whitespace-nowrap ${v ? "" : "text-muted"}`}>{v ? fmt(v, { month: "short", day: "numeric", year: "numeric" }) : placeholder}</span>

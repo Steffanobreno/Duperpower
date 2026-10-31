@@ -65,6 +65,11 @@ await swipe(page.getByLabel("April 2026"), -200);
 await page.getByRole("button", { name: "Friday, May 1, 2026" }).waitFor();
 await page.waitForTimeout(500);
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/W01-date-field.png` });
+// Tapping the field's name (its label) opens the same calendar.
+await page.getByRole("heading", { name: "Reports" }).click();
+await page.getByRole("dialog", { name: "Pick a day" }).waitFor({ state: "detached" });
+await page.locator("label", { hasText: "To" }).locator("span", { hasText: /^To$/ }).click();
+await page.getByRole("dialog", { name: "Pick a day" }).waitFor();
 step("a date field opens the month calendar: arrows and swipe change the month, a tap picks the day");
 
 // Clients: live search and the A–Z strip.
