@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { listDay } from "@/lib/data/appointments";
+import { listDay, listRange } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
-import { addDaysYmd, isYmd, longDayLabel, minutesLabel, money, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
+import { addDaysYmd, isYmd, longDayLabel, minutesLabel, money, timeLabel, todayYmd, ymd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
 import { RouteMap } from "@/components/route-map";
+import { DayMap, type DayStop } from "@/components/day-map";
+import { WeekStrip } from "@/components/week-strip";
 import { locateStops } from "@/lib/geocode";
 import { dayRoute } from "@/lib/maps";
 import { GroomerFilter } from "@/components/groomer-filter";
@@ -20,6 +22,26 @@ import { petCodesFor } from "@/lib/data/options";
 import { PetCodeChips } from "@/components/chips";
 
 export const metadata: Metadata = { title: "Today" };
+
+// The next step on a visit's card, as on the visit page.
+const NEXT: Record<string, { to: string; label: string }> = {
+  requested: { to: "unconfirmed", label: "Accept" },
+  unconfirmed: { to: "en_route", label: "On my way" },
+  confirmed: { to: "en_route", label: "On my way" },
+  en_route: { to: "in_progress", label: "Check in" },
+  in_progress: { to: "completed", label: "Finish" },
+};
+
+// The status on a card's dark header: red until the client confirms (like on the calendar).
+const CARD_STATUS: Record<string, { label: string; className: string }> = {
+  requested: { label: "REQUESTED", className: "bg-warn text-white" },
+  unconfirmed: { label: "UNCONFIRMED", className: "bg-danger text-white" },
+  confirmed: { label: "CONFIRMED", className: "bg-success text-white" },
+  en_route: { label: "ON THE WAY", className: "bg-sky text-navy" },
+  in_progress: { label: "CHECKED IN", className: "bg-success text-white" },
+  completed: { label: "UNPAID", className: "bg-danger text-white" },
+  paid: { label: "PAID", className: "bg-success text-white" },
+};
 
 export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const staff = await requireStaff();
@@ -76,6 +98,33 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const legs = road?.minutes ?? null;
   const driveTo = (i: number) => (legs ? legs[i + (ends?.start_address ? 1 : 0) - 1] ?? null : null);
   const driving = legs?.reduce((a, b) => a + b, 0) ?? null;
+  const view = sp.view === "list" ? "list" : "map";
+  // The week strip's dots: visits on each day of the shown week (for this groomer).
+  const sunday = addDaysYmd(date, -new Date(`${date}T12:00:00Z`).getUTCDay());
+  const week = (await listRange(staff, sunday, 7))
+    .filter((a) => (!groomer || a.staff_id === groomer) && !["cancelled", "no_show"].includes(a.status));
+  const dotsOn = (d: string) => week.filter((a) => ymd(a.start_at, tz) === d).length;
+  const q = (extra: Record<string, string>) =>
+    `/today?${new URLSearchParams({ date, groomer: groomer ?? "all", ...(view === "list" ? { view } : {}), ...extra })}`;
+  const cards: DayStop[] = stops.map((s, i) => {
+    const next = s.paid ? null : NEXT[s.status] ?? null;
+    return {
+      id: s.id, n: i + 1, lat: s.lat, lng: s.lng,
+      time: `${timeLabel(s.start_at, tz)} – ${timeLabel(s.end_at, tz)}`,
+      status: CARD_STATUS[s.paid ? "paid" : s.status] ?? { label: s.status, className: "bg-white/20" },
+      client: s.client_name,
+      initials: s.client_name.split(/\s+/).map((w) => w[0] ?? "").slice(0, 2).join("").toUpperCase(),
+      isNew: s.client_new,
+      pets: s.pets.map((p) => [p.name, p.breed].filter(Boolean).join(" · ")).join(", "),
+      phone: s.client_phone,
+      address: s.address_line,
+      directions: s.address_line || s.lat != null ? directionsUrl({ address: s.address_line, lat: s.lat, lng: s.lng }) : null,
+      next,
+      drive: driveTo(i) != null ? `🚐 ${minutesLabel(driveTo(i)!)} drive` : null,
+      codes: s.pets.flatMap((p) => codes.get(p.id) ?? []).map((c) => ({ label: c.label, color: c.color })),
+      alerts: s.pets.flatMap((p) => vaccines.filter((v) => v.pet_id === p.id).map((v) => `💉 ${p.name}: ${alertText(v)}`)),
+    };
+  });
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
 
@@ -102,20 +151,43 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </ButtonLink>
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
-          href={(g) => `/today?date=${date}&groomer=${g ?? "all"}`} />
+          href={(g) => `/today?date=${date}&groomer=${g ?? "all"}${view === "list" ? "&view=list" : ""}`} />
         <DayNav
-          base={`/today?groomer=${groomer ?? "all"}&`}
+          base={`/today?groomer=${groomer ?? "all"}${view === "list" ? "&view=list" : ""}&`}
           prev={addDaysYmd(date, -1)}
           next={addDaysYmd(date, 1)}
           today={today}
           label={longDayLabel(zonedToUtc(date, "12:00", tz), tz)}
           isToday={date === today}
         />
+        <WeekStrip date={date} today={today} dots={dotsOn} href={(d) => q({ date: d })} />
+        {stops.length > 0 && (
+          <div className="flex items-center gap-2 text-sm">
+            <p className="min-w-0 flex-1 truncate text-muted">
+              <strong className="text-ink">{stops.length}</strong> stop{stops.length > 1 ? "s" : ""} · {done}/{stops.length} done · {money(expected)}
+              {driving != null && <> · 🚐 {minutesLabel(driving)}</>}
+            </p>
+            <nav aria-label="View" className="flex shrink-0 rounded-full bg-surface p-0.5 shadow-[var(--shadow-card)]">
+              {(["map", "list"] as const).map((v) => (
+                <Link key={v} href={q({ view: v })} aria-current={v === view ? "page" : undefined}
+                  className={`rounded-full px-3 py-1 font-semibold ${v === view ? "bg-navy text-white" : "text-muted"}`}>
+                  {v === "map" ? "Map" : "List"}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
 
         {stops.length === 0 ? (
           <Empty title="No appointments this day">
             <Link href={`/appointments/new?date=${date}`} className="text-brand underline">Book one</Link>
           </Empty>
+        ) : view === "map" ? (
+          <>
+            <div className="-mx-4 -mb-24">
+              <DayMap stops={cards} path={road?.path} route={route} />
+            </div>
+          </>
         ) : (
           <>
             <div className={`grid ${driving != null ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center`}>

@@ -88,13 +88,16 @@ await owner.getByLabel(/Day ends at/).fill("100 Home St, San Mateo, CA");
 await owner.getByRole("button", { name: "Save van and route" }).click();
 await owner.getByText("Saved.").first().waitFor();
 await owner.goto(`${BASE}/today?date=${DATE}`);
+// The map view: the road path (solid line), not the dashed straight line.
+await owner.locator("path.leaflet-interactive:not([stroke-dasharray])").first().waitFor();
+if (await owner.locator("path.leaflet-interactive[stroke-dasharray]").count()) fail("the dashed straight line should be replaced by the road path");
+await owner.getByText("🚐 10min drive").first().waitFor();
+// The list view: every leg and the day's total.
+await owner.goto(`${BASE}/today?date=${DATE}&view=list`);
 await owner.getByText("Driving", { exact: true }).waitFor();
 await owner.getByText("🚐 10min drive from the start").waitFor();
 await owner.getByText("🚐 20min drive back to the end of the day").waitFor();
 await owner.getByText("30min", { exact: true }).waitFor();
-// The road path (solid line), not the dashed straight line.
-await owner.locator("path.leaflet-interactive:not([stroke-dasharray])").first().waitFor();
-if (await owner.locator("path.leaflet-interactive[stroke-dasharray]").count()) fail("the dashed straight line should be replaced by the road path");
 if (SHOTS) await owner.screenshot({ path: `${SHOTS}/M02-today-driving.png`, fullPage: true });
 step("Today: 10 min from home, 20 min back, 30 min driving in total; the map draws the road path");
 

@@ -100,7 +100,7 @@ step("overlapping booking warns (the owner may book it anyway)");
 
 await page.goto(`${BASE}/today?date=${date}`);
 await page.getByText("Maria Lopez").waitFor();
-await page.getByRole("link", { name: "Open the whole route in Google Maps" }).waitFor();
+await page.getByRole("link", { name: /Route in Google Maps/ }).waitFor();
 await shot("S02-today-route");
 step("Today shows the stop and the Google Maps route link");
 

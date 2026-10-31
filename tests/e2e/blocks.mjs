@@ -103,7 +103,7 @@ step("slot menu → New appointment keeps the date and time");
 
 // Map: the stops of a day with points on it get numbered pins.
 // MAP_DATE / EXPECT_PINS: a day whose visits were given points beforehand (geocoding needs the internet).
-await page.goto(`${BASE}/today${process.env.MAP_DATE ? `?date=${process.env.MAP_DATE}` : ""}`);
+await page.goto(`${BASE}/today?view=list${process.env.MAP_DATE ? `&date=${process.env.MAP_DATE}` : ""}`);
 const pins = await page.locator(".route-pin").count();
 const stops = await page.locator("ol > li").count();
 if (stops > 0 && process.env.EXPECT_PINS && pins !== Number(process.env.EXPECT_PINS)) fail(`expected ${process.env.EXPECT_PINS} pins, got ${pins}`);

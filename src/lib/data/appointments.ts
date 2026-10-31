@@ -19,7 +19,7 @@ export type AppointmentListItem = {
   client_phone: string;
   city: string | null;
   access_notes: string | null;
-  pets: { id: string; name: string; size_class: string | null; services: string[] }[];
+  pets: { id: string; name: string; breed: string | null; size_class: string | null; services: string[] }[];
   total_cents: number;
   paid: boolean;
   series_id: string | null;
@@ -28,6 +28,8 @@ export type AppointmentListItem = {
   staff_color: string;
   /** The color of the visit's first service, for "color by service". */
   service_color: string | null;
+  /** The client's first visit: nothing finished before, here or in the old app. */
+  client_new: boolean;
 };
 
 const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<AppointmentListItem[]>`
@@ -37,7 +39,7 @@ const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<Appointm
          c.phone as client_phone, c.city, c.access_notes,
          coalesce((
            select json_agg(json_build_object(
-                    'id', p.id, 'name', p.name, 'size_class', p.size_class,
+                    'id', p.id, 'name', p.name, 'breed', p.breed, 'size_class', p.size_class,
                     'services', coalesce((select json_agg(s.name order by s.created_at)
                                           from appointment_services s where s.appointment_pet_id = ap.id), '[]'::json))
                   order by p.name)
@@ -49,7 +51,9 @@ const listSelect = (staff: StaffContext, start: Date, end: Date) => sql<Appointm
          exists (select 1 from invoices i where i.appointment_id = a.id and i.status = 'closed') as paid,
          (select sv.color from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
           join services sv on sv.id = s.service_id
-          where ap.appointment_id = a.id and sv.color is not null order by s.created_at limit 1) as service_color
+          where ap.appointment_id = a.id and sv.color is not null order by s.created_at limit 1) as service_color,
+         (c.imported_last_service_at is null and not exists (
+            select 1 from appointments p where p.client_id = c.id and p.status = 'completed' and p.start_at < a.start_at)) as client_new
   from appointments a
   join clients c on c.id = a.client_id
   join staff st on st.id = a.staff_id
