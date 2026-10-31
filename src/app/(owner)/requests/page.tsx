@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GoldBanner } from "@/components/gold-banner";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { dayLabel, money, phoneLabel, timeLabel } from "@/lib/format";
@@ -84,13 +85,8 @@ export default async function RequestsPage() {
         )}
 
         {waiting > 0 && (
-          <Link href="/abandoned" className="card flex items-center justify-between gap-3 px-4 py-3 hover:bg-bg">
-            <span>
-              <span className="block font-semibold">{waiting} didn&apos;t finish booking online</span>
-              <span className="block text-sm text-muted">A quick call or text often gets the booking.</span>
-            </span>
-            <span className="font-semibold text-brand">See →</span>
-          </Link>
+          <GoldBanner href="/abandoned" count={waiting} icon="cart" action="See"
+            title={`${waiting} didn't finish booking online`} text="A quick call or text often gets the booking." />
         )}
       </Page>
     </>
