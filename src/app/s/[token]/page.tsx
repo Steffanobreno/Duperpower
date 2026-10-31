@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 import { logoUrl } from "@/lib/business-logo";
+import { getStaff } from "@/lib/auth";
 import { phoneLabel } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { AgreementText } from "@/components/agreement-text";
@@ -23,9 +24,10 @@ export default async function SignPage({ params, searchParams }: PageProps<"/s/[
   if (!c) notFound();
   const [{ lang, t }, agreement, logo] = await Promise.all([getI18n(sp.lang), activeAgreement(c.business_id), logoUrl(c.business_id)]);
   if (!agreement) notFound();
-  const signed = await currentSignature(agreement, c.id);
+  const [signed, viewer] = await Promise.all([currentSignature(agreement, c.id), getStaff()]);
   return (
-    <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url} i18n={{ lang, t }} brand={{ name: c.business, logo }}>
+    <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url} i18n={{ lang, t }} brand={{ name: c.business, logo }}
+      staffBack={viewer?.businessId === c.business_id ? `/clients/${c.id}` : null}>
       <StepCard className="space-y-4">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">{t("Hi {name}!", { name: c.first_name })}</h1>
         {signed && !agreement.sign_every_booking ? (

@@ -115,7 +115,14 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
   return (
     <>
-      <PageHeader title="Calendar" action={<ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>} />
+      <PageHeader title="Calendar" action={
+        <span className="flex gap-2">
+          {/* Quick switch back to the day on the map. */}
+          <Link href={`/today?date=${date}${groomer ? `&groomer=${groomer}` : ""}`}
+            className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">Map</Link>
+          <ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>
+        </span>
+      } />
       <Page>
         <nav aria-label="View" className="grid grid-cols-4 gap-1 rounded-2xl bg-surface p-1 shadow-[var(--shadow-card)]">
           {VIEWS.map((v) => (
@@ -290,11 +297,6 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick, vie
           {hours ? `${visible.length} appts · ${dogs} dog${dogs === 1 ? "" : "s"} · ${money(total)}` : "Day off"}
           {appts.length > visible.length && <span className="font-normal text-muted"> · {appts.length - visible.length} cancelled</span>}
         </p>
-        {visible.length > 0 && (
-          <Link href={`/today?date=${date}${groomer ? `&groomer=${groomer}` : ""}`} className="shrink-0 rounded-full bg-surface px-3 py-1 text-sm font-semibold text-brand shadow-[var(--shadow-card)]">
-            Map
-          </Link>
-        )}
       </div>
       {allDay.map((t) => (
         <Link key={t.id} href={`/calendar/block/${t.id}`}

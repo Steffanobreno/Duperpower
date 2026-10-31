@@ -30,7 +30,11 @@ export type DayStop = {
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-export function DayMap({ stops, path, route }: { stops: DayStop[]; path?: [number, number][]; route?: string | null }) {
+export function DayMap({ stops, path, route, compact = false }: {
+  stops: DayStop[]; path?: [number, number][]; route?: string | null;
+  /** Smaller, when the whole month is open above it. */
+  compact?: boolean;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const rail = useRef<HTMLDivElement>(null);
   const markers = useRef<Map<string, import("leaflet").Marker>>(new Map());
@@ -112,7 +116,8 @@ export function DayMap({ stops, path, route }: { stops: DayStop[]; path?: [numbe
 
   return (
     // Fills the screen between the week and the tab bar.
-    <div className="relative isolate z-0 overflow-hidden" style={{ height: "calc(100dvh - 22rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
+    <div className="relative isolate z-0 overflow-hidden"
+      style={compact ? { height: 330 } : { height: "calc(100dvh - 22rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
       <div ref={box} className="absolute inset-0" role="img" aria-label="Map of the day's visits" />
       {route && (
         <a href={route} target="_blank" rel="noopener"

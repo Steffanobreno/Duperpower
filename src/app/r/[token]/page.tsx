@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getReceipt } from "@/lib/data/receipts";
+import { getStaff } from "@/lib/auth";
 import { phoneLabel } from "@/lib/format";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { ReceiptView } from "@/components/receipt-view";
@@ -17,9 +18,11 @@ export default async function ClientReceiptPage({ params, searchParams }: PagePr
   if (!/^[0-9a-f]{32}$/.test(token)) notFound();
   const r = await getReceipt({ token });
   if (!r) notFound();
+  const viewer = await getStaff();
   return (
     <ClientShell phone={r.business.phone} phoneLabel={phoneLabel(r.business.phone)} website={null} i18n={{ lang, t }}
-      brand={{ name: r.business.name, logo: r.business.logo }}>
+      brand={{ name: r.business.name, logo: r.business.logo }}
+      staffBack={viewer?.businessId === r.business.id ? `/receipts/${r.invoiceId}` : null}>
       <StepCard>
         <ReceiptView r={r} t={t} locale={LOCALES[lang]} />
         <div className="mt-6 grid grid-cols-2 gap-2">

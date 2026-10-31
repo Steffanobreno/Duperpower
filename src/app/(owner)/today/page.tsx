@@ -6,11 +6,10 @@ import { listDay, listRange } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
 import { addDaysYmd, isYmd, longDayLabel, minutesLabel, money, timeLabel, todayYmd, ymd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
-import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
 import { RouteMap } from "@/components/route-map";
 import { DayMap, type DayStop } from "@/components/day-map";
-import { WeekStrip } from "@/components/week-strip";
+import { MonthStrip, WeekStrip, monthGridStart, shiftMonth } from "@/components/week-strip";
 import { locateStops } from "@/lib/geocode";
 import { dayRoute } from "@/lib/maps";
 import { GroomerFilter } from "@/components/groomer-filter";
@@ -99,13 +98,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const driveTo = (i: number) => (legs ? legs[i + (ends?.start_address ? 1 : 0) - 1] ?? null : null);
   const driving = legs?.reduce((a, b) => a + b, 0) ?? null;
   const view = sp.view === "list" ? "list" : "map";
-  // The week strip's dots: visits on each day of the shown week (for this groomer).
-  const sunday = addDaysYmd(date, -new Date(`${date}T12:00:00Z`).getUTCDay());
-  const week = (await listRange(staff, sunday, 7))
+  // The dates on top: one week, or the whole month when opened (▾).
+  const monthOpen = sp.cal === "1";
+  // Dots: visits on each day of the month grid around the date (it contains the date's week).
+  const shown = (await listRange(staff, monthGridStart(date), 42))
     .filter((a) => (!groomer || a.staff_id === groomer) && !["cancelled", "no_show"].includes(a.status));
-  const dotsOn = (d: string) => week.filter((a) => ymd(a.start_at, tz) === d).length;
-  const q = (extra: Record<string, string>) =>
-    `/today?${new URLSearchParams({ date, groomer: groomer ?? "all", ...(view === "list" ? { view } : {}), ...extra })}`;
+  const dotsOn = (d: string) => shown.filter((a) => ymd(a.start_at, tz) === d).length;
+  const q = (extra: Record<string, string>) => {
+    const params = new URLSearchParams({ date, groomer: groomer ?? "all", ...(view === "list" ? { view } : {}), ...(monthOpen ? { cal: "1" } : {}), ...extra });
+    for (const [k, v] of [...params]) if (!v) params.delete(k);
+    return `/today?${params}`;
+  };
   const cards: DayStop[] = stops.map((s, i) => {
     const next = s.paid ? null : NEXT[s.status] ?? null;
     return {
@@ -152,15 +155,27 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
           href={(g) => `/today?date=${date}&groomer=${g ?? "all"}${view === "list" ? "&view=list" : ""}`} />
-        <DayNav
-          base={`/today?groomer=${groomer ?? "all"}${view === "list" ? "&view=list" : ""}&`}
-          prev={addDaysYmd(date, -1)}
-          next={addDaysYmd(date, 1)}
-          today={today}
-          label={longDayLabel(zonedToUtc(date, "12:00", tz), tz)}
-          isToday={date === today}
-        />
-        <WeekStrip date={date} today={today} dots={dotsOn} href={(d) => q({ date: d })} />
+        <div className="flex items-center gap-1">
+          <Link href={q({ date: monthOpen ? shiftMonth(date, -1) : addDaysYmd(date, -1) })}
+            aria-label={monthOpen ? "Previous month" : "Previous day"} className="rounded-full p-2 text-lg text-brand">‹</Link>
+          <Link href={q({ cal: monthOpen ? "" : "1" })} aria-expanded={monthOpen}
+            aria-label={monthOpen ? "Show one week" : "Show the whole month"}
+            className="flex min-w-0 flex-1 items-center justify-center gap-1.5 font-bold">
+            <span className="truncate">{monthOpen
+              ? new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
+              : longDayLabel(zonedToUtc(date, "12:00", tz), tz)}</span>
+            <span aria-hidden className="text-brand">{monthOpen ? "▴" : "▾"}</span>
+          </Link>
+          <Link href={q({ date: monthOpen ? shiftMonth(date, 1) : addDaysYmd(date, 1) })}
+            aria-label={monthOpen ? "Next month" : "Next day"} className="rounded-full p-2 text-lg text-brand">›</Link>
+          {date !== today && <Link href={q({ date: today })} className="shrink-0 px-1 text-sm font-semibold text-brand">Today</Link>}
+        </div>
+        {monthOpen ? (
+          <MonthStrip date={date} today={today} dots={dotsOn} href={(d) => q({ date: d })}
+            monthHref={(n) => q({ date: shiftMonth(date, n) })} />
+        ) : (
+          <WeekStrip date={date} today={today} dots={dotsOn} href={(d) => q({ date: d })} />
+        )}
         {stops.length > 0 && (
           <div className="flex items-center gap-2 text-sm">
             <p className="min-w-0 flex-1 truncate text-muted">
@@ -169,11 +184,13 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
             </p>
             <nav aria-label="View" className="flex shrink-0 rounded-full bg-surface p-0.5 shadow-[var(--shadow-card)]">
               {(["map", "list"] as const).map((v) => (
-                <Link key={v} href={q({ view: v })} aria-current={v === view ? "page" : undefined}
+                <Link key={v} href={q({ view: v === "list" ? "list" : "" })} aria-current={v === view ? "page" : undefined}
                   className={`rounded-full px-3 py-1 font-semibold ${v === view ? "bg-navy text-white" : "text-muted"}`}>
                   {v === "map" ? "Map" : "List"}
                 </Link>
               ))}
+              <Link href={`/calendar?view=day&date=${date}${groomer ? `&groomer=${groomer}` : ""}`}
+                className="rounded-full px-3 py-1 font-semibold text-muted">Agenda</Link>
             </nav>
           </div>
         )}
@@ -185,7 +202,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         ) : view === "map" ? (
           <>
             <div className="-mx-4 -mb-24">
-              <DayMap stops={cards} path={road?.path} route={route} />
+              <DayMap stops={cards} path={road?.path} route={route} compact={monthOpen} />
             </div>
           </>
         ) : (

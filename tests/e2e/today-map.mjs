@@ -64,7 +64,37 @@ await second.getByText("ON THE WAY").waitFor();
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/D02-today-card.png` });
 step("Contact shows Call and Text; “On my way” moves the visit along");
 
+// The dates: one week; ▾ opens the whole month and the map gets smaller; ▴ closes it.
+await page.getByRole("link", { name: "Show the whole month" }).click();
+await page.waitForURL(/cal=1/);
+await page.getByRole("link", { name: "Next month" }).waitFor();
+if ((await page.locator("a[aria-current='date']").count()) !== 1) fail("the chosen day should be marked");
+const monthCells = await page.locator('a[aria-label*=", "][href*="date="]').count();
+if (monthCells < 28) fail(`the whole month should show, got ${monthCells} days`);
+const mapHeight = await page.getByRole("img", { name: "Map of the day's visits" }).evaluate((e) => e.parentElement.offsetHeight);
+if (mapHeight > 340) fail(`the map should get smaller, is ${mapHeight}px`);
+if (SHOTS) await page.screenshot({ path: `${SHOTS}/D03-today-month.png` });
+await page.getByRole("link", { name: "Show one week" }).click();
+await page.waitForURL((u) => !u.search.includes("cal=1"));
+step(`▾ opens the whole month (${monthCells} days) with a smaller map; ▴ goes back to the week`);
+
+// Map ↔ Agenda.
+await page.getByRole("link", { name: "Agenda", exact: true }).click();
+await page.waitForURL(/\/calendar\?view=day/);
+await page.getByRole("link", { name: "Map", exact: true }).click();
+await page.waitForURL(/\/today\?date=/);
+await page.getByRole("img", { name: "Map of the day's visits" }).waitFor();
+step("Agenda opens the day's schedule; Map comes back");
+
+// The client's receipt page opened from the app has a way back.
+const [{ token }] = await db`select public_token as token from invoices where status = 'closed' limit 1`;
+await page.goto(`${BASE}/r/${token}`);
+await page.getByRole("link", { name: "← Back to the app" }).click();
+await page.waitForURL(/\/receipts\//);
+step("the client's receipt page has “Back to the app” for the team");
+
 // The list view is still there.
+await page.goto(`${BASE}/today?date=${date}`);
 await page.getByRole("link", { name: "List", exact: true }).click();
 await page.waitForURL(/view=list/);
 await page.getByRole("link", { name: /Directions/ }).first().waitFor();

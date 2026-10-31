@@ -14,6 +14,7 @@ export function ClientShell({
   bare = false,
   i18n,
   brand,
+  staffBack,
   children,
 }: {
   phone: string | null;
@@ -24,6 +25,8 @@ export function ClientShell({
   i18n?: { lang: Lang; t: T };
   /** The business's own logo and name; without a logo, the Woofers artwork. */
   brand?: { name: string; logo: string | null };
+  /** Where "Back to the app" goes when someone from the team opens this page (clients never see it). */
+  staffBack?: string | null;
   children: ReactNode;
 }) {
   const t: T = i18n?.t ?? ((s) => s);
@@ -32,9 +35,17 @@ export function ClientShell({
       <LanguagePicker lang={i18n.lang} label={t("Language")} />
     </div>
   );
+  // The installed app has no browser Back button: a way out for the team.
+  const back = staffBack && (
+    <div className="sticky top-0 z-30 flex items-center gap-3 bg-ink px-4 py-2.5 text-sm text-white">
+      <a href={staffBack} className="shrink-0 rounded-full bg-white px-3 py-1.5 font-bold text-ink">← Back to the app</a>
+      <span className="min-w-0 truncate text-white/80">You&apos;re seeing the client&apos;s page</span>
+    </div>
+  );
   if (bare) return <main lang={i18n?.lang} className="mx-auto w-full max-w-lg flex-1 px-3 py-4">{picker}{children}</main>;
   return (
     <>
+      {back}
       <header className="sticky top-0 z-20 bg-navy">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
           <a href={website ?? "#"} aria-label={`${brand?.name ?? "Woofers Dog Spa"} home`} className="flex min-w-0 items-center gap-2">
