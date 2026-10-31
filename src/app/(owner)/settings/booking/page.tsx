@@ -86,7 +86,7 @@ export default async function BookingSettingsPage() {
               <Field label="Minimum notice (hours)">
                 <Input name="min_notice_hours" inputMode="numeric" defaultValue={b.min_notice_hours} />
               </Field>
-              <Field label="Book up to (days ahead)">
+              <Field label="Book up to (days ahead)" hint="365 = the whole year ahead.">
                 <Input name="booking_days_ahead" inputMode="numeric" defaultValue={b.booking_days_ahead} />
               </Field>
               <Field label="Clients can cancel up to (hours before)">

@@ -155,7 +155,7 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
   if (buffer < 0 || buffer > 180) return { error: "Driving time between visits: 0 to 180 minutes." };
   if (miles < 1 || miles > 200 || radius < 1 || radius > 300) return { error: "Distances must be between 1 and 200 miles." };
   if (notice < 0 || notice > 336) return { error: "Notice: 0 to 336 hours." };
-  if (ahead < 1 || ahead > 180) return { error: "Clients can book 1 to 180 days ahead." };
+  if (ahead < 1 || ahead > 730) return { error: "Clients can book 1 to 730 days ahead (365 = a whole year)." };
   if (cancelHours < 0 || cancelHours > 168) return { error: "Cancellation window: 0 to 168 hours." };
   if (slot < 15 || slot > 240) return { error: "Start times: every 15 to 240 minutes." };
   if (startZip && !/^\d{5}$/.test(startZip)) return { error: "The van's ZIP code has 5 digits." };
