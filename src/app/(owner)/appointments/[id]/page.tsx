@@ -9,7 +9,7 @@ import { getInvoiceForAppointment } from "@/lib/data/invoices";
 import { smsTextFor } from "@/lib/messaging";
 import { sql } from "@/lib/db";
 import { fullName } from "@/lib/data/clients";
-import { addDaysYmd, hm, isYmd, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd, zonedToUtc } from "@/lib/format";
+import { addDaysYmd, dayLabel, hm, isYmd, longDayLabel, minutesLabel, money, phoneLabel, sizeLabel, timeLabel, ymd, zonedToUtc } from "@/lib/format";
 import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@/components/ui";
 import { Calendar, Card as Card2, Chat, Check, ChevronDown, ChevronRight, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { NEXT_STATUS } from "@/lib/appointment-status";
@@ -20,6 +20,8 @@ import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { RescheduleForm } from "../reschedule-form";
 import { ReschedulePlanner } from "./reschedule-planner";
 import { OnMyWayButton } from "@/components/on-my-way";
+import { GroomForm } from "./groom-form";
+import { visitGrooms } from "@/lib/data/grooms";
 import { PetPhoto } from "@/components/pet-photo";
 import { ConfirmButton } from "@/components/confirm-button";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
@@ -60,7 +62,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const appt = await getAppointment(staff, id);
   if (!appt) notFound();
-  const [checkout, onMyWay, messages, [series], groomers, vaccines, codes, tags] = await Promise.all([
+  const [checkout, onMyWay, messages, [series], groomers, vaccines, codes, tags, cuts] = await Promise.all([
     getInvoiceForAppointment(staff, id),
     smsTextFor(id, "on_my_way"),
     sql<{ id: string; channel: string; status: string; template_trigger: string | null; created_at: Date }[]>`
@@ -76,6 +78,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
     vaccineAlerts(staff, appt.pets.map((p) => p.pet_id), ymd(appt.start_at, staff.timezone)),
     petCodesFor(appt.pets.map((p) => p.pet_id)),
     clientTagsFor([appt.client.id]),
+    visitGrooms(staff, id, appt.pets.map((p) => p.pet_id)),
   ]);
   const groomer = groomers.find((g) => g.id === appt.staff_id);
   const otherGroomers = groomers.filter((g) => g.active && g.id !== appt.staff_id);
@@ -287,6 +290,28 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             <span>{money(total)}</span>
           </div>
         </section>
+
+        {appt.pets.length > 0 && !closed && (
+          <section className="space-y-2" aria-label="Cuts">
+            <h2 className="section-label">How they were groomed</h2>
+            <div className="card divide-y divide-line">
+              {appt.pets.map((p) => {
+                const now = cuts.now.get(p.pet_id);
+                const last = cuts.last.get(p.pet_id);
+                return (
+                  <GroomForm key={p.appointment_pet_id} appointmentPetId={p.appointment_pet_id} pet={p.name}
+                    now={now ? { blade: now.blade, style: now.style, note: now.note } : null}
+                    photoUrl={now?.has_photo ? `/api/grooms/${now.id}/photo?v=${now.v}` : null}
+                    last={last ? {
+                      blade: last.blade, style: last.style, note: last.note,
+                      when: dayLabel(last.day, tz),
+                      photoUrl: last.has_photo ? `/api/grooms/${last.id}/photo?v=${last.v}` : null,
+                    } : null} />
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="space-y-2">
           <h2 className="section-label">Customer</h2>

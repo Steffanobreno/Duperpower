@@ -11,7 +11,8 @@ import { listServices } from "@/lib/data/services";
 import { petPrices } from "@/lib/data/pet-prices";
 import { PetPriceForm } from "./price-form";
 import { listVaccines, SOON_DAYS } from "@/lib/data/vaccines";
-import { addDaysYmd, minutesLabel, money, todayYmd } from "@/lib/format";
+import { addDaysYmd, dayLabel, minutesLabel, money, todayYmd } from "@/lib/format";
+import { petGrooms } from "@/lib/data/grooms";
 import { VaccineForm } from "./vaccine-form";
 import { PetPhotoUpload } from "../../../pet-photo-upload";
 import { PetPhoto } from "@/components/pet-photo";
@@ -22,9 +23,9 @@ export const metadata: Metadata = { title: "Edit pet" };
 export default async function EditPetPage({ params }: PageProps<"/clients/[id]/pets/[petId]">) {
   const staff = await requireStaff();
   const { id, petId } = await params;
-  const [pet, vaccines, services, own, lists, codes, petCodes] = await Promise.all([
+  const [pet, vaccines, services, own, lists, codes, petCodes, grooms] = await Promise.all([
     getPet(staff, petId), listVaccines(staff, petId), listServices(staff), petPrices([petId]),
-    allOptions(staff.businessId), listPetCodes(staff.businessId), petCodesFor([petId]),
+    allOptions(staff.businessId), listPetCodes(staff.businessId), petCodesFor([petId]), petGrooms(staff, petId),
   ]);
   const onPet = new Set((petCodes.get(petId) ?? []).map((c) => c.id));
   if (!pet || pet.client_id !== id) notFound();
@@ -102,6 +103,31 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
             </ul>
           )}
           <PetPriceForm action={savePetPriceAction.bind(null, id, petId)} petName={pet.name} options={priceOptions} />
+        </Card>
+        <Card className="space-y-3">
+          <h2 className="font-bold">Grooming history</h2>
+          {grooms.length === 0 ? (
+            <p className="text-sm text-muted">Nothing yet. On each visit, note the blade, the length and a photo under “How they were groomed”.</p>
+          ) : (
+            <ul className="divide-y divide-line text-sm">
+              {grooms.map((g) => (
+                <li key={g.id}>
+                  <Link href={`/appointments/${g.appointment_id}`} className="flex items-center gap-3 py-2.5">
+                    {g.has_photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- a small private photo
+                      <img src={`/api/grooms/${g.id}/photo?v=${g.v}`} alt={`${pet.name} on ${dayLabel(g.day, staff.timezone)}`}
+                        className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                    ) : <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-bg text-xl">✂️</span>}
+                    <span className="min-w-0">
+                      <span className="block font-semibold">{dayLabel(g.day, staff.timezone)}</span>
+                      <span className="block">{[g.blade, g.style].filter(Boolean).join(" · ") || "—"}</span>
+                      {g.note && <span className="block truncate text-muted">{g.note}</span>}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
         <Card className="space-y-3">
           <h2 className="font-bold">Vaccines</h2>
