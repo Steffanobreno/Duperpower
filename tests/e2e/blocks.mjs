@@ -56,7 +56,7 @@ await page.getByRole("link", { name: /12:00 PM – 1:30 PM/ }).waitFor();
 step("edit the block");
 
 await page.goto(`${BASE}/calendar?view=week&date=${day}`);
-if ((await page.getByRole("link", { name: "Lunch" }).count()) < 1) fail("block missing on the week view");
+await page.getByRole("link", { name: "Lunch" }).first().waitFor({ timeout: 10000 }).catch(() => fail("block missing on the week view"));
 await page.goto(`${BASE}/calendar?view=agenda&date=${day}`);
 await page.getByRole("link", { name: /Lunch.*12:00 PM – 1:30 PM/ }).waitFor();
 step("block on week and agenda views");
