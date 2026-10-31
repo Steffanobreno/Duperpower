@@ -61,13 +61,15 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
 
   return (
     <div ref={box} className={`relative ${className}`}>
-      <button type="button" id={id} aria-label={label} aria-expanded={open} onClick={toggle}
+      {/* The real field (first, so a wrapping <label> names it): it carries the value in the form and
+          can still be typed into; tapping the label focuses it, which opens the calendar. */}
+      <input type="date" name={name} value={v} onChange={(e) => set(e.target.value)} min={min} max={max} required={required}
+        aria-label={label} tabIndex={-1} className="sr-only" onFocus={() => !open && toggle()} />
+      <button type="button" id={id} aria-expanded={open} onClick={toggle}
         className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2.5 text-left text-ink focus:border-brand focus:outline-none">
         <span className={`min-w-0 truncate whitespace-nowrap ${v ? "" : "text-muted"}`}>{v ? fmt(v, { month: "short", day: "numeric", year: "numeric" }) : placeholder}</span>
         <span aria-hidden className="text-brand">📅</span>
       </button>
-      <input type="date" name={name} value={v} onChange={(e) => set(e.target.value)} min={min} max={max} required={required}
-        tabIndex={-1} aria-hidden className="sr-only" />
       {/* The calendar is drawn outside the field's <label>, so tapping it never toggles the field. */}
       {open && at && createPortal(
         <div ref={pop} role="dialog" aria-label="Pick a day" style={{ top: at.top, left: at.left }}
