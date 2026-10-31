@@ -147,7 +147,7 @@ export function PaymentForm({
           <textarea name="note" rows={3} placeholder="Description" aria-label="Description"
             className="card block w-full px-4 py-3 outline-none focus:border-brand" />
           <button type="submit" disabled={pending || charge <= 0}
-            className="block w-full rounded-full bg-brand py-4 text-lg font-bold text-white shadow-[0_6px_16px_rgb(10_132_204/0.25)] disabled:opacity-40">
+            className="block w-full rounded-full bg-brand py-4 text-lg font-bold text-white shadow-[0_6px_16px_rgb(11_31_58/0.3)] disabled:opacity-40">
             {pending ? "Saving…" : `Charge ${money(charge)}`}
           </button>
         </div>

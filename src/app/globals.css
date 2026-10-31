@@ -3,15 +3,18 @@
 /* Design tokens. Components use these names only (bg-brand, text-muted, ...),
    never raw colors, so the palette can change in one place. */
 @theme {
-  /* Woofers: navy and sky blue from the logo and website. */
+  /* Woofers: deep navy with a gold edge (the "booking request" banner look), sky blue as an accent. */
   --color-bg: #f3f5f8;
   --color-surface: #ffffff;
   --color-ink: #132039;
   --color-muted: #5d6b80;
   --color-line: #e1e6ee;
-  --color-brand: #0a84cc;
-  --color-brand-strong: #0769a6;
-  --color-brand-soft: #e6f4fc;
+  --color-brand: #12305a;
+  --color-brand-strong: #0b1f3a;
+  --color-brand-soft: #f7efd4;
+  --color-gold: #d4af37;
+  --color-gold-light: #f7e7a1;
+  --color-gold-deep: #a8811f;
   --color-on-brand: #ffffff;
   --color-navy: #132039;
   --color-navy-deep: #0e1726;
@@ -93,6 +96,24 @@ textarea {
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;
+}
+
+/* Navy and gold: every filled brand surface (buttons, the chosen day, chips) gets the navy
+   gradient and a thin gold edge, like the booking-request banner. */
+@layer components {
+  .bg-brand {
+    background-image: linear-gradient(135deg, #0b1f3a, #12305a 55%, #0b1f3a);
+    outline: 1px solid rgb(212 175 55 / 0.8);
+    outline-offset: -1px;
+  }
+}
+/* On the navy header, the main button is gold with navy text (outside the layers, so it wins
+   over the button's own text color). */
+.header-action .bg-brand {
+  background-image: linear-gradient(90deg, var(--color-gold-light), var(--color-gold));
+  color: var(--color-brand-strong);
+  font-weight: 700;
+  outline: none;
 }
 
 /* Numbered pins on the route map (Today). */

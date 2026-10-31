@@ -698,7 +698,7 @@ function BigButton({ className = "", ...props }: React.ComponentProps<"button">)
   return (
     <button
       type="button"
-      className={`block w-full rounded-full bg-brand px-6 py-4 text-lg font-semibold text-on-brand shadow-[0_6px_16px_rgb(10_132_204/0.25)] transition hover:bg-brand-strong active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-brand/35 disabled:shadow-none ${className}`}
+      className={`block w-full rounded-full bg-brand px-6 py-4 text-lg font-semibold text-on-brand shadow-[0_6px_16px_rgb(11_31_58/0.3)] transition hover:bg-brand-strong active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-brand/35 disabled:shadow-none ${className}`}
       {...props}
     />
   );
