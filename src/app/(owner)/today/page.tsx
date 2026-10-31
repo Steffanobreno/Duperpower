@@ -4,12 +4,13 @@ import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { listDay } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
-import { addDaysYmd, isYmd, longDayLabel, money, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
+import { addDaysYmd, isYmd, longDayLabel, minutesLabel, money, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
 import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
 import { RouteMap } from "@/components/route-map";
 import { locateStops } from "@/lib/geocode";
+import { drivingMinutes } from "@/lib/maps";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
@@ -65,6 +66,15 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     [...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })), ...(ends?.end_address ? [{ address: ends.end_address }] : [])],
     ends?.start_address ? { address: ends.start_address } : null,
   );
+  // Driving minutes from Google (only with its key): from the day's start to stop 1, between
+  // stops, and from the last stop to the day's end.
+  const legs = stops.length === 0 ? null : await drivingMinutes([
+    ...(ends?.start_address ? [{ address: ends.start_address }] : []),
+    ...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })),
+    ...(ends?.end_address ? [{ address: ends.end_address }] : []),
+  ]);
+  const driveTo = (i: number) => (legs ? legs[i + (ends?.start_address ? 1 : 0) - 1] ?? null : null);
+  const driving = legs?.reduce((a, b) => a + b, 0) ?? null;
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
 
@@ -107,10 +117,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </Empty>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2 text-center">
+            <div className={`grid ${driving != null ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center`}>
               <Stat label="Stops" value={String(stops.length)} />
               <Stat label="Done" value={`${done}/${stops.length}`} />
               <Stat label="Expected" value={money(expected)} />
+              {driving != null && <Stat label="Driving" value={minutesLabel(driving)} />}
             </div>
 
             {pins.length > 0 && <RouteMap stops={pins} />}
@@ -128,7 +139,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
 
             <ol className="space-y-3">
               {stops.map((s, i) => (
-                <li key={s.id} className="card overflow-hidden">
+                <li key={s.id} className="space-y-3">
+                  {driveTo(i) != null && (
+                    <p className="text-center text-xs font-semibold text-muted">🚐 {minutesLabel(driveTo(i)!)} drive{i === 0 ? " from the start" : ""}</p>
+                  )}
+                  <div className="card overflow-hidden">
                   <Link href={`/appointments/${s.id}`} className="flex gap-3 p-4">
                     <div className="w-16 shrink-0">
                       <span aria-hidden className="mb-1 flex h-6 w-6 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
@@ -173,9 +188,13 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                       <Phone size={16} /> Call
                     </a>
                   </div>
+                  </div>
                 </li>
               ))}
             </ol>
+            {ends?.end_address && legs && (
+              <p className="text-center text-xs font-semibold text-muted">🚐 {minutesLabel(legs.at(-1)!)} drive back to the end of the day</p>
+            )}
           </>
         )}
         {/* Off the route but still here, so a visit never just disappears: tap to see or restore it. */}

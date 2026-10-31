@@ -20,10 +20,10 @@ fica no **Netlify (plano Free, permite uso comercial)**; a Hostinger continua co
 1. Crie uma conta em netlify.com com o GitHub (plano Free, sem cartão).
 2. **Add new site → Import from Git** → repositório `Duperpower`.
    O Netlify reconhece o Next.js sozinho (o arquivo `netlify.toml` já está no projeto).
-   **Importante:** em *Build & deploy → Branches*, coloque **Production branch = `production`** e
+   **Importante:** em *Build & deploy → Branches*, coloque **Production branch = `master`** e
    desligue *Branch deploys* e *Deploy previews*. Cada publicação gasta 15 dos 300 créditos do mês;
-   assim só publicamos quando juntamos as mudanças (umas 4 por mês), e as melhorias do dia a dia
-   não gastam créditos.
+   as melhorias do dia a dia ficam em outros ramos e só vão para o `master` quando você diz
+   "pode publicar" — então só gastamos créditos quando publicamos de verdade.
 3. **Site configuration → Environment variables**: `DATABASE_URL`, `APP_URL`
    (ex.: `https://woofersdogspa.netlify.app`), `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`.
 4. Domínio: **Domain management → Add a domain** → `app.woofersdogspa.com`. O Netlify mostra um
@@ -175,3 +175,25 @@ Uma vez só, no iPad (Safari em "Solicitar Site para Computador") ou num computa
    (planilha). Todo domingo à noite ele salva de novo e guarda as últimas 12 semanas.
 
 Em Settings → Backups aparece "Working. Last backup: …". Se passar de 8 dias sem backup, aparece um aviso.
+
+## 12. Mapa do Google (opcional, ~$0 por mês)
+
+Com a chave do Google, o app:
+- completa o endereço enquanto a pessoa digita (agendamento online e cadastro de cliente);
+- acha o ponto no mapa de cada endereço com mais precisão;
+- mostra no Today os minutos de direção entre as visitas e o total do dia.
+
+Sem a chave, tudo continua funcionando como antes.
+
+1. Abra **console.cloud.google.com** com o Gmail da Woofers → **Novo projeto** → nome `Woofers`.
+2. **Faturamento** → cadastre o cartão. O uso de um negócio pequeno fica dentro da cota grátis do
+   Google (milhares de usos por mês), ou seja, **$0**.
+3. **APIs e serviços → Biblioteca** → ative: **Places API (New)**, **Geocoding API** e **Routes API**.
+4. **APIs e serviços → Credenciais → Criar credenciais → Chave de API**. Nome: `Woofers servidor`.
+   Em **Restrições de API**, marque só esses 3 serviços → **Salvar**.
+5. Proteção: **Faturamento → Orçamentos e alertas** → orçamento de **$5** com alertas por e-mail. Em cada
+   um dos 3 serviços → aba **Cotas** → limite de **500 por dia**.
+6. No Netlify: **Environment variables** → `GOOGLE_MAPS_SERVER_KEY` = a chave → depois **Deploys →
+   Trigger deploy** para valer.
+
+A chave fica só no servidor (nunca aparece para o cliente). Não mande a chave por mensagem.

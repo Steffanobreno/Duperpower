@@ -1,10 +1,17 @@
 import "server-only";
 import { sql } from "./db";
 
-// Street address → map point, with the US Census Bureau geocoder: free, no key, US addresses.
+import { geocode as googleGeocode } from "./maps";
+
+// Street address → map point: Google when its key is set (more exact), else the US Census
+// Bureau geocoder: free, no key, US addresses.
 // https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html
 
 async function geocode(address: string): Promise<{ lat: number; lng: number } | null> {
+  return (await googleGeocode(address)) ?? censusGeocode(address);
+}
+
+async function censusGeocode(address: string): Promise<{ lat: number; lng: number } | null> {
   const u = new URL("https://geocoding.geo.census.gov/geocoder/locations/onelineaddress");
   u.searchParams.set("address", address);
   u.searchParams.set("benchmark", "Public_AR_Current");

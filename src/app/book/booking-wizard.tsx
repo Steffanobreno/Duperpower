@@ -10,6 +10,7 @@ import {
 } from "@/components/icons";
 import { MonthCalendar } from "./month-calendar";
 import { useT } from "@/components/i18n";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import type { T } from "@/lib/i18n";
 import { SignaturePad } from "./signature-pad";
 import {
@@ -341,8 +342,9 @@ export function BookingWizard({
             <div className="space-y-4">
               <label className="block">
                 <span className={labelClass}>{t("Street address")}</span>
-                <input aria-label={t("Street address")} autoComplete="street-address" placeholder="123 Main St" className={inputClass}
-                  value={address.address} onChange={(e) => setAddress({ ...address, address: e.target.value })} />
+                <AddressAutocomplete aria-label={t("Street address")} autoComplete="street-address" placeholder="123 Main St" className={inputClass}
+                  value={address.address} onChange={(v) => setAddress((a) => ({ ...a, address: v }))}
+                  onPick={(a) => setAddress({ address: a.street, city: a.city, zip: a.zip.slice(0, 5) })} />
               </label>
               <div className="grid grid-cols-[1fr_8rem] gap-3">
                 <label className="block">

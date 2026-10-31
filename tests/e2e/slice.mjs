@@ -18,11 +18,11 @@ page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 const shot = (name) => page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true, caret: "initial" });
 const step = (msg) => console.log(`✓ ${msg}`);
 
-// Next weekday at 10:00, so the booking is inside working hours.
-const d = new Date();
-do d.setDate(d.getDate() + 1);
-while (d.getDay() === 0);
-const date = d.toISOString().slice(0, 10);
+// The next working day (not Sunday) at 10:00, by the business's California calendar.
+const laDay = (n) => new Date(Date.now() + n * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+let ahead = 1;
+while (new Date(`${laDay(ahead)}T12:00:00Z`).getUTCDay() === 0) ahead++;
+const date = laDay(ahead);
 
 await page.goto(`${BASE}/login`);
 await page.waitForURL(/\/setup/);

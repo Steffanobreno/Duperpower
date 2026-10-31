@@ -1,6 +1,7 @@
 "use client";
 import { ActionForm } from "@/components/action-form";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
 import { SIZES } from "@/lib/format";
 import { BreedOptions } from "@/components/breed-options";
@@ -22,6 +23,34 @@ export type ClientValues = {
   referral_source?: string | null;
   tags?: string[];
 };
+
+/** Street (with Google suggestions when set up), city, state and ZIP, filled together when a suggestion is picked. */
+function AddressFields({ initial }: { initial?: ClientValues }) {
+  const [a, setA] = useState({
+    street: initial?.address_line ?? "", city: initial?.city ?? "", state: initial?.state ?? "CA", zip: initial?.zip ?? "",
+  });
+  const input = "block w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink placeholder:text-muted focus:border-brand focus:outline-none";
+  return (
+    <>
+      <Field label="Street address">
+        <AddressAutocomplete name="address_line" autoComplete="off" placeholder="123 Main St, Apt 4" className={input}
+          value={a.street} onChange={(street) => setA((x) => ({ ...x, street }))}
+          onPick={(p) => setA({ street: p.street, city: p.city, state: p.state || "CA", zip: p.zip })} />
+      </Field>
+      <div className="grid grid-cols-[1fr_5rem_6rem] gap-3">
+        <Field label="City">
+          <Input name="city" value={a.city} onChange={(e) => setA({ ...a, city: e.target.value })} />
+        </Field>
+        <Field label="State">
+          <Input name="state" value={a.state} onChange={(e) => setA({ ...a, state: e.target.value })} maxLength={2} />
+        </Field>
+        <Field label="ZIP">
+          <Input name="zip" inputMode="numeric" value={a.zip} onChange={(e) => setA({ ...a, zip: e.target.value })} maxLength={10} />
+        </Field>
+      </div>
+    </>
+  );
+}
 
 /** The owner's lists from Settings → Client and pet options. */
 export type ClientOptions = { tags: string[]; sources: string[] };
@@ -84,20 +113,7 @@ export function ClientForm({ action, initial, submitLabel, options }: {
       <Field label="Email (optional)">
         <Input name="email" type="email" defaultValue={initial?.email ?? ""} />
       </Field>
-      <Field label="Street address">
-        <Input name="address_line" defaultValue={initial?.address_line ?? ""} autoComplete="off" placeholder="123 Main St, Apt 4" />
-      </Field>
-      <div className="grid grid-cols-[1fr_5rem_6rem] gap-3">
-        <Field label="City">
-          <Input name="city" defaultValue={initial?.city ?? ""} />
-        </Field>
-        <Field label="State">
-          <Input name="state" defaultValue={initial?.state ?? "CA"} maxLength={2} />
-        </Field>
-        <Field label="ZIP">
-          <Input name="zip" inputMode="numeric" defaultValue={initial?.zip ?? ""} maxLength={10} />
-        </Field>
-      </div>
+      <AddressFields initial={initial} />
       <Field label="Parking and access notes" hint="Gate code, where to park the van, water or power outlet.">
         <Textarea name="access_notes" defaultValue={initial?.access_notes ?? ""} />
       </Field>
