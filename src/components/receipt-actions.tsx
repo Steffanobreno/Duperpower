@@ -28,7 +28,10 @@ export function ReceiptActions({ r, emailAction, result }: {
         <p className="text-sm text-muted">
           {r.emailedAt
             ? `Emailed to ${r.client.email} on ${dayLabel(r.emailedAt, tz)} ${timeLabel(r.emailedAt, tz)}.`
-            : r.client.email ? "Not emailed yet." : "No email on file for this client: send it by text or WhatsApp."}
+            : r.client.email
+              // The receipt goes out right after the payment, in the background.
+              ? (r.justClosed ? `Sending to ${r.client.email}…` : "Not emailed yet.")
+              : "No email on file for this client: send it by text or WhatsApp."}
         </p>
         <div className="grid grid-cols-2 gap-2 text-sm font-bold">
           <ShareReceiptButton pdfUrl={`/r/${r.token}/pdf`} fileName={`woofers-receipt-${r.number}.pdf`}

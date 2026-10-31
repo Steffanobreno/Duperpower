@@ -26,6 +26,8 @@ export type Receipt = {
   paid: number;
   payments: { method: string; amount: number; tip: number; at: Date; reference: string | null }[];
   emailedAt: Date | null;
+  /** Paid in the last two minutes: its email may still be on the way. */
+  justClosed: boolean;
 };
 
 type Where = { token: string } | { invoiceId: string; businessId: string };
@@ -34,7 +36,7 @@ type Where = { token: string } | { invoiceId: string; businessId: string };
 export async function getReceipt(where: Where): Promise<Receipt | null> {
   const [r] = await sql<{
     id: string; receipt_no: number; public_token: string; status: string; subtotal_cents: number; discount_cents: number;
-    tax_cents: number; tip_cents: number; total_cents: number; paid_cents: number; created_at: Date; receipt_emailed_at: Date | null;
+    tax_cents: number; tip_cents: number; total_cents: number; paid_cents: number; created_at: Date; receipt_emailed_at: Date | null; just_closed: boolean;
     business_id: string; business: string; business_phone: string | null; business_address: string | null; timezone: string;
     logo_v: string | null;
     client_id: string; first_name: string; last_name: string; email: string | null; phone: string | null;
@@ -42,6 +44,7 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
   }[]>`
     select i.id, i.receipt_no, i.public_token, i.status, i.subtotal_cents, i.discount_cents, i.tax_cents, i.tip_cents,
            i.total_cents, i.paid_cents, i.created_at, i.receipt_emailed_at,
+           coalesce(i.closed_at > now() - interval '2 minutes', false) as just_closed,
            b.id as business_id, b.name as business, b.phone as business_phone, b.timezone,
            coalesce(nullif(concat_ws(', ', b.address_line, b.city, nullif(concat_ws(' ', b.state, b.zip), '')), ''),
                     b.mailing_address) as business_address,
@@ -98,6 +101,7 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
     paid: r.paid_cents,
     payments: payments.map((p) => ({ method: methodLabel(p.method), amount: p.amount_cents, tip: p.tip_cents, at: p.received_at, reference: p.reference })),
     emailedAt: r.receipt_emailed_at,
+    justClosed: r.just_closed,
   };
 }
 

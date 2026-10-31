@@ -57,6 +57,12 @@ await page.getByRole("button", { name: "$21.80 (20%)" }).click();
 await page.getByRole("button", { name: "Venmo" }).click();
 await page.getByRole("button", { name: "Charge $130.80" }).click();
 await page.getByText("Order finished · Paid in full. Thank you!").waitFor();
+// The email goes out right after the payment, without holding up the screen.
+await page.getByText(/(Emailed|Sending) to maria@example\.com/).waitFor();
+for (let i = 0; i < 20 && !(await page.getByText(/Emailed to maria@example\.com/).count()); i++) {
+  await page.waitForTimeout(500);
+  await page.reload();
+}
 await page.getByText(/Emailed to maria@example\.com/).waitFor();
 await shot("R01-order-receipt");
 const number = (await page.getByRole("heading", { name: /^Receipt #\d+$/ }).first().textContent()).replace(/\D/g, "");
