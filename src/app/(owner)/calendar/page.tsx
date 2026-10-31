@@ -115,7 +115,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
   return (
     <>
-      <PageHeader title="Calendar" action={
+      <PageHeader title="Calendar" back={choosing?.cancel} action={
         <span className="flex gap-2">
           {/* Quick switch back to the day on the map. */}
           <Link href={`/today?date=${date}${groomer ? `&groomer=${groomer}` : ""}`}
@@ -143,7 +143,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
               <span className="block font-bold text-brand-strong">{choosing.title}</span>
               <span className="text-muted">{view === "day" ? "Tap a free time to pick it." : "Open the Day view to pick a time."}</span>
             </p>
-            <Link href={choosing.cancel} className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-sm font-semibold">Cancel</Link>
+            <Link href={choosing.cancel} className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-sm font-semibold">← Back</Link>
           </div>
         )}
 

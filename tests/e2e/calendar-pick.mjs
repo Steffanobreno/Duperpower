@@ -82,19 +82,41 @@ await select.selectOption(await select.locator("option", { hasText: "Bath - Medi
 await page.getByRole("button", { name: "Book appointment" }).click();
 await page.waitForURL(/\?booked=1/);
 const apptUrl = page.url().split("?")[0];
+// Reschedule opens the planner in the visit: the week with dots, the day's visits and free times.
 await page.getByRole("link", { name: "Reschedule" }).first().click();
-await page.waitForURL(/pick=move/);
-await page.getByText("Moving Maria Lopez's visit (2h)").waitFor();
-await shot("C02-calendar-moving");
-await page.getByRole("button", { name: / · 2:00 PM: move to this hour/ }).click();
-await page.getByRole("link", { name: "Move to 2:30 PM" }).click();
+await page.waitForURL(/rs=/);
+const planner = page.locator("#reschedule");
+await planner.getByRole("link", { name: /visits?$/ }).first().waitFor();
+const chosen = planner.getByRole("region", { name: "Chosen day" });
+await chosen.getByText("This visit").waitFor();
+await shot("C02-reschedule-planner");
+// The next week (arrow), then back, then the whole month and back to the week.
+await planner.getByRole("link", { name: "Next week" }).click();
+await page.waitForURL((u) => u.searchParams.get("rs") === plus(day, 9));
+await planner.getByRole("link", { name: "Previous week" }).click();
+await page.waitForURL((u) => u.searchParams.get("rs") === plus(day, 2));
+await planner.getByRole("link", { name: "Show the whole month" }).click();
+await page.waitForURL(/rsm=1/);
+await planner.getByRole("link", { name: "Next month" }).waitFor();
+await planner.getByRole("link", { name: "Show one week" }).click();
+await page.waitForURL((u) => !u.href.includes("rsm=1"));
+await chosen.getByRole("link", { name: "2:30 PM", exact: true }).click();
 await page.waitForURL(/move=1/);
 await page.getByText(/Move to .* at 2:30 PM\?/).waitFor();
 await shot("C03-move-confirm");
 await page.getByRole("button", { name: "Move appointment" }).first().click();
 await page.waitForURL(apptUrl);
 await page.getByText("2:30 PM – 4:30 PM · 2h").waitFor();
-step("Reschedule opens the calendar; tapping 2:30 PM moves the visit there");
+step("Reschedule shows the week, the day's visits and free times; arrows and ▾ move around; tapping 2:30 PM moves the visit");
+
+// The full day calendar is still there, with a back arrow to the visit.
+await page.goto(`${apptUrl}?rs=${plus(day, 2)}`);
+await page.getByRole("link", { name: "Open the full day calendar ›" }).click();
+await page.waitForURL(/pick=move/);
+await page.getByText("Moving Maria Lopez's visit (2h)").waitFor();
+await page.getByRole("link", { name: "Back", exact: true }).click();
+await page.waitForURL(apptUrl);
+step("the full day calendar opens from the planner and its ← goes back to the visit");
 
 // Book again opens the calendar too, and the pick lands on the booking form.
 await page.goto(doneUrl);
@@ -109,6 +131,7 @@ step("Book again opens the calendar; tapping 9:15 AM opens the booking form at t
 // A finished visit's time can be corrected, without texting the client.
 await page.goto(doneUrl);
 await page.getByRole("link", { name: "Reschedule" }).first().click();
+await page.getByRole("link", { name: "Open the full day calendar ›" }).click();
 await page.getByRole("button", { name: / · 3:00 PM: move to this hour/ }).click();
 await page.getByRole("link", { name: "Move to 3:00 PM" }).click();
 await page.waitForURL(/move=1/);

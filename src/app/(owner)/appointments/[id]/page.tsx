@@ -18,6 +18,7 @@ import { assignGroomerAction, setStatusAction, rescheduleAction, startCheckoutAc
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { RescheduleForm } from "../reschedule-form";
+import { ReschedulePlanner } from "./reschedule-planner";
 import { PetPhoto } from "@/components/pet-photo";
 import { ConfirmButton } from "@/components/confirm-button";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
@@ -98,6 +99,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
   const day = ymd(appt.start_at, tz);
   // Moving and booking again open the calendar on that day, to see the schedule and tap a free time.
   const moveHref = `/calendar?view=day&date=${day}&pick=move&appt=${id}`;
+  // The planner inside the page (Reschedule section): ?rs=<day>, ?rsm=1 with the month open.
+  const planDay = isYmd(sp.rs) ? sp.rs : day;
+  const planHref = `/appointments/${id}?rs=${day}#reschedule`;
   const bookAgainHref = `/calendar?view=day&date=${nextDate}&pick=book&client=${c.id}`;
   const picked = sp.move === "1" && isYmd(sp.date) && typeof sp.time === "string" && /^\d{2}:\d{2}$/.test(sp.time)
     ? { date: sp.date, time: sp.time } : null;
@@ -114,7 +118,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               Move to {longDayLabel(zonedToUtc(picked.date, picked.time, tz), tz)} at {timeLabel(zonedToUtc(picked.date, picked.time, tz), tz)}?
             </p>
             <RescheduleForm action={rescheduleAction.bind(null, id)} date={picked.date} time={picked.time} notify={!finishedMove} primary />
-            <Link href={moveHref} className="block text-center text-sm font-semibold text-brand">Pick another time</Link>
+            <Link href={`/appointments/${id}?rs=${picked.date}#reschedule`} className="block text-center text-sm font-semibold text-brand">Pick another time</Link>
           </section>
         )}
         {sp.conflict === "1" && <Notice kind="error">Another appointment already uses that time.</Notice>}
@@ -167,7 +171,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
             <a href={`sms:${c.phone}&body=${encodeURIComponent(onMyWay)}`} className={pillar}><Van size={22} />On my way</a>
           )}
-          {canMove && <Link href={moveHref} className={pillar}><Calendar size={22} />Reschedule</Link>}
+          {canMove && <Link href={planHref} className={pillar}><Calendar size={22} />Reschedule</Link>}
           {canEditServices && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
           <Link href={bookAgainHref} className={pillar}>
             <Plus size={22} />Book again
@@ -196,7 +200,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
               <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}</p>
             </div>
-            {canMove && <Link href={moveHref} aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></Link>}
+            {canMove && <Link href={planHref} aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></Link>}
           </div>
           {(groomers.length > 1 || appt.staff_id !== staff.staffId) && groomer && (
             <div className="card space-y-2 px-4 py-3">
@@ -321,7 +325,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           <section className="scroll-mt-20 space-y-2" id="reschedule">
             <h2 className="section-label">Reschedule</h2>
             <Card className="space-y-3">
-              <Link href={moveHref} className="block rounded-xl bg-brand py-3 text-center font-bold text-white">📅 Pick a time on the calendar</Link>
+              <ReschedulePlanner staff={staff} day={planDay} monthOpen={sp.rsm === "1"}
+                appt={{ id, staff_id: appt.staff_id, start_at: appt.start_at, end_at: appt.end_at, client: c.first_name }} />
+              <Link href={moveHref} className="block text-center text-sm font-semibold text-brand">Open the full day calendar ›</Link>
               <details>
                 <summary className="cursor-pointer text-sm font-semibold text-muted">Or type the date and time</summary>
                 <div className="pt-3">
