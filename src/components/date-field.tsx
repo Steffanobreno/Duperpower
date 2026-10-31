@@ -107,9 +107,16 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
 }
 
 /** A month of days: swipe or arrows for the next/previous month, a list to jump years. */
-export function MonthPicker({ value, min, max, onPick }: { value: string; min?: string; max?: string; onPick: (d: string) => void }) {
+export function MonthPicker({ value, min, max, onPick, marked, start }: {
+  value: string; min?: string; max?: string; onPick: (d: string) => void;
+  /** More days shown as chosen (picking several days). */
+  marked?: string[];
+  /** The month to open on (yyyy-MM-dd), when nothing is chosen yet. */
+  start?: string;
+}) {
   const today = localToday();
-  const [month, setMonth] = useState((value || today).slice(0, 7));
+  const [month, setMonth] = useState((value || start || today).slice(0, 7));
+  const chosen = new Set(marked ?? []);
   const first = new Date(`${month}-01T12:00:00Z`);
   const lead = first.getUTCDay();
   const count = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
@@ -140,10 +147,10 @@ export function MonthPicker({ value, min, max, onPick }: { value: string; min?: 
         {days.map((d) => {
           const off = (!!min && d < min) || (!!max && d > max);
           return (
-            <button key={d} type="button" disabled={off} onClick={() => onPick(d)} aria-pressed={d === value}
+            <button key={d} type="button" disabled={off} onClick={() => onPick(d)} aria-pressed={d === value || chosen.has(d)}
               aria-label={fmt(d, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold disabled:opacity-30 ${
-                d === value ? "bg-brand text-white" : d === today ? "ring-2 ring-brand text-brand" : "hover:bg-brand-soft"}`}>
+                d === value || chosen.has(d) ? "bg-brand text-white" : d === today ? "ring-2 ring-brand text-brand" : "hover:bg-brand-soft"}`}>
               {Number(d.slice(8))}
             </button>
           );
