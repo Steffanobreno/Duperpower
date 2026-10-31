@@ -49,6 +49,7 @@ export const es: Messages = {
   "Somewhere else": "En otro lugar",
   "Type the new address": "Escribe la nueva dirección",
   "Street address": "Dirección",
+  "Apt, suite or unit (optional)": "Apto, suite o unidad (opcional)",
   City: "Ciudad",
   "ZIP code": "Código postal",
 

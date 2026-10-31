@@ -44,6 +44,7 @@ export const vi: Messages = {
   "Somewhere else": "Nơi khác",
   "Type the new address": "Nhập địa chỉ mới",
   "Street address": "Địa chỉ nhà",
+  "Apt, suite or unit (optional)": "Căn hộ, phòng hoặc số đơn vị (không bắt buộc)",
   City: "Thành phố",
   "ZIP code": "Mã ZIP",
 

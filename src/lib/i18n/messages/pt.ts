@@ -46,6 +46,7 @@ export const pt: Messages = {
   "Somewhere else": "Outro lugar",
   "Type the new address": "Digite o novo endereço",
   "Street address": "Endereço",
+  "Apt, suite or unit (optional)": "Apto, suíte ou unidade (opcional)",
   City: "Cidade",
   "ZIP code": "CEP (ZIP code)",
 

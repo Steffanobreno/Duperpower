@@ -2,16 +2,18 @@
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
-// The day's stops on a map: numbered pins in visit order, joined by a dashed line.
+// The day's stops on a map: numbered pins in visit order, joined by the road route when
+// Google gives it, else by a dashed straight line.
 // OpenStreetMap tiles through Leaflet: free, no key.
 
 export type MapStop = { id: string; n: number; lat: number; lng: number; name: string; time: string; done: boolean };
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-export function RouteMap({ stops }: { stops: MapStop[] }) {
+/** `path`: the road route from Google, drawn instead of straight dashes between the stops. */
+export function RouteMap({ stops, path }: { stops: MapStop[]; path?: [number, number][] }) {
   const box = useRef<HTMLDivElement>(null);
-  const key = JSON.stringify(stops);
+  const key = JSON.stringify(stops) + (path?.length ?? 0);
 
   useEffect(() => {
     let map: import("leaflet").Map | undefined;
@@ -26,7 +28,9 @@ export function RouteMap({ stops }: { stops: MapStop[] }) {
       }).addTo(map);
       map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
       const points = stops.map((s) => L.latLng(s.lat, s.lng));
-      if (points.length > 1) {
+      if (path && path.length > 1) {
+        L.polyline(path, { color: "#0a84cc", weight: 4, opacity: 0.85 }).addTo(map);
+      } else if (points.length > 1) {
         L.polyline(points, { color: "#0a84cc", weight: 3, dashArray: "8 8", opacity: 0.9 }).addTo(map);
       }
       for (const s of stops) {
@@ -41,8 +45,9 @@ export function RouteMap({ stops }: { stops: MapStop[] }) {
           .bindPopup(`<a href="/appointments/${s.id}" class="route-pop"><b>${s.n}. ${esc(s.name)}</b><br>${esc(s.time)}</a>`)
           .addTo(map);
       }
-      if (points.length === 1) map.setView(points[0], 13);
-      else map.fitBounds(L.latLngBounds(points), { padding: [36, 36] });
+      const all = path && path.length > 1 ? [...points, ...path.map(([a, b]) => L.latLng(a, b))] : points;
+      if (all.length === 1) map.setView(all[0], 13);
+      else map.fitBounds(L.latLngBounds(all), { padding: [36, 36] });
     })();
     return () => {
       cancelled = true;

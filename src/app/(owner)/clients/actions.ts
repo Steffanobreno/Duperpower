@@ -26,7 +26,8 @@ function readClient(form: FormData) {
       last_name: text(form, "last_name") ?? "",
       phone,
       email: text(form, "email"),
-      address_line: text(form, "address_line"),
+      // Street and apartment are saved as one line: "123 Main St, Apt 4".
+      address_line: [text(form, "address_line"), text(form, "address_unit")].filter(Boolean).join(", ") || null,
       city: text(form, "city"),
       state: text(form, "state") ?? "CA",
       zip: text(form, "zip"),

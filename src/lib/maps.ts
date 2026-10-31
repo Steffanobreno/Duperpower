@@ -108,35 +108,62 @@ export type Place = { address?: string | null; lat?: number | null; lng?: number
 const waypoint = (p: Place) =>
   p.lat != null && p.lng != null ? { location: { latLng: { latitude: p.lat, longitude: p.lng } } } : { address: p.address ?? "" };
 
+/** Google's encoded polyline → [lat, lng] points. */
+export function decodePolyline(encoded: string): [number, number][] {
+  const points: [number, number][] = [];
+  let i = 0, lat = 0, lng = 0;
+  while (i < encoded.length) {
+    for (const which of [0, 1]) {
+      let shift = 0, result = 0, b: number;
+      do {
+        b = encoded.charCodeAt(i++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20 && i < encoded.length);
+      const delta = result & 1 ? ~(result >> 1) : result >> 1;
+      if (which === 0) lat += delta;
+      else lng += delta;
+    }
+    points.push([lat / 1e5, lng / 1e5]);
+  }
+  return points;
+}
+
+export type DayRoute = { minutes: number[]; path: [number, number][] };
+
 /**
- * Driving minutes between consecutive places (Routes API, one request for the whole day),
- * or null without the key. Kept for a week, so reopening Today costs nothing.
+ * The day's route by road (Routes API, one request for the whole day): driving minutes
+ * between consecutive places and the road path to draw, or null without the key. Kept for a
+ * week, so reopening Today costs nothing.
  */
-export async function drivingMinutes(places: Place[]): Promise<number[] | null> {
+export async function dayRoute(places: Place[]): Promise<DayRoute | null> {
   const valid = places.filter((p) => (p.lat != null && p.lng != null) || p.address);
   if (!key() || valid.length < 2 || valid.length > 27) return null;
   const cacheKey = createHash("sha256").update(JSON.stringify(valid.map(waypoint))).digest("hex");
-  const [hit] = await sql<{ minutes: number[] }[]>`
-    select minutes from route_cache where key = ${cacheKey} and created_at > now() - interval '7 days'`;
-  if (hit) return hit.minutes;
-  const data = await call<{ routes?: { legs?: { duration?: string }[] }[] }>(
+  const [hit] = await sql<{ minutes: number[]; polyline: string | null }[]>`
+    select minutes, polyline from route_cache where key = ${cacheKey} and created_at > now() - interval '7 days'`;
+  if (hit?.polyline != null) return { minutes: hit.minutes, path: decodePolyline(hit.polyline) };
+  const data = await call<{ routes?: { legs?: { duration?: string }[]; polyline?: { encodedPolyline?: string } }[] }>(
     endpoint("routes.googleapis.com", "/directions/v2:computeRoutes"),
     {
       method: "POST",
-      fieldMask: "routes.legs.duration",
+      fieldMask: "routes.legs.duration,routes.polyline.encodedPolyline",
       body: JSON.stringify({
         origin: waypoint(valid[0]),
         destination: waypoint(valid.at(-1)!),
         intermediates: valid.slice(1, -1).map(waypoint),
         travelMode: "DRIVE",
         routingPreference: "TRAFFIC_UNAWARE",
+        polylineQuality: "OVERVIEW",
       }),
     },
   );
-  const legs = data?.routes?.[0]?.legs;
+  const route = data?.routes?.[0];
+  const legs = route?.legs;
   if (!legs || legs.length !== valid.length - 1) return null;
   const minutes = legs.map((l) => Math.round(Number(String(l.duration ?? "0s").replace("s", "")) / 60));
-  await sql`insert into route_cache (key, minutes) values (${cacheKey}, ${minutes})
-            on conflict (key) do update set minutes = excluded.minutes, created_at = now()`;
-  return minutes;
+  const polyline = route.polyline?.encodedPolyline ?? "";
+  await sql`insert into route_cache (key, minutes, polyline) values (${cacheKey}, ${minutes}, ${polyline})
+            on conflict (key) do update set minutes = excluded.minutes, polyline = excluded.polyline, created_at = now()`;
+  return { minutes, path: decodePolyline(polyline) };
 }

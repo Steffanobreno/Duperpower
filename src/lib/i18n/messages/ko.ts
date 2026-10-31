@@ -44,6 +44,7 @@ export const ko: Messages = {
   "Somewhere else": "다른 곳",
   "Type the new address": "새 주소를 입력하세요",
   "Street address": "도로명 주소",
+  "Apt, suite or unit (optional)": "아파트 호수, 스위트 또는 유닛 (선택)",
   City: "도시",
   "ZIP code": "우편번호",
 

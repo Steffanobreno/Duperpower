@@ -44,6 +44,7 @@ export const tl: Messages = {
   "Somewhere else": "Ibang lugar",
   "Type the new address": "I-type ang bagong address",
   "Street address": "Street address",
+  "Apt, suite or unit (optional)": "Apt, suite o unit (opsyonal)",
   City: "Lungsod",
   "ZIP code": "ZIP code",
 

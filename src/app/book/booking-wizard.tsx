@@ -96,7 +96,9 @@ export function BookingWizard({
   const [pets, setPets] = useState<Pet[]>([]);
   const [draft, setDraft] = useState<Pet>(blankPet);
   const [useFileAddress, setUseFileAddress] = useState(true);
-  const [address, setAddress] = useState({ address: "", city: "", zip: "" });
+  const [address, setAddress] = useState({ address: "", unit: "", city: "", zip: "" });
+  // The street with the apartment or unit, as saved on the visit and the client.
+  const street = address.unit.trim() ? `${address.address.trim()}, ${address.unit.trim()}` : address.address.trim();
   const [contact, setContact] = useState({ firstName: "", lastName: "", email: "", notes: "", website: "" });
   const [days, setDays] = useState<DaySlots[]>([]);
   const [day, setDay] = useState<string | null>(null);
@@ -165,7 +167,7 @@ export function BookingWizard({
 
   const afterAddress = () => {
     void trackDraftAction(fileAddress ? { phone, step: "address" }
-      : { phone, step: "address", zip: address.zip, addressLine: address.address, city: address.city });
+      : { phone, step: "address", zip: address.zip, addressLine: street, city: address.city });
     if (pets.length === 0) {
       setDraft(blankPet());
       go({ name: "newpet" });
@@ -210,6 +212,7 @@ export function BookingWizard({
         start,
         useFileAddress: fileAddress,
         ...address,
+        address: street,
         ...contact,
         smsConsent: consent,
         agreed: !!signed,
@@ -344,7 +347,12 @@ export function BookingWizard({
                 <span className={labelClass}>{t("Street address")}</span>
                 <AddressAutocomplete aria-label={t("Street address")} autoComplete="street-address" placeholder="123 Main St" className={inputClass}
                   value={address.address} onChange={(v) => setAddress((a) => ({ ...a, address: v }))}
-                  onPick={(a) => setAddress({ address: a.street, city: a.city, zip: a.zip.slice(0, 5) })} />
+                  onPick={(a) => setAddress((x) => ({ ...x, address: a.street, city: a.city, zip: a.zip.slice(0, 5) }))} />
+              </label>
+              <label className="block">
+                <span className={labelClass}>{t("Apt, suite or unit (optional)")}</span>
+                <input aria-label={t("Apt, suite or unit (optional)")} autoComplete="address-line2" placeholder="Apt 4B" className={inputClass}
+                  value={address.unit} onChange={(e) => setAddress({ ...address, unit: e.target.value.slice(0, 40) })} />
               </label>
               <div className="grid grid-cols-[1fr_8rem] gap-3">
                 <label className="block">
@@ -580,7 +588,7 @@ export function BookingWizard({
           {sheet === "time" && selected && picked && (
             <Sheet title={`${timeOf(picked.value)}, ${dayOf(selected.date, true)}`} sub={inDays(t, today, selected.date)} onClose={() => setSheet(null)}>
               <Summary
-                place={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${address.address}, ${address.city}, CA ${address.zip}`}
+                place={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${street}, ${address.city}, CA ${address.zip}`}
                 pets={chosen.map((p) => ({ name: p.name, services: serviceIdsOf(p).map((id) => byId.get(id)?.name ?? "") }))}
                 total={total}
               />
@@ -600,7 +608,7 @@ export function BookingWizard({
             <InfoRow label={t("Phone")} value={phone} />
             {!known && contact.email && <InfoRow label={t("Email")} value={contact.email} />}
             <InfoRow label={t("Address")}
-              value={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${address.address}, ${address.city}, CA ${address.zip}`} />
+              value={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${street}, ${address.city}, CA ${address.zip}`} />
             <InfoRow label={t("When")}
               value={day && start ? t("{date} at {time}", { date: dayOf(day, true), time: timeOf(start) }) : ""} />
             <div className="px-4 py-3">

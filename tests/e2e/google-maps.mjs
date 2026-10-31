@@ -42,10 +42,21 @@ await client.waitForFunction(() => document.querySelector('input[aria-label="ZIP
 if ((await client.getByLabel("Street address").inputValue()) !== "1 Main St") fail("street not filled");
 if ((await client.getByLabel("City").inputValue()) !== "San Mateo") fail("city not filled");
 if (SHOTS) await client.screenshot({ path: `${SHOTS}/M01-address-suggestions.png` });
+await client.getByLabel("Apt, suite or unit (optional)").fill("Apt 4B");
 if (!(await button("Continue").isEnabled())) fail("Continue should be enabled after picking an address");
 await button("Continue").click();
 await client.getByLabel("Breed").waitFor();
-step("booking page: “1 Main” suggests addresses; picking one fills street, city and ZIP");
+{
+  const dbx = postgres(process.env.DATABASE_URL);
+  let draft;
+  for (let i = 0; i < 25 && !draft?.address_line?.includes("Apt"); i++) {
+    [draft] = await dbx`select address_line from booking_drafts order by updated_at desc limit 1`;
+    if (!draft?.address_line?.includes("Apt")) await client.waitForTimeout(200);
+  }
+  await dbx.end();
+  if (draft?.address_line !== "1 Main St, Apt 4B") fail(`the unit should be saved with the street: ${draft?.address_line}`);
+}
+step("booking page: “1 Main” suggests addresses; picking one fills street, city and ZIP; the apartment is kept");
 
 // The owner's new client form.
 const owner = await newPage();
@@ -60,7 +71,14 @@ await owner.getByRole("option", { name: /1 Main St San Mateo/ }).click();
 await owner.waitForFunction(() => document.querySelector('input[name="zip"]')?.value === "94401");
 if ((await owner.locator('input[name="city"]').inputValue()) !== "San Mateo") fail("owner form city not filled");
 if ((await owner.locator('input[name="state"]').inputValue()) !== "CA") fail("owner form state not filled");
-step("client form: the same suggestions fill street, city, state and ZIP");
+await owner.getByLabel("Apt, suite or unit (optional)").fill("Apt 2");
+await owner.locator('input[name="first_name"]').fill("Nina");
+await owner.locator('input[name="phone"]').fill("650-555-0177");
+await owner.getByRole("button", { name: "Save and add a pet" }).click();
+await owner.waitForURL(/\/pets\/new/);
+await owner.goto(owner.url().replace(/\/pets\/new.*/, ""));
+await owner.getByText("1 Main St, Apt 2").first().waitFor();
+step("client form: the same suggestions fill street, city, state and ZIP; the apartment is saved with the street");
 
 // Today: driving times from home to the visit and back (the fake answers 10, then 20 min).
 await owner.goto(`${BASE}/settings/team`);
@@ -74,8 +92,11 @@ await owner.getByText("Driving", { exact: true }).waitFor();
 await owner.getByText("🚐 10min drive from the start").waitFor();
 await owner.getByText("🚐 20min drive back to the end of the day").waitFor();
 await owner.getByText("30min", { exact: true }).waitFor();
+// The road path (solid line), not the dashed straight line.
+await owner.locator("path.leaflet-interactive:not([stroke-dasharray])").first().waitFor();
+if (await owner.locator("path.leaflet-interactive[stroke-dasharray]").count()) fail("the dashed straight line should be replaced by the road path");
 if (SHOTS) await owner.screenshot({ path: `${SHOTS}/M02-today-driving.png`, fullPage: true });
-step("Today: 10 min from home, 20 min back, 30 min driving in total");
+step("Today: 10 min from home, 20 min back, 30 min driving in total; the map draws the road path");
 
 await browser.close();
 if (errors.length) {

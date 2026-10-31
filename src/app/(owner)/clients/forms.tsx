@@ -27,15 +27,18 @@ export type ClientValues = {
 /** Street (with Google suggestions when set up), city, state and ZIP, filled together when a suggestion is picked. */
 function AddressFields({ initial }: { initial?: ClientValues }) {
   const [a, setA] = useState({
-    street: initial?.address_line ?? "", city: initial?.city ?? "", state: initial?.state ?? "CA", zip: initial?.zip ?? "",
+    street: initial?.address_line ?? "", unit: "", city: initial?.city ?? "", state: initial?.state ?? "CA", zip: initial?.zip ?? "",
   });
   const input = "block w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink placeholder:text-muted focus:border-brand focus:outline-none";
   return (
     <>
       <Field label="Street address">
-        <AddressAutocomplete name="address_line" autoComplete="off" placeholder="123 Main St, Apt 4" className={input}
+        <AddressAutocomplete name="address_line" autoComplete="off" placeholder="123 Main St" className={input}
           value={a.street} onChange={(street) => setA((x) => ({ ...x, street }))}
-          onPick={(p) => setA({ street: p.street, city: p.city, state: p.state || "CA", zip: p.zip })} />
+          onPick={(p) => setA((x) => ({ ...x, street: p.street, city: p.city, state: p.state || "CA", zip: p.zip }))} />
+      </Field>
+      <Field label="Apt, suite or unit (optional)">
+        <Input name="address_unit" value={a.unit} onChange={(e) => setA({ ...a, unit: e.target.value.slice(0, 40) })} placeholder="Apt 4B" autoComplete="off" />
       </Field>
       <div className="grid grid-cols-[1fr_5rem_6rem] gap-3">
         <Field label="City">

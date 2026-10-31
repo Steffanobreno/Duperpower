@@ -44,6 +44,7 @@ export const zh: Messages = {
   "Somewhere else": "其他地址",
   "Type the new address": "输入新地址",
   "Street address": "街道地址",
+  "Apt, suite or unit (optional)": "公寓、套房或单元号（选填）",
   City: "城市",
   "ZIP code": "邮编",
 

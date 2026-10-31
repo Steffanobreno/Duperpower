@@ -10,7 +10,7 @@ import { DayNav } from "@/components/day-nav";
 import { Chat, Phone, Pin } from "@/components/icons";
 import { RouteMap } from "@/components/route-map";
 import { locateStops } from "@/lib/geocode";
-import { drivingMinutes } from "@/lib/maps";
+import { dayRoute } from "@/lib/maps";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
@@ -68,11 +68,12 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   );
   // Driving minutes from Google (only with its key): from the day's start to stop 1, between
   // stops, and from the last stop to the day's end.
-  const legs = stops.length === 0 ? null : await drivingMinutes([
+  const road = stops.length === 0 ? null : await dayRoute([
     ...(ends?.start_address ? [{ address: ends.start_address }] : []),
     ...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })),
     ...(ends?.end_address ? [{ address: ends.end_address }] : []),
   ]);
+  const legs = road?.minutes ?? null;
   const driveTo = (i: number) => (legs ? legs[i + (ends?.start_address ? 1 : 0) - 1] ?? null : null);
   const driving = legs?.reduce((a, b) => a + b, 0) ?? null;
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
@@ -124,7 +125,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               {driving != null && <Stat label="Driving" value={minutesLabel(driving)} />}
             </div>
 
-            {pins.length > 0 && <RouteMap stops={pins} />}
+            {pins.length > 0 && <RouteMap stops={pins} path={road?.path} />}
             {pins.length < stops.length && (
               <p className="-mt-2 text-center text-xs text-muted">
                 {stops.length - pins.length} stop{stops.length - pins.length > 1 ? "s" : ""} not on the map (address not found).
