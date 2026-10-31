@@ -84,9 +84,10 @@ self.addEventListener("fetch", (event) => {
   if (!OWNER.test(url.pathname) || (req.mode !== "navigate" && !warm)) return;
 
   event.respondWith((async () => {
-    const network = fetch(req).then(async (res) => {
+    // The page shows as it arrives; the copy is saved alongside, without holding it up.
+    const network = fetch(req).then((res) => {
       if (res.ok && (res.headers.get("content-type") || "").includes("text/html") && !res.redirected) {
-        await keep(req, res.clone());
+        event.waitUntil(keep(req, res.clone()).catch(() => null));
       }
       return res;
     });
