@@ -155,7 +155,10 @@ export async function setStatusAction(appointmentId: string, status: string) {
       update appointments set status = ${status},
         confirmed_at = case when ${status} = 'confirmed' then now() else confirmed_at end,
         cancelled_at = case when ${status} in ('cancelled', 'no_show') then now() else null end,
-        checked_in_at = case when ${status} = 'in_progress' then coalesce(checked_in_at, now()) else checked_in_at end,
+        -- Finished without a check-in: it started at the booked time (or now, if that's still ahead).
+        checked_in_at = case when ${status} = 'in_progress' then coalesce(checked_in_at, now())
+                             when ${status} = 'completed' then coalesce(checked_in_at, least(start_at, now()))
+                             else checked_in_at end,
         checked_out_at = case when ${status} = 'completed' then coalesce(checked_out_at, now())
                               when ${status} = 'in_progress' then null else checked_out_at end
       where id = ${appointmentId} and business_id = ${staff.businessId}`;

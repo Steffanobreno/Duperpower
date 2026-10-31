@@ -358,11 +358,21 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto max-w-3xl">
             {primary ? (
-              <form action={setStatusAction.bind(null, id, primary.to)}>
-                <button type="submit" className={`w-full rounded-2xl py-3.5 text-base font-bold text-white ${primary.to === "in_progress" ? "bg-success" : "bg-brand"}`}>
-                  {primary.label}
-                </button>
-              </form>
+              <div className="flex gap-2">
+                <form action={setStatusAction.bind(null, id, primary.to)} className="flex-1">
+                  <button type="submit" className={`w-full rounded-2xl py-3.5 text-base font-bold text-white ${primary.to === "in_progress" ? "bg-success" : "bg-brand"}`}>
+                    {primary.label}
+                  </button>
+                </form>
+                {/* Forgot "on the way" or the check-in: finish the order straight away. */}
+                {NEXT_STATUS[appt.status]?.includes("completed") && primary.to !== "completed" && (
+                  <form action={setStatusAction.bind(null, id, "completed")}>
+                    <button type="submit" className="h-full rounded-2xl border-2 border-danger px-4 text-sm font-bold text-danger">
+                      Finish order
+                    </button>
+                  </form>
+                )}
+              </div>
             ) : paid ? (
               <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-success py-3.5 text-center text-base font-bold text-white">
                 Order finished · See receipt
@@ -394,6 +404,9 @@ const TAKES_OFF: Record<string, string> = {
 const MENU_NAME: Record<string, string> = {
   "unconfirmed>confirmed": "Client confirmed",
   "confirmed>unconfirmed": "Client hasn't confirmed",
+  "unconfirmed>completed": "Finish order (skip the steps)",
+  "confirmed>completed": "Finish order (skip the steps)",
+  "en_route>completed": "Finish order (skip check-in)",
 };
 
 // Names in the status menu, as the groomer says them.
