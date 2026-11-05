@@ -57,6 +57,7 @@ await page.locator('input[name="password"]').fill("a brand new password");
 await page.getByLabel("New password again").fill("a brand new password");
 await page.getByRole("button", { name: "Change password" }).click();
 await page.getByText("Your current password is not right.").waitFor();
+await page.getByRole("button", { name: "OK" }).click();
 await page.getByLabel("Current password").fill("correct horse battery");
 await page.getByRole("button", { name: "Change password" }).click();
 await page.getByText(/Password changed/).waitFor();
