@@ -35,6 +35,7 @@ await owner.getByLabel(/ZIP codes or cities/).fill("Palo Alto, 94305, Atlantis")
 for (const d of ["Mon", "Wed", "Fri", "Sat"]) await owner.getByText(d, { exact: true }).click();
 await owner.getByRole("button", { name: "Save area" }).click();
 await owner.getByText("Not found in California: Atlantis.").waitFor();
+await owner.getByRole("button", { name: "OK" }).click();
 await owner.getByLabel(/ZIP codes or cities/).fill("Palo Alto, 94305");
 await owner.getByRole("button", { name: "Save area" }).click();
 await owner.waitForURL(/\/settings\/areas$/);
