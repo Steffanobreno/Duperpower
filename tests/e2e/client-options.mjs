@@ -42,6 +42,7 @@ await page.getByRole("button", { name: "Rename Loves treats" }).waitFor();
 await page.getByLabel("New item").fill("VIP");
 await page.getByRole("button", { name: "Add", exact: true }).click();
 await page.getByText("“VIP” is already on the list.").waitFor();
+await page.getByRole("button", { name: "OK" }).click();
 await page.getByRole("button", { name: "Rename Loves treats" }).click();
 await page.getByLabel("New name for Loves treats").fill("Treat lover");
 await page.getByRole("button", { name: "Save", exact: true }).click();
