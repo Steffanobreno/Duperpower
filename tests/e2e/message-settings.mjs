@@ -44,7 +44,7 @@ const template = (title) => page.locator("details", { has: page.locator("summary
 await template("Booking confirmation").locator("summary").click();
 await template("Booking confirmation").getByLabel("Text (SMS)").uncheck();
 await template("Booking confirmation").getByRole("button", { name: "Save" }).click();
-await template("Booking confirmation").getByText("Saved.").waitFor();
+await page.getByRole("status").getByText("Saved.").first().waitFor(); // the confirmation window
 // 2nd reminder: on, 1 day before.
 const second = template("2nd reminder");
 await second.locator("summary").getByText("Off").waitFor();
@@ -52,7 +52,7 @@ await second.locator("summary").click();
 await second.getByLabel("Send this message").check();
 await second.getByLabel("Days before the visit").fill("1");
 await second.getByRole("button", { name: "Save" }).click();
-await second.getByText("Saved.").waitFor();
+await page.getByRole("status").getByText("Saved.").last().waitFor();
 await page.reload();
 await template("Booking confirmation").locator("summary").getByText("Email").waitFor();
 if (await template("Booking confirmation").locator("summary").getByText("SMS").count()) fail("SMS should be off");
