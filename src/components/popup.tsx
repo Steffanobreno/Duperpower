@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 // Messages as a window over the screen (instead of a line somewhere on the page):
@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 //   form again with override=on, or close it to change something;
 // - a confirmation ("Saved."): a small window that closes by itself.
 
+const noop = () => () => {};
 const ICON = { error: "⛔", warn: "⚠️", success: "✅" } as const;
 
 export function Popup({ kind, title, children, onClose, actions, autoClose }: {
@@ -15,6 +16,7 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
   actions?: ReactNode; autoClose?: number;
 }) {
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const mounted = useSyncExternalStore(noop, () => true, () => false);
   useEffect(() => {
     closeBtn.current?.focus();
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -25,7 +27,8 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
       if (t) clearTimeout(t);
     };
   }, [onClose, autoClose]);
-  if (typeof document === "undefined") return null;
+  // Drawn only once the page is running in the browser (not in the HTML from the server).
+  if (!mounted) return null;
   // A confirmation doesn't stop anything: a small window at the top that goes away by itself.
   if (kind === "success" && !actions) {
     return createPortal(
