@@ -1,9 +1,10 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
-import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { SIZES } from "@/lib/format";
 import { BreedOptions } from "@/components/breed-options";
 import type { FormState } from "./actions";
@@ -98,7 +99,7 @@ export function ClientForm({ action, initial, submitLabel, options }: {
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name">
           <Input name="first_name" defaultValue={initial?.first_name} required autoComplete="off" />
@@ -163,7 +164,7 @@ export function PetForm({
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <div className="grid grid-cols-2 gap-3">
         <Field label="Pet name">
           <Input name="name" defaultValue={initial?.name} required autoComplete="off" />

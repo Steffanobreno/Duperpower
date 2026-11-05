@@ -1,4 +1,5 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Notice } from "@/components/ui";
@@ -10,7 +11,7 @@ export function ImportForm() {
   return (
     <div className="space-y-4">
       <ActionForm action={action} className="space-y-4">
-        {state?.error && <Notice kind="error">{state.error}</Notice>}
+        <FormPopup state={state} />
         <label className="block space-y-1">
           <span className="text-sm font-medium">Client export (.csv)</span>
           <input type="file" name="file" accept=".csv,text/csv" required className="block w-full text-sm" />

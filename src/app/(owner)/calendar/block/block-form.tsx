@@ -1,8 +1,9 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Card, Field, Input, Notice, Select, Textarea } from "@/components/ui";
+import { Button, Card, Field, Input, Select, Textarea } from "@/components/ui";
 import type { FormState } from "../../appointments/actions";
 
 // Blocked time: a date, a start and an end (or all day), a description,
@@ -20,7 +21,7 @@ export function BlockForm({ action, initial, isNew, groomers = [], defaultGroome
   const [repeat, setRepeat] = useState("0");
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <Card className="space-y-3">
         {isNew && groomers.length > 1 && (
           <div>

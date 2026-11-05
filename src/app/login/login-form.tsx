@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { ActionForm } from "@/components/action-form";
 import { useActionState } from "react";
-import { Button, Field, Input, Notice } from "@/components/ui";
+import { Button, Field, Input } from "@/components/ui";
 import { loginAction, setupAction } from "./actions";
 
 export function LoginForm({ mode }: { mode: "login" | "setup" }) {
@@ -9,7 +10,7 @@ export function LoginForm({ mode }: { mode: "login" | "setup" }) {
   return (
     // Just logged in with the password: the app lock doesn't ask for the PIN right away.
     <ActionForm action={(f) => { try { sessionStorage.setItem("woofers:unlocked-at", String(Date.now())); } catch {} action(f); }} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <Field label="Email">
         <Input name="email" type="email" autoComplete="email" required />
       </Field>

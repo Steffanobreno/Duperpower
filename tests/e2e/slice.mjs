@@ -97,7 +97,8 @@ const sel2 = page.locator('select[name^="svc:"]');
 await sel2.selectOption(await sel2.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));
 await page.getByRole("button", { name: "Book appointment" }).click();
 await page.getByText("This overlaps Maria's visit at 10:00 AM.").waitFor();
-await page.getByLabel("Book anyway").waitFor();
+await page.getByRole("button", { name: "Book anyway" }).waitFor();
+await page.getByRole("button", { name: "Change it" }).click();
 step("overlapping booking warns (the owner may book it anyway)");
 
 await page.goto(`${BASE}/today?date=${date}`);

@@ -1,7 +1,7 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Notice } from "@/components/ui";
 import { ArrowLeft, ChevronRight } from "@/components/icons";
 import { money } from "@/lib/format";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
@@ -48,7 +48,7 @@ export function PaymentForm({
 
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <input type="hidden" name="method" value={method} />
       <input type="hidden" name="tip" value={(tipCents / 100).toFixed(2)} />
 

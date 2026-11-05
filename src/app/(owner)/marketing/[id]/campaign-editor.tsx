@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Card, Field, Input, Notice, Textarea } from "@/components/ui";
+import { Button, Card, Field, Input, Textarea } from "@/components/ui";
 import { marketingEmailHtml, type MarketingVars } from "@/lib/marketing-email";
 import type { CampaignState } from "../actions";
 
@@ -30,8 +31,7 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
   });
   return (
     <ActionForm action={action} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
-      {state?.saved && <Notice kind="success">Saved.</Notice>}
+      <FormPopup state={state} savedText="Saved." />
       <Card className="space-y-3">
         <Field label="Campaign name" hint="Only you see this.">
           <Input name="name" value={c.name} onChange={set("name")} />

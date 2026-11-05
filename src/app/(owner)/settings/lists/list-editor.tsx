@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Input, Notice } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import type { FormState } from "../actions";
 
 type Action = (state: FormState, form: FormData) => Promise<FormState>;
@@ -17,7 +18,7 @@ export function AddOption({ action, placeholder }: { action: Action; placeholder
   }, undefined);
   return (
     <ActionForm action={formAction} className="space-y-2" key={added}>
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <div className="flex gap-2">
         <Input name="label" placeholder={placeholder} required maxLength={60} aria-label="New item" className="flex-1" />
         <Button type="submit" disabled={pending}>{pending ? "Adding…" : "Add"}</Button>
@@ -41,7 +42,7 @@ export function OptionRow({ label, rename, move, remove, first, last }: {
   if (editing) {
     return (
       <li className="space-y-2 px-4 py-3">
-        {state?.error && <Notice kind="error">{state.error}</Notice>}
+        <FormPopup state={state} />
         <ActionForm action={formAction} className="flex gap-2">
           <Input name="label" defaultValue={label} required maxLength={60} aria-label={`New name for ${label}`} className="flex-1" autoFocus />
           <Button type="submit" disabled={pending}>Save</Button>

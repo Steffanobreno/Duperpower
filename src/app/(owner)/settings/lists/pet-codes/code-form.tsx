@@ -1,4 +1,5 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Notice } from "@/components/ui";
@@ -29,7 +30,7 @@ export function PetCodeForm({ action, initial, submitLabel, onDone }: {
   }, undefined);
   return (
     <ActionForm action={formAction} className="space-y-3">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       {state?.saved && !initial && <Notice kind="success">Code added.</Notice>}
       <div className="grid grid-cols-[1fr_auto] items-end gap-3">
         <Field label="Code (up to 8 letters)">

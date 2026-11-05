@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { SIZES, WEEKDAYS } from "@/lib/format";
 import type { FormState } from "./actions";
 
@@ -24,7 +25,7 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <Field label="Name">
         <Input name="name" defaultValue={initial?.name} required />
       </Field>
@@ -95,8 +96,7 @@ export function HoursForm({ action, hours }: { action: Action; hours: { weekday:
   const order = [1, 2, 3, 4, 5, 6, 0];
   return (
     <ActionForm action={formAction} className="space-y-3">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
-      {state?.saved && <Notice kind="success">Working hours saved.</Notice>}
+      <FormPopup state={state} savedText="Working hours saved." />
       {order.map((d) => {
         const h = byDay.get(d);
         return (
@@ -139,8 +139,7 @@ export function SimpleForm({
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
-      {state?.saved && <Notice kind="success">{savedLabel}</Notice>}
+      <FormPopup state={state} savedText={savedLabel} />
       {children}
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Saving…" : submitLabel}

@@ -1,4 +1,5 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Notice } from "@/components/ui";
@@ -8,7 +9,7 @@ export function TestTextForm({ defaultPhone }: { defaultPhone: string }) {
   const [state, action, pending] = useActionState(queueTestTextAction, undefined);
   return (
     <ActionForm action={action} className="space-y-2">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       {state?.saved && (
         <Notice kind="success">
           Test text is waiting. Open Shortcuts on the iPhone and run the automation (▶︎): it goes out in a few seconds.

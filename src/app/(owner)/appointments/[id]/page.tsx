@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Toast } from "@/components/toast";
 import { clientTagsFor, petCodesFor } from "@/lib/data/options";
 import { PetCodeChips, TagChips } from "@/components/chips";
 import { notFound } from "next/navigation";
@@ -116,7 +117,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
     <>
       <PageHeader title="Appointment" back={`/today?date=${ymd(appt.start_at, tz)}`} />
       <Page>
-        {sp.booked === "1" && <Notice kind="success">Appointment booked.</Notice>}
+        {sp.booked === "1" && <Toast>Appointment booked.</Toast>}
         {picked && canMove && (
           <section className="card space-y-3 border-2 border-brand p-4" aria-label="Move this visit">
             <p className="font-bold">

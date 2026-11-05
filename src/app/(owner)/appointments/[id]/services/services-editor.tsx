@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Notice } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { Close, Plus } from "@/components/icons";
 import { minutesLabel, money } from "@/lib/format";
 import { saveServicesAction, type VisitPet } from "../../actions";
@@ -184,8 +185,7 @@ export function ServicesEditor({
         <p className="flex justify-between"><span className="text-muted">Visit</span><span className="font-semibold">{time(start)} – {time(end)}</span></p>
         <p className="flex justify-between text-lg font-bold"><span>Total</span><span>{money(total)}</span></p>
       </div>
-      {result?.error && <Notice kind="error">{result.error}</Notice>}
-      {result?.warning && <Notice kind="warn">{result.warning}</Notice>}
+      <FormPopup state={result} />
       <Button className="w-full py-3.5 text-base" disabled={pending || state.some((p) => p.lines.length === 0)} onClick={save}>
         {pending ? "Saving…" : state.some((p) => p.lines.length === 0) ? "Pick a service for each pet" : "Save changes"}
       </Button>

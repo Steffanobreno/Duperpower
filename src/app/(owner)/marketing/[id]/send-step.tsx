@@ -1,4 +1,5 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -28,13 +29,13 @@ export function SendStep({ count, ownerEmail, today, sendTest, sendNow, schedule
           <Input name="to" type="email" defaultValue={ownerEmail} placeholder="you@gmail.com" aria-label="Test email" className="flex-1" />
           <Button type="submit" kind="secondary" disabled={testing}>{testing ? "Sending…" : "Send test"}</Button>
         </ActionForm>
-        {test?.error && <Notice kind="error">{test.error}</Notice>}
+        <FormPopup state={test} />
         {test?.sent && <Notice kind="success">Sent to {test.sent}. Check how it looks on your phone.</Notice>}
       </Card>
 
       <Card className="space-y-3">
         <h2 className="font-bold">2. Send it to {count} client{count === 1 ? "" : "s"}</h2>
-        {now?.error && <Notice kind="error">{now.error}</Notice>}
+        <FormPopup state={now} />
         {!sure ? (
           <Button type="button" className="w-full py-3.5 text-base" onClick={() => setSure(true)}>Send now</Button>
         ) : (
@@ -50,7 +51,7 @@ export function SendStep({ count, ownerEmail, today, sendTest, sendNow, schedule
 
       <Card className="space-y-3">
         <h2 className="font-bold">Or schedule it</h2>
-        {later?.error && <Notice kind="error">{later.error}</Notice>}
+        <FormPopup state={later} />
         <ActionForm action={laterAction} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Day"><DateField name="date" min={today} defaultValue={today} required /></Field>

@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Field, Input, Notice, Select } from "@/components/ui";
+import { Button, Field, Input, Select } from "@/components/ui";
 import { money } from "@/lib/format";
 import type { FormState } from "../../../actions";
 
@@ -16,7 +17,7 @@ export function PetPriceForm({ action, petName, options }: {
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-3">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <Field label="Service">
         <Select name="service_id" required defaultValue="">
           <option value="" disabled>Choose a service</option>

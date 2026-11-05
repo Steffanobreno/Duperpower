@@ -1,8 +1,9 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Input, Notice } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import { deleteClockEntryAction, saveClockEntryAction, type TeamState } from "../actions";
 
 const label = (t: string) => {
@@ -36,7 +37,7 @@ export function ClockRow({ id, name, date, inT, outT }: { id: string; name: stri
   return (
     <li className="space-y-2 px-4 py-3">
       <p className="font-semibold">{name}</p>
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <ActionForm action={action} className="space-y-2">
         <div className="grid grid-cols-3 gap-2">
           <DateField name="date" defaultValue={date} label="Day" />

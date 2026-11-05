@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Field, Input, Notice, Textarea } from "@/components/ui";
+import { Button, Field, Input, Textarea } from "@/components/ui";
 import type { FormState } from "../actions";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -15,7 +16,7 @@ export function AreaForm({ action, initial }: {
   const [color, setColor] = useState(initial?.color ?? AREA_COLORS[0]);
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} />
       <Field label="Area name"><Input name="name" defaultValue={initial?.name} required placeholder="Peninsula" maxLength={60} /></Field>
       <Field label="ZIP codes or cities" hint="Separate with commas. A city name adds all its ZIP codes.">
         <Textarea name="places" rows={4} defaultValue={initial?.places} placeholder="San Mateo, Burlingame, 94010, 94401" required />

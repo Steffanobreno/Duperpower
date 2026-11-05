@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Toast } from "@/components/toast";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { listDay, listRange } from "@/lib/data/appointments";
@@ -214,7 +215,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </div>
         )}
 
-        {sp.reordered === "1" && <Notice kind="success">The visits are in the new order, with their new times.</Notice>}
+        {sp.reordered === "1" && <Toast>The visits are in the new order, with their new times.</Toast>}
         {canOptimize && sp.optimize !== "1" && (
           <Link href={q({ optimize: "1" })}
             className="flex items-center justify-center gap-2 rounded-full border border-[#d4af37] bg-surface py-2 text-sm font-bold text-brand">

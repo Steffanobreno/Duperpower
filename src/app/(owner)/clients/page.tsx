@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Toast } from "@/components/toast";
 import { requireStaff } from "@/lib/auth";
 import { clientCounts, fullAddress, fullName, listClients } from "@/lib/data/clients";
 import { phoneLabel } from "@/lib/format";
 import { clientTagsFor, optionLabels } from "@/lib/data/options";
 import { TagChips } from "@/components/chips";
-import { ButtonLink, Empty, Notice, Page, PageHeader } from "@/components/ui";
+import { ButtonLink, Empty, Page, PageHeader } from "@/components/ui";
 import { ClientFinder } from "@/components/client-finder";
 
 export const metadata: Metadata = { title: "Clients" };
@@ -43,7 +44,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
           </Link>
         </p>
         {inactive && <p className="px-1 text-sm font-semibold">Inactive clients</p>}
-        {sp.removed && <Notice kind="success">Client removed.</Notice>}
+        {sp.removed && <Toast>Client removed.</Toast>}
         {clients.length === 0 ? (
           <Empty title={q || tag ? "No client matches that search" : inactive ? "No inactive clients" : "No clients yet"}>
             {q ? "Try part of the name, the phone number or the pet's name." : "Add your first client to start booking."}

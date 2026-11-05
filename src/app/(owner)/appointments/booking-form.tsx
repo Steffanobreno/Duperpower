@@ -1,8 +1,9 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
-import { Button, Field, Input, Notice, Select, Textarea } from "@/components/ui";
+import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { minutesLabel, money, sizeLabel } from "@/lib/format";
 import { Dog } from "@/components/icons";
 import type { FormState } from "./actions";
@@ -78,7 +79,7 @@ export function BookingForm({
 
   return (
     <ActionForm action={formAction} className="space-y-4">
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <FormPopup state={state} override="override" overrideLabel="Book anyway" />
 
       <h2 className="section-label">Select pet</h2>
       {pets.map((pet) => {
@@ -225,15 +226,6 @@ export function BookingForm({
         Send the confirmation to the client (text and email)
       </label>
 
-      {state?.warning && (
-        <div className="space-y-2">
-          <Notice kind="warn">{state.warning}</Notice>
-          <label className="flex items-center gap-3 text-sm">
-            <input type="checkbox" name="override" className="h-5 w-5" />
-            Book anyway
-          </label>
-        </div>
-      )}
 
       <Button type="submit" className="w-full rounded-2xl py-3.5 text-base" disabled={pending}>
         {pending ? "Booking…" : "Book appointment"}

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Toast } from "@/components/toast";
 import { requireStaff } from "@/lib/auth";
 import { listWaitlist, waitlistOpenings } from "@/lib/data/waitlist";
 import { hm, longDayLabel, phoneLabel, timeLabel, ymd } from "@/lib/format";
-import { Empty, Notice, Page, PageHeader } from "@/components/ui";
+import { Empty, Page, PageHeader } from "@/components/ui";
 import { removeFromWaitlistAction } from "./actions";
 
 export const metadata: Metadata = { title: "Waitlist" };
@@ -22,7 +23,7 @@ export default async function WaitlistPage({ searchParams }: PageProps<"/waitlis
     <>
       <PageHeader title="Waitlist" back="/today" />
       <Page>
-        {sp.added === "1" && <Notice kind="success">Added to the waitlist. You&apos;ll see it here and on Today when a spot opens.</Notice>}
+        {sp.added === "1" && <Toast>Added to the waitlist. You&apos;ll see it here and on Today when a spot opens.</Toast>}
         <p className="px-1 text-sm text-muted">
           Clients who want a day that&apos;s full. Add one from their page (Clients → the client → + Waitlist).
         </p>

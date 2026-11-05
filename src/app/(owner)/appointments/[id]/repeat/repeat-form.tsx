@@ -1,4 +1,5 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { DateField, MonthPicker } from "@/components/date-field";
 import Link from "next/link";
 import { useActionState, useState } from "react";
@@ -78,7 +79,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
   return (
     <div className="space-y-4">
       <ActionForm action={saveAction} className="space-y-4">
-        {state?.error && <Notice kind="error">{state.error}</Notice>}
+        <FormPopup state={state} />
         <input type="hidden" name="mode" value={mode} />
         <nav aria-label="How it repeats" className="grid grid-cols-2 gap-1 rounded-2xl bg-surface p-1 shadow-[var(--shadow-card)]">
           {([["rule", "Every few weeks"], ["dates", "Pick dates"]] as const).map(([m, label]) => (

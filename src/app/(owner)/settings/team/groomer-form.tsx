@@ -1,7 +1,8 @@
 "use client";
+import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { Button, Field, Input, Notice } from "@/components/ui";
+import { Button, Field, Input } from "@/components/ui";
 import type { TeamState } from "./actions";
 
 export function GroomerForm({ action, colors, initial, isOwner = false, submit }: {
@@ -15,8 +16,7 @@ export function GroomerForm({ action, colors, initial, isOwner = false, submit }
   const [color, setColor] = useState(initial?.color ?? colors[1]);
   return (
     <ActionForm action={formAction} className="space-y-3" key={state?.saved ? "saved" : "form"}>
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
-      {state?.saved && <Notice kind="success">Added.</Notice>}
+      <FormPopup state={state} savedText="Added." />
       <Field label="Name"><Input name="name" defaultValue={initial?.name} required placeholder="Maria" /></Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Mobile (optional)"><Input name="phone" defaultValue={initial?.phone} inputMode="tel" placeholder="(650) 555-0100" /></Field>
