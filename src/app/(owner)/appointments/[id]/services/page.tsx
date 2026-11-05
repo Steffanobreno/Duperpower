@@ -19,7 +19,10 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
     sql<{ status: string }[]>`select status from invoices where appointment_id = ${id} and business_id = ${staff.businessId}`,
   ]);
   if (!appt) notFound();
-  const own = await petPrices(appt.pets.map((p) => p.pet_id));
+  // The client's pets (to add one to the visit) and every one's own prices.
+  const clientPets = await sql<{ id: string; name: string; breed: string | null; size_class: string | null }[]>`
+    select id, name, breed, size_class from pets where client_id = ${appt.client.id} and deceased_at is null order by name`;
+  const own = await petPrices(clientPets.map((p) => p.id));
   const ownPricesOf = (petId: string) =>
     Object.fromEntries([...own.values()].filter((r) => r.pet_id === petId)
       .map((r) => [r.service_id, { priceCents: r.price_cents, minutes: r.duration_min }]));
@@ -40,11 +43,16 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
           timezone={staff.timezone}
           pets={appt.pets.map((p) => ({
             appointmentPetId: p.appointment_pet_id,
+            petId: p.pet_id,
             name: p.name,
             size: p.size_class,
             ownPrices: ownPricesOf(p.pet_id),
             lines: p.services.map((s) => ({ id: s.id, serviceId: s.service_id, name: s.name, priceCents: s.price_cents, minutes: s.duration_min })),
           }))}
+          otherPets={clientPets.filter((cp) => !appt.pets.some((p) => p.pet_id === cp.id)).map((p) => ({
+            petId: p.id, name: p.name, breed: p.breed, size: p.size_class, ownPrices: ownPricesOf(p.id), lines: [],
+          }))}
+          canKeepPrices={staff.can.payments}
           catalog={services.map((s) => ({
             id: s.id, name: s.name, kind: s.kind, size: s.size_class, priceCents: s.price_cents, minutes: s.duration_min,
           }))}

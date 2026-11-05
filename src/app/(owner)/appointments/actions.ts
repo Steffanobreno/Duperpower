@@ -415,35 +415,47 @@ export async function reopenInvoiceAction(appointmentId: string) {
 
 // ---------------------------------------------------------------- edit services
 
-export type ServiceLine = { id?: string; appointmentPetId: string; serviceId: string; priceCents: number; minutes: number };
+export type ServiceLine = { id?: string; serviceId: string; priceCents: number; minutes: number; keepForPet?: boolean };
+/** One pet on the visit: already on it (appointmentPetId) or added now (petId only). */
+export type VisitPet = { appointmentPetId?: string; petId: string; lines: ServiceLine[] };
 
 /**
- * Replaces the services of a visit (after the client booked online, a dog may take less or
- * more time, or need an extra). The visit's end moves with the total time. Works at and after
- * checkout too: the bill follows, and a paid bill opens again if it now asks for more.
+ * Replaces the pets and services of a visit (after the client booked online, a dog may take
+ * less or more; a pet joins or stays home): each line's service, price and time. A line marked
+ * "keep for this pet" saves its price (and time) as the pet's own, for the next bookings.
  */
-export async function saveServicesAction(appointmentId: string, lines: ServiceLine[]): Promise<{ error?: string; warning?: string } | undefined> {
+export async function saveServicesAction(appointmentId: string, pets: VisitPet[]): Promise<{ error?: string; warning?: string } | undefined> {
   const staff = await requireStaff();
-  const [appt] = await sql`select id, start_at, status, staff_id from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  const [appt] = await sql`select id, client_id, start_at, status, staff_id from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
   if (!appt) return { error: "Appointment not found." };
   if (["cancelled", "no_show", "declined"].includes(appt.status)) return { error: "This visit is closed. Restore it first." };
   const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
-  if (!Array.isArray(lines) || lines.length === 0 || lines.length > 40) return { error: "Keep at least one service." };
+  if (!Array.isArray(pets) || pets.length === 0) return { error: "Keep at least one pet on the visit." };
+  const lines = pets.flatMap((p) => p.lines ?? []);
+  if (lines.length === 0 || lines.length > 40) return { error: "Keep at least one service." };
   for (const l of lines) {
     if (!Number.isInteger(l.priceCents) || l.priceCents < 0 || l.priceCents > 1_000_000) return { error: "Check the prices." };
     if (!Number.isInteger(l.minutes) || l.minutes < 0 || l.minutes > 720) return { error: "Each service takes 0 to 12 hours." };
   }
-  const pets = await sql`select id from appointment_pets where appointment_id = ${appointmentId}`;
-  const petIds = new Set(pets.map((p) => p.id as string));
-  if (lines.some((l) => !petIds.has(l.appointmentPetId))) return { error: "Please reload the page and try again." };
-  for (const pid of petIds) {
-    if (!lines.some((l) => l.appointmentPetId === pid)) return { error: "Each pet needs at least one service." };
+  if (pets.some((p) => !p.lines?.length)) return { error: "Each pet needs at least one service." };
+  if (new Set(pets.map((p) => p.petId)).size !== pets.length) return { error: "Please reload the page and try again." };
+
+  const onVisit = await sql<{ id: string; pet_id: string }[]>`select id, pet_id from appointment_pets where appointment_id = ${appointmentId}`;
+  const byId = new Map(onVisit.map((p) => [p.id, p.pet_id]));
+  if (pets.some((p) => p.appointmentPetId && byId.get(p.appointmentPetId) !== p.petId)) return { error: "Please reload the page and try again." };
+  // Pets added now must be this client's.
+  const added = pets.filter((p) => !p.appointmentPetId).map((p) => p.petId);
+  if (added.length) {
+    const own = await sql`select id from pets where client_id = ${appt.client_id} and id = any(${added}::uuid[]) and deceased_at is null`;
+    if (own.length !== added.length) return { error: "That pet isn't this client's." };
   }
   const existing = await sql`
-    select s.id from appointment_services s join appointment_pets ap on ap.id = s.appointment_pet_id
+    select s.id, s.appointment_pet_id from appointment_services s join appointment_pets ap on ap.id = s.appointment_pet_id
     where ap.appointment_id = ${appointmentId}`;
-  const existingIds = new Set(existing.map((e) => e.id as string));
-  if (lines.some((l) => l.id && !existingIds.has(l.id))) return { error: "Please reload the page and try again." };
+  const lineOwner = new Map(existing.map((e) => [e.id as string, e.appointment_pet_id as string]));
+  for (const p of pets) {
+    if (p.lines.some((l) => l.id && lineOwner.get(l.id) !== p.appointmentPetId)) return { error: "Please reload the page and try again." };
+  }
   const serviceIds = [...new Set(lines.map((l) => l.serviceId))];
   const services = await sql<{ id: string; name: string }[]>`
     select id, name from services where business_id = ${staff.businessId} and id = any(${serviceIds})`;
@@ -454,17 +466,35 @@ export async function saveServicesAction(appointmentId: string, lines: ServiceLi
   const endAt = new Date(appt.start_at.getTime() + Math.max(totalMin, 15) * 60_000);
   try {
     await sql.begin(async (tx) => {
+      // Pets taken off the visit (with their services).
+      const staying = pets.map((p) => p.appointmentPetId).filter((x): x is string => !!x);
+      await tx`delete from appointment_pets where appointment_id = ${appointmentId} and not (id = any(${staying}::uuid[]))`;
       const keep = lines.map((l) => l.id).filter((x): x is string => !!x);
       await tx`delete from appointment_services s using appointment_pets ap
                where ap.id = s.appointment_pet_id and ap.appointment_id = ${appointmentId}
                  and not (s.id = any(${keep}::uuid[]))`;
-      for (const l of lines) {
-        if (l.id) {
-          await tx`update appointment_services set price_cents = ${l.priceCents}, duration_min = ${l.minutes}
-                   where id = ${l.id}`;
-        } else {
-          await tx`insert into appointment_services (appointment_pet_id, service_id, name, price_cents, duration_min)
-                   values (${l.appointmentPetId}, ${l.serviceId}, ${names.get(l.serviceId)!}, ${l.priceCents}, ${l.minutes})`;
+      for (const p of pets) {
+        let apId = p.appointmentPetId;
+        if (!apId) {
+          const [ap] = await tx`insert into appointment_pets (appointment_id, pet_id) values (${appointmentId}, ${p.petId}) returning id`;
+          apId = ap.id as string;
+        }
+        for (const l of p.lines) {
+          if (l.id) {
+            await tx`update appointment_services set service_id = ${l.serviceId}, name = ${names.get(l.serviceId)!},
+                       price_cents = ${l.priceCents}, duration_min = ${l.minutes}
+                     where id = ${l.id}`;
+          } else {
+            await tx`insert into appointment_services (appointment_pet_id, service_id, name, price_cents, duration_min)
+                     values (${apId}, ${l.serviceId}, ${names.get(l.serviceId)!}, ${l.priceCents}, ${l.minutes})`;
+          }
+          // "Keep this price for this pet": its own price (and time) from now on.
+          if (l.keepForPet && staff.can.payments) {
+            await tx`insert into pet_service_prices (pet_id, service_id, price_cents, duration_min)
+                     values (${p.petId}, ${l.serviceId}, ${l.priceCents}, ${Math.min(l.minutes, 600)})
+                     on conflict (pet_id, service_id) do update set price_cents = excluded.price_cents,
+                       duration_min = excluded.duration_min, updated_at = now()`;
+          }
         }
       }
       await tx`update appointments set end_at = ${endAt} where id = ${appointmentId}`;
@@ -477,6 +507,7 @@ export async function saveServicesAction(appointmentId: string, lines: ServiceLi
     if (isExclusionViolation(e)) return { error: "With that length it runs into another online booking. Shorten it or move one visit." };
     throw e;
   }
+  revalidatePath(`/clients/${appt.client_id}`);
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath(`/appointments/${appointmentId}/checkout`);
   revalidatePath("/today");
