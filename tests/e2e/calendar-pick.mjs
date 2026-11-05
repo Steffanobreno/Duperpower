@@ -76,10 +76,19 @@ await page.waitForURL((u) => dateOf(u.href) === plus(day, 1));
 step("swiping the week strip turns the week; swiping the day turns the day");
 
 // Book a visit, then Reschedule it from the calendar.
-await page.goto(`${BASE}/appointments/new?client=${clientId}&date=${plus(day, 2)}&time=10:00`);
+// A working day two or so days later (Sundays are off).
+let k = 2;
+while (new Date(`${plus(day, k)}T12:00:00Z`).getUTCDay() === 0) k++;
+const visitDay = plus(day, k);
+await page.goto(`${BASE}/appointments/new?client=${clientId}&date=${visitDay}&time=10:00`);
 const select = page.locator('select[name^="svc:"]');
 await select.selectOption(await select.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));
 await page.getByRole("button", { name: "Book appointment" }).click();
+// The day may be outside the hours (a weekend): the warning window offers "Book anyway".
+await Promise.race([
+  page.waitForURL(/\?booked=1/),
+  page.getByRole("button", { name: "Book anyway" }).click(),
+]);
 await page.waitForURL(/\?booked=1/);
 const apptUrl = page.url().split("?")[0];
 // Reschedule opens the planner in the visit: the week with dots, the day's visits and free times.
@@ -92,9 +101,9 @@ await chosen.getByText("This visit").waitFor();
 await shot("C02-reschedule-planner");
 // The next week (arrow), then back, then the whole month and back to the week.
 await planner.getByRole("link", { name: "Next week" }).click();
-await page.waitForURL((u) => u.searchParams.get("rs") === plus(day, 9));
+await page.waitForURL((u) => u.searchParams.get("rs") === plus(visitDay, 7));
 await planner.getByRole("link", { name: "Previous week" }).click();
-await page.waitForURL((u) => u.searchParams.get("rs") === plus(day, 2));
+await page.waitForURL((u) => u.searchParams.get("rs") === visitDay);
 await planner.getByRole("link", { name: "Show the whole month" }).click();
 await page.waitForURL(/rsm=1/);
 await planner.getByRole("link", { name: "Next month" }).waitFor();
@@ -110,7 +119,7 @@ await page.getByText("2:30 PM – 4:30 PM · 2h").waitFor();
 step("Reschedule shows the week, the day's visits and free times; arrows and ▾ move around; tapping 2:30 PM moves the visit");
 
 // The full day calendar is still there, with a back arrow to the visit.
-await page.goto(`${apptUrl}?rs=${plus(day, 2)}`);
+await page.goto(`${apptUrl}?rs=${visitDay}`);
 await page.getByRole("link", { name: "Open the full day calendar ›" }).click();
 await page.waitForURL(/pick=move/);
 await page.getByText("Moving Maria Lopez's visit (2h)").waitFor();

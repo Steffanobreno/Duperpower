@@ -32,6 +32,11 @@ const sel = page.locator('select[name^="svc:"]');
 await sel.selectOption(await sel.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));
 await page.getByLabel(/Send the confirmation/).uncheck();
 await page.getByRole("button", { name: "Book appointment" }).click();
+// The day may be outside the hours (a weekend): the warning window offers "Book anyway".
+await Promise.race([
+  page.waitForURL(/\?booked=1/),
+  page.getByRole("button", { name: "Book anyway" }).click(),
+]);
 await page.waitForURL(/\?booked=1/);
 const id = page.url().split("/").pop().split("?")[0];
 
