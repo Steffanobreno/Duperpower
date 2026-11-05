@@ -8,6 +8,7 @@ export type RepeatRule = {
   count: number | null; // how many visits in total, this one included (at most 100)
   until: string | null; // or the last day (yyyy-MM-dd)
   dates?: string[]; // with freq "dates": the days picked (yyyy-MM-dd)
+  times?: Record<string, string>; // and, for any of them, another start time ("HH:mm")
 };
 
 export const MAX_VISITS = 100;

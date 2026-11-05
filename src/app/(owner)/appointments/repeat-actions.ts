@@ -20,10 +20,13 @@ const LIVE = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress"
 function readRule(form: FormData): RepeatRule | string {
   const freq = String(form.get("freq"));
   if (form.get("mode") === "dates") {
-    const dates = String(form.get("dates") ?? "").split(",").filter((d) => isYmd(d));
+    // "2026-11-18@09:30": a day, and its start time when it's not the visit's.
+    const picks = String(form.get("dates") ?? "").split(",").map((x) => x.split("@"));
+    const dates = picks.map(([d]) => d).filter((d) => isYmd(d));
     if (dates.length === 0) return "Pick at least one more day on the calendar.";
     if (dates.length > MAX_VISITS) return `Pick up to ${MAX_VISITS} days.`;
-    return { freq: "dates", every: 1, count: dates.length + 1, until: null, dates };
+    const times = Object.fromEntries(picks.filter(([d, t]) => isYmd(d) && /^\d{2}:\d{2}$/.test(t ?? "")).map(([d, t]) => [d, t]));
+    return { freq: "dates", every: 1, count: dates.length + 1, until: null, dates, times };
   }
   const every = Number(form.get("every"));
   const ends = String(form.get("ends"));
@@ -69,7 +72,7 @@ export async function saveRepeatAction(appointmentId: string, _: RepeatState, fo
   const dates = repeatDates(first, rule).slice(1);
   if (dates.length === 0) return { error: "That rule has no dates after this visit." };
   const ranges = dates.map((d) => {
-    const s = zonedToUtc(d, time, tz);
+    const s = zonedToUtc(d, rule.times?.[d] ?? time, tz);
     return { date: d, s, e: new Date(s.getTime() + length) };
   });
   const old = await replaceable(staff, a);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { timeLabel, ymd } from "@/lib/format";
+import { hm, timeLabel, ymd } from "@/lib/format";
 import type { RepeatRule } from "@/lib/repeat";
 import { Page, PageHeader } from "@/components/ui";
 import { saveRepeatAction, stopRepeatAction } from "../../repeat-actions";
@@ -23,12 +23,13 @@ export default async function RepeatPage({ params }: PageProps<"/appointments/[i
   // A new repeat starts from the pet's usual frequency (in weeks) when we know it.
   const weeks = a.pet_days ? Math.min(Math.max(Math.round(a.pet_days / 7), 1), 12) : 4;
   // Days picked one by one: the later visits of the series are those days.
-  const later = a.freq === "dates" && a.series_id ? await sql<{ d: string }[]>`
-    select to_char(start_at at time zone ${staff.timezone}, 'YYYY-MM-DD') as d from appointments
+  const later = a.freq === "dates" && a.series_id ? await sql<{ d: string; t: string }[]>`
+    select to_char(start_at at time zone ${staff.timezone}, 'YYYY-MM-DD') as d,
+           to_char(start_at at time zone ${staff.timezone}, 'HH24:MI') as t from appointments
     where series_id = ${a.series_id} and start_at > ${a.start_at} and status not in ('cancelled', 'no_show', 'declined')
     order by start_at` : [];
   const initial: RepeatRule = a.freq === "dates"
-    ? { freq: "dates", every: 1, count: null, until: null, dates: later.map((r) => r.d) }
+    ? { freq: "dates", every: 1, count: null, until: null, dates: later.map((r) => r.d), times: Object.fromEntries(later.map((r) => [r.d, r.t])) }
     : a.freq
       ? { freq: a.freq, every: a.interval_n ?? 1, count: a.occurrences, until: a.ends_on }
       : { freq: "week", every: weeks, count: 10, until: null };
@@ -41,6 +42,7 @@ export default async function RepeatPage({ params }: PageProps<"/appointments/[i
           clientId={a.client_id}
           first={ymd(a.start_at, staff.timezone)}
           time={timeLabel(a.start_at, staff.timezone)}
+          clock={hm(a.start_at, staff.timezone)}
           initial={initial}
           repeating={!!a.series_id}
           save={saveRepeatAction.bind(null, id)}

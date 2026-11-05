@@ -57,7 +57,7 @@ await page.waitForFunction(() => navigator.serviceWorker?.controller, null, { ti
 await page.goto(`${BASE}/today?date=${date}`);
 await page.getByText("Maria Lopez").first().waitFor();
 const saved = (path) => page.evaluate(async (p) => {
-  const cache = await caches.open("woofers-pages-v1");
+  const cache = await caches.open("woofers-pages-v2");
   return !!(await cache.match(location.origin + p, { ignoreVary: true }));
 }, path);
 for (let i = 0; i < 40 && !(await saved(`/appointments/${id}`)); i++) await page.waitForTimeout(500);

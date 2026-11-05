@@ -52,19 +52,24 @@ await page.getByRole("button", { name: label(`${ym}-15`), exact: true }).click()
 await page.getByRole("heading", { name: "4 visits" }).waitFor();
 await page.getByRole("button", { name: label(`${ym}-15`), exact: true }).click();
 await page.getByRole("heading", { name: "3 visits" }).waitFor();
+// The second day at another time.
+const short = (d) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric", year: "numeric" });
+await page.getByLabel(`Time on ${short(picks[1])}`).selectOption("14:30");
+await page.getByText("2:30 PM", { exact: true }).last().waitFor();
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/P01-repeat-pick-dates.png`, fullPage: true });
 await page.getByRole("button", { name: "Save and book 2 more" }).click();
 await page.getByText(/Booked 2 more visits: on 3 chosen dates/).waitFor();
 const copies = await db`
   select to_char(start_at at time zone 'America/Los_Angeles', 'YYYY-MM-DD HH24:MI') as at from appointments
   where series_id = (select series_id from appointments where id = ${id}) and id <> ${id} order by start_at`;
-if (copies.map((c) => c.at).join() !== picks.map((d) => `${d} 11:00`).join()) fail(`copies should be on the picked days at 11:00: ${copies.map((c) => c.at)}`);
-step("Pick dates: two days next month → 2 more visits on exactly those days, same time");
+if (copies.map((c) => c.at).join() !== [`${picks[0]} 11:00`, `${picks[1]} 14:30`].join()) fail(`copies should be on the picked days and times: ${copies.map((c) => c.at)}`);
+step("Pick dates: two days next month, the second at 2:30 PM → 2 more visits on exactly those days and times");
 
 await page.getByRole("link", { name: "Done" }).click();
 await page.getByText("On 3 chosen dates · 2 more after this one").waitFor();
 await page.getByRole("link", { name: /Repeat appointment/ }).click();
-await page.getByRole("button", { name: `Remove ${new Date(`${picks[0]}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric", year: "numeric" })}` }).waitFor();
+await page.getByRole("button", { name: `Remove ${short(picks[0])}` }).waitFor();
+if ((await page.getByLabel(`Time on ${short(picks[1])}`).inputValue()) !== "14:30") fail("reopening Repeat should keep the 2:30 PM day");
 step("the visit says “On 3 chosen dates”; reopening Repeat shows the days picked");
 
 await db.end();

@@ -6,10 +6,11 @@
 //    network catches up. Offline, the saved copy shows with a notice. Nothing is kept for the
 //    client pages, logins or anything sent (payments, bookings always need the network).
 
-const PAGES = "woofers-pages-v1";
+const PAGES = "woofers-pages-v2";
 const STATIC = "woofers-static-v1";
-const OWNER = /^\/(today|calendar|appointments|clients|requests|waitlist|receipts|reports)(\/|$)/;
-const WAIT_MS = 2500; // how long to wait for the network before showing the saved copy
+// Only screens to look at (never forms: an old copy of a form could save old data).
+const OWNER = /^\/(today|calendar|requests|waitlist|clients|appointments\/[0-9a-f-]{36}|clients\/[0-9a-f-]{36})$/;
+const WAIT_MS = 4000; // how long to wait for the network before showing the saved copy
 const MAX_PAGES = 80;
 // In development (sw.js?dev=1) built files keep their names while they change: never keep them.
 const DEV = new URL(self.location.href).searchParams.get("dev") === "1";

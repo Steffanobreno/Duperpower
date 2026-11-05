@@ -10,14 +10,21 @@ import type { RepeatState } from "../../repeat-actions";
 // Repeat type (day / week / month), every N, and when it ends (after N times or on a date),
 // with the dates listed live below. Saving books them.
 
+// Start times to pick from, every 15 minutes, 6 AM to 8 PM.
+const TIMES = Array.from({ length: 57 }, (_, i) => `${String(6 + Math.floor(i / 4)).padStart(2, "0")}:${String((i % 4) * 15).padStart(2, "0")}`);
+const label12 = (t: string) => {
+  const h = Number(t.slice(0, 2));
+  return `${h % 12 || 12}:${t.slice(3)} ${h < 12 ? "AM" : "PM"}`;
+};
 const fmt = (d: string) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric", year: "numeric" });
 
-export function RepeatForm({ appointmentId, clientId, first, time, initial, repeating, save, stop }: {
+export function RepeatForm({ appointmentId, clientId, first, time, clock, initial, repeating, save, stop }: {
   appointmentId: string;
   clientId: string;
   first: string; // this visit's date
   time: string; // "10:00 AM"
+  clock: string; // the same, "10:00"
   initial: RepeatRule;
   repeating: boolean;
   save: (state: RepeatState, form: FormData) => Promise<RepeatState>;
@@ -28,13 +35,16 @@ export function RepeatForm({ appointmentId, clientId, first, time, initial, repe
   // Every N days/weeks/months, or days picked one by one on the calendar.
   const [mode, setMode] = useState<"rule" | "dates">(initial.freq === "dates" ? "dates" : "rule");
   const [picked, setPicked] = useState<string[]>(initial.dates ?? []);
+  // A start time for each picked day (the visit's own time unless changed).
+  const [times, setTimes] = useState<Record<string, string>>(initial.times ?? {});
+  const timeOf = (d: string) => times[d] ?? clock;
   const [freq, setFreq] = useState<"day" | "week" | "month">(initial.freq === "dates" ? "week" : initial.freq);
   const [every, setEvery] = useState(initial.every);
   const [ends, setEnds] = useState<"count" | "date">(initial.until ? "date" : "count");
   const [count, setCount] = useState(initial.count ?? 10);
   const [until, setUntil] = useState(initial.until ?? "");
   const rule: RepeatRule = mode === "dates"
-    ? { freq: "dates", every: 1, count: null, until: null, dates: picked }
+    ? { freq: "dates", every: 1, count: null, until: null, dates: picked, times }
     : { freq, every, count: ends === "count" ? count : null, until: ends === "date" ? until || null : null };
   const dates = mode === "rule" && ends === "date" && !until ? [first] : repeatDates(first, rule);
   const toggle = (d: string) => setPicked((p) => (p.includes(d) ? p.filter((x) => x !== d) : [...p, d].sort()));
@@ -80,18 +90,24 @@ export function RepeatForm({ appointmentId, clientId, first, time, initial, repe
         </nav>
         {mode === "dates" ? (
           <Card className="space-y-3">
-            <input type="hidden" name="dates" value={picked.join(",")} />
-            <p className="text-sm text-muted">Tap each day to book (tap again to remove). Swipe for other months. Same pets, services and time ({time}).</p>
+            <input type="hidden" name="dates" value={picked.map((d) => `${d}@${timeOf(d)}`).join(",")} />
+            <p className="text-sm text-muted">Tap each day to book (tap again to remove). Swipe for other months. Same pets and services; {time} unless you change a day&apos;s time below.</p>
             <MonthPicker value={first} start={first} min={first} onPick={(d) => d !== first && toggle(d)} marked={picked} />
             {picked.length > 0 && (
-              <div className="flex flex-wrap gap-1.5" aria-label="Chosen days">
+              <ul className="divide-y divide-line rounded-xl border border-line" aria-label="Chosen days">
                 {picked.map((d) => (
-                  <button key={d} type="button" onClick={() => toggle(d)} aria-label={`Remove ${fmt(d)}`}
-                    className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand-strong">
-                    {fmt(d)} ✕
-                  </button>
+                  <li key={d} className="flex items-center gap-2 px-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1 font-semibold">{fmt(d)}</span>
+                    <select aria-label={`Time on ${fmt(d)}`} value={timeOf(d)} onChange={(e) => setTimes({ ...times, [d]: e.target.value })}
+                      className="rounded-lg border border-line bg-surface px-2 py-1.5 font-semibold">
+                      {TIMES.includes(timeOf(d)) ? null : <option value={timeOf(d)}>{label12(timeOf(d))}</option>}
+                      {TIMES.map((t) => <option key={t} value={t}>{label12(t)}</option>)}
+                    </select>
+                    <button type="button" onClick={() => toggle(d)} aria-label={`Remove ${fmt(d)}`}
+                      className="rounded-full px-2 py-1 text-lg leading-none text-danger">✕</button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </Card>
         ) : (<>
@@ -156,7 +172,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, initial, repe
             {dates.map((d, i) => (
               <li key={d} className="flex justify-between py-1.5">
                 <span>{i + 1}. {fmt(d)}</span>
-                <span className="text-muted">{i === 0 ? "this visit" : time}</span>
+                <span className="text-muted">{i === 0 ? "this visit" : mode === "dates" ? label12(timeOf(d)) : time}</span>
               </li>
             ))}
           </ol>
