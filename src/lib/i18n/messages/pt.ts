@@ -262,4 +262,9 @@ export const pt: Messages = {
   "Thank you! You signed the service agreement.": "Obrigado! Você assinou o contrato de serviço.",
   "Please read and sign our service agreement.": "Leia e assine nosso contrato de serviço.",
   "Please tick the box and type your full name to sign.": "Marque a caixa e digite seu nome completo para assinar.",
+  // Worldwide
+  "Postal code": "Código postal (CEP)",
+  "Please check your mobile number.": "Confira seu número de celular.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Não encontramos esse código postal. Confira, ou mande mensagem para agendar.",
+  "Please check the postal code.": "Confira o código postal (CEP).",
 };

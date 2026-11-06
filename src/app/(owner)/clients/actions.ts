@@ -1,9 +1,10 @@
 "use server";
 import { redirect } from "next/navigation";
+import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { requireStaff, requirePermission } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
-import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
+import { LB_PER_KG, normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { geocode } from "@/lib/maps";
 import { savePetPhoto } from "@/lib/pet-photos";
 import { sendEmail } from "@/lib/email";
@@ -15,11 +16,11 @@ const text = (form: FormData, key: string) => {
   return v === "" ? null : v;
 };
 
-function readClient(form: FormData) {
+function readClient(form: FormData, country: string) {
   const first_name = text(form, "first_name");
-  const phone = normalizePhone(form.get("phone"));
+  const phone = normalizePhone(form.get("phone"), country);
   if (!first_name) return { error: "First name is required." } as const;
-  if (!phone) return { error: "Enter a 10-digit US phone number." } as const;
+  if (!phone) return { error: country === "US" ? "Enter a 10-digit US phone number." : msg("Check the phone number.") } as const;
   return {
     values: {
       first_name,
@@ -29,7 +30,7 @@ function readClient(form: FormData) {
       // Street and apartment are saved as one line: "123 Main St, Apt 4".
       address_line: [text(form, "address_line"), text(form, "address_unit")].filter(Boolean).join(", ") || null,
       city: text(form, "city"),
-      state: text(form, "state") ?? "CA",
+      state: text(form, "state") ?? (country === "US" ? "CA" : null),
       zip: text(form, "zip"),
       access_notes: text(form, "access_notes"),
       // The client agreed to texts when the owner ticks this (TCPA).
@@ -40,9 +41,9 @@ function readClient(form: FormData) {
   } as const;
 }
 
-async function locate(v: { address_line: string | null; city: string | null; state: string | null; zip: string | null }) {
+async function locate(v: { address_line: string | null; city: string | null; state: string | null; zip: string | null }, country: string) {
   const address = [v.address_line, v.city, v.state, v.zip].filter(Boolean).join(", ");
-  return v.address_line ? geocode(address) : null;
+  return v.address_line ? geocode(address, country) : null;
 }
 
 async function saveTags(clientId: string, tags: readonly string[]) {
@@ -54,10 +55,10 @@ async function saveTags(clientId: string, tags: readonly string[]) {
 
 export async function createClientAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  const parsed = readClient(form);
+  const parsed = readClient(form, staff.region.country);
   if ("error" in parsed) return { error: parsed.error };
   const v = parsed.values;
-  const geo = await locate(v);
+  const geo = await locate(v, staff.region.country);
   let id: string;
   try {
     const [row] = await sql`
@@ -78,10 +79,10 @@ export async function createClientAction(_: FormState, form: FormData): Promise<
 
 export async function updateClientAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  const parsed = readClient(form);
+  const parsed = readClient(form, staff.region.country);
   if ("error" in parsed) return { error: parsed.error };
   const v = parsed.values;
-  const geo = await locate(v);
+  const geo = await locate(v, staff.region.country);
   try {
     const rows = await sql`
       update clients set first_name = ${v.first_name}, last_name = ${v.last_name}, phone = ${v.phone},
@@ -111,7 +112,7 @@ export async function addNoteAction(clientId: string, form: FormData) {
   revalidatePath(`/clients/${clientId}`);
 }
 
-function readPet(form: FormData) {
+function readPet(form: FormData, metric = false) {
   const name = text(form, "name");
   if (!name) return { error: "The pet's name is required." } as const;
   const size = text(form, "size_class");
@@ -126,7 +127,7 @@ function readPet(form: FormData) {
       name,
       breed: text(form, "breed"),
       size_class: size,
-      weight_lbs: weight && Number.isFinite(Number(weight)) ? Number(weight) : null,
+      weight_lbs: weight && Number.isFinite(Number(weight.replace(",", "."))) ? Math.round(Number(weight.replace(",", ".")) * (metric ? LB_PER_KG : 1) * 10) / 10 : null,
       coat_type: text(form, "coat_type"),
       birth_date: text(form, "birth_date"),
       sex: text(form, "sex"),
@@ -143,7 +144,7 @@ function readPet(form: FormData) {
 
 export async function savePetAction(clientId: string, petId: string | null, _: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  const parsed = readPet(form);
+  const parsed = readPet(form, staff.region.metric);
   if ("error" in parsed) return { error: parsed.error };
   const v = parsed.values;
   const [owner] = await sql`select id from clients where id = ${clientId} and business_id = ${staff.businessId}`;

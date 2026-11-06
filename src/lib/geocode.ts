@@ -7,9 +7,10 @@ import { geocode as googleGeocode, googleMapsOn } from "./maps";
 // Bureau geocoder: free, no key, US addresses.
 // https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html
 
-async function geocode(address: string): Promise<{ lat: number; lng: number; by: string } | null> {
-  const g = await googleGeocode(address);
+async function geocode(address: string, country: string): Promise<{ lat: number; lng: number; by: string } | null> {
+  const g = await googleGeocode(address, country);
   if (g) return { ...g, by: "google" };
+  if (country !== "US") return null; // the Census geocoder knows only US addresses
   const c = await censusGeocode(address);
   return c ? { ...c, by: "census" } : null;
 }
@@ -37,7 +38,7 @@ type Stop = { id: string; client_id: string; address_line: string | null; zip: s
  * missing), trying each address once. Once the Google key is set, visits placed earlier by
  * the Census geocoder are placed again with Google, once. Changes the stops in place.
  */
-export async function locateStops(stops: Stop[]) {
+export async function locateStops(stops: Stop[], country = "US") {
   const google = googleMapsOn();
   const candidates = stops.filter((s) => s.address_line && (s.lat == null || google)).slice(0, 15);
   if (candidates.length === 0) return;
@@ -46,7 +47,7 @@ export async function locateStops(stops: Stop[]) {
       and (geocode_tried_at is null or (${google} and geocoded_by is distinct from 'google'))`;
   const todo = candidates.filter((s) => rows.some((t) => t.id === s.id));
   await Promise.all(todo.map(async (s) => {
-    const point = await geocode([s.address_line, s.zip].filter(Boolean).join(" "));
+    const point = await geocode([s.address_line, s.zip].filter(Boolean).join(" "), country);
     // A Google miss keeps the old point; mark it so it isn't asked again.
     await sql`update appointments set geocode_tried_at = now(),
                 geocoded_by = ${point?.by ?? (google ? "google" : null)},

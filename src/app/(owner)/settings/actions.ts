@@ -1,12 +1,14 @@
 "use server";
 import { redirect } from "next/navigation";
+import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
 import { normalizePhone, parseMoney, SIZES } from "@/lib/format";
 import { sendEmail } from "@/lib/email";
 import { saveLogo } from "@/lib/business-logo";
-import { TIMEZONES } from "@/lib/timezones";
+import { currencyOf, isCountry, isCurrency, isZone } from "@/lib/countries";
+import { distanceIn, postalOk } from "@/lib/region";
 
 export type FormState = { error?: string; saved?: boolean } | undefined;
 
@@ -94,8 +96,10 @@ export async function saveBusinessAction(_: FormState, form: FormData): Promise<
   const staff = await requirePermission("settings");
   const text = (k: string, max = 200) => String(form.get(k) ?? "").trim().slice(0, max) || null;
   const name = text("name", 80);
+  const country = isCountry(form.get("country")) ? String(form.get("country")) : staff.region.country;
+  const currency = isCurrency(form.get("currency")) ? String(form.get("currency")) : currencyOf(country);
   const rawPhone = String(form.get("phone") ?? "").trim();
-  const phone = rawPhone ? normalizePhone(rawPhone) : null;
+  const phone = rawPhone ? normalizePhone(rawPhone, country) : null;
   const slug = String(form.get("booking_slug") ?? "").trim().toLowerCase();
   const timezone = String(form.get("timezone") ?? "");
   const zip = text("zip", 10);
@@ -104,14 +108,15 @@ export async function saveBusinessAction(_: FormState, form: FormData): Promise<
     yelp_url: text("yelp_url"), google_url: text("google_url"),
   };
   if (!name) return { error: "The business needs a name." };
-  if (rawPhone && !phone) return { error: "Enter a 10-digit US phone number." };
+  if (rawPhone && !phone) return { error: country === "US" ? "Enter a 10-digit US phone number." : msg("Check the phone number.") };
   if (!/^[a-z0-9-]{3,40}$/.test(slug)) return { error: "The booking link can use letters, numbers and dashes (3 to 40)." };
-  if (!TIMEZONES.some(([z]) => z === timezone)) return { error: "Pick a time zone." };
-  if (zip && !/^\d{5}$/.test(zip)) return { error: "The ZIP code has 5 digits." };
+  if (!isZone(timezone)) return { error: "Pick a time zone." };
+  if (zip && !postalOk(zip, country)) return { error: country === "US" ? "The ZIP code has 5 digits." : msg("Check the postal code.") };
   for (const url of Object.values(links)) if (url && !/^https?:\/\/\S+$/.test(url)) return { error: "Links must start with https://" };
   try {
     await sql`
       update businesses set name = ${name}, phone = ${phone}, booking_slug = ${slug}, timezone = ${timezone},
+        country = ${country}, currency = ${currency},
         address_line = ${text("address_line")}, city = ${text("city", 60)}, state = ${text("state", 20)}, zip = ${zip},
         website_url = ${links.website_url}, facebook_url = ${links.facebook_url}, instagram_url = ${links.instagram_url},
         yelp_url = ${links.yelp_url}, google_url = ${links.google_url}
@@ -144,8 +149,9 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
   const staff = await requirePermission("settings");
   const num = (k: string) => Number(String(form.get(k) ?? "").trim());
   const buffer = num("buffer_minutes");
-  const miles = num("max_cluster_miles");
-  const radius = num("service_radius_miles");
+  const rg = staff.region;
+  const miles = distanceIn(num("max_cluster_miles"), rg);
+  const radius = distanceIn(num("service_radius_miles"), rg);
   const notice = num("min_notice_hours");
   const ahead = num("booking_days_ahead");
   const cancelHours = num("cancellation_hours");
@@ -153,12 +159,12 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
   const startZip = String(form.get("start_zip") ?? "").trim();
   if (![buffer, miles, radius, notice, ahead, cancelHours, slot].every(Number.isFinite)) return { error: "Use numbers only." };
   if (buffer < 0 || buffer > 180) return { error: "Driving time between visits: 0 to 180 minutes." };
-  if (miles < 1 || miles > 200 || radius < 1 || radius > 300) return { error: "Distances must be between 1 and 200 miles." };
+  if (miles < 0.6 || miles > 200 || radius < 0.6 || radius > 300) return { error: rg.km ? "Distances must be between 1 and 320 km." : "Distances must be between 1 and 200 miles." };
   if (notice < 0 || notice > 336) return { error: "Notice: 0 to 336 hours." };
   if (ahead < 1 || ahead > 730) return { error: "Clients can book 1 to 730 days ahead (365 = a whole year)." };
   if (cancelHours < 0 || cancelHours > 168) return { error: "Cancellation window: 0 to 168 hours." };
   if (slot < 15 || slot > 240) return { error: "Start times: every 15 to 240 minutes." };
-  if (startZip && !/^\d{5}$/.test(startZip)) return { error: "The van's ZIP code has 5 digits." };
+  if (startZip && !postalOk(startZip, rg.country)) return { error: rg.country === "US" ? "The van's ZIP code has 5 digits." : msg("Check the postal code.") };
   await sql`
     update businesses set online_booking_enabled = ${form.get("online_booking_enabled") === "on"},
       buffer_minutes = ${buffer}, max_cluster_miles = ${miles}, service_radius_miles = ${radius},
@@ -282,8 +288,8 @@ export async function sendTestEmailAction(): Promise<FormState & { sentTo?: stri
  */
 export async function queueTestTextAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requirePermission("settings");
-  const phone = normalizePhone(form.get("phone"));
-  if (!phone) return { error: "Enter a 10-digit mobile number." };
+  const phone = normalizePhone(form.get("phone"), staff.region.country);
+  if (!phone) return { error: staff.region.country === "US" ? "Enter a 10-digit mobile number." : msg("Check the phone number.") };
   const [b] = await sql`select name from businesses where id = ${staff.businessId}`;
   await sql`
     insert into messages (business_id, direction, channel, to_phone, body, template_trigger, status)

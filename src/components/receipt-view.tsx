@@ -8,6 +8,8 @@ import type { T } from "@/lib/i18n";
  * The client's page passes their language (t, locale); the owner's screens stay in English.
  */
 export function ReceiptView({ r, t = (s) => s, locale = "en-US" }: { r: Receipt; t?: T; locale?: string }) {
+  const rg = { ...r.region, locale: `${locale.split("-")[0]}-${r.region.country}` };
+  const m = (cents: number) => money(cents, rg);
   const tz = r.business.timezone;
   const when = (d: Date | null) =>
     d ? `${d.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric", timeZone: tz })} · ${d.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", timeZone: tz })}` : "—";
@@ -45,7 +47,7 @@ export function ReceiptView({ r, t = (s) => s, locale = "en-US" }: { r: Receipt;
           <div key={p.name || "visit"} className="space-y-1 px-4 py-3">
             {p.name && <p className="font-bold">{p.name}</p>}
             {p.lines.map((l, i) => (
-              <p key={i} className="flex justify-between gap-3"><span>{l.name}</span><span className="tabular-nums">{money(l.cents)}</span></p>
+              <p key={i} className="flex justify-between gap-3"><span>{l.name}</span><span className="tabular-nums">{m(l.cents)}</span></p>
             ))}
           </div>
         ))}
@@ -53,19 +55,19 @@ export function ReceiptView({ r, t = (s) => s, locale = "en-US" }: { r: Receipt;
           <div className="space-y-1 px-4 py-3">
             {r.adjustments.map((a, i) => (
               <p key={i} className={`flex justify-between gap-3 ${a.kind === "discount" ? "text-success" : ""}`}>
-                <span>{a.label}</span><span className="tabular-nums">{money(a.cents)}</span>
+                <span>{a.label}</span><span className="tabular-nums">{m(a.cents)}</span>
               </p>
             ))}
           </div>
         )}
         <dl className="space-y-1 px-4 py-3">
-          <Row k={t("Subtotal")} v={money(r.subtotal)} />
-          {r.discount > 0 && <Row k={t("Discount")} v={`−${money(r.discount)}`} />}
-          {r.tax > 0 && <Row k={t("Tax")} v={money(r.tax)} />}
-          <Row k={t("Tips")} v={money(r.tips)} />
-          <Row k={t("Total")} v={money(r.total)} strong />
-          <Row k={t("Total paid")} v={money(r.paid)} strong />
-          {r.total > r.paid && <Row k={t("Balance due")} v={money(r.total - r.paid)} strong />}
+          <Row k={t("Subtotal")} v={m(r.subtotal)} />
+          {r.discount > 0 && <Row k={t("Discount")} v={`−${m(r.discount)}`} />}
+          {r.tax > 0 && <Row k={t("Tax")} v={m(r.tax)} />}
+          <Row k={t("Tips")} v={m(r.tips)} />
+          <Row k={t("Total")} v={m(r.total)} strong />
+          <Row k={t("Total paid")} v={m(r.paid)} strong />
+          {r.total > r.paid && <Row k={t("Balance due")} v={m(r.total - r.paid)} strong />}
         </dl>
         {r.payments.length > 0 && (
           <div className="space-y-1 px-4 py-3">
@@ -75,9 +77,9 @@ export function ReceiptView({ r, t = (s) => s, locale = "en-US" }: { r: Receipt;
                 <span>
                   {p.method} · {p.at.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: tz })}{" "}
                   {p.at.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", timeZone: tz })}
-                  {p.tip ? ` ${t("(incl. {amount} tip)", { amount: money(p.tip) })}` : ""}
+                  {p.tip ? ` ${t("(incl. {amount} tip)", { amount: m(p.tip) })}` : ""}
                 </span>
-                <span className="tabular-nums text-ink">{money(p.amount + p.tip)}</span>
+                <span className="tabular-nums text-ink">{m(p.amount + p.tip)}</span>
               </p>
             ))}
           </div>

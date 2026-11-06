@@ -1,13 +1,53 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import { msg } from "@/lib/i18n";
-export const money = (cents: number) =>
-  (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+import { phoneText, toE164 } from "./countries";
+import type { Region } from "./region";
+import { currentRegion } from "./region-store";
 
-/** Parses a dollar amount typed by a person ("45", "45.5", "$1,200.00") into cents. */
+// Money, dates and times follow the business's region (currency, language + country): the
+// page's region by default (see region-store), or the one passed in.
+
+const nfCache = new Map<string, Intl.NumberFormat>();
+const dfCache = new Map<string, Intl.DateTimeFormat>();
+const nf = (locale: string, currency: string) => {
+  const k = `${locale}|${currency}`;
+  let f = nfCache.get(k);
+  if (!f) {
+    try {
+      f = new Intl.NumberFormat(locale, { style: "currency", currency });
+    } catch {
+      f = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+    }
+    nfCache.set(k, f);
+  }
+  return f;
+};
+const df = (locale: string, tz: string, opts: Intl.DateTimeFormatOptions) => {
+  const k = `${locale}|${tz}|${JSON.stringify(opts)}`;
+  let f = dfCache.get(k);
+  if (!f) {
+    try {
+      f = new Intl.DateTimeFormat(locale, { ...opts, timeZone: tz });
+    } catch {
+      f = new Intl.DateTimeFormat("en-US", { ...opts, timeZone: tz });
+    }
+    dfCache.set(k, f);
+  }
+  return f;
+};
+// Newer ICU puts a narrow no-break space before AM/PM; plain spaces read (and match) the same.
+const plain = (s: string) => s.replace(/[\u202f\u00a0]/g, " ");
+
+export const money = (cents: number, r: Region = currentRegion()) => plain(nf(r.locale, r.currency).format(cents / 100));
+
+/** Parses an amount typed by a person ("45", "45.5", "$1,200.00", "1.200,50") into cents. */
 export function parseMoney(input: FormDataEntryValue | null): number | null {
-  const text = String(input ?? "").replace(/[$,\s]/g, "");
+  let text = String(input ?? "").replace(/[^\d.,-]/g, "");
   if (text === "") return null;
+  // "1.200,50" or "45,5": the comma is the decimal mark.
+  if (/,\d{1,2}$/.test(text)) text = text.replace(/\./g, "").replace(",", ".");
+  else text = text.replace(/,/g, "");
   const n = Number(text);
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null;
 }
@@ -25,9 +65,12 @@ export const zonedToUtc = (date: string, time: string, tz: string) =>
 
 export const ymd = (d: Date, tz: string) => formatInTimeZone(d, tz, "yyyy-MM-dd");
 export const hm = (d: Date, tz: string) => formatInTimeZone(d, tz, "HH:mm");
-export const timeLabel = (d: Date, tz: string) => formatInTimeZone(d, tz, "h:mm a");
-export const dayLabel = (d: Date, tz: string) => formatInTimeZone(d, tz, "EEE, MMM d");
-export const longDayLabel = (d: Date, tz: string) => formatInTimeZone(d, tz, "EEEE, MMMM d");
+export const timeLabel = (d: Date, tz: string, r: Region = currentRegion()) =>
+  plain(df(r.locale, tz, { hour: "numeric", minute: "2-digit" }).format(d));
+export const dayLabel = (d: Date, tz: string, r: Region = currentRegion()) =>
+  plain(df(r.locale, tz, { weekday: "short", month: "short", day: "numeric" }).format(d));
+export const longDayLabel = (d: Date, tz: string, r: Region = currentRegion()) =>
+  plain(df(r.locale, tz, { weekday: "long", month: "long", day: "numeric" }).format(d));
 
 /** Today's date (yyyy-MM-dd) in the business time zone. */
 export const todayYmd = (tz: string) => ymd(new Date(), tz);
@@ -52,19 +95,14 @@ export const isUuid = (s: unknown): s is string =>
 
 export const isYmd = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
-/** Formats an E.164 US number as (650) 555-0123 for display. */
-export function phoneLabel(e164: string | null | undefined) {
-  if (!e164) return "";
-  const m = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
-  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : e164;
+/** An E.164 number for display: (650) 555-0123 at home, +55 11 98765-4321 from abroad. */
+export function phoneLabel(e164: string | null | undefined, country: string = currentRegion().country) {
+  return phoneText(e164, country);
 }
 
-/** Normalizes a US phone typed in any format to E.164 (+16505550123), or null. */
-export function normalizePhone(input: FormDataEntryValue | null): string | null {
-  const digits = String(input ?? "").replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return null;
+/** A phone typed in any format → E.164 (+16505550123), read in the business's country; or null. */
+export function normalizePhone(input: FormDataEntryValue | null, country: string = currentRegion().country): string | null {
+  return toE164(String(input ?? ""), country);
 }
 
 export const SIZES = [
@@ -74,6 +112,17 @@ export const SIZES = [
   { value: "xlarge", label: msg('X-Large (20" or up)') },
 ] as const;
 export type SizeClass = (typeof SIZES)[number]["value"];
-export const sizeLabel = (s: string | null) => SIZES.find((x) => x.value === s)?.label ?? msg("Size not set");
+const SIZES_CM: Record<SizeClass, string> = {
+  small: msg("Small (30 cm or less)"),
+  medium: msg("Medium (30–40 cm)"),
+  large: msg("Large (40–50 cm)"),
+  xlarge: msg("X-Large (50 cm or up)"),
+};
+/** The sizes with their heights in inches, or in centimeters (`metric`). */
+export const sizesFor = (metric: boolean) => SIZES.map((s) => ({ value: s.value, label: metric ? SIZES_CM[s.value] : s.label }));
+export const sizeLabel = (s: string | null, metric: boolean = currentRegion().metric) =>
+  sizesFor(metric).find((x) => x.value === s)?.label ?? msg("Size not set");
+
+export const LB_PER_KG = 2.20462;
 
 export const WEEKDAYS = [msg("Sunday"), msg("Monday"), msg("Tuesday"), msg("Wednesday"), msg("Thursday"), msg("Friday"), msg("Saturday")];

@@ -97,7 +97,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const [vaccines, codes, road] = await Promise.all([
     vaccineAlerts(staff, stops.flatMap((s) => s.pets.map((p) => p.id)), date),
     petCodesFor(stops.flatMap((s) => s.pets.map((p) => p.id))),
-    locateStops(stops).then(() => stops.length === 0 ? null : dayRoute([
+    locateStops(stops, staff.region.country).then(() => stops.length === 0 ? null : dayRoute([
       ...(ends?.start_address ? [{ address: ends.start_address }] : []),
       ...stops.map((s) => ({ address: s.address_line, lat: s.lat, lng: s.lng })),
       ...(ends?.end_address ? [{ address: ends.end_address }] : []),

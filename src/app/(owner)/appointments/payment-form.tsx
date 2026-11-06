@@ -1,10 +1,10 @@
 "use client";
-import { useT } from "@/components/i18n";
+import { useMoney, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { ArrowLeft, ChevronRight } from "@/components/icons";
-import { money } from "@/lib/format";
+
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import type { FormState } from "./actions";
 
@@ -28,6 +28,7 @@ export function PaymentForm({
   clientName: string;
 }) {
   const { t } = useT();
+  const money = useMoney();
   const [state, formAction, pending] = useActionState(action, undefined);
   const [step, setStep] = useState<"tip" | "method" | "details">("tip");
   const [tip, setTip] = useState(0);

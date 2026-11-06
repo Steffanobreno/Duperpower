@@ -255,4 +255,9 @@ export const tl: Messages = {
   "Thank you! You signed the service agreement.": "Salamat! Napirmahan mo na ang kasunduan sa serbisyo.",
   "Please read and sign our service agreement.": "Pakibasa at pirmahan ang aming kasunduan sa serbisyo.",
   "Please tick the box and type your full name to sign.": "Pakilagyan ng check ang kahon at i-type ang buong pangalan mo para pumirma.",
+  // Worldwide
+  "Postal code": "Postal code",
+  "Please check your mobile number.": "Pakitingnan ang numero ng mobile mo.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Hindi namin nahanap ang postal code na iyan. Pakitingnan ito, o i-text kami para mag-book.",
+  "Please check the postal code.": "Pakitingnan ang postal code.",
 };

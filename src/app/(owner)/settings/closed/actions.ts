@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { isYmd } from "@/lib/format";
-import { HOLIDAYS } from "@/lib/holidays";
+import { holidaysFor } from "@/lib/holidays";
 import type { FormState } from "../actions";
 
 export async function addClosedDatesAction(_: FormState, form: FormData): Promise<FormState> {
@@ -29,7 +29,7 @@ export async function deleteClosedDatesAction(id: string) {
 
 export async function saveHolidaysAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requirePermission("settings");
-  const closed = HOLIDAYS.filter((h) => form.get(`closed:${h.key}`) === "on").map((h) => h.key);
+  const closed = holidaysFor(staff.region.country).filter((h) => form.get(`closed:${h.key}`) === "on").map((h) => h.key);
   await sql`update businesses set closed_holidays = ${closed} where id = ${staff.businessId}`;
   revalidatePath("/settings/closed");
   revalidatePath("/calendar");

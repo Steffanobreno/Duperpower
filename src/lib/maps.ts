@@ -37,14 +37,14 @@ async function call<T>(url: string, init: RequestInit & { fieldMask?: string }):
 
 export type Suggestion = { id: string; main: string; rest: string };
 
-/** Address suggestions while typing (Places Autocomplete, US addresses). */
-export async function suggestAddresses(input: string, sessionToken: string): Promise<Suggestion[]> {
+/** Address suggestions while typing (Places Autocomplete, addresses in the business's country). */
+export async function suggestAddresses(input: string, sessionToken: string, country = "US"): Promise<Suggestion[]> {
   if (input.trim().length < 4) return [];
   const data = await call<{ suggestions?: { placePrediction?: {
     placeId: string; text?: { text: string }; structuredFormat?: { mainText?: { text: string }; secondaryText?: { text: string } };
   } }[] }>(endpoint("places.googleapis.com", "/v1/places:autocomplete"), {
     method: "POST",
-    body: JSON.stringify({ input: input.slice(0, 200), sessionToken, includedRegionCodes: ["us"] }),
+    body: JSON.stringify({ input: input.slice(0, 200), sessionToken, includedRegionCodes: [country.toLowerCase()] }),
   });
   return (data?.suggestions ?? []).flatMap((s) => {
     const p = s.placePrediction;
@@ -89,11 +89,11 @@ export async function addressOf(placeId: string, sessionToken: string): Promise<
 export type Geo = { lat: number; lng: number; zip: string | null; city: string | null };
 
 /** An address as a map point, with Google (null without the key). */
-export async function geocode(address: string): Promise<Geo | null> {
+export async function geocode(address: string, country = "US"): Promise<Geo | null> {
   if (!address.trim() || !key()) return null;
   const url = new URL(endpoint("maps.googleapis.com", "/maps/api/geocode/json"));
   url.searchParams.set("address", address);
-  url.searchParams.set("components", "country:US");
+  url.searchParams.set("components", `country:${country}`);
   url.searchParams.set("key", key()!);
   const data = await call<{ results?: { geometry: { location: { lat: number; lng: number } };
     address_components?: { long_name: string; types: string[] }[] }[] }>(url.toString(), { method: "GET" });
@@ -101,6 +101,21 @@ export async function geocode(address: string): Promise<Geo | null> {
   if (!r) return null;
   const part = (type: string) => r.address_components?.find((c) => c.types.includes(type))?.long_name ?? null;
   return { lat: r.geometry.location.lat, lng: r.geometry.location.lng, zip: part("postal_code"), city: part("locality") };
+}
+
+/** A postal code (in a country) as a map point and its city, with Google (null without the key). */
+export async function geocodePostal(code: string, country: string): Promise<Geo | null> {
+  if (!code.trim() || !key()) return null;
+  const url = new URL(endpoint("maps.googleapis.com", "/maps/api/geocode/json"));
+  url.searchParams.set("components", `postal_code:${code}|country:${country}`);
+  url.searchParams.set("key", key()!);
+  const data = await call<{ results?: { geometry: { location: { lat: number; lng: number } };
+    address_components?: { long_name: string; types: string[] }[] }[] }>(url.toString(), { method: "GET" });
+  const r = data?.results?.[0];
+  if (!r) return null;
+  const part = (type: string) => r.address_components?.find((c) => c.types.includes(type))?.long_name ?? null;
+  return { lat: r.geometry.location.lat, lng: r.geometry.location.lng, zip: part("postal_code"),
+           city: part("locality") ?? part("postal_town") ?? part("administrative_area_level_2") };
 }
 
 export type Place = { address?: string | null; lat?: number | null; lng?: number | null };

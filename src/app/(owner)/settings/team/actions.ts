@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { removeStaffLogin, requirePermission, setStaffLogin } from "@/lib/auth";
 import { ALL_PERMISSIONS } from "@/lib/permissions";
@@ -9,22 +10,22 @@ import { GROOMER_COLORS } from "@/lib/data/staff";
 
 export type TeamState = { error?: string; saved?: boolean } | undefined;
 
-function read(form: FormData) {
+function read(form: FormData, country: string) {
   const name = String(form.get("name") ?? "").trim().slice(0, 60);
   const color = String(form.get("color") ?? "");
   const phoneRaw = String(form.get("phone") ?? "").trim();
-  const phone = phoneRaw ? normalizePhone(phoneRaw) : null;
+  const phone = phoneRaw ? normalizePhone(phoneRaw, country) : null;
   const email = String(form.get("email") ?? "").trim().toLowerCase() || null;
   if (!name) return { error: "Type the groomer's name." };
   if (!GROOMER_COLORS.includes(color)) return { error: "Pick a color." };
-  if (phoneRaw && !phone) return { error: "Check the phone number (10 digits)." };
+  if (phoneRaw && !phone) return { error: country === "US" ? "Check the phone number (10 digits)." : msg("Check the phone number.") };
   if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: "Check the email address." };
   return { name, color, phone, email };
 }
 
 export async function addGroomerAction(_: TeamState, form: FormData): Promise<TeamState> {
   const staff = await requirePermission("settings");
-  const g = read(form);
+  const g = read(form, staff.region.country);
   if ("error" in g) return { error: g.error };
   await sql.begin(async (tx) => {
     const [row] = await tx`
@@ -40,7 +41,7 @@ export async function addGroomerAction(_: TeamState, form: FormData): Promise<Te
 
 export async function updateGroomerAction(id: string, _: TeamState, form: FormData): Promise<TeamState> {
   const staff = await requirePermission("settings");
-  const g = read(form);
+  const g = read(form, staff.region.country);
   if ("error" in g) return { error: g.error };
   const [row] = await sql`select role from staff where id = ${id} and business_id = ${staff.businessId}`;
   if (!row) return { error: "Groomer not found." };

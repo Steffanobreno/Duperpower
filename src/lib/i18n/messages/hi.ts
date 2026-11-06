@@ -262,4 +262,9 @@ export const hi: Messages = {
   "Thank you! You signed the service agreement.": "धन्यवाद! आपने सेवा समझौते पर हस्ताक्षर कर दिए।",
   "Please read and sign our service agreement.": "कृपया हमारा सेवा समझौता पढ़ें और हस्ताक्षर करें।",
   "Please tick the box and type your full name to sign.": "बॉक्स पर टिक करें और हस्ताक्षर के लिए अपना पूरा नाम लिखें।",
+  // Worldwide
+  "Postal code": "पिन कोड",
+  "Please check your mobile number.": "कृपया अपना मोबाइल नंबर जाँचें।",
+  "We couldn't find that postal code. Please check it, or text us to book.": "हमें वह पिन कोड नहीं मिला। कृपया जाँचें, या बुक करने के लिए हमें मैसेज करें।",
+  "Please check the postal code.": "कृपया पिन कोड जाँचें।",
 };

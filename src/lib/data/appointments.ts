@@ -2,7 +2,7 @@ import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
 import { dayRangeUtc, addDaysYmd, hm, isUuid, ymd } from "../format";
-import { zipMiles } from "../geo/zip";
+import { milesIn, postalPoints } from "../geo/postal";
 
 export type AppointmentListItem = {
   id: string;
@@ -167,8 +167,9 @@ export async function tooFarFromDay(staff: StaffContext, date: string, zip: stri
       and a.status in ('requested', 'unconfirmed', 'confirmed', 'en_route', 'in_progress', 'completed')
       and (${excludeId ?? null}::uuid is null or a.id <> ${excludeId ?? null})`;
   let worst: { miles: number; client: string } | null = null;
+  const points = await postalPoints([zip, ...others.map((o) => o.zip)], staff.region.country);
   for (const o of others) {
-    const miles = zipMiles(zip, o.zip);
+    const miles = milesIn(points, zip, o.zip);
     if (miles != null && miles > limit && (!worst || miles > worst.miles)) worst = { miles, client: o.client };
   }
   return worst ? { ...worst, limit } : null;
@@ -187,8 +188,9 @@ export async function nearbyDays(staff: StaffContext, zip: string | null, limit 
       and a.start_at > now() and a.start_at < now() + interval '45 days' and a.zip is not null
       and a.status in ('requested', 'unconfirmed', 'confirmed')`;
   const best = new Map<string, { date: string; miles: number; name: string; after: string }>();
+  const points = await postalPoints([zip, ...rows.map((r) => r.zip)], staff.region.country);
   for (const r of rows) {
-    const miles = zipMiles(zip, r.zip);
+    const miles = milesIn(points, zip, r.zip);
     if (miles == null || miles > 25) continue;
     const date = ymd(r.start_at, staff.timezone);
     const end = hm(new Date(Math.ceil(r.end_at.getTime() / 900_000) * 900_000), staff.timezone);

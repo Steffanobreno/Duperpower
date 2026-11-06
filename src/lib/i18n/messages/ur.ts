@@ -262,4 +262,9 @@ export const ur: Messages = {
   "Thank you! You signed the service agreement.": "شکریہ! آپ نے سروس معاہدے پر دستخط کر دیے۔",
   "Please read and sign our service agreement.": "براہ کرم ہمارا سروس معاہدہ پڑھیں اور دستخط کریں۔",
   "Please tick the box and type your full name to sign.": "خانے پر نشان لگائیں اور دستخط کے لیے اپنا پورا نام لکھیں۔",
+  // Worldwide
+  "Postal code": "پوسٹل کوڈ",
+  "Please check your mobile number.": "براہ کرم اپنا موبائل نمبر چیک کریں۔",
+  "We couldn't find that postal code. Please check it, or text us to book.": "ہمیں یہ پوسٹل کوڈ نہیں ملا۔ براہ کرم چیک کریں، یا بک کرنے کے لیے ہمیں میسج کریں۔",
+  "Please check the postal code.": "براہ کرم پوسٹل کوڈ چیک کریں۔",
 };

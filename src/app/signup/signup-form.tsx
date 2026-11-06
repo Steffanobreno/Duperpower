@@ -4,21 +4,12 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { FormPopup } from "@/components/popup";
-import { Button, Field, Input, Select } from "@/components/ui";
-import { TIMEZONES } from "@/lib/timezones";
+import { Button, Field, Input } from "@/components/ui";
+import { CountryFields } from "@/components/country-fields";
+import { currencyOf, mainZoneOf } from "@/lib/countries";
 import { signupAction } from "./actions";
 
-// The phone's own time zone, when it's one we offer.
-const guessZone = () => {
-  try {
-    const z = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return TIMEZONES.some(([v]) => v === z) ? z : "America/Los_Angeles";
-  } catch {
-    return "America/Los_Angeles";
-  }
-};
-
-export function SignupForm() {
+export function SignupForm({ country }: { country: string }) {
   const { t } = useT();
   const [state, action, pending] = useActionState(signupAction, undefined);
   return (
@@ -29,14 +20,10 @@ export function SignupForm() {
       <Field label={t("Email")}><Input name="email" type="email" required autoComplete="email" /></Field>
       <Field label={t("Password")} hint={t("At least 10 characters.")}><Input name="password" type="password" required autoComplete="new-password" /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={t("Business phone")}><Input name="phone" type="tel" autoComplete="tel" placeholder="(650) 555-0123" /></Field>
-        <Field label={t("ZIP code")}><Input name="zip" inputMode="numeric" maxLength={10} placeholder="94401" /></Field>
+        <Field label={t("Business phone")}><Input name="phone" type="tel" autoComplete="tel" placeholder={country === "US" ? "(650) 555-0123" : ""} /></Field>
+        <Field label={country === "US" ? t("ZIP code") : t("Postal code")}><Input name="zip" maxLength={10} placeholder={country === "US" ? "94401" : ""} /></Field>
       </div>
-      <Field label={t("Time zone")}>
-        <Select name="timezone" defaultValue={guessZone()} suppressHydrationWarning>
-          {TIMEZONES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-        </Select>
-      </Field>
+      <CountryFields country={country} currency={currencyOf(country)} timezone={mainZoneOf(country)} guess />
       {/* People never see this field; bots fill it in. */}
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <label className="flex items-start gap-3 text-sm">

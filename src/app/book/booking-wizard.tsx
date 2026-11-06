@@ -3,14 +3,14 @@ import { hasBuiltInArtwork } from "@/lib/product";
 import { useState, useTransition, type ReactNode } from "react";
 import { StepCard } from "@/components/client-shell";
 import { DOG_BREEDS } from "@/lib/breeds";
-import { minutesLabel, money, SIZES } from "@/lib/format";
+import { minutesLabel, sizesFor } from "@/lib/format";
 import { blobToDataUrl, resizeImage } from "@/lib/resize-image";
 import type { DaySlots } from "@/lib/booking";
 import {
   ArrowLeft, Camera, Check, Close, Dog, Hourglass, Pencil, Pin, Plus, Search, Sign,
 } from "@/components/icons";
 import { MonthCalendar } from "./month-calendar";
-import { useT } from "@/components/i18n";
+import { useMoney, useRegion, useT } from "@/components/i18n";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import type { T } from "@/lib/i18n";
 import { SignaturePad } from "./signature-pad";
@@ -70,7 +70,11 @@ const blankPet = (): Pet => ({
 });
 const digits = (s: string) => s.replace(/\D/g, "");
 /** $129 rather than $129.00. */
-const price = (cents: number) => money(cents).replace(/\.00$/, "");
+/** Prices without the cents when there are none ($65, not $65.00). */
+function usePrice() {
+  const money = useMoney();
+  return (cents: number) => money(cents).replace(/[.,]00(?=\D*$)/, "");
+}
 
 export function BookingWizard({
   services,
@@ -115,7 +119,12 @@ export function BookingWizard({
   const [accepted, setAccepted] = useState(false);
   const [pending, startTransition] = useTransition();
   const { t, locale, serverMessage } = useT();
-  const sizeName = (size: string) => t(SIZES.find((x) => x.value === size)?.label.split(" (")[0] ?? "");
+  const { country } = useRegion();
+  const us = country === "US" || country === "CA";
+  const phoneOk = (p: string) => digits(p).length >= (us ? 10 : 7);
+  const zipOk = (z: string) => (country === "US" ? z.length === 5 : z.trim().length >= 2);
+  const price = usePrice();
+  const sizeName = (size: string) => t(sizesFor(false).find((x) => x.value === size)?.label.split(" (")[0] ?? "");
   /** The time of an open slot in the client's language ("10:00 AM", "上午10:00"). */
   const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", timeZone: timezone });
   const dayOf = (ymd: string, long = false) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(locale,
@@ -285,16 +294,16 @@ export function BookingWizard({
               inputMode="tel"
               autoComplete="tel"
               aria-label={t("Mobile phone")}
-              placeholder="(650) 555-0123"
+              placeholder={us ? "(650) 555-0123" : ""}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && digits(phone).length >= 10 && lookup()}
+              onKeyDown={(e) => e.key === "Enter" && phoneOk(phone) && lookup()}
               className={inputClass}
             />
           </label>
           <p className="mt-2 text-sm text-muted">{t("Been here before? We'll find your pets and address, so you don't type them again.")}</p>
           {errorBox}
-          <BigButton disabled={pending || digits(phone).length < 10} onClick={lookup} className="mt-6">
+          <BigButton disabled={pending || !phoneOk(phone)} onClick={lookup} className="mt-6">
             {pending ? t("One moment…") : t("Next")}
           </BigButton>
           </div>
@@ -370,9 +379,10 @@ export function BookingWizard({
                     value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} />
                 </label>
                 <label className="block">
-                  <span className={labelClass}>{t("ZIP code")}</span>
-                  <input aria-label={t("ZIP code")} inputMode="numeric" maxLength={5} autoComplete="postal-code" placeholder="94401" className={inputClass}
-                    value={address.zip} onChange={(e) => setAddress({ ...address, zip: digits(e.target.value) })} />
+                  <span className={labelClass}>{country === "US" ? t("ZIP code") : t("Postal code")}</span>
+                  <input aria-label={country === "US" ? t("ZIP code") : t("Postal code")} inputMode={country === "US" ? "numeric" : "text"}
+                    maxLength={country === "US" ? 5 : 10} autoComplete="postal-code" placeholder={country === "US" ? "94401" : ""} className={inputClass}
+                    value={address.zip} onChange={(e) => setAddress({ ...address, zip: country === "US" ? digits(e.target.value) : e.target.value.toUpperCase().slice(0, 10) })} />
                 </label>
               </div>
             </div>
@@ -380,7 +390,7 @@ export function BookingWizard({
           {errorBox}
           <BigButton
             className="mt-8"
-            disabled={!fileAddress && (!address.address.trim() || !address.city.trim() || address.zip.length !== 5)}
+            disabled={!fileAddress && (!address.address.trim() || !address.city.trim() || !zipOk(address.zip))}
             onClick={afterAddress}
           >
             {t("Continue")}
@@ -550,8 +560,9 @@ export function BookingWizard({
 
     case "time": {
       const selected = days.find((d) => d.date === day);
-      const am = selected?.times.filter((x) => x.label.endsWith("AM")) ?? [];
-      const pm = selected?.times.filter((x) => x.label.endsWith("PM")) ?? [];
+      const hourOf = (iso: string) => Number(new Date(iso).toLocaleString("en-US", { hour: "numeric", hourCycle: "h23", timeZone: timezone }));
+      const am = selected?.times.filter((x) => hourOf(x.value) < 12) ?? [];
+      const pm = selected?.times.filter((x) => hourOf(x.value) >= 12) ?? [];
       const picked = selected?.times.find((t) => t.value === start);
       return (
         <StepCard>
@@ -715,6 +726,7 @@ function BigButton({ className = "", ...props }: React.ComponentProps<"button">)
 
 function PricePill({ cents }: { cents: number }) {
   const { t } = useT();
+  const price = usePrice();
   const label = cents === 0 ? t("Free") : price(cents);
   return <span className="shrink-0 rounded-full bg-bg px-3 py-1.5 font-bold">{label}</span>;
 }
@@ -774,6 +786,7 @@ function PetTabs({ pets, current, hint }: { pets: Pet[]; current: number; hint: 
 
 function SizePicker({ value, onChange }: { value: string; onChange: (size: string) => void }) {
   const { t } = useT();
+  const { metric } = useRegion();
   return (
     <div>
       <span className="block font-semibold">{t("Size")}</span>
@@ -782,7 +795,7 @@ function SizePicker({ value, onChange }: { value: string; onChange: (size: strin
       <img src="/size-chart.jpg" alt={t("Size chart: Small 12 inches or less, Medium 12 to 16, Large 16 to 20, X-Large 20 inches or up")}
         width={900} height={304} className="my-3 w-full" />
       <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("Size")}>
-        {SIZES.map((s) => {
+        {sizesFor(metric).map((s) => {
           const [name, inches] = s.label.replace(")", "").split(" (");
           return (
             <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={`${t(name)} (${inches})`}
@@ -960,6 +973,7 @@ function Sheet({ title, sub, onClose, children }: { title: string; sub?: string;
 
 function Summary({ place, pets, total }: { place: string; pets: { name: string; services: string[] }[]; total: number }) {
   const { t } = useT();
+  const price = usePrice();
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4 rounded-2xl border border-line px-4 py-4">

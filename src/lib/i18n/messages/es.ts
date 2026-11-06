@@ -273,4 +273,9 @@ export const es: Messages = {
   "Thank you! You signed the service agreement.": "¡Gracias! Firmaste el contrato de servicio.",
   "Please read and sign our service agreement.": "Lee y firma nuestro contrato de servicio.",
   "Please tick the box and type your full name to sign.": "Marca la casilla y escribe tu nombre completo para firmar.",
+  // Worldwide
+  "Postal code": "Código postal",
+  "Please check your mobile number.": "Revisa tu número de celular.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "No encontramos ese código postal. Revísalo, o escríbenos para reservar.",
+  "Please check the postal code.": "Revisa el código postal.",
 };

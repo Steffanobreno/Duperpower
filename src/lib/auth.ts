@@ -1,4 +1,6 @@
 import "server-only";
+import { regionOf, type Region } from "./region";
+import { setRegion } from "./region-store";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { cookies, headers } from "next/headers";
@@ -102,7 +104,7 @@ async function freeSlug(name: string) {
  * Returns an error message, or null when done.
  */
 export async function signUpBusiness(input: { businessName: string; ownerName: string; email: string; password: string;
-  phone: string | null; zip: string | null; timezone: string }) {
+  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string }) {
   const email = input.email.trim().toLowerCase();
   const [exists] = await sql`select 1 from users where email = ${email}`;
   if (exists) return "There's already an account with that email. Log in instead.";
@@ -112,6 +114,7 @@ export async function signUpBusiness(input: { businessName: string; ownerName: s
     const [user] = await tx`insert into users (email, password_hash) values (${email}, ${hash}) returning id`;
     await createBusiness(tx, {
       name: input.businessName.trim(), phone: input.phone, slug, timezone: input.timezone, zip: input.zip,
+      country: input.country, currency: input.currency,
       ownerName: input.ownerName.trim(), ownerUserId: user.id,
     });
     return user.id as string;
@@ -140,6 +143,8 @@ export type StaffContext = {
   lang: Lang;
   /** Whether they picked it (false: it follows the phone). */
   langPicked: boolean;
+  /** The business's country and currency, with this person's language (for money and dates). */
+  region: Region;
 };
 
 /** The logged-in staff member, or null. Cached per request. */
@@ -148,7 +153,7 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   if (!token) return null;
   const [row] = await sql`
     select s.id as staff_id, s.name as staff_name, s.role, s.language, b.id as business_id, b.name as business_name,
-           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded,
+           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded, b.country, b.currency,
            -- In the same trip: what this role may do (the owner may do everything).
            array(select rp.perm from role_permissions rp where rp.business_id = b.id and rp.role = s.role) as perms
     from sessions se
@@ -164,6 +169,8 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   const allowed = row.role === "owner" ? new Set<string>(ALL_PERMISSIONS) : new Set(perms);
   const langPicked = isLang(row.language);
   const lang = langPicked ? (row.language as Lang) : fromAcceptLanguage((await headers()).get("accept-language"));
+  const region = regionOf(row.country, row.currency, lang);
+  setRegion(region);
   return {
     staffId: row.staff_id,
     staffName: row.staff_name,
@@ -176,6 +183,7 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
     can: Object.fromEntries(ALL_PERMISSIONS.map((p) => [p, allowed.has(p)])) as Record<Permission, boolean>,
     lang,
     langPicked,
+    region,
   };
 });
 

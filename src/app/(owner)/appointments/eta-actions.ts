@@ -2,6 +2,7 @@
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { timeLabel } from "@/lib/format";
+import { messageRegion } from "@/lib/region";
 import { driveMinutesFrom } from "@/lib/maps";
 
 /** How long the drive to this visit takes from where the phone is, and the arrival time. */
@@ -13,5 +14,5 @@ export async function etaAction(appointmentId: string, lat: number, lng: number)
   if (!a) return null;
   const minutes = await driveMinutesFrom({ lat, lng }, { address: [a.address_line, a.zip].filter(Boolean).join(" "), lat: a.lat, lng: a.lng });
   if (minutes == null) return null;
-  return { minutes, arrive: timeLabel(new Date(Date.now() + minutes * 60_000), staff.timezone) };
+  return { minutes, arrive: timeLabel(new Date(Date.now() + minutes * 60_000), staff.timezone, messageRegion(staff.region.country)) };
 }

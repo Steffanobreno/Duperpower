@@ -1,11 +1,11 @@
 "use client";
-import { useT } from "@/components/i18n";
+import { useMoney, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { Close, Plus } from "@/components/icons";
-import { minutesLabel, money } from "@/lib/format";
+import {minutesLabel } from "@/lib/format";
 import { saveServicesAction, type VisitPet } from "../../actions";
 
 type Line = { key: string; id?: string; serviceId: string; name: string; priceCents: number; minutes: number; keepForPet?: boolean };
@@ -36,6 +36,7 @@ export function ServicesEditor({
   canKeepPrices?: boolean;
 }) {
   const { t } = useT();
+  const money = useMoney();
   const router = useRouter();
   const [state, setState] = useState<PetState[]>(() => pets.map(withKeys));
   const [result, setResult] = useState<{ error?: string; warning?: string } | null>(null);

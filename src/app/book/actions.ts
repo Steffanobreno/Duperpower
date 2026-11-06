@@ -66,11 +66,11 @@ async function mustSignFor(b: PublicBusiness, clientId: string | null) {
 export async function lookupClientAction(rawPhone: string, slug: string | null = null): Promise<LookupResult> {
   const b = await getPublicBusiness(slug);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
-  const phone = normalizePhone(rawPhone);
-  if (!phone) return { error: "Please enter your 10-digit mobile number." };
+  const phone = normalizePhone(rawPhone, b.country);
+  if (!phone) return b.country === "US" ? { error: "Please enter your 10-digit mobile number." } : { error: "Please check your mobile number." };
   if (await tooManyLookups()) return { error: "Too many tries. Please wait a few minutes or text us." };
   const c = await findClient(b, phone);
-  if (c?.online_booking_blocked) return { error: `Please text us at ${phoneLabel(b.phone)} to book your next visit.` };
+  if (c?.online_booking_blocked) return { error: `Please text us at ${phoneLabel(b.phone, b.country)} to book your next visit.` };
   if (!c) return { known: false, mustSign: (await mustSignFor(b, null)).mustSign };
   const pets = await sql<{ id: string; name: string; breed: string | null; size: string | null }[]>`
     select id, name, breed, size_class as size from pets where client_id = ${c.id} and deceased_at is null order by name`;
@@ -137,10 +137,10 @@ export async function availabilityAction(input: {
 }): Promise<{ error?: string; days?: DaySlots[] }> {
   const b = await getPublicBusiness(input.slug);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
-  const zip = await zipFor(b, normalizePhone(input.phone), input.useFileAddress, input.zip);
+  const zip = await zipFor(b, normalizePhone(input.phone, b?.country), input.useFileAddress, input.zip);
   const problem = await zipProblem(b, zip);
   if (problem) return { error: problem };
-  const checked = await priceAndLength(b, input.pets, normalizePhone(input.phone));
+  const checked = await priceAndLength(b, input.pets, normalizePhone(input.phone, b?.country));
   if ("error" in checked) return { error: checked.error };
   const days = await findSlots(b, zip, checked.minutes);
   if (days.length === 0) return { error: "No open times in your area right now. Please text us and we'll fit you in." };
@@ -172,10 +172,10 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
 
-  const phone = normalizePhone(input.phone);
-  if (!phone) return { error: "Please enter a 10-digit mobile number." };
+  const phone = normalizePhone(input.phone, b?.country);
+  if (!phone) return b.country === "US" ? { error: "Please enter a 10-digit mobile number." } : { error: "Please check your mobile number." };
   const existing = await findClient(b, phone);
-  if (existing?.online_booking_blocked) return { error: `Please text us at ${phoneLabel(b.phone)} to book your next visit.` };
+  if (existing?.online_booking_blocked) return { error: `Please text us at ${phoneLabel(b.phone, b.country)} to book your next visit.` };
   const useFile = !!existing && input.useFileAddress && !!existing.zip && !!existing.address_line;
 
   const firstName = String(input.firstName ?? "").trim();
@@ -239,7 +239,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
         const [c] = await tx`
           insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip,
                                sms_consent_at, source)
-          values (${b.id}, ${firstName}, ${lastName}, ${phone}, ${email || null}, ${address}, ${city}, 'CA', ${zip},
+          values (${b.id}, ${firstName}, ${lastName}, ${phone}, ${email || null}, ${address}, ${city}, ${b.country === "US" ? "CA" : null}, ${zip},
                   ${input.smsConsent ? new Date() : null}, 'online')
           returning id`;
         clientId = c.id;
@@ -249,8 +249,8 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
       // A known client who typed a different address: keep the file as is, tell the owner.
       const visitAddress = useFile
         ? [existing!.address_line, existing!.city, existing!.state].filter(Boolean).join(", ")
-        : `${address}, ${city}, CA`;
-      const moved = existing && !useFile ? `New address given online: ${address}, ${city}, CA ${zip}.` : null;
+        : b.country === "US" ? `${address}, ${city}, CA` : `${address}, ${city} ${zip}`;
+      const moved = existing && !useFile ? `New address given online: ${address}, ${city}${b.country === "US" ? ", CA" : ""} ${zip}.` : null;
       const [appt] = await tx`
         insert into appointments (business_id, client_id, staff_id, start_at, end_at, status, source, address_line, zip, notes)
         values (${b.id}, ${clientId}, ${b.staff_id}, ${start}, ${end}, ${accepted ? "unconfirmed" : "requested"}, 'online', ${visitAddress}, ${zip},
@@ -324,7 +324,7 @@ export async function trackDraftAction(input: {
 }) {
   try {
     const b = await getPublicBusiness(input.slug);
-    const phone = normalizePhone(input.phone);
+    const phone = normalizePhone(input.phone, b?.country);
     if (!b || !phone || !["phone", "contact", "address", "times", "review"].includes(input.step)) return;
     const cut = (v: string | undefined, n: number) => (v ?? "").trim().slice(0, n) || null;
     const email = cut(input.email, 120)?.toLowerCase() ?? null;

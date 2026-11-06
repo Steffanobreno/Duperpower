@@ -1,11 +1,12 @@
 import "server-only";
 import { sql } from "./db";
 import { addDaysYmd, dayRangeUtc, dayLabel, timeLabel, todayYmd, weekdayOf, zonedToUtc } from "./format";
-import { zipInfo, zipMiles } from "./geo/zip";
+import { areaCovers, milesIn, postalPoints } from "./geo/postal";
+import { postalOk, regionOf, type Region } from "./region";
 import { closedDays } from "./data/closed";
 
 // Online booking: which times a client may request. Rules, in order:
-// 1. the ZIP is in California, within the service radius of the van's start ZIP and, when
+// 1. the postal code is known (in the US: a real ZIP), within the service radius of the van's start ZIP and, when
 //    service areas are set, inside one of them;
 // 2. on a day the business is open (not a closed date or holiday) and, when service areas are
 //    set, a weekday the client's area is served; inside working hours,
@@ -21,6 +22,8 @@ export type PublicBusiness = {
   name: string;
   phone: string | null;
   timezone: string;
+  country: string;
+  currency: string;
   website_url: string | null;
   email: string | null;
   buffer_minutes: number;
@@ -41,7 +44,7 @@ export type PublicBusiness = {
 export async function getPublicBusiness(slug?: string | null) {
   const key = typeof slug === "string" && /^[a-z0-9-]{2,60}$/.test(slug) ? slug : null;
   const [b] = await sql<PublicBusiness[]>`
-    select b.id, b.name, b.phone, b.timezone, b.website_url, b.email, b.buffer_minutes,
+    select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.website_url, b.email, b.buffer_minutes,
            b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles, b.online_booking_enabled,
            (select s.id from staff s where s.business_id = b.id and s.active order by (s.role = 'owner') desc, s.created_at limit 1) as staff_id
@@ -68,10 +71,15 @@ export function serviceAreas(businessId: string) {
 
 /** Checks the ZIP against the service area. Returns an error message, or null when fine. */
 export async function zipProblem(b: PublicBusiness, zip: string) {
-  if (!zipInfo(zip)) return "We couldn't find that ZIP code. Please check it, or text us to book.";
-  const miles = b.start_zip ? zipMiles(b.start_zip, zip) : null;
+  const points = await postalPoints([zip, b.start_zip], b.country);
+  // In the US a ZIP must be found; elsewhere a well-formed code is enough when it can't be placed.
+  if (!postalOk(zip, b.country) || (b.country === "US" && !points.get(zip.replace(/[\s-]/g, "").toUpperCase()))) {
+    if (b.country === "US") return "We couldn't find that ZIP code. Please check it, or text us to book.";
+    return "We couldn't find that postal code. Please check it, or text us to book.";
+  }
+  const miles = b.start_zip ? milesIn(points, b.start_zip, zip) : null;
   const areas = miles != null && miles > b.service_radius_miles ? [] : await serviceAreas(b.id);
-  if ((miles != null && miles > b.service_radius_miles) || (areas.length && !areas.some((a) => a.zip_codes.includes(zip)))) {
+  if ((miles != null && miles > b.service_radius_miles) || (areas.length && !areas.some((a) => areaCovers(a.zip_codes, zip)))) {
     return "Sorry, that address is outside our service area. Text us and we'll see what we can do.";
   }
   return null;
@@ -89,7 +97,7 @@ export type DaySlots = {
 };
 
 /** Open start times for a visit of `durationMin` minutes at `zip`, for the coming days. */
-export async function findSlots(b: PublicBusiness, zip: string, durationMin: number, onlyDate?: string): Promise<DaySlots[]> {
+export async function findSlots(b: PublicBusiness, zip: string, durationMin: number, onlyDate?: string, rg: Region = regionOf(b.country, b.currency)): Promise<DaySlots[]> {
   const tz = b.timezone;
   const today = todayYmd(tz);
   const firstDay = onlyDate ?? today;
@@ -111,7 +119,9 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     serviceAreas(b.id),
   ]);
   // With service areas, only the weekdays the client's area is served.
-  const areaDays = areas.length ? new Set(areas.filter((a) => a.zip_codes.includes(zip)).flatMap((a) => a.weekdays)) : null;
+  const areaDays = areas.length ? new Set(areas.filter((a) => areaCovers(a.zip_codes, zip)).flatMap((a) => a.weekdays)) : null;
+  const points = await postalPoints([zip, ...busy.map((a) => a.zip)], b.country);
+  const zipMiles = (x: string | null, y: string | null) => milesIn(points, x, y);
 
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
   const buffer = b.buffer_minutes * 60_000;
@@ -161,9 +171,9 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     }
     const times: DaySlots["times"] = sorted.map((t) => {
       const d = new Date(t);
-      return { value: d.toISOString(), label: timeLabel(d, tz), ...(best.has(t) ? { best: true } : {}) };
+      return { value: d.toISOString(), label: timeLabel(d, tz, rg), ...(best.has(t) ? { best: true } : {}) };
     });
-    if (times.length) result.push({ date, label: dayLabel(zonedToUtc(date, "12:00", tz), tz), near: !!closest, times });
+    if (times.length) result.push({ date, label: dayLabel(zonedToUtc(date, "12:00", tz), tz, rg), near: !!closest, times });
   }
   return result;
 }

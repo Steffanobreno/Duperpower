@@ -1,5 +1,6 @@
 "use server";
 import { inBackground } from "@/lib/background";
+import { distanceOut } from "@/lib/region";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext, requirePermission } from "@/lib/auth";
@@ -54,13 +55,15 @@ async function overlapWarning(staff: StaffContext, start: Date, end: Date, exclu
   const [block] = await sql`
     select reason, start_at from time_off where staff_id = ${staff.staffId} and start_at < ${end} and end_at > ${start}
     order by start_at limit 1`;
-  return block ? `This overlaps blocked time${block.reason ? ` (${block.reason})` : ""} at ${timeLabel(block.start_at, staff.timezone)}.` : null;
+  return block ? `This overlaps blocked time${block.reason ? ` (${block.reason})` : ""} at ${timeLabel(block.start_at, staff.timezone, staff.region)}.` : null;
 }
 
 async function distanceWarning(staff: StaffContext, date: string, zip: string | null, excludeId?: string) {
   const far = await tooFarFromDay(staff, date, zip, excludeId);
   return far
-    ? `This address is about ${Math.round(far.miles)} miles from ${far.client}'s stop that day (your limit is ${far.limit}).`
+    ? staff.region.km
+      ? `This address is about ${distanceOut(far.miles, staff.region)} km from ${far.client}'s stop that day (your limit is ${distanceOut(far.limit, staff.region)}).`
+      : `This address is about ${Math.round(far.miles)} miles from ${far.client}'s stop that day (your limit is ${far.limit}).`
     : null;
 }
 

@@ -1,11 +1,11 @@
 "use client";
-import { useT } from "@/components/i18n";
+import { useMoney, useRegion, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
-import { minutesLabel, money, sizeLabel } from "@/lib/format";
+import {minutesLabel, sizeLabel } from "@/lib/format";
 import { Dog } from "@/components/icons";
 import type { FormState } from "./actions";
 
@@ -46,6 +46,8 @@ export function BookingForm({
   defaultGroomer?: string;
 }) {
   const { t } = useT();
+  const money = useMoney();
+  const { metric } = useRegion();
   const [state, formAction, pending] = useActionState(action, undefined);
   const [chosen, setChosen] = useState<Record<string, boolean>>(() =>
     pets.length === 1 ? { [pets[0].id]: true } : {},
@@ -96,7 +98,7 @@ export function BookingForm({
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-bg"><Dog size={26} /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-bold">{pet.name}</span>
-                <span className="block truncate text-sm text-muted">{[pet.breed, t(sizeLabel(pet.size_class))].filter(Boolean).join(" · ")}</span>
+                <span className="block truncate text-sm text-muted">{[pet.breed, t(sizeLabel(pet.size_class, metric))].filter(Boolean).join(" · ")}</span>
                 {pet.vaccineAlert && <span className="block text-xs font-semibold text-danger">💉 {pet.vaccineAlert}</span>}
               </span>
               <input
@@ -120,7 +122,7 @@ export function BookingForm({
                     <option value="" disabled>
                       {t("Choose a service")}
                     </option>
-                    <optgroup label={pet.size_class ? t("For {sizeLabel}", { sizeLabel: t(sizeLabel(pet.size_class)) }) : t("Services")}>
+                    <optgroup label={pet.size_class ? t("For {sizeLabel}", { sizeLabel: t(sizeLabel(pet.size_class, metric)) }) : t("Services")}>
                       {fits.map((x) => forPet(pet, x)).map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name} — {money(s.price_cents)}{s.own ? ` (${pet.name}'s price)` : ""} · {t(minutesLabel(s.duration_min))}

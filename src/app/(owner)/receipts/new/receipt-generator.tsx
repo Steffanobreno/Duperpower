@@ -1,10 +1,10 @@
 "use client";
-import { useT } from "@/components/i18n";
+import { useMoney, useT } from "@/components/i18n";
 import { DateField } from "@/components/date-field";
 import { useMemo, useState, useTransition } from "react";
 import { Button, Field, Input, Notice, Select } from "@/components/ui";
 import { Close, Plus } from "@/components/icons";
-import { money } from "@/lib/format";
+
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { createReceiptAction } from "../actions";
 
@@ -25,6 +25,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
   defaultClient: string;
 }) {
   const { t } = useT();
+  const money = useMoney();
   const [search, setSearch] = useState("");
   const [clientId, setClientId] = useState(clients.some((c) => c.id === defaultClient) ? defaultClient : "");
   const [lines, setLines] = useState<Line[]>([]);

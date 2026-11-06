@@ -1,12 +1,12 @@
 "use client";
-import { useT } from "@/components/i18n";
+import { useRegion, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
-import { SIZES } from "@/lib/format";
+import { LB_PER_KG, sizesFor } from "@/lib/format";
 import { BreedOptions } from "@/components/breed-options";
 import type { FormState } from "./actions";
 
@@ -30,8 +30,10 @@ export type ClientValues = {
 /** Street (with Google suggestions when set up), city, state and ZIP, filled together when a suggestion is picked. */
 function AddressFields({ initial }: { initial?: ClientValues }) {
   const { t } = useT();
+  const { country } = useRegion();
+  const us = country === "US";
   const [a, setA] = useState({
-    street: initial?.address_line ?? "", unit: "", city: initial?.city ?? "", state: initial?.state ?? "CA", zip: initial?.zip ?? "",
+    street: initial?.address_line ?? "", unit: "", city: initial?.city ?? "", state: initial?.state ?? (us ? "CA" : ""), zip: initial?.zip ?? "",
   });
   const input = "block w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink placeholder:text-muted focus:border-brand focus:outline-none";
   return (
@@ -39,7 +41,7 @@ function AddressFields({ initial }: { initial?: ClientValues }) {
       <Field label={t("Street address")}>
         <AddressAutocomplete name="address_line" autoComplete="off" placeholder={t("123 Main St")} className={input}
           value={a.street} onChange={(street) => setA((x) => ({ ...x, street }))}
-          onPick={(p) => setA((x) => ({ ...x, street: p.street, city: p.city, state: p.state || "CA", zip: p.zip }))} />
+          onPick={(p) => setA((x) => ({ ...x, street: p.street, city: p.city, state: p.state || (us ? "CA" : ""), zip: p.zip }))} />
       </Field>
       <Field label={t("Apt, suite or unit (optional)")}>
         <Input name="address_unit" value={a.unit} onChange={(e) => setA({ ...a, unit: e.target.value.slice(0, 40) })} placeholder={t("Apt 4B")} autoComplete="off" />
@@ -48,11 +50,11 @@ function AddressFields({ initial }: { initial?: ClientValues }) {
         <Field label={t("City")}>
           <Input name="city" value={a.city} onChange={(e) => setA({ ...a, city: e.target.value })} />
         </Field>
-        <Field label={t("State")}>
-          <Input name="state" value={a.state} onChange={(e) => setA({ ...a, state: e.target.value })} maxLength={2} />
+        <Field label={us ? t("State") : t("State / region")}>
+          <Input name="state" value={a.state} onChange={(e) => setA({ ...a, state: e.target.value })} maxLength={us ? 2 : 20} />
         </Field>
-        <Field label="ZIP">
-          <Input name="zip" inputMode="numeric" value={a.zip} onChange={(e) => setA({ ...a, zip: e.target.value })} maxLength={10} />
+        <Field label={us ? "ZIP" : t("Postal code")}>
+          <Input name="zip" inputMode={us ? "numeric" : "text"} value={a.zip} onChange={(e) => setA({ ...a, zip: e.target.value })} maxLength={10} />
         </Field>
       </div>
     </>
@@ -165,6 +167,7 @@ export function PetForm({
   options: PetOptions;
 }) {
   const { t } = useT();
+  const { metric } = useRegion();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
@@ -181,7 +184,7 @@ export function PetForm({
       <Field label={t("Size (height at the shoulder)")} hint={t("Picks the right price when booking.")}>
         <Select name="size_class" defaultValue={initial?.size_class ?? ""}>
           <option value="">{t("Not set")}</option>
-          {SIZES.map((s) => (
+          {sizesFor(metric).map((s) => (
             <option key={s.value} value={s.value}>
               {t(s.label)}
             </option>
@@ -189,8 +192,9 @@ export function PetForm({
         </Select>
       </Field>
       <div className="grid grid-cols-3 gap-3">
-        <Field label={t("Weight (lb)")}>
-          <Input name="weight_lbs" inputMode="decimal" defaultValue={initial?.weight_lbs ?? ""} />
+        <Field label={metric ? t("Weight (kg)") : t("Weight (lb)")}>
+          <Input name="weight_lbs" inputMode="decimal"
+            defaultValue={initial?.weight_lbs ? (metric ? String(Math.round((Number(initial.weight_lbs) / LB_PER_KG) * 10) / 10) : initial.weight_lbs) : ""} />
         </Field>
         <Field label={t("Sex")}>
           <Select name="sex" defaultValue={initial?.sex ?? ""}>

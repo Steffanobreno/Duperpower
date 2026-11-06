@@ -1,10 +1,10 @@
 "use client";
-import { useT } from "@/components/i18n";
+import { useMoney, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Select } from "@/components/ui";
-import { money } from "@/lib/format";
+
 import type { FormState } from "../../../actions";
 
 type Option = { id: string; name: string; price_cents: number; duration_min: number };
@@ -16,6 +16,7 @@ export function PetPriceForm({ action, petName, options }: {
   options: Option[];
 }) {
   const { t } = useT();
+  const money = useMoney();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-3">

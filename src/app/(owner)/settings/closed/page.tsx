@@ -5,7 +5,7 @@ import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { listClosedDates } from "@/lib/data/closed";
 import { todayYmd } from "@/lib/format";
-import { HOLIDAYS } from "@/lib/holidays";
+import { holidaysFor } from "@/lib/holidays";
 import { Card, Empty, Field, Input, Page, PageHeader } from "@/components/ui";
 import { SimpleForm } from "../forms";
 import { addClosedDatesAction, deleteClosedDatesAction, saveHolidaysAction } from "./actions";
@@ -28,8 +28,8 @@ export default async function ClosedPage() {
     sql<{ closed_holidays: string[] }[]>`select closed_holidays from businesses where id = ${staff.businessId}`,
   ]);
   // The next time each holiday comes around: this year's, or next year's when it has passed.
-  const next = HOLIDAYS.map((h) => ({ ...h, on: h.date(year) >= today ? h.date(year) : h.date(year + 1) }))
-    .sort((x, y) => x.on.localeCompare(y.on));
+  const next = holidaysFor(staff.region.country, staff.lang).map((h) => ({ ...h, on: h.date(year) >= today ? h.date(year) : h.date(year + 1) }))
+    .filter((h) => h.on).sort((x, y) => x.on.localeCompare(y.on));
   return (
     <>
       <PageHeader title={t("Closed dates and holidays")} back="/settings" />

@@ -1,11 +1,11 @@
 "use client";
 import { msg } from "@/lib/i18n";
-import { useT } from "@/components/i18n";
+import { useRegion, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
-import { SIZES, WEEKDAYS } from "@/lib/format";
+import { sizesFor, WEEKDAYS } from "@/lib/format";
 import type { FormState } from "./actions";
 
 type Action = (state: FormState, form: FormData) => Promise<FormState>;
@@ -25,6 +25,7 @@ export type ServiceValues = {
 
 export function ServiceForm({ action, initial, categories }: { action: Action; initial?: ServiceValues; categories: string[] }) {
   const { t } = useT();
+  const { metric } = useRegion();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
@@ -51,7 +52,7 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
       <Field label={t("Pet size")} hint={t("Leave as 'Any size' for services that cost the same for every dog.")}>
         <Select name="size_class" defaultValue={initial?.size_class ?? ""}>
           <option value="">{t("Any size")}</option>
-          {SIZES.map((s) => (
+          {sizesFor(metric).map((s) => (
             <option key={s.value} value={s.value}>
               {t(s.label)}
             </option>

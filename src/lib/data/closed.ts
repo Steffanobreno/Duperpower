@@ -1,6 +1,7 @@
 import "server-only";
 import { sql } from "../db";
 import { closedHoliday } from "../holidays";
+import { countryLang } from "../region";
 
 export type ClosedDate = { id: string; start_date: string; end_date: string; reason: string | null };
 
@@ -17,7 +18,7 @@ export async function listClosedDates(businessId: string) {
  */
 export async function closedDays(businessId: string, from: string, to: string) {
   const [[b], ranges] = await Promise.all([
-    sql<{ closed_holidays: string[] }[]>`select closed_holidays from businesses where id = ${businessId}`,
+    sql<{ closed_holidays: string[]; country: string }[]>`select closed_holidays, country from businesses where id = ${businessId}`,
     sql<{ start_date: string; end_date: string; reason: string | null }[]>`
       select start_date::text, end_date::text, reason from closed_dates
       where business_id = ${businessId} and start_date <= ${to} and end_date >= ${from}`,
@@ -25,7 +26,7 @@ export async function closedDays(businessId: string, from: string, to: string) {
   const out = new Map<string, string>();
   for (let d = from; d <= to; d = nextDay(d)) {
     const range = ranges.find((r) => r.start_date <= d && r.end_date >= d);
-    const holiday = closedHoliday(d, b?.closed_holidays ?? []);
+    const holiday = closedHoliday(d, b?.closed_holidays ?? [], b?.country ?? "US", countryLang(b?.country ?? "US"));
     if (range) out.set(d, range.reason || "Closed");
     else if (holiday) out.set(d, holiday.name);
   }

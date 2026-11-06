@@ -255,4 +255,9 @@ export const vi: Messages = {
   "Thank you! You signed the service agreement.": "Cảm ơn bạn! Bạn đã ký thỏa thuận dịch vụ.",
   "Please read and sign our service agreement.": "Vui lòng đọc và ký thỏa thuận dịch vụ của chúng tôi.",
   "Please tick the box and type your full name to sign.": "Vui lòng đánh dấu vào ô và nhập họ tên đầy đủ để ký.",
+  // Worldwide
+  "Postal code": "Mã bưu chính",
+  "Please check your mobile number.": "Vui lòng kiểm tra số điện thoại di động.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Chúng tôi không tìm thấy mã bưu chính đó. Vui lòng kiểm tra lại, hoặc nhắn tin để đặt lịch.",
+  "Please check the postal code.": "Vui lòng kiểm tra mã bưu chính.",
 };

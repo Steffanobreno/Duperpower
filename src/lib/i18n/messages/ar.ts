@@ -262,4 +262,9 @@ export const ar: Messages = {
   "Thank you! You signed the service agreement.": "شكرًا لك! لقد وقّعت اتفاقية الخدمة.",
   "Please read and sign our service agreement.": "يرجى قراءة اتفاقية الخدمة وتوقيعها.",
   "Please tick the box and type your full name to sign.": "ضع علامة في المربع واكتب اسمك الكامل للتوقيع.",
+  // Worldwide
+  "Postal code": "الرمز البريدي",
+  "Please check your mobile number.": "يرجى التحقق من رقم جوالك.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "لم نجد هذا الرمز البريدي. يرجى التحقق منه، أو راسلنا للحجز.",
+  "Please check the postal code.": "يرجى التحقق من الرمز البريدي.",
 };

@@ -2,6 +2,7 @@
 import { useId, useRef, useState, type ComponentProps } from "react";
 import { addressSuggestionsAction, pickAddressAction } from "@/app/address-actions";
 import type { PickedAddress, Suggestion } from "@/lib/maps";
+import { useRegion } from "./i18n";
 
 /**
  * A street address input that suggests full addresses while typing (Google Places, through
@@ -20,6 +21,7 @@ export function AddressAutocomplete({ value, onChange, onPick, className, ...pro
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef("");
   const listId = useId();
+  const { country } = useRegion();
 
   // Asks the server a moment after typing stops; answers to older text are dropped.
   const type = (v: string) => {
@@ -33,7 +35,7 @@ export function AddressAutocomplete({ value, onChange, onPick, className, ...pro
     }
     timer.current = setTimeout(async () => {
       token.current ??= crypto.randomUUID();
-      const found = await addressSuggestionsAction(v, token.current);
+      const found = await addressSuggestionsAction(v, token.current, country);
       if (latest.current !== v) return;
       setItems(found);
       setActive(-1);

@@ -262,4 +262,9 @@ export const fr: Messages = {
   "Thank you! You signed the service agreement.": "Merci ! Vous avez signé le contrat de service.",
   "Please read and sign our service agreement.": "Veuillez lire et signer notre contrat de service.",
   "Please tick the box and type your full name to sign.": "Cochez la case et saisissez votre nom complet pour signer.",
+  // Worldwide
+  "Postal code": "Code postal",
+  "Please check your mobile number.": "Vérifiez votre numéro de portable.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Nous n'avons pas trouvé ce code postal. Vérifiez-le, ou écrivez-nous pour réserver.",
+  "Please check the postal code.": "Vérifiez le code postal.",
 };

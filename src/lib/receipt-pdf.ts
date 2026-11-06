@@ -27,6 +27,7 @@ const safe = (s: string) =>
 type Fonts = { regular: PDFFont; bold: PDFFont };
 
 function draw(page: PDFPage, fonts: Fonts, logo: PDFImage | null, r: Receipt) {
+  const m = (cents: number) => money(cents, r.region);
   const tz = r.business.timezone;
   const when = (d: Date | null) => (d ? formatInTimeZone(d, tz, "EEE, MMM d, yyyy h:mm a") : "—");
   let y = H - 56;
@@ -99,19 +100,19 @@ function draw(page: PDFPage, fonts: Fonts, logo: PDFImage | null, r: Receipt) {
       text(pet.name, LEFT, 12, fonts.bold);
       y -= 18;
     }
-    for (const l of pet.lines) row(l.name, money(l.cents));
+    for (const l of pet.lines) row(l.name, m(l.cents));
     y -= 4;
   }
-  for (const a of r.adjustments) row(a.label, money(a.cents), { color: a.kind === "discount" ? GREEN : NAVY });
+  for (const a of r.adjustments) row(a.label, m(a.cents), { color: a.kind === "discount" ? GREEN : NAVY });
   rule();
 
-  row("Subtotal", money(r.subtotal));
-  if (r.discount > 0) row("Discount", `-${money(r.discount)}`, { color: GREEN });
-  if (r.tax > 0) row("Tax", money(r.tax));
-  row("Tips", money(r.tips));
-  row("Total", money(r.total), { bold: true, size: 13 });
-  row("Total paid", money(r.paid), { bold: true });
-  if (r.total > r.paid) row("Balance due", money(r.total - r.paid), { bold: true, color: rgb(0.73, 0.15, 0.15) });
+  row("Subtotal", m(r.subtotal));
+  if (r.discount > 0) row("Discount", `-${m(r.discount)}`, { color: GREEN });
+  if (r.tax > 0) row("Tax", m(r.tax));
+  row("Tips", m(r.tips));
+  row("Total", m(r.total), { bold: true, size: 13 });
+  row("Total paid", m(r.paid), { bold: true });
+  if (r.total > r.paid) row("Balance due", m(r.total - r.paid), { bold: true, color: rgb(0.73, 0.15, 0.15) });
   y -= 4;
 
   if (r.payments.length) {
@@ -119,8 +120,8 @@ function draw(page: PDFPage, fonts: Fonts, logo: PDFImage | null, r: Receipt) {
     text("Payments", LEFT, 11, fonts.bold);
     y -= 17;
     for (const p of r.payments) {
-      const tip = p.tip ? ` (incl. ${money(p.tip)} tip)` : "";
-      row(`${p.method} · ${formatInTimeZone(p.at, tz, "MMM d, h:mm a")}${tip}`, money(p.amount + p.tip), { size: 10 });
+      const tip = p.tip ? ` (incl. ${m(p.tip)} tip)` : "";
+      row(`${p.method} · ${formatInTimeZone(p.at, tz, "MMM d, h:mm a")}${tip}`, m(p.amount + p.tip), { size: 10 });
     }
   }
 

@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { Button, Card } from "@/components/ui";
 import { ClientShell } from "@/components/client-shell";
 import { phoneLabel } from "@/lib/format";
+import { regionForPage } from "@/lib/region-server";
 import { unsubscribeAction } from "./actions";
 
 export const metadata: Metadata = { title: "Email preferences", robots: { index: false } };
@@ -14,10 +15,11 @@ export default async function UnsubscribePage({ params, searchParams }: PageProp
   const { token } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f]{24}$/.test(token)) notFound();
-  const [c] = await sql<{ first_name: string; out: boolean; business: string; phone: string | null; website_url: string | null }[]>`
-    select c.first_name, c.email_unsubscribed_at is not null as out, b.name as business, b.phone, b.website_url
+  const [c] = await sql<{ first_name: string; out: boolean; business: string; phone: string | null; website_url: string | null; country: string; currency: string }[]>`
+    select c.first_name, c.email_unsubscribed_at is not null as out, b.name as business, b.phone, b.website_url, b.country, b.currency
     from clients c join businesses b on b.id = c.business_id where c.marketing_token = ${token}`;
   if (!c) notFound();
+  regionForPage(c, "en");
   return (
     <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url}>
       <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">

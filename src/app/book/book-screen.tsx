@@ -9,6 +9,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { I18nProvider } from "@/components/i18n";
 import { logoUrl } from "@/lib/business-logo";
 import { getStaff } from "@/lib/auth";
+import { regionForPage } from "@/lib/region-server";
 
 /** The booking page of one business (/book/<slug>), or of the first one (/book). */
 export async function BookScreen({ slug, query }: { slug: string | null; query: Record<string, string | string[] | undefined> }) {
@@ -19,12 +20,13 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
     onlineServices(b.id), activeAgreement(b.id), getI18n(langParam), logoUrl(b.id),
   ]);
   const viewer = await getStaff();
+  const region = regionForPage(b, lang);
   const phone = phoneLabel(b.phone);
   return (
     <ClientShell phone={b.phone} phoneLabel={phone} website={b.website_url} bare={embed === "1"} i18n={{ lang, t }}
       brand={{ name: b.name, logo }} staffBack={viewer?.businessId === b.id ? "/settings/booking" : null}>
       {b.online_booking_enabled ? (
-        <I18nProvider lang={lang} messages={messages}>
+        <I18nProvider lang={lang} messages={messages} region={region}>
           <BookingWizard
             timezone={b.timezone}
             services={services}
@@ -34,7 +36,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
             agreementTitle={agreement?.title ?? null}
             agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null}
             slug={slug}
-            initialPhone={typeof resumePhone === "string" ? resumePhone.replace(/\D/g, "").slice(-10) : ""}
+            initialPhone={typeof resumePhone !== "string" ? "" : b.country === "US" ? resumePhone.replace(/\D/g, "").slice(-10) : resumePhone.replace(/[^\d+]/g, "").slice(0, 16)}
           />
         </I18nProvider>
       ) : (

@@ -19,7 +19,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
            (select pin_hash is not null from staff where id = ${staff.staffId}) as lock,
            (select extract(epoch from updated_at)::bigint::text from business_logos where business_id = ${staff.businessId}) as logo`;
   return (
-    <I18nProvider lang={lang} messages={messages}>
+    <I18nProvider lang={lang} messages={messages} region={staff.region}>
      <div lang={lang} dir={dir} className="contents">
       {lock && <AppLock />}
       <OfflineSupport />

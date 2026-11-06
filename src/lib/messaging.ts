@@ -7,7 +7,8 @@ import { sendPush } from "./push";
 import { clientEvent } from "./client-calendar";
 import { lastSentByTemplate, processCampaigns } from "./data/marketing";
 import { nextDate, suggestions } from "./marketing-templates";
-import { addDaysYmd, dayRangeUtc, hm, money, phoneLabel, todayYmd, ymd } from "./format";
+import { addDaysYmd, dayLabel, dayRangeUtc, hm, longDayLabel, money, phoneLabel, timeLabel, todayYmd, ymd } from "./format";
+import { messageRegion, type Region } from "./region";
 
 // Every client message goes through here. A message is a row in `messages`:
 // - email rows are sent right away from the business Gmail;
@@ -67,6 +68,8 @@ type ApptContext = {
   business_name: string;
   business_phone: string | null;
   timezone: string;
+  country: string;
+  currency: string;
   website_url: string | null;
   booking_slug: string | null;
   review_url: string | null;
@@ -84,7 +87,7 @@ type ApptContext = {
 /** Client-level context: their last visit date from the old app, all their pets. */
 async function clientContext(clientId: string, lastVisit: Date) {
   const [row] = await sql<Omit<ApptContext, "id" | "start_at" | "status" | "public_token" | "source">[]>`
-    select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.booking_slug, b.review_url,
+    select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.country, b.currency, b.website_url, b.booking_slug, b.review_url,
            b.arrival_before_min, b.arrival_after_min, c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
            (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = c.id and p.deceased_at is null) as pets
@@ -101,7 +104,7 @@ async function autoMessagesOn(businessId: string) {
 async function appointmentContext(appointmentId: string) {
   const [row] = await sql<ApptContext[]>`
     select a.id, a.business_id, a.start_at, a.status, a.public_token, a.source,
-           b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.booking_slug, b.review_url,
+           b.name as business_name, b.phone as business_phone, b.timezone, b.country, b.currency, b.website_url, b.booking_slug, b.review_url,
            b.arrival_before_min, b.arrival_after_min,
            c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
@@ -120,20 +123,21 @@ export const bookingUrl = (b: { website_url: string | null; booking_slug?: strin
 export const appointmentLink = (token: string) => `${appUrl()}/a/${token}`;
 
 /** "10:00 AM", or with an arrival window "10:00 AM – 10:45 AM". */
-export function arrivalTime(start: Date, tz: string, before: number, after: number) {
-  const at = (d: Date) => formatInTimeZone(d, tz, "h:mm a");
+export function arrivalTime(start: Date, tz: string, before: number, after: number, rg?: Region) {
+  const at = (d: Date) => timeLabel(d, tz, rg);
   if (!before && !after) return at(start);
   return `${at(new Date(start.getTime() - before * 60_000))} – ${at(new Date(start.getTime() + after * 60_000))}`;
 }
 
 function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
+  const rg = messageRegion(c.country, c.currency);
   return {
     business: c.business_name,
-    business_phone: phoneLabel(c.business_phone),
+    business_phone: phoneLabel(c.business_phone, rg.country),
     client: c.first_name,
     pet: c.pets ?? "your pet",
-    date: formatInTimeZone(c.start_at, c.timezone, "EEE, MMM d"),
-    time: arrivalTime(c.start_at, c.timezone, c.arrival_before_min ?? 0, c.arrival_after_min ?? 0),
+    date: dayLabel(c.start_at, c.timezone, rg),
+    time: arrivalTime(c.start_at, c.timezone, c.arrival_before_min ?? 0, c.arrival_after_min ?? 0, rg),
     link: c.public_token ? appointmentLink(c.public_token) : bookingUrl(c),
     booking_url: bookingUrl(c),
     review_url: c.review_url ?? "",
@@ -267,7 +271,8 @@ export async function queueDueMessages(businessId: string) {
         and not exists (select 1 from vaccines n where n.pet_id = v.pet_id and lower(n.name) = lower(v.name) and n.expires_on > v.expires_on)`;
     for (const v of due) {
       const c = await clientContext(v.client_id, new Date());
-      const expires = formatInTimeZone(new Date(`${v.expires}T12:00:00Z`), "UTC", "MMM d, yyyy");
+      const rg = messageRegion(c?.country, c?.currency);
+      const expires = new Date(`${v.expires}T12:00:00Z`).toLocaleDateString(rg.locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
       if (c) await enqueue(c, "vaccine_due", vaccine, `vaccine:${v.id}:${v.expires}`, { pet: v.pet, vaccine: v.name, expires });
     }
   }
@@ -311,10 +316,10 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
   const heading = HEADINGS[trigger];
   if (!heading) return null;
   const [a] = await sql<{ start_at: Date; end_at: Date; status: string; address_line: string | null; public_token: string;
-                         timezone: string; phone: string | null; cancellation_hours: number; total: number;
+                         timezone: string; country: string; currency: string; phone: string | null; cancellation_hours: number; total: number;
                          arrival_before_min: number; arrival_after_min: number;
                          pets: { name: string; services: { name: string; price_cents: number }[] }[] }[]>`
-    select a.start_at, a.end_at, a.status, a.address_line, a.public_token, b.timezone, b.phone, b.cancellation_hours,
+    select a.start_at, a.end_at, a.status, a.address_line, a.public_token, b.timezone, b.country, b.currency, b.phone, b.cancellation_hours,
       b.arrival_before_min, b.arrival_after_min,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
                 where ap.appointment_id = a.id), 0)::int as total,
@@ -324,7 +329,8 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
                 from appointment_pets ap join pets p on p.id = ap.pet_id where ap.appointment_id = a.id), '[]'::json) as pets
     from appointments a join businesses b on b.id = a.business_id where a.id = ${appointmentId}`;
   if (!a) return null;
-  const price = (c: number) => (c === 0 ? "Included" : money(c).replace(/\.00$/, ""));
+  const rg = messageRegion(a.country, a.currency);
+  const price = (c: number) => (c === 0 ? "Included" : money(c, rg).replace(/[.,]00(?=\D*$)/, ""));
   const live = !["cancelled", "declined", "no_show"].includes(a.status);
   const calendar = ["booked", "confirmed", "reminder", "reminder_2"].includes(trigger) ? await clientEvent({ id: appointmentId }) : null;
   return {
@@ -335,12 +341,12 @@ export async function emailDetails(appointmentId: string, trigger: Trigger): Pro
         : ["booked", "reminder", "reminder_2"].includes(trigger) && a.status === "unconfirmed"
           ? "Please confirm"
           : null,
-    when: `${formatInTimeZone(a.start_at, a.timezone, "EEEE, MMMM d")} · ${arrivalTime(a.start_at, a.timezone, a.arrival_before_min, a.arrival_after_min)}`,
+    when: `${longDayLabel(a.start_at, a.timezone, rg)} · ${arrivalTime(a.start_at, a.timezone, a.arrival_before_min, a.arrival_after_min, rg)}`,
     address: a.address_line,
     pets: a.pets.map((p) => ({ name: p.name, services: p.services.map((s) => ({ name: s.name, price: price(s.price_cents) })) })),
     total: a.total ? price(a.total) : "",
     link: live ? appointmentLink(a.public_token) : null,
-    businessPhone: phoneLabel(a.phone) || null,
+    businessPhone: phoneLabel(a.phone, rg.country) || null,
     policy: live
       ? `Free cancellation up to ${a.cancellation_hours} hours before the visit. After that, 50% of the service price applies. The final price can change for matting or behavior.`
       : null,

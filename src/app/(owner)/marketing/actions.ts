@@ -81,7 +81,7 @@ export async function sendTestAction(id: string, _: CampaignState, form: FormDat
   const [error] = await sendMany(b.name, [{
     to,
     subject: `[Test] ${fillVars(c.subject || c.name, vars)}`,
-    html: marketingEmailHtml({ appUrl: appUrl(), logo: await emailLogo(staff.businessId, b.name), content, vars, phone: phoneLabel(b.phone) || null, mailingAddress: b.mailing_address, unsubscribeUrl }),
+    html: marketingEmailHtml({ appUrl: appUrl(), logo: await emailLogo(staff.businessId, b.name), content, vars, phone: phoneLabel(b.phone, staff.region.country) || null, mailingAddress: b.mailing_address, unsubscribeUrl }),
     text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: b.mailing_address }),
   }]);
   return error ? { error: `Gmail said: ${error}` } : { sent: to };

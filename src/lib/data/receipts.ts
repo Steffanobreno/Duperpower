@@ -1,4 +1,5 @@
 import "server-only";
+import { regionOf, type Region } from "../region";
 import { sql } from "../db";
 import { methodLabel } from "../payment-methods";
 
@@ -12,6 +13,8 @@ export type Receipt = {
   token: string;
   open: boolean;
   business: { id: string; name: string; phone: string | null; address: string | null; timezone: string; logo: string | null };
+  /** The business's country and currency (English; pages pass their own language). */
+  region: Region;
   client: { id: string; name: string; email: string | null; phone: string | null };
   checkedIn: Date | null;
   checkedOut: Date | null;
@@ -37,7 +40,7 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
   const [r] = await sql<{
     id: string; receipt_no: number; public_token: string; status: string; subtotal_cents: number; discount_cents: number;
     tax_cents: number; tip_cents: number; total_cents: number; paid_cents: number; created_at: Date; receipt_emailed_at: Date | null; just_closed: boolean;
-    business_id: string; business: string; business_phone: string | null; business_address: string | null; timezone: string;
+    business_id: string; business: string; business_phone: string | null; business_address: string | null; timezone: string; country: string; currency: string;
     logo_v: string | null;
     client_id: string; first_name: string; last_name: string; email: string | null; phone: string | null;
     checked_in_at: Date | null; checked_out_at: Date | null; start_at: Date | null;
@@ -45,7 +48,7 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
     select i.id, i.receipt_no, i.public_token, i.status, i.subtotal_cents, i.discount_cents, i.tax_cents, i.tip_cents,
            i.total_cents, i.paid_cents, i.created_at, i.receipt_emailed_at,
            coalesce(i.closed_at > now() - interval '2 minutes', false) as just_closed,
-           b.id as business_id, b.name as business, b.phone as business_phone, b.timezone,
+           b.id as business_id, b.name as business, b.phone as business_phone, b.timezone, b.country, b.currency,
            coalesce(nullif(concat_ws(', ', b.address_line, b.city, nullif(concat_ws(' ', b.state, b.zip), '')), ''),
                     b.mailing_address) as business_address,
            (select extract(epoch from l.updated_at)::bigint::text from business_logos l where l.business_id = b.id) as logo_v,
@@ -85,6 +88,7 @@ export async function getReceipt(where: Where): Promise<Receipt | null> {
       id: r.business_id, name: r.business, phone: r.business_phone, address: r.business_address, timezone: r.timezone,
       logo: r.logo_v ? `/logo/${r.business_id}?v=${r.logo_v}` : null,
     },
+    region: regionOf(r.country, r.currency),
     client: { id: r.client_id, name: `${r.first_name} ${r.last_name}`.trim(), email: r.email, phone: r.phone },
     checkedIn: r.checked_in_at,
     checkedOut: r.checked_out_at,

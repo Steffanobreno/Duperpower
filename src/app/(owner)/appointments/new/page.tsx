@@ -1,4 +1,5 @@
 import { msg } from "@/lib/i18n";
+import { distanceOut } from "@/lib/region";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -124,7 +125,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
                     className="flex items-center justify-between gap-2 py-2">
                     <span>
                       <span className="font-semibold">{dayLabel(zonedToUtc(n.date, "12:00", staff.timezone), staff.timezone)}</span>
-                      <span className="text-muted"> · {n.miles < 1 ? t("same area as") : t("{round} mi from", { round: Math.round(n.miles) })} {n.name}</span>
+                      <span className="text-muted"> · {n.miles < 1 ? t("same area as") : (staff.region.km ? t("{round} km from", { round: distanceOut(n.miles, staff.region) }) : t("{round} mi from", { round: Math.round(n.miles) }))} {n.name}</span>
                     </span>
                     <span className="shrink-0 font-semibold text-brand">{timeLabel(zonedToUtc(n.date, n.after, staff.timezone), staff.timezone)} →</span>
                   </Link>

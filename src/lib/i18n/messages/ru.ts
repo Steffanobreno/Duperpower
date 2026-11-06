@@ -262,4 +262,9 @@ export const ru: Messages = {
   "Thank you! You signed the service agreement.": "Спасибо! Вы подписали договор.",
   "Please read and sign our service agreement.": "Прочитайте и подпишите наш договор.",
   "Please tick the box and type your full name to sign.": "Поставьте галочку и введите полное имя для подписи.",
+  // Worldwide
+  "Postal code": "Почтовый индекс",
+  "Please check your mobile number.": "Проверьте номер мобильного.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Мы не нашли этот почтовый индекс. Проверьте его или напишите нам, чтобы записаться.",
+  "Please check the postal code.": "Проверьте почтовый индекс.",
 };

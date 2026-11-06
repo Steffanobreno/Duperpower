@@ -262,4 +262,9 @@ export const te: Messages = {
   "Thank you! You signed the service agreement.": "ధన్యవాదాలు! మీరు సేవా ఒప్పందంపై సంతకం చేశారు.",
   "Please read and sign our service agreement.": "దయచేసి మా సేవా ఒప్పందం చదివి సంతకం చేయండి.",
   "Please tick the box and type your full name to sign.": "బాక్స్‌ను టిక్ చేసి, సంతకం కోసం మీ పూర్తి పేరు టైప్ చేయండి.",
+  // Worldwide
+  "Postal code": "పిన్ కోడ్",
+  "Please check your mobile number.": "దయచేసి మీ మొబైల్ నంబర్ చూడండి.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "ఆ పిన్ కోడ్ మాకు దొరకలేదు. దయచేసి చూడండి, లేదా బుక్ చేయడానికి మాకు మెసేజ్ చేయండి.",
+  "Please check the postal code.": "దయచేసి పిన్ కోడ్ చూడండి.",
 };

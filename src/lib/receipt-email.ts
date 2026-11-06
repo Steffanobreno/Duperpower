@@ -14,6 +14,7 @@ export type ReceiptEmailResult = "sent" | "no-email" | "not-set-up" | "failed";
 export async function emailReceipt(businessId: string, invoiceId: string, { onlyOnce = false } = {}): Promise<ReceiptEmailResult> {
   const r = await getReceipt({ invoiceId, businessId });
   if (!r) return "failed";
+  const m = (cents: number) => money(cents, r.region);
   if (onlyOnce && r.emailedAt) return "sent";
   if (!r.client.email) return "no-email";
   if (!emailConfigured()) return "not-set-up";
@@ -23,8 +24,8 @@ export async function emailReceipt(businessId: string, invoiceId: string, { only
   const text = [
     `Hi ${firstName}! Thank you for choosing ${r.business.name}${pets ? ` for ${pets}` : ""}. 🐾`,
     "",
-    `Receipt #${r.number}: ${money(r.paid)} paid${paidWith ? ` by ${paidWith}` : ""}${r.tips ? ` (incl. ${money(r.tips)} tip)` : ""}.`,
-    r.total > r.paid ? `Balance due: ${money(r.total - r.paid)}.` : "",
+    `Receipt #${r.number}: ${m(r.paid)} paid${paidWith ? ` by ${paidWith}` : ""}${r.tips ? ` (incl. ${m(r.tips)} tip)` : ""}.`,
+    r.total > r.paid ? `Balance due: ${m(r.total - r.paid)}.` : "",
     "",
     `See your receipt: ${receiptUrl(r.token)}`,
     "The PDF is attached.",

@@ -262,4 +262,9 @@ export const id: Messages = {
   "Thank you! You signed the service agreement.": "Terima kasih! Anda telah menandatangani perjanjian layanan.",
   "Please read and sign our service agreement.": "Silakan baca dan tanda tangani perjanjian layanan kami.",
   "Please tick the box and type your full name to sign.": "Centang kotaknya dan ketik nama lengkap Anda untuk menandatangani.",
+  // Worldwide
+  "Postal code": "Kode pos",
+  "Please check your mobile number.": "Mohon periksa nomor ponsel Anda.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Kami tidak menemukan kode pos itu. Mohon periksa, atau kirim pesan untuk memesan.",
+  "Please check the postal code.": "Mohon periksa kode pos.",
 };

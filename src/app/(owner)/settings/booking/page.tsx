@@ -3,6 +3,7 @@ import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { distanceOut } from "@/lib/region";
 import { Card, Field, Input, Page, PageHeader } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { saveAutoAcceptAction, saveBookingSettingsAction } from "../actions";
@@ -19,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function BookingSettingsPage() {
   const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
+  const rg = staff.region;
   const [b] = await sql`
     select online_booking_enabled, buffer_minutes, max_cluster_miles::float8 as max_cluster_miles,
            service_radius_miles::float8 as service_radius_miles, min_notice_hours, booking_days_ahead,
@@ -74,17 +76,17 @@ export default async function BookingSettingsPage() {
               {t("Clients can request appointments online")}
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <Field label={t("Max miles between a day's stops")} hint={t("New requests must be this close to the other visits that day.")}>
-                <Input name="max_cluster_miles" inputMode="decimal" defaultValue={b.max_cluster_miles} />
+              <Field label={rg.km ? t("Max km between a day's stops") : t("Max miles between a day's stops")} hint={t("New requests must be this close to the other visits that day.")}>
+                <Input name="max_cluster_miles" inputMode="decimal" defaultValue={distanceOut(b.max_cluster_miles, rg)} />
               </Field>
               <Field label={t("Driving time between visits (min)")} hint={t("Kept free before and after each visit.")}>
                 <Input name="buffer_minutes" inputMode="numeric" defaultValue={b.buffer_minutes} />
               </Field>
-              <Field label={t("Van's home ZIP")} hint={t("Private. Used to check the service area.")}>
-                <Input name="start_zip" inputMode="numeric" maxLength={5} defaultValue={b.start_zip ?? ""} />
+              <Field label={rg.country === "US" ? t("Van's home ZIP") : t("Van's home postal code")} hint={t("Private. Used to check the service area.")}>
+                <Input name="start_zip" inputMode={rg.country === "US" ? "numeric" : "text"} maxLength={10} defaultValue={b.start_zip ?? ""} />
               </Field>
-              <Field label={t("Service area (miles from home)")}>
-                <Input name="service_radius_miles" inputMode="decimal" defaultValue={b.service_radius_miles} />
+              <Field label={rg.km ? t("Service area (km from home)") : t("Service area (miles from home)")}>
+                <Input name="service_radius_miles" inputMode="decimal" defaultValue={distanceOut(b.service_radius_miles, rg)} />
               </Field>
               <Field label={t("Start times every (min)")} hint={t("120 = 7, 9, 11… After a visit ends, times restart from there.")}>
                 <Input name="slot_minutes" inputMode="numeric" defaultValue={b.slot_minutes} />

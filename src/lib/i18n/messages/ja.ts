@@ -262,4 +262,9 @@ export const ja: Messages = {
   "Thank you! You signed the service agreement.": "ありがとうございます！サービス同意書に署名いただきました。",
   "Please read and sign our service agreement.": "サービス同意書をお読みのうえ署名してください。",
   "Please tick the box and type your full name to sign.": "チェックを入れ、署名としてフルネームを入力してください。",
+  // Worldwide
+  "Postal code": "郵便番号",
+  "Please check your mobile number.": "携帯電話番号をご確認ください。",
+  "We couldn't find that postal code. Please check it, or text us to book.": "その郵便番号が見つかりませんでした。ご確認いただくか、メッセージでご予約ください。",
+  "Please check the postal code.": "郵便番号をご確認ください。",
 };

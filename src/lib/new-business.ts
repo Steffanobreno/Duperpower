@@ -135,6 +135,8 @@ export type NewBusiness = {
   slug: string;
   timezone: string;
   zip: string | null;
+  country?: string;
+  currency?: string;
   ownerName: string;
   ownerUserId?: string | null;
   extra?: { reviewUrl?: string; websiteUrl?: string; cancellationHours?: number; mailingAddress?: string };
@@ -144,9 +146,10 @@ export type NewBusiness = {
 /** Creates the business with everything it needs to start booking; returns its id and the owner's staff id. */
 export async function createBusiness(tx: postgres.TransactionSql, b: NewBusiness) {
   const [biz] = await tx`
-    insert into businesses (name, phone, booking_slug, timezone, start_zip, review_url, website_url, cancellation_hours, mailing_address)
+    insert into businesses (name, phone, booking_slug, timezone, start_zip, review_url, website_url, cancellation_hours, mailing_address,
+                            country, currency)
     values (${b.name}, ${b.phone}, ${b.slug}, ${b.timezone}, ${b.zip}, ${b.extra?.reviewUrl ?? null}, ${b.extra?.websiteUrl ?? null},
-            ${b.extra?.cancellationHours ?? 24}, ${b.extra?.mailingAddress ?? null})
+            ${b.extra?.cancellationHours ?? 24}, ${b.extra?.mailingAddress ?? null}, ${b.country ?? "US"}, ${b.currency ?? "USD"})
     returning id`;
   const agreement = b.agreement ?? starterAgreement(b.name);
   await tx`insert into agreements (business_id, title, body) values (${biz.id}, ${agreement.title}, ${agreement.body})`;

@@ -9,6 +9,7 @@ import { Button, ButtonLink, Card, Field, Input, Notice } from "@/components/ui"
 import { AgreementText } from "@/components/agreement-text";
 import { logoUrl } from "@/lib/business-logo";
 import { getStaff } from "@/lib/auth";
+import { regionForPage } from "@/lib/region-server";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { Calendar, Dog } from "@/components/icons";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
@@ -38,12 +39,14 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
       business: string;
       phone: string | null;
       timezone: string;
+      country: string;
+      currency: string;
       website_url: string | null;
       cancellation_hours: number;
       reschedule_requested_at: Date | null;
     }[]
   >`
-    select a.id, a.business_id, a.client_id, a.start_at, a.status, a.reschedule_requested_at, c.first_name, b.name as business, b.phone, b.timezone, b.website_url, b.cancellation_hours,
+    select a.id, a.business_id, a.client_id, a.start_at, a.status, a.reschedule_requested_at, c.first_name, b.name as business, b.phone, b.timezone, b.country, b.currency, b.website_url, b.cancellation_hours,
       (select string_agg(p.name, ' & ' order by p.name) from appointment_pets ap join pets p on p.id = ap.pet_id
         where ap.appointment_id = a.id) as pets,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
@@ -54,6 +57,7 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
     where a.public_token = ${token}`;
   if (!a) notFound();
   const tz = a.timezone;
+  regionForPage(a, lang);
   const phone = phoneLabel(a.phone);
   const open = ["requested", "unconfirmed", "confirmed"].includes(a.status);
   const [agreement, calendar, logo] = await Promise.all([

@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { signUpBusiness } from "@/lib/auth";
 import { normalizePhone } from "@/lib/format";
-import { TIMEZONES } from "@/lib/timezones";
+import { currencyOf, isCountry, isZone, mainZoneOf } from "@/lib/countries";
 
 export type SignupState = { error?: string } | undefined;
 
@@ -16,14 +16,15 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
   const email = String(form.get("email") ?? "").trim();
   const password = String(form.get("password") ?? "");
   const zip = String(form.get("zip") ?? "").trim().slice(0, 10) || null;
+  const country = isCountry(form.get("country")) ? String(form.get("country")) : "US";
   const tz = String(form.get("timezone") ?? "");
-  const timezone = TIMEZONES.some(([v]) => v === tz) ? tz : "America/Los_Angeles";
+  const timezone = isZone(tz) ? tz : mainZoneOf(country);
   if (businessName.length < 2) return { error: "Type your business name." };
   if (!ownerName) return { error: "Type your name." };
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email." };
   if (password.length < 10) return { error: "Use at least 10 characters for the password." };
   if (form.get("terms") !== "on") return { error: "Please accept the terms to create your account." };
-  const error = await signUpBusiness({ businessName, ownerName, email, password, phone: normalizePhone(form.get("phone")), zip, timezone });
+  const error = await signUpBusiness({ businessName, ownerName, email, password, phone: normalizePhone(form.get("phone"), country), zip, timezone, country, currency: currencyOf(country) });
   if (error) return { error };
   redirect("/today?welcome=1");
 }

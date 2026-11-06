@@ -16,9 +16,9 @@ function allow(token: string) {
   return n <= MAX_PER_SESSION;
 }
 
-export async function addressSuggestionsAction(input: string, token: string): Promise<Suggestion[]> {
+export async function addressSuggestionsAction(input: string, token: string, country = "US"): Promise<Suggestion[]> {
   if (typeof input !== "string" || typeof token !== "string" || !allow(token)) return [];
-  return suggestAddresses(input, token);
+  return suggestAddresses(input, token, typeof country === "string" && /^[A-Z]{2}$/.test(country) ? country : "US");
 }
 
 export async function pickAddressAction(placeId: string, token: string): Promise<PickedAddress | null> {

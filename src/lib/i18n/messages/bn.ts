@@ -262,4 +262,9 @@ export const bn: Messages = {
   "Thank you! You signed the service agreement.": "ধন্যবাদ! আপনি সেবা চুক্তিতে স্বাক্ষর করেছেন।",
   "Please read and sign our service agreement.": "আমাদের সেবা চুক্তি পড়ে স্বাক্ষর করুন।",
   "Please tick the box and type your full name to sign.": "বক্সে টিক দিন এবং স্বাক্ষরের জন্য পুরো নাম লিখুন।",
+  // Worldwide
+  "Postal code": "পোস্টাল কোড",
+  "Please check your mobile number.": "অনুগ্রহ করে আপনার মোবাইল নম্বর দেখে নিন।",
+  "We couldn't find that postal code. Please check it, or text us to book.": "আমরা ওই পোস্টাল কোডটি খুঁজে পাইনি। অনুগ্রহ করে দেখে নিন, বা বুক করতে আমাদের মেসেজ করুন।",
+  "Please check the postal code.": "অনুগ্রহ করে পোস্টাল কোড দেখে নিন।",
 };

@@ -255,4 +255,9 @@ export const ko: Messages = {
   "Thank you! You signed the service agreement.": "감사합니다! 서비스 약관에 서명하셨어요.",
   "Please read and sign our service agreement.": "서비스 약관을 읽고 서명해 주세요.",
   "Please tick the box and type your full name to sign.": "체크박스를 선택하고 성함을 입력해 서명해 주세요.",
+  // Worldwide
+  "Postal code": "우편번호",
+  "Please check your mobile number.": "휴대폰 번호를 확인해 주세요.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "그 우편번호를 찾지 못했어요. 확인해 주시거나 문자로 예약해 주세요.",
+  "Please check the postal code.": "우편번호를 확인해 주세요.",
 };

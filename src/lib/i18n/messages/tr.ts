@@ -262,4 +262,9 @@ export const tr: Messages = {
   "Thank you! You signed the service agreement.": "Teşekkürler! Hizmet sözleşmesini imzaladınız.",
   "Please read and sign our service agreement.": "Lütfen hizmet sözleşmemizi okuyup imzalayın.",
   "Please tick the box and type your full name to sign.": "Kutuyu işaretleyin ve imza için adınızı soyadınızı yazın.",
+  // Worldwide
+  "Postal code": "Posta kodu",
+  "Please check your mobile number.": "Lütfen cep telefonu numaranızı kontrol edin.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "Bu posta kodunu bulamadık. Lütfen kontrol edin veya randevu için bize mesaj atın.",
+  "Please check the postal code.": "Lütfen posta kodunu kontrol edin.",
 };

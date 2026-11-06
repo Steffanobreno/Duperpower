@@ -1,13 +1,25 @@
 "use client";
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { money as formatMoney } from "@/lib/format";
 import { LANGS, LOCALES, makeT, translateServerMessage, type Lang, type Messages } from "@/lib/i18n";
+import { DEFAULT_REGION, type Region } from "@/lib/region";
 
-// The chosen language for the client pages' interactive parts (the booking steps).
-const I18n = createContext<{ lang: Lang; messages: Messages }>({ lang: "en", messages: {} });
+// The chosen language for the client pages' interactive parts (the booking steps), and the
+// business's region (currency, country) so money reads the same as in the server's HTML.
+const I18n = createContext<{ lang: Lang; messages: Messages; region: Region }>({ lang: "en", messages: {}, region: DEFAULT_REGION });
 
-export function I18nProvider({ lang, messages, children }: { lang: Lang; messages: Messages; children: ReactNode }) {
-  const value = useMemo(() => ({ lang, messages }), [lang, messages]);
+export function I18nProvider({ lang, messages, region = DEFAULT_REGION, children }: { lang: Lang; messages: Messages; region?: Region; children: ReactNode }) {
+  const value = useMemo(() => ({ lang, messages, region }), [lang, messages, region]);
   return <I18n.Provider value={value}>{children}</I18n.Provider>;
+}
+
+/** The business's region (country, currency, locale). */
+export const useRegion = () => useContext(I18n).region;
+
+/** money() in the business's currency. */
+export function useMoney() {
+  const region = useRegion();
+  return useCallback((cents: number) => formatMoney(cents, region), [region]);
 }
 
 /** t("Continue"), the language and its locale (for dates), and server messages translated. */

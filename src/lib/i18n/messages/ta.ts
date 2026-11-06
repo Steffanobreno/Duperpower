@@ -262,4 +262,9 @@ export const ta: Messages = {
   "Thank you! You signed the service agreement.": "நன்றி! நீங்கள் சேவை ஒப்பந்தத்தில் கையொப்பமிட்டீர்கள்.",
   "Please read and sign our service agreement.": "எங்கள் சேவை ஒப்பந்தத்தைப் படித்து கையொப்பமிடுங்கள்.",
   "Please tick the box and type your full name to sign.": "பெட்டியை டிக் செய்து, கையொப்பமிட உங்கள் முழுப் பெயரைத் தட்டச்சு செய்யுங்கள்.",
+  // Worldwide
+  "Postal code": "அஞ்சல் குறியீடு",
+  "Please check your mobile number.": "உங்கள் மொபைல் எண்ணைச் சரிபாருங்கள்.",
+  "We couldn't find that postal code. Please check it, or text us to book.": "அந்த அஞ்சல் குறியீடு கிடைக்கவில்லை. சரிபாருங்கள், அல்லது முன்பதிவுக்கு எங்களுக்குக் குறுஞ்செய்தி அனுப்புங்கள்.",
+  "Please check the postal code.": "அஞ்சல் குறியீட்டைச் சரிபாருங்கள்.",
 };

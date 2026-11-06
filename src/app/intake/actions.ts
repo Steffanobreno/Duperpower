@@ -1,5 +1,6 @@
 "use server";
 import { sql } from "@/lib/db";
+import { postalOk } from "@/lib/region";
 import { getPublicBusiness } from "@/lib/booking";
 import { normalizePhone, SIZES } from "@/lib/format";
 import { notifyOwner } from "@/lib/messaging";
@@ -18,16 +19,16 @@ export async function submitIntakeAction(_: IntakeState, form: FormData): Promis
   if (text(form, "website")) return { ok: true }; // a bot filled the hidden field
   const first = text(form, "first_name", 60);
   const last = text(form, "last_name", 60);
-  const phone = normalizePhone(form.get("phone"));
+  const phone = normalizePhone(form.get("phone"), b.country);
   const email = text(form, "email", 160).toLowerCase() || null;
   const address = text(form, "address_line", 200) || null;
   const city = text(form, "city", 60) || null;
   const zip = text(form, "zip", 10) || null;
   const consent = form.get("sms_consent") === "on";
   if (!first) return { error: "Please enter your first name." };
-  if (!phone) return { error: "Please enter a 10-digit mobile number." };
+  if (!phone) return b.country === "US" ? { error: "Please enter a 10-digit mobile number." } : { error: "Please check your mobile number." };
   if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: "Please check your email address." };
-  if (zip && !/^\d{5}$/.test(zip)) return { error: "Please check the ZIP code." };
+  if (zip && !postalOk(zip, b.country)) return b.country === "US" ? { error: "Please check the ZIP code." } : { error: "Please check the postal code." };
   const pets = [0, 1, 2].map((i) => ({
     name: text(form, `pet_name:${i}`, 80),
     breed: text(form, `pet_breed:${i}`, 120) || null,
@@ -53,7 +54,7 @@ export async function submitIntakeAction(_: IntakeState, form: FormData): Promis
     } else {
       const [c] = await tx`
         insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip, sms_consent_at, source)
-        values (${b.id}, ${first}, ${last}, ${phone}, ${email}, ${address}, ${city}, 'CA', ${zip}, ${consent ? new Date() : null}, 'online')
+        values (${b.id}, ${first}, ${last}, ${phone}, ${email}, ${address}, ${city}, ${b.country === "US" ? "CA" : null}, ${zip}, ${consent ? new Date() : null}, 'online')
         returning id`;
       id = c.id;
     }

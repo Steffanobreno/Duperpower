@@ -1,6 +1,6 @@
 "use client";
 import { useActionState, useState } from "react";
-import { useT } from "@/components/i18n";
+import { useRegion, useT } from "@/components/i18n";
 import { submitIntakeAction } from "./actions";
 
 const input = "block w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink focus:border-brand focus:outline-none";
@@ -18,6 +18,7 @@ function Text({ label, ...props }: { label: string } & React.ComponentProps<"inp
 /** The new-client form: you, your address, up to three pets. */
 export function IntakeForm({ bookUrl, slug = null }: { bookUrl: string; slug?: string | null }) {
   const { t, serverMessage } = useT();
+  const { country } = useRegion();
   const [count, setCount] = useState(1);
   const [state, action, pending] = useActionState(submitIntakeAction, undefined);
   if (state?.ok) {
@@ -49,7 +50,7 @@ export function IntakeForm({ bookUrl, slug = null }: { bookUrl: string; slug?: s
         <Text label={t("Street address")} name="address_line" autoComplete="street-address" />
         <div className="grid grid-cols-[1fr_7rem] gap-3">
           <Text label={t("City")} name="city" autoComplete="address-level2" />
-          <Text label={t("ZIP code")} name="zip" inputMode="numeric" maxLength={5} autoComplete="postal-code" />
+          <Text label={country === "US" ? t("ZIP code") : t("Postal code")} name="zip" inputMode={country === "US" ? "numeric" : "text"} maxLength={country === "US" ? 5 : 10} autoComplete="postal-code" />
         </div>
         <label className="flex items-start gap-3 text-sm">
           <input type="checkbox" name="sms_consent" defaultChecked className="mt-1 h-4 w-4" />

@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { regionOf } from "@/lib/region";
 import { revalidatePath } from "next/cache";
 import { sql } from "@/lib/db";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
@@ -44,7 +45,7 @@ export async function cancelByTokenAction(token: string) {
     from businesses b
     where b.id = a.business_id and a.public_token = ${token}
       and a.status in ('requested', 'unconfirmed', 'confirmed') and a.start_at > now()
-    returning a.id, a.business_id, a.start_at, b.timezone,
+    returning a.id, a.business_id, a.start_at, b.timezone, b.country, b.currency,
       (a.start_at < now() + make_interval(hours => b.cancellation_hours)) as late,
       coalesce((select sum(s.price_cents) from appointment_pets ap join appointment_services s on s.appointment_pet_id = ap.id
                 where ap.appointment_id = a.id), 0)::int as total_cents,
@@ -53,7 +54,7 @@ export async function cancelByTokenAction(token: string) {
     await notifyAppointment(a.id, "cancelled");
     const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
     const when = `${dayLabel(a.start_at, a.timezone)} ${timeLabel(a.start_at, a.timezone)}`;
-    const fee = a.late ? ` Late cancellation: 50% fee = ${money(Math.round(a.total_cents / 2))}.` : "";
+    const fee = a.late ? ` Late cancellation: 50% fee = ${money(Math.round(a.total_cents / 2), regionOf(a.country, a.currency))}.` : "";
     await notifyOwner(
       a.business_id,
       `Cancelled${a.late ? " (late)" : ""}: ${a.client}, ${dayLabel(a.start_at, a.timezone)}`,
