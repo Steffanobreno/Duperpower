@@ -18,6 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <nav aria-label="Painel" className="flex gap-1 text-sm font-semibold">
             <Link href="/admin" className="rounded-lg px-3 py-1.5 hover:bg-white/10">Visão geral</Link>
             <Link href="/admin/businesses" className="rounded-lg px-3 py-1.5 hover:bg-white/10">Negócios</Link>
+            <Link href="/admin/help" className="rounded-lg px-3 py-1.5 hover:bg-white/10">Suporte</Link>
           </nav>
           <span className="ml-auto hidden text-xs text-white/70 sm:inline">{me.email}</span>
           <Link href="/today" className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold">Voltar ao app</Link>

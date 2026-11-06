@@ -153,3 +153,30 @@ export async function adminBusiness(id: string): Promise<AdminBusinessDetail | n
     where b.id = ${id}`;
   return b ?? null;
 }
+
+export type HelpRow = {
+  id: string; business_id: string; business: string; staff: string | null; lang: string; question: string;
+  answer: string | null; helpful: boolean | null; escalated: boolean; created_at: Date;
+};
+
+/** What people ask the help assistant (and the "talk to a person" messages), newest first. */
+export async function helpQuestions(filter: "all" | "people" | "unhelpful" | "unanswered") {
+  const [rows, [stats]] = await Promise.all([
+    sql<HelpRow[]>`
+      select h.id, h.business_id, b.name as business, s.name as staff, h.lang, h.question, h.answer, h.helpful, h.escalated, h.created_at
+      from help_questions h join businesses b on b.id = h.business_id left join staff s on s.id = h.staff_id
+      where case ${filter}
+        when 'people' then h.escalated
+        when 'unhelpful' then h.helpful = false
+        when 'unanswered' then not h.escalated and h.answer is null
+        else true end
+      order by h.created_at desc limit 200`,
+    sql<{ week: number; people: number; helpful: number; rated: number }[]>`
+      select count(*) filter (where created_at > now() - interval '7 days')::int as week,
+             count(*) filter (where escalated and created_at > now() - interval '30 days')::int as people,
+             count(*) filter (where helpful)::int as helpful,
+             count(*) filter (where helpful is not null)::int as rated
+      from help_questions`,
+  ]);
+  return { rows, stats };
+}

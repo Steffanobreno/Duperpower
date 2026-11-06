@@ -14,6 +14,7 @@
     "db:import": "tsx --env-file-if-exists=.env.local scripts/import-clients.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.2.0",
     "countries-and-timezones": "3.11.0",
     "country-to-currency": "3.0.1",
     "date-fns": "^4.4.0",
