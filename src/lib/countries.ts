@@ -123,3 +123,12 @@ export function guessCountry(h: Headers) {
   }
   return "US";
 }
+
+/** Country and currency names for the pickers, in one language. */
+export function placeNames(lang = "en") {
+  const names = new Intl.DisplayNames([lang, "en"], { type: "currency" });
+  return {
+    countries: countryList(lang),
+    currencies: Intl.supportedValuesOf("currency").map((code) => ({ code, name: `${code} · ${names.of(code) ?? code}` })),
+  };
+}

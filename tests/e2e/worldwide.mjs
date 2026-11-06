@@ -95,7 +95,7 @@ await page.goto(`${BASE}/settings/business`);
 await page.getByLabel("Country").selectOption("US");
 await page.getByLabel("Time zone").selectOption("America/Los_Angeles");
 await page.getByLabel("Business phone").fill("(650) 555-0100");
-await page.getByLabel("ZIP").fill("94401");
+await page.getByLabel("Postal code").fill("94401");
 await page.getByRole("button", { name: "Save", exact: true }).click();
 await page.getByText("Saved.").waitFor();
 await page.goto(`${BASE}/settings/services`);

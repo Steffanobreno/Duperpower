@@ -5,6 +5,7 @@ import { logoUrl } from "@/lib/business-logo";
 import { sql } from "@/lib/db";
 import { phoneLabel } from "@/lib/format";
 import { CountryFields } from "@/components/country-fields";
+import { placeNames } from "@/lib/countries";
 import { Card, Field, Input, Page, PageHeader } from "@/components/ui";
 import { saveBusinessAction } from "../actions";
 import { SimpleForm } from "../forms";
@@ -52,7 +53,7 @@ export default async function BusinessPage() {
             </Field>
             <div className="grid grid-cols-[1fr_5rem_6rem] gap-2">
               <Field label={t("City")}><Input name="city" defaultValue={b.city ?? ""} /></Field>
-              <Field label={b.country === "US" ? t("State") : t("State / region")}><Input name="state" defaultValue={b.state ?? ""} maxLength={20} /></Field>
+              <Field label={b.country === "US" ? t("State") : t("State / region")}><Input name="state" defaultValue={b.state ?? (b.country === "US" ? "CA" : "")} maxLength={20} /></Field>
               <Field label={b.country === "US" ? "ZIP" : t("Postal code")}><Input name="zip" defaultValue={b.zip ?? ""} inputMode={b.country === "US" ? "numeric" : "text"} maxLength={10} /></Field>
             </div>
             <h2 className="section-label pt-2">{t("Links")}</h2>
@@ -62,7 +63,7 @@ export default async function BusinessPage() {
             <Field label={t("Yelp")}><Input name="yelp_url" type="url" defaultValue={b.yelp_url ?? ""} placeholder="https://yelp.com/biz/…" /></Field>
             <Field label={t("Google Business")}><Input name="google_url" type="url" defaultValue={b.google_url ?? ""} placeholder="https://g.page/…" /></Field>
             <h2 className="section-label pt-2">{t("Preferences")}</h2>
-            <CountryFields country={b.country} currency={b.currency} timezone={b.timezone} />
+            <CountryFields country={b.country} currency={b.currency} timezone={b.timezone} names={placeNames(staff.lang)} />
             <Field label={t("Booking link name")} hint={t("Letters, numbers and dashes.")}>
               <Input name="booking_slug" defaultValue={b.booking_slug} required />
             </Field>

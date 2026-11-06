@@ -5,11 +5,11 @@ import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { FormPopup } from "@/components/popup";
 import { Button, Field, Input } from "@/components/ui";
-import { CountryFields } from "@/components/country-fields";
+import { CountryFields, type PlaceNames } from "@/components/country-fields";
 import { currencyOf, mainZoneOf } from "@/lib/countries";
 import { signupAction } from "./actions";
 
-export function SignupForm({ country }: { country: string }) {
+export function SignupForm({ country, names }: { country: string; names: PlaceNames }) {
   const { t } = useT();
   const [state, action, pending] = useActionState(signupAction, undefined);
   return (
@@ -23,7 +23,7 @@ export function SignupForm({ country }: { country: string }) {
         <Field label={t("Business phone")}><Input name="phone" type="tel" autoComplete="tel" placeholder={country === "US" ? "(650) 555-0123" : ""} /></Field>
         <Field label={country === "US" ? t("ZIP code") : t("Postal code")}><Input name="zip" maxLength={10} placeholder={country === "US" ? "94401" : ""} /></Field>
       </div>
-      <CountryFields country={country} currency={currencyOf(country)} timezone={mainZoneOf(country)} guess />
+      <CountryFields country={country} currency={currencyOf(country)} timezone={mainZoneOf(country)} guess names={names} />
       {/* People never see this field; bots fill it in. */}
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <label className="flex items-start gap-3 text-sm">
