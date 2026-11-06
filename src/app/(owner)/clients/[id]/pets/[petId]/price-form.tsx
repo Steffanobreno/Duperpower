@@ -1,5 +1,5 @@
 "use client";
-import { useMoney, useT } from "@/components/i18n";
+import { useCurrencySymbol, useMoney, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -17,6 +17,7 @@ export function PetPriceForm({ action, petName, options }: {
 }) {
   const { t } = useT();
   const money = useMoney();
+  const symbol = useCurrencySymbol();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-3">
@@ -31,7 +32,7 @@ export function PetPriceForm({ action, petName, options }: {
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("{name}'s price", { name: petName })}>
-          <Input name="price" inputMode="decimal" placeholder="$" required autoComplete="off" />
+          <Input name="price" inputMode="decimal" placeholder={symbol} required autoComplete="off" />
         </Field>
         <Field label={t("Time (optional)")}>
           <Input name="minutes" inputMode="numeric" placeholder={t("minutes")} autoComplete="off" />

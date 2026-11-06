@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
-import { money as formatMoney } from "@/lib/format";
+import { currencySymbol, money as formatMoney } from "@/lib/format";
 import { LANGS, LOCALES, makeT, translateServerMessage, type Lang, type Messages } from "@/lib/i18n";
 import { DEFAULT_REGION, type Region } from "@/lib/region";
 
@@ -15,6 +15,9 @@ export function I18nProvider({ lang, messages, region = DEFAULT_REGION, children
 
 /** The business's region (country, currency, locale). */
 export const useRegion = () => useContext(I18n).region;
+
+/** The business's currency sign ("R$", "€"). */
+export const useCurrencySymbol = () => currencySymbol(useRegion());
 
 /** money() in the business's currency. */
 export function useMoney() {

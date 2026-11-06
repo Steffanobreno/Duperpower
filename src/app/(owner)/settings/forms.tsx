@@ -5,7 +5,7 @@ import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
-import { sizesFor, WEEKDAYS } from "@/lib/format";
+import { sizesFor, WEEKDAYS, currencySymbol } from "@/lib/format";
 import type { FormState } from "./actions";
 
 type Action = (state: FormState, form: FormData) => Promise<FormState>;
@@ -60,7 +60,7 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
         </Select>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={t("Price ($)")}>
+        <Field label={`${t("Price")} (${currencySymbol(region)})`}>
           <Input
             name="price"
             inputMode="decimal"

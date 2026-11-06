@@ -1,5 +1,5 @@
 "use client";
-import { useMoney, useT } from "@/components/i18n";
+import { useCurrencySymbol, useMoney, useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -29,6 +29,7 @@ export function PaymentForm({
 }) {
   const { t } = useT();
   const money = useMoney();
+  const symbol = useCurrencySymbol();
   const [state, formAction, pending] = useActionState(action, undefined);
   const [step, setStep] = useState<"tip" | "method" | "details">("tip");
   const [tip, setTip] = useState(0);
@@ -116,7 +117,7 @@ export function PaymentForm({
           <div className="card divide-y divide-line">
             <label className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="font-semibold">{t("Amount")}</span>
-              <span className="flex items-center gap-1">$<input name="amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+              <span className="flex items-center gap-1">{symbol}<input name="amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
                 className="w-28 rounded-lg border border-line px-2 py-1.5 text-right" /></span>
             </label>
             {tipCents > 0 && (
@@ -126,7 +127,7 @@ export function PaymentForm({
               <>
                 <label className="flex items-center justify-between gap-3 px-4 py-3">
                   <span className="font-semibold">{t("Cash tendered")}</span>
-                  <span className="flex items-center gap-1">$<input inputMode="decimal" value={tendered} onChange={(e) => setTendered(e.target.value)} placeholder="0.00"
+                  <span className="flex items-center gap-1">{symbol}<input inputMode="decimal" value={tendered} onChange={(e) => setTendered(e.target.value)} placeholder="0.00"
                     aria-label={t("Cash tendered")} className="w-28 rounded-lg border border-line px-2 py-1.5 text-right" /></span>
                 </label>
                 {tendered && (

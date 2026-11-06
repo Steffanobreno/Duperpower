@@ -2,6 +2,7 @@ import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
+import { currencySymbol } from "@/lib/format";
 import { sql } from "@/lib/db";
 import { GROOMER_COLORS } from "@/lib/data/staff";
 import { phoneLabel } from "@/lib/format";
@@ -110,7 +111,7 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
               <div className="grid grid-cols-3 gap-3">
                 <Field label={t("Commission %")}><Input name="commission_pct" inputMode="decimal" defaultValue={g.commission_pct} /></Field>
                 <Field label={t("Tips %")}><Input name="tips_pct" inputMode="decimal" defaultValue={g.tips_pct} /></Field>
-                <Field label={t("Hourly $")}><Input name="hourly" inputMode="decimal" defaultValue={(g.hourly_cents / 100).toFixed(2)} /></Field>
+                <Field label={`${t("Hourly pay")} (${currencySymbol(staff.region)})`}><Input name="hourly" inputMode="decimal" defaultValue={(g.hourly_cents / 100).toFixed(2)} /></Field>
               </div>
               <p className="text-xs text-muted">
                 {t("Payroll = commission on the services of their finished visits + their share of tips + hours clocked × hourly pay.")}

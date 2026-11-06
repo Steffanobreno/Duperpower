@@ -7,7 +7,7 @@ import { getAppointment } from "@/lib/data/appointments";
 import { fullName } from "@/lib/data/clients";
 import { getInvoiceForAppointment, methodLabel } from "@/lib/data/invoices";
 import { formatInTimeZone } from "date-fns-tz";
-import { dayLabel, money, timeLabel } from "@/lib/format";
+import { dayLabel, money, timeLabel, currencySymbol } from "@/lib/format";
 import { Button, Input, Notice, Page, PageHeader } from "@/components/ui";
 import {
   addInvoiceItemAction,
@@ -241,9 +241,9 @@ async function AddItem({ appointmentId, kind, title, placeholder, tone }: {
       <form action={addInvoiceItemAction.bind(null, appointmentId)} className="mt-2 grid grid-cols-[1fr_5.5rem_4.5rem] gap-2">
         <input type="hidden" name="kind" value={kind} />
         <Input name="description" placeholder={placeholder} aria-label={`${title} description`} />
-        <Input name="amount" inputMode="decimal" placeholder={t("$ or %")} required aria-label={`${title} amount`} />
+        <Input name="amount" inputMode="decimal" placeholder={`${currencySymbol()} / %`} required aria-label={`${title} amount`} />
         <select name="unit" aria-label={t("Dollars or percent")} className="rounded-xl border border-line bg-surface px-2">
-          <option value="dollars">$</option>
+          <option value="dollars">{currencySymbol()}</option>
           <option value="percent">%</option>
         </select>
         <Button type="submit" kind="secondary" className="col-span-3">{t("Add")}</Button>

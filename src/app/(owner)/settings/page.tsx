@@ -58,6 +58,12 @@ const GROUPS: SettingsGroup[] = [
       { href: "/settings/backups", title: msg("Backups"), text: msg("A weekly copy of everything on your Google Drive") },
     ],
   },
+  {
+    title: msg("Help"),
+    links: [
+      { href: "/help", title: msg("Help and tutorials"), text: msg("Step-by-step guides, the assistant, and a person when you need one") },
+    ],
+  },
 ];
 
 // Without the "Change settings" permission: just their own account and phone notifications.
@@ -67,6 +73,7 @@ const MINE: SettingsGroup[] = [
     links: [
       { href: "/settings/account", title: msg("Account"), text: msg("Your name, login email, password and devices") },
       { href: "/settings/notifications", title: msg("Notifications"), text: msg("Pop-ups on your phone for new bookings, cancellations and reschedules") },
+      { href: "/help", title: msg("Help and tutorials"), text: msg("Step-by-step guides, the assistant, and a person when you need one") },
     ],
   },
 ];

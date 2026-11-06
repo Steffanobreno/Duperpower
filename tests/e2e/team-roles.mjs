@@ -49,7 +49,7 @@ await owner.getByLabel("Password").fill("ana-password-123");
 await owner.getByRole("button", { name: "Give a login" }).click();
 await owner.getByText(/Login saved/).waitFor();
 await owner.getByLabel("Commission %").fill("50");
-await owner.getByLabel("Hourly $").fill("20");
+await owner.getByLabel("Hourly pay ($)").fill("20");
 await owner.getByRole("button", { name: "Save pay" }).click();
 await owner.getByText("Saved.").last().waitFor();
 if (SHOTS) await owner.screenshot({ path: `${SHOTS}/T01-team-member.png`, fullPage: true });

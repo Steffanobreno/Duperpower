@@ -40,6 +40,9 @@ const df = (locale: string, tz: string, opts: Intl.DateTimeFormatOptions) => {
 const plain = (s: string) => s.replace(/[\u202f\u00a0]/g, " ");
 
 export const money = (cents: number, r: Region = currentRegion()) => plain(nf(r.locale, r.currency).format(cents / 100));
+/** The currency's sign alone ("$", "R$", "€"), for labels next to amount boxes. */
+export const currencySymbol = (r: Region = currentRegion()) =>
+  nf(r.locale, r.currency).formatToParts(0).find((p) => p.type === "currency")?.value ?? r.currency;
 
 /** Parses an amount typed by a person ("45", "45.5", "$1,200.00", "1.200,50") into cents. */
 export function parseMoney(input: FormDataEntryValue | null): number | null {

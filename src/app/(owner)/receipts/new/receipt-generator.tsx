@@ -138,7 +138,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
             </Select>
           </Field>
           <Field label={t("Tip (leave empty for no tip)")}>
-            <Input inputMode="decimal" placeholder="$0.00" value={tip} onChange={(e) => setTip(e.target.value)} />
+            <Input inputMode="decimal" placeholder={money(0)} value={tip} onChange={(e) => setTip(e.target.value)} />
           </Field>
           <label className="flex items-center gap-3 text-sm">
             <input type="checkbox" checked={email && !!client.email} disabled={!client.email} onChange={(e) => setEmail(e.target.checked)} className="h-4 w-4" />
