@@ -55,8 +55,8 @@ export async function getPublicBusiness(slug?: string | null) {
 
 export async function onlineServices(businessId: string) {
   return sql<{ id: string; name: string; kind: "service" | "addon"; category: string | null; size_class: string | null;
-               description: string | null; duration_min: number; price_cents: number }[]>`
-    select id, name, kind, category, size_class, description, duration_min, price_cents
+               description: string | null; duration_min: number; price_cents: number; role: string | null }[]>`
+    select id, name, kind, category, size_class, description, duration_min, price_cents, role
     from services where business_id = ${businessId} and active and online_bookable
     order by kind, sort_order, name`;
 }

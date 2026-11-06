@@ -30,7 +30,7 @@ await visitor.getByLabel("Email").fill(`maya${Date.now()}@example.com`);
 await visitor.getByLabel("Password").fill("bubbles bubbles 1");
 await visitor.getByRole("checkbox").check();
 await visitor.getByRole("button", { name: "Create my account" }).click();
-await visitor.waitForURL(/\/today/);
+await visitor.waitForURL(/\/welcome/);
 const denied = await visitor.goto(`${BASE}/admin`);
 if (denied?.status() !== 404) fail(`a groomer should not open /admin (got ${denied?.status()})`);
 step("a new signup can't open the dashboard (404)");

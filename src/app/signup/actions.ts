@@ -2,6 +2,8 @@
 import { redirect } from "next/navigation";
 import { signUpBusiness } from "@/lib/auth";
 import { normalizePhone } from "@/lib/format";
+import { getOwnerI18n } from "@/lib/i18n/server";
+import { regionOf } from "@/lib/region";
 import { currencyOf, isCountry, isZone, mainZoneOf } from "@/lib/countries";
 
 export type SignupState = { error?: string } | undefined;
@@ -25,7 +27,8 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
   if (password.length < 10) return { error: "Use at least 10 characters for the password." };
   if (form.get("terms") !== "on") return { error: "Please accept the terms to create your account." };
   const error = await signUpBusiness({ businessName, ownerName, email, password, phone: normalizePhone(form.get("phone"), country), zip, timezone, country, currency: currencyOf(country),
+    lang: (await getOwnerI18n()).lang, metric: regionOf(country).metric,
     source: String(form.get("source") ?? "").trim().slice(0, 120) || null });
   if (error) return { error };
-  redirect("/today?welcome=1");
+  redirect("/welcome");
 }

@@ -32,6 +32,7 @@ type Service = {
   name: string;
   kind: "service" | "addon";
   category: string | null;
+  role?: string | null;
   size_class: string | null;
   description: string | null;
   duration_min: number;
@@ -143,7 +144,7 @@ export function BookingWizard({
   };
 
   const byId = new Map(services.map((s) => [s.id, s]));
-  const demat = services.find((s) => s.kind === "addon" && /demat/i.test(s.name));
+  const demat = services.find((s) => s.kind === "addon" && (s.role === "demat" || /demat/i.test(s.name)));
   const known = who?.known === true ? who : null;
   const fileAddress = !!known?.hasAddress && useFileAddress;
   const chosen = pets.filter((p) => p.on);

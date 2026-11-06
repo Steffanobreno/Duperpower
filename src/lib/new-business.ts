@@ -2,6 +2,8 @@
 // texts and a simple service agreement. Used by the signup (any new business) and by the seed
 // (the first install). No "server-only": the seed script runs it too.
 import type postgres from "postgres";
+import { makeT, msg, type Lang } from "./i18n";
+import { OWNER_MESSAGES } from "./i18n/owner";
 
 export type Size = "small" | "medium" | "large" | "xlarge";
 export const SIZE_LABEL: Record<Size, string> = {
@@ -24,15 +26,22 @@ export const bath: [Size, number, number][] = [
   ["xlarge", 120, 14900],
 ];
 export const addons: [string, number, number][] = [
-  ["Nail trim (included in every package)", 0, 0],
-  ["Dematting or shave-down fee", 0, 4500],
-  ["De-shedding", 0, 4500],
-  ["Nail painting", 0, 1500],
-  ["Sensitive care shampoo", 0, 2000],
-  ["Flea treatment bath", 0, 2000],
-  ["Hypoallergenic fragrance-free shampoo", 0, 1500],
-  ["Skunk odor removal", 180, 28000],
+  [msg("Nail trim (included in every package)"), 0, 0],
+  [msg("Dematting or shave-down fee"), 0, 4500],
+  [msg("De-shedding"), 0, 4500],
+  [msg("Nail painting"), 0, 1500],
+  [msg("Sensitive care shampoo"), 0, 2000],
+  [msg("Flea treatment bath"), 0, 2000],
+  [msg("Hypoallergenic fragrance-free shampoo"), 0, 1500],
+  [msg("Skunk odor removal"), 180, 28000],
 ];
+// The starter services in the owner's language, sizes in inches or centimeters.
+const SIZE_NAME: Record<Size, [string, string]> = {
+  small: [msg('Small (12" or less)'), msg("Small (30 cm or less)")],
+  medium: [msg('Medium (12"–16")'), msg("Medium (30–40 cm)")],
+  large: [msg('Large (16"–20")'), msg("Large (40–50 cm)")],
+  xlarge: [msg('X-Large (20" or up)'), msg("X-Large (50 cm or up)")],
+};
 
 // The owner's own message texts. Variables in {braces} are filled in when sending.
 // {link} is the client's page to see, confirm or cancel the visit (no login needed).
@@ -138,6 +147,11 @@ export type NewBusiness = {
   country?: string;
   currency?: string;
   source?: string | null;
+  /** The owner's language and whether sizes are in cm: the starter services are named in it. */
+  lang?: Lang;
+  metric?: boolean;
+  /** New signups go through the first-run setup; the seed's business is set up already. */
+  needsSetup?: boolean;
   ownerName: string;
   ownerUserId?: string | null;
   extra?: { reviewUrl?: string; websiteUrl?: string; cancellationHours?: number; mailingAddress?: string };
@@ -148,9 +162,9 @@ export type NewBusiness = {
 export async function createBusiness(tx: postgres.TransactionSql, b: NewBusiness) {
   const [biz] = await tx`
     insert into businesses (name, phone, booking_slug, timezone, start_zip, review_url, website_url, cancellation_hours, mailing_address,
-                            country, currency, signup_source)
+                            country, currency, signup_source, onboarded_at)
     values (${b.name}, ${b.phone}, ${b.slug}, ${b.timezone}, ${b.zip}, ${b.extra?.reviewUrl ?? null}, ${b.extra?.websiteUrl ?? null},
-            ${b.extra?.cancellationHours ?? 24}, ${b.extra?.mailingAddress ?? null}, ${b.country ?? "US"}, ${b.currency ?? "USD"}, ${b.source ?? null})
+            ${b.extra?.cancellationHours ?? 24}, ${b.extra?.mailingAddress ?? null}, ${b.country ?? "US"}, ${b.currency ?? "USD"}, ${b.source ?? null}, ${b.needsSetup ? null : new Date()})
     returning id`;
   const agreement = b.agreement ?? starterAgreement(b.name);
   await tx`insert into agreements (business_id, title, body) values (${biz.id}, ${agreement.title}, ${agreement.body})`;
@@ -163,17 +177,22 @@ export async function createBusiness(tx: postgres.TransactionSql, b: NewBusiness
     await tx`insert into working_hours (staff_id, weekday, start_time, end_time) values (${staff.id}, ${weekday}, '07:00', '19:00')`;
   }
   let order = 0;
+  // English stays as it always was (the seed and the tests know these names).
+  const t = b.lang && b.lang !== "en" ? makeT(OWNER_MESSAGES[b.lang]) : null;
+  const sizeName = (size: Size) => (t ? t(SIZE_NAME[size][b.metric ? 1 : 0]) : SIZE_LABEL[size]);
+  const tr = (s: string) => (t ? t(s) : s);
   for (const [size, min, cents] of haircut) {
     await tx`insert into services (business_id, name, kind, category, size_class, duration_min, price_cents, sort_order)
-             values (${biz.id}, ${"Full Haircut - " + SIZE_LABEL[size]}, 'service', 'Haircut + Bath', ${size}, ${min}, ${cents}, ${order++})`;
+             values (${biz.id}, ${`${tr(msg("Full Haircut"))} - ${sizeName(size)}`}, 'service', ${tr(msg("Haircut + Bath"))}, ${size}, ${min}, ${cents}, ${order++})`;
   }
   for (const [size, min, cents] of bath) {
     await tx`insert into services (business_id, name, kind, category, size_class, duration_min, price_cents, sort_order)
-             values (${biz.id}, ${"Bath - " + SIZE_LABEL[size]}, 'service', 'Bath', ${size}, ${min}, ${cents}, ${order++})`;
+             values (${biz.id}, ${`${tr(msg("Bath"))} - ${sizeName(size)}`}, 'service', ${tr(msg("Bath"))}, ${size}, ${min}, ${cents}, ${order++})`;
   }
   for (const [name, min, cents] of addons) {
-    await tx`insert into services (business_id, name, kind, category, duration_min, price_cents, sort_order)
-             values (${biz.id}, ${name}, 'addon', 'Add-on', ${min}, ${cents}, ${order++})`;
+    await tx`insert into services (business_id, name, kind, category, duration_min, price_cents, sort_order, role)
+             values (${biz.id}, ${tr(name)}, 'addon', ${tr(msg("Add-on"))}, ${min}, ${cents}, ${order++},
+                     ${name.startsWith("Dematting") ? "demat" : null})`;
   }
   for (const t of templates) {
     await tx`insert into message_templates (business_id, trigger, body, email_subject, offset_days, offset_minutes,

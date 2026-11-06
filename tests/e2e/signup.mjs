@@ -1,5 +1,5 @@
 // Many businesses, end to end. Run after slice.mjs (Woofers Dog Spa with Maria Lopez), with
-// DATABASE_URL. Two groomers sign up → each lands on Today with the welcome steps, has its own
+// DATABASE_URL. Two groomers sign up → each skips the first-run setup and lands on Today with the welcome steps, has its own
 // services and booking link (/book/<slug>) under its own name; neither can open the other's
 // clients or visits; the first business's /book still works.
 // Usage: node tests/e2e/signup.mjs [baseUrl] [screenshotDir]
@@ -36,6 +36,10 @@ const signUp = async (business, name, email) => {
   await page.getByLabel("ZIP code").fill("94110");
   await page.getByLabel(/I agree to the/).check();
   await page.getByRole("button", { name: "Create my account" }).click();
+  // The first-run setup opens; skipping it lands on Today with the welcome steps.
+  await page.waitForURL(/\/welcome/);
+  await page.getByText("Step 1 of 5").first().waitFor();
+  await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL(/\/today/);
   await page.getByText("Welcome! Set up in a few minutes").waitFor();
   return page;

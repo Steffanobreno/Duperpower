@@ -93,7 +93,7 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
   );
 }
 
-export function HoursForm({ action, hours }: { action: Action; hours: { weekday: number; start: string; end: string }[] }) {
+export function HoursForm({ action, hours, submitLabel }: { action: Action; hours: { weekday: number; start: string; end: string }[]; submitLabel?: string }) {
   const { t } = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   const byDay = new Map(hours.map((h) => [h.weekday, h]));
@@ -123,7 +123,7 @@ export function HoursForm({ action, hours }: { action: Action; hours: { weekday:
       })}
       <p className="text-xs text-muted">{t("Unchecked days are days off.")}</p>
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? t("Saving…") : t("Save hours")}
+        {pending ? t("Saving…") : submitLabel ?? t("Save hours")}
       </Button>
     </ActionForm>
   );

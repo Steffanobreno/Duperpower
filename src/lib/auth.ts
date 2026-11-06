@@ -104,7 +104,7 @@ async function freeSlug(name: string) {
  * Returns an error message, or null when done.
  */
 export async function signUpBusiness(input: { businessName: string; ownerName: string; email: string; password: string;
-  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string; source?: string | null }) {
+  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string; source?: string | null; lang?: Lang; metric?: boolean }) {
   const email = input.email.trim().toLowerCase();
   const [exists] = await sql`select 1 from users where email = ${email}`;
   if (exists) return "There's already an account with that email. Log in instead.";
@@ -115,6 +115,7 @@ export async function signUpBusiness(input: { businessName: string; ownerName: s
     await createBusiness(tx, {
       name: input.businessName.trim(), phone: input.phone, slug, timezone: input.timezone, zip: input.zip,
       country: input.country, currency: input.currency, source: input.source ?? null,
+      lang: input.lang, metric: input.metric, needsSetup: true,
       ownerName: input.ownerName.trim(), ownerUserId: user.id,
     });
     return user.id as string;

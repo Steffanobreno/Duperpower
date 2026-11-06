@@ -78,8 +78,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     // Spots that opened for someone on the waitlist.
     waitlistOpenings(staff),
     // A new account: the first steps, until it has a few visits.
-    sql<{ fresh: boolean; logo: boolean; visits: number }[]>`
-      select b.created_at > now() - interval '30 days' as fresh,
+    sql<{ fresh: boolean; logo: boolean; visits: number; setup: boolean }[]>`
+      select b.created_at > now() - interval '30 days' as fresh, b.onboarded_at is null as setup,
              exists (select 1 from business_logos l where l.business_id = b.id) as logo,
              (select count(*)::int from appointments a where a.business_id = b.id) as visits
       from businesses b where b.id = ${staff.businessId}`,
@@ -227,9 +227,10 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </div>
         )}
 
-        {staff.role === "owner" && start && (sp.welcome === "1" || (start.fresh && start.visits < 3)) && (
+        {staff.role === "owner" && start && (sp.welcome === "1" || start.setup || (start.fresh && start.visits < 3)) && (
           <section aria-label={t("Get started")} className="card space-y-2 border-[#d4af37] p-4">
             <p className="text-lg font-extrabold">{t("👋 Welcome! Set up in a few minutes")}</p>
+            {start.setup && <a href="/welcome" className="block rounded-full bg-navy py-2.5 text-center font-bold text-white">{t("Continue setup")} ›</a>}
             <ol className="space-y-1.5 text-sm">
               {[
                 { done: start.logo, href: "/settings/business", label: t("Add your logo, address and phone") },
