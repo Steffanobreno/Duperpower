@@ -26,8 +26,10 @@ const ITEMS = [
   { href: "/settings", label: msg("Settings"), icon: "M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2.1-1.6ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" },
 ];
 
-export function SideMenu({ staffName, businessName, requests, role, can, logo }: {
+export function SideMenu({ staffName, businessName, requests, role, can, logo, admin = false }: {
   staffName: string; businessName: string; requests: number; role: string; can: Record<string, boolean>; logo: string | null;
+  /** The app owner: a link to their own dashboard (/admin). */
+  admin?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
@@ -70,6 +72,14 @@ export function SideMenu({ staffName, businessName, requests, role, can, logo }:
               </li>
             );
           })}
+          {admin && (
+            <li>
+              <Link href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-4 rounded-xl px-3 py-3.5 text-lg font-semibold text-[#d4af37] hover:bg-white/5">
+                <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="currentColor" aria-hidden><path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z" /></svg>
+                Painel do app
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
       <div className="flex-1 bg-black/50" aria-hidden />

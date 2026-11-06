@@ -24,7 +24,8 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email." };
   if (password.length < 10) return { error: "Use at least 10 characters for the password." };
   if (form.get("terms") !== "on") return { error: "Please accept the terms to create your account." };
-  const error = await signUpBusiness({ businessName, ownerName, email, password, phone: normalizePhone(form.get("phone"), country), zip, timezone, country, currency: currencyOf(country) });
+  const error = await signUpBusiness({ businessName, ownerName, email, password, phone: normalizePhone(form.get("phone"), country), zip, timezone, country, currency: currencyOf(country),
+    source: String(form.get("source") ?? "").trim().slice(0, 120) || null });
   if (error) return { error };
   redirect("/today?welcome=1");
 }

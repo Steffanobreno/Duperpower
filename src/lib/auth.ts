@@ -4,7 +4,7 @@ import { setRegion } from "./region-store";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { sql } from "./db";
 import { ALL_PERMISSIONS, DEFAULT_PERMISSIONS, type Permission, type Role } from "./permissions";
@@ -104,7 +104,7 @@ async function freeSlug(name: string) {
  * Returns an error message, or null when done.
  */
 export async function signUpBusiness(input: { businessName: string; ownerName: string; email: string; password: string;
-  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string }) {
+  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string; source?: string | null }) {
   const email = input.email.trim().toLowerCase();
   const [exists] = await sql`select 1 from users where email = ${email}`;
   if (exists) return "There's already an account with that email. Log in instead.";
@@ -114,7 +114,7 @@ export async function signUpBusiness(input: { businessName: string; ownerName: s
     const [user] = await tx`insert into users (email, password_hash) values (${email}, ${hash}) returning id`;
     await createBusiness(tx, {
       name: input.businessName.trim(), phone: input.phone, slug, timezone: input.timezone, zip: input.zip,
-      country: input.country, currency: input.currency,
+      country: input.country, currency: input.currency, source: input.source ?? null,
       ownerName: input.ownerName.trim(), ownerUserId: user.id,
     });
     return user.id as string;
@@ -154,6 +154,7 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   const [row] = await sql`
     select s.id as staff_id, s.name as staff_name, s.role, s.language, b.id as business_id, b.name as business_name,
            b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded, b.country, b.currency,
+           (b.last_active_at is null or b.last_active_at < now() - interval '1 hour') as stale,
            -- In the same trip: what this role may do (the owner may do everything).
            array(select rp.perm from role_permissions rp where rp.business_id = b.id and rp.role = s.role) as perms
     from sessions se
@@ -161,6 +162,8 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
     join businesses b on b.id = s.business_id
     where se.token_hash = ${hashToken(token)} and se.expires_at > now()`;
   if (!row) return null;
+  // For the app owner's dashboard: when the business last used the app (at most once an hour).
+  if (row.stale) await sql`update businesses set last_active_at = now() where id = ${row.business_id}`.catch(() => null);
   let perms = row.perms as string[];
   if (!row.roles_seeded) {
     await seedRoles(row.business_id);
@@ -214,6 +217,25 @@ export async function requireStaff(): Promise<StaffContext> {
   const staff = await getStaff();
   if (!staff) redirect("/login");
   return staff;
+}
+
+/** The app's own admins (ADMIN_EMAILS, comma separated, in the server settings). */
+const adminEmails = () => (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+/** Whether this staff member is one of the app's own admins. */
+export async function isAdmin(staffId: string) {
+  const list = adminEmails();
+  if (!list.length) return false;
+  return list.includes(((await accountEmail(staffId)) ?? "").toLowerCase());
+}
+
+/** The app owner's dashboard: only people whose login email is in ADMIN_EMAILS. Others get a 404. */
+export async function requireAdmin(): Promise<StaffContext & { email: string }> {
+  const staff = await getStaff();
+  if (!staff) redirect("/login");
+  const email = ((await accountEmail(staff.staffId)) ?? "").toLowerCase();
+  if (!email || !adminEmails().includes(email)) notFound();
+  return { ...staff, email };
 }
 
 /** The login email of the logged-in staff member. */

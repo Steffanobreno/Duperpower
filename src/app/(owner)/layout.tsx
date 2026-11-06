@@ -1,4 +1,4 @@
-import { requireStaff } from "@/lib/auth";
+import { isAdmin, requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { TabBar } from "@/components/tab-bar";
 import { SideMenu } from "@/components/side-menu";
@@ -26,7 +26,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
       {children}
       <TabBar can={staff.can} />
       <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} role={staff.role} can={staff.can}
-        logo={logo ? `/logo/${staff.businessId}?v=${logo}` : null} />
+        logo={logo ? `/logo/${staff.businessId}?v=${logo}` : null} admin={await isAdmin(staff.staffId)} />
      </div>
     </I18nProvider>
   );
