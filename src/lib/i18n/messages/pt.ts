@@ -267,4 +267,18 @@ export const pt: Messages = {
   "Please check your mobile number.": "Confira seu número de celular.",
   "We couldn't find that postal code. Please check it, or text us to book.": "Não encontramos esse código postal. Confira, ou mande mensagem para agendar.",
   "Please check the postal code.": "Confira o código postal (CEP).",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "Pelo peso do seu cachorro.",
+  "Small (up to 20 lb)": "Pequeno (até 20 lb)",
+  "Medium (21–50 lb)": "Médio (21–50 lb)",
+  "Large (51–90 lb)": "Grande (51–90 lb)",
+  "X-Large (91 lb or more)": "Extra grande (91 lb ou mais)",
+  "Small (up to 9 kg)": "Pequeno (até 9 kg)",
+  "Medium (10–22 kg)": "Médio (10–22 kg)",
+  "Large (23–40 kg)": "Grande (23–40 kg)",
+  "X-Large (41 kg or more)": "Extra grande (41 kg ou mais)",
+  "Small (30 cm or less)": "Pequeno (30 cm ou menos)",
+  "Medium (30–40 cm)": "Médio (30–40 cm)",
+  "Large (40–50 cm)": "Grande (40–50 cm)",
+  "X-Large (50 cm or up)": "Extra grande (50 cm ou mais)",
 };

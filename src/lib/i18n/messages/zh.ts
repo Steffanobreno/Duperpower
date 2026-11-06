@@ -260,4 +260,18 @@ export const zh: Messages = {
   "Please check your mobile number.": "请检查你的手机号码。",
   "We couldn't find that postal code. Please check it, or text us to book.": "我们找不到这个邮政编码。请检查一下，或发短信给我们预约。",
   "Please check the postal code.": "请检查邮政编码。",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "按你家狗狗的体重。",
+  "Small (up to 20 lb)": "小型（20 磅以下）",
+  "Medium (21–50 lb)": "中型（21–50 磅）",
+  "Large (51–90 lb)": "大型（51–90 磅）",
+  "X-Large (91 lb or more)": "特大型（91 磅以上）",
+  "Small (up to 9 kg)": "小型（9 公斤以下）",
+  "Medium (10–22 kg)": "中型（10–22 公斤）",
+  "Large (23–40 kg)": "大型（23–40 公斤）",
+  "X-Large (41 kg or more)": "特大型（41 公斤以上）",
+  "Small (30 cm or less)": "小型（30 厘米或以下）",
+  "Medium (30–40 cm)": "中型（30–40 厘米）",
+  "Large (40–50 cm)": "大型（40–50 厘米）",
+  "X-Large (50 cm or up)": "特大型（50 厘米或以上）",
 };

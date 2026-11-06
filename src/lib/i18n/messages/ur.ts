@@ -267,4 +267,18 @@ export const ur: Messages = {
   "Please check your mobile number.": "براہ کرم اپنا موبائل نمبر چیک کریں۔",
   "We couldn't find that postal code. Please check it, or text us to book.": "ہمیں یہ پوسٹل کوڈ نہیں ملا۔ براہ کرم چیک کریں، یا بک کرنے کے لیے ہمیں میسج کریں۔",
   "Please check the postal code.": "براہ کرم پوسٹل کوڈ چیک کریں۔",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "آپ کے کتے کے وزن کے حساب سے۔",
+  "Small (up to 20 lb)": "چھوٹا (20 lb تک)",
+  "Medium (21–50 lb)": "درمیانہ (21–50 lb)",
+  "Large (51–90 lb)": "بڑا (51–90 lb)",
+  "X-Large (91 lb or more)": "بہت بڑا (91 lb یا زیادہ)",
+  "Small (up to 9 kg)": "چھوٹا (9 kg تک)",
+  "Medium (10–22 kg)": "درمیانہ (10–22 kg)",
+  "Large (23–40 kg)": "بڑا (23–40 kg)",
+  "X-Large (41 kg or more)": "بہت بڑا (41 kg یا زیادہ)",
+  "Small (30 cm or less)": "چھوٹا (30 سینٹی میٹر یا کم)",
+  "Medium (30–40 cm)": "درمیانہ (30–40 سینٹی میٹر)",
+  "Large (40–50 cm)": "بڑا (40–50 سینٹی میٹر)",
+  "X-Large (50 cm or up)": "بہت بڑا (50 سینٹی میٹر یا زیادہ)",
 };

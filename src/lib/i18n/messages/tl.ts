@@ -260,4 +260,18 @@ export const tl: Messages = {
   "Please check your mobile number.": "Pakitingnan ang numero ng mobile mo.",
   "We couldn't find that postal code. Please check it, or text us to book.": "Hindi namin nahanap ang postal code na iyan. Pakitingnan ito, o i-text kami para mag-book.",
   "Please check the postal code.": "Pakitingnan ang postal code.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "Ayon sa timbang ng aso mo.",
+  "Small (up to 20 lb)": "Maliit (hanggang 20 lb)",
+  "Medium (21–50 lb)": "Katamtaman (21–50 lb)",
+  "Large (51–90 lb)": "Malaki (51–90 lb)",
+  "X-Large (91 lb or more)": "Napakalaki (91 lb pataas)",
+  "Small (up to 9 kg)": "Maliit (hanggang 9 kg)",
+  "Medium (10–22 kg)": "Katamtaman (10–22 kg)",
+  "Large (23–40 kg)": "Malaki (23–40 kg)",
+  "X-Large (41 kg or more)": "Napakalaki (41 kg pataas)",
+  "Small (30 cm or less)": "Maliit (30 cm o mas mababa)",
+  "Medium (30–40 cm)": "Katamtaman (30–40 cm)",
+  "Large (40–50 cm)": "Malaki (40–50 cm)",
+  "X-Large (50 cm or up)": "Napakalaki (50 cm o higit)",
 };

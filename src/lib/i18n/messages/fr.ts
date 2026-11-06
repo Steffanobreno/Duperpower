@@ -267,4 +267,18 @@ export const fr: Messages = {
   "Please check your mobile number.": "Vérifiez votre numéro de portable.",
   "We couldn't find that postal code. Please check it, or text us to book.": "Nous n'avons pas trouvé ce code postal. Vérifiez-le, ou écrivez-nous pour réserver.",
   "Please check the postal code.": "Vérifiez le code postal.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "Selon le poids de votre chien.",
+  "Small (up to 20 lb)": "Petit (jusqu'à 20 lb)",
+  "Medium (21–50 lb)": "Moyen (21–50 lb)",
+  "Large (51–90 lb)": "Grand (51–90 lb)",
+  "X-Large (91 lb or more)": "Très grand (91 lb ou plus)",
+  "Small (up to 9 kg)": "Petit (jusqu'à 9 kg)",
+  "Medium (10–22 kg)": "Moyen (10–22 kg)",
+  "Large (23–40 kg)": "Grand (23–40 kg)",
+  "X-Large (41 kg or more)": "Très grand (41 kg ou plus)",
+  "Small (30 cm or less)": "Petit (30 cm ou moins)",
+  "Medium (30–40 cm)": "Moyen (30–40 cm)",
+  "Large (40–50 cm)": "Grand (40–50 cm)",
+  "X-Large (50 cm or up)": "Très grand (50 cm ou plus)",
 };

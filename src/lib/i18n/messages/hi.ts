@@ -267,4 +267,18 @@ export const hi: Messages = {
   "Please check your mobile number.": "कृपया अपना मोबाइल नंबर जाँचें।",
   "We couldn't find that postal code. Please check it, or text us to book.": "हमें वह पिन कोड नहीं मिला। कृपया जाँचें, या बुक करने के लिए हमें मैसेज करें।",
   "Please check the postal code.": "कृपया पिन कोड जाँचें।",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "आपके कुत्ते के वज़न के हिसाब से।",
+  "Small (up to 20 lb)": "छोटा (20 lb तक)",
+  "Medium (21–50 lb)": "मध्यम (21–50 lb)",
+  "Large (51–90 lb)": "बड़ा (51–90 lb)",
+  "X-Large (91 lb or more)": "बहुत बड़ा (91 lb या ज़्यादा)",
+  "Small (up to 9 kg)": "छोटा (9 kg तक)",
+  "Medium (10–22 kg)": "मध्यम (10–22 kg)",
+  "Large (23–40 kg)": "बड़ा (23–40 kg)",
+  "X-Large (41 kg or more)": "बहुत बड़ा (41 kg या ज़्यादा)",
+  "Small (30 cm or less)": "छोटा (30 सेमी या कम)",
+  "Medium (30–40 cm)": "मध्यम (30–40 सेमी)",
+  "Large (40–50 cm)": "बड़ा (40–50 सेमी)",
+  "X-Large (50 cm or up)": "बहुत बड़ा (50 सेमी या ज़्यादा)",
 };

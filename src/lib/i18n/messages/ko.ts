@@ -260,4 +260,18 @@ export const ko: Messages = {
   "Please check your mobile number.": "휴대폰 번호를 확인해 주세요.",
   "We couldn't find that postal code. Please check it, or text us to book.": "그 우편번호를 찾지 못했어요. 확인해 주시거나 문자로 예약해 주세요.",
   "Please check the postal code.": "우편번호를 확인해 주세요.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "강아지 체중 기준이에요.",
+  "Small (up to 20 lb)": "소형 (20lb 이하)",
+  "Medium (21–50 lb)": "중형 (21–50lb)",
+  "Large (51–90 lb)": "대형 (51–90lb)",
+  "X-Large (91 lb or more)": "특대형 (91lb 이상)",
+  "Small (up to 9 kg)": "소형 (9kg 이하)",
+  "Medium (10–22 kg)": "중형 (10–22kg)",
+  "Large (23–40 kg)": "대형 (23–40kg)",
+  "X-Large (41 kg or more)": "특대형 (41kg 이상)",
+  "Small (30 cm or less)": "소형 (30cm 이하)",
+  "Medium (30–40 cm)": "중형 (30–40cm)",
+  "Large (40–50 cm)": "대형 (40–50cm)",
+  "X-Large (50 cm or up)": "특대형 (50cm 이상)",
 };

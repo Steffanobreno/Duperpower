@@ -24,6 +24,9 @@ export type PublicBusiness = {
   timezone: string;
   country: string;
   currency: string;
+  size_by: string;
+  length_unit: string | null;
+  weight_unit: string | null;
   website_url: string | null;
   email: string | null;
   buffer_minutes: number;
@@ -44,7 +47,7 @@ export type PublicBusiness = {
 export async function getPublicBusiness(slug?: string | null) {
   const key = typeof slug === "string" && /^[a-z0-9-]{2,60}$/.test(slug) ? slug : null;
   const [b] = await sql<PublicBusiness[]>`
-    select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.website_url, b.email, b.buffer_minutes,
+    select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit, b.website_url, b.email, b.buffer_minutes,
            b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles, b.online_booking_enabled,
            (select s.id from staff s where s.business_id = b.id and s.active order by (s.role = 'owner') desc, s.created_at limit 1) as staff_id

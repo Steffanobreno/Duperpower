@@ -8,9 +8,16 @@ export type Region = {
   locale: string;
   /** Distances in kilometers (false: miles). Stored in miles either way. */
   km: boolean;
-  /** Centimeters and kilograms (false: inches and pounds). */
+  /** Heights in centimeters (false: inches). */
   metric: boolean;
+  /** Weights in kilograms (false: pounds). Stored in pounds either way. */
+  kg: boolean;
+  /** How the business sorts dogs into sizes: by height at the shoulder, or by weight. */
+  sizeBy: "height" | "weight";
 };
+
+/** The business's own unit choices (null: what its country uses). */
+export type Units = { size_by?: string | null; length_unit?: string | null; weight_unit?: string | null };
 
 const MILES = new Set(["US", "GB", "LR", "MM", "PR", "VI", "GU", "AS", "MP", "UM"]);
 const IMPERIAL = new Set(["US", "LR", "MM", "PR", "VI", "GU", "AS", "MP", "UM"]);
@@ -19,10 +26,16 @@ const isCode = (c: unknown): c is string => typeof c === "string" && /^[A-Z]{2}$
 const isMoneyCode = (c: unknown): c is string => typeof c === "string" && /^[A-Z]{3}$/.test(c);
 
 /** The region of a business (country and currency as stored), read in the given language. */
-export function regionOf(country: string | null | undefined, currency?: string | null, lang = "en"): Region {
+export function regionOf(country: string | null | undefined, currency?: string | null, lang = "en", units?: Units | null): Region {
   const c = isCode(country) ? country : "US";
   const cur = isMoneyCode(currency) ? currency : "USD";
-  return { country: c, currency: cur, locale: `${lang}-${c}`, km: !MILES.has(c), metric: !IMPERIAL.has(c) };
+  const imperial = IMPERIAL.has(c);
+  return {
+    country: c, currency: cur, locale: `${lang}-${c}`, km: !MILES.has(c),
+    metric: units?.length_unit ? units.length_unit === "cm" : !imperial,
+    kg: units?.weight_unit ? units.weight_unit === "kg" : !imperial,
+    sizeBy: units?.size_by === "weight" ? "weight" : "height",
+  };
 }
 
 export const DEFAULT_REGION: Region = regionOf("US", "USD", "en");

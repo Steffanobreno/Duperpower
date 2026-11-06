@@ -267,4 +267,18 @@ export const id: Messages = {
   "Please check your mobile number.": "Mohon periksa nomor ponsel Anda.",
   "We couldn't find that postal code. Please check it, or text us to book.": "Kami tidak menemukan kode pos itu. Mohon periksa, atau kirim pesan untuk memesan.",
   "Please check the postal code.": "Mohon periksa kode pos.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "Berdasarkan berat anjing Anda.",
+  "Small (up to 20 lb)": "Kecil (sampai 20 lb)",
+  "Medium (21–50 lb)": "Sedang (21–50 lb)",
+  "Large (51–90 lb)": "Besar (51–90 lb)",
+  "X-Large (91 lb or more)": "Sangat besar (91 lb atau lebih)",
+  "Small (up to 9 kg)": "Kecil (sampai 9 kg)",
+  "Medium (10–22 kg)": "Sedang (10–22 kg)",
+  "Large (23–40 kg)": "Besar (23–40 kg)",
+  "X-Large (41 kg or more)": "Sangat besar (41 kg atau lebih)",
+  "Small (30 cm or less)": "Kecil (30 cm atau kurang)",
+  "Medium (30–40 cm)": "Sedang (30–40 cm)",
+  "Large (40–50 cm)": "Besar (40–50 cm)",
+  "X-Large (50 cm or up)": "Sangat besar (50 cm atau lebih)",
 };

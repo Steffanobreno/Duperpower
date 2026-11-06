@@ -16,6 +16,8 @@ for (const f of files) {
 // The shapes server messages are matched to (src/lib/i18n/index.ts) and the size names.
 for (const m of readFileSync("src/lib/i18n/index.ts", "utf8").matchAll(/\/, "((?:[^"\\]|\\.)*)"\]/g)) used.add(unescape(m[1]));
 for (const size of ["Small", "Medium", "Large", "X-Large"]) used.add(size);
+// The size labels by weight and in cm (booking page, sized the business's way).
+for (const m of readFileSync("src/lib/format.ts", "utf8").matchAll(/msg\("((?:Small|Medium|Large|X-Large) \((?:up to|\d)[^"]*(?:lb|kg|cm)[^"]*\))"\)/g)) used.add(m[1]);
 // English messages the booking server actions send back (shown translated on the page).
 for (const f of ["src/app/book/actions.ts", "src/lib/booking.ts", "src/app/intake/actions.ts"]) {
   const src = readFileSync(f, "utf8");

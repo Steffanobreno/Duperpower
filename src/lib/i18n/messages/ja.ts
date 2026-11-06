@@ -267,4 +267,18 @@ export const ja: Messages = {
   "Please check your mobile number.": "携帯電話番号をご確認ください。",
   "We couldn't find that postal code. Please check it, or text us to book.": "その郵便番号が見つかりませんでした。ご確認いただくか、メッセージでご予約ください。",
   "Please check the postal code.": "郵便番号をご確認ください。",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "わんちゃんの体重で選びます。",
+  "Small (up to 20 lb)": "小型（20 lb まで）",
+  "Medium (21–50 lb)": "中型（21〜50 lb）",
+  "Large (51–90 lb)": "大型（51〜90 lb）",
+  "X-Large (91 lb or more)": "特大（91 lb 以上）",
+  "Small (up to 9 kg)": "小型（9 kg まで）",
+  "Medium (10–22 kg)": "中型（10〜22 kg）",
+  "Large (23–40 kg)": "大型（23〜40 kg）",
+  "X-Large (41 kg or more)": "特大（41 kg 以上）",
+  "Small (30 cm or less)": "小型（30cm 以下）",
+  "Medium (30–40 cm)": "中型（30〜40cm）",
+  "Large (40–50 cm)": "大型（40〜50cm）",
+  "X-Large (50 cm or up)": "特大（50cm 以上）",
 };

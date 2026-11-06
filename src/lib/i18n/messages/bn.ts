@@ -267,4 +267,18 @@ export const bn: Messages = {
   "Please check your mobile number.": "অনুগ্রহ করে আপনার মোবাইল নম্বর দেখে নিন।",
   "We couldn't find that postal code. Please check it, or text us to book.": "আমরা ওই পোস্টাল কোডটি খুঁজে পাইনি। অনুগ্রহ করে দেখে নিন, বা বুক করতে আমাদের মেসেজ করুন।",
   "Please check the postal code.": "অনুগ্রহ করে পোস্টাল কোড দেখে নিন।",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "আপনার কুকুরের ওজন অনুযায়ী।",
+  "Small (up to 20 lb)": "ছোট (২০ lb পর্যন্ত)",
+  "Medium (21–50 lb)": "মাঝারি (২১–৫০ lb)",
+  "Large (51–90 lb)": "বড় (৫১–৯০ lb)",
+  "X-Large (91 lb or more)": "অনেক বড় (৯১ lb বা বেশি)",
+  "Small (up to 9 kg)": "ছোট (৯ kg পর্যন্ত)",
+  "Medium (10–22 kg)": "মাঝারি (১০–২২ kg)",
+  "Large (23–40 kg)": "বড় (২৩–৪০ kg)",
+  "X-Large (41 kg or more)": "অনেক বড় (৪১ kg বা বেশি)",
+  "Small (30 cm or less)": "ছোট (৩০ সেমি বা কম)",
+  "Medium (30–40 cm)": "মাঝারি (৩০–৪০ সেমি)",
+  "Large (40–50 cm)": "বড় (৪০–৫০ সেমি)",
+  "X-Large (50 cm or up)": "অনেক বড় (৫০ সেমি বা বেশি)",
 };

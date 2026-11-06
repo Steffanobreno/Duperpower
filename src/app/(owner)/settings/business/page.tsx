@@ -6,7 +6,7 @@ import { sql } from "@/lib/db";
 import { phoneLabel } from "@/lib/format";
 import { CountryFields } from "@/components/country-fields";
 import { placeNames } from "@/lib/countries";
-import { Card, Field, Input, Page, PageHeader } from "@/components/ui";
+import { Card, Field, Input, Page, PageHeader, Select } from "@/components/ui";
 import { saveBusinessAction } from "../actions";
 import { SimpleForm } from "../forms";
 import { LogoUpload } from "./logo-upload";
@@ -64,6 +64,27 @@ export default async function BusinessPage() {
             <Field label={t("Google Business")}><Input name="google_url" type="url" defaultValue={b.google_url ?? ""} placeholder="https://g.page/…" /></Field>
             <h2 className="section-label pt-2">{t("Preferences")}</h2>
             <CountryFields country={b.country} currency={b.currency} timezone={b.timezone} names={placeNames(staff.lang)} />
+            <h2 className="section-label pt-2">{t("Measurements")}</h2>
+            <Field label={t("Sort dogs into sizes by")} hint={t("Prices by size follow it, in the app and on your booking page.")}>
+              <Select name="size_by" defaultValue={staff.region.sizeBy}>
+                <option value="height">{t("Height at the shoulder")}</option>
+                <option value="weight">{t("Weight")}</option>
+              </Select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t("Weight in")}>
+                <Select name="weight_unit" defaultValue={staff.region.kg ? "kg" : "lb"}>
+                  <option value="lb">{t("Pounds (lb)")}</option>
+                  <option value="kg">{t("Kilograms (kg)")}</option>
+                </Select>
+              </Field>
+              <Field label={t("Height in")}>
+                <Select name="length_unit" defaultValue={staff.region.metric ? "cm" : "in"}>
+                  <option value="in">{t("Inches (in)")}</option>
+                  <option value="cm">{t("Centimeters (cm)")}</option>
+                </Select>
+              </Field>
+            </div>
             <Field label={t("Booking link name")} hint={t("Letters, numbers and dashes.")}>
               <Input name="booking_slug" defaultValue={b.booking_slug} required />
             </Field>

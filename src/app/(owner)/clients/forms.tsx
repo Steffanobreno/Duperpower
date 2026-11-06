@@ -6,7 +6,7 @@ import { ActionForm } from "@/components/action-form";
 import { useActionState, useState } from "react";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
-import { LB_PER_KG, sizesFor } from "@/lib/format";
+import { sizesFor, weightOut } from "@/lib/format";
 import { BreedOptions } from "@/components/breed-options";
 import type { FormState } from "./actions";
 
@@ -167,7 +167,7 @@ export function PetForm({
   options: PetOptions;
 }) {
   const { t } = useT();
-  const { metric } = useRegion();
+  const region = useRegion();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
@@ -181,10 +181,11 @@ export function PetForm({
           <BreedOptions extra={options.breeds} />
         </Field>
       </div>
-      <Field label={t("Size (height at the shoulder)")} hint={t("Picks the right price when booking.")}>
+      <Field label={region.sizeBy === "weight" ? t("Size") : t("Size (height at the shoulder)")}
+        hint={region.sizeBy === "weight" ? t("Comes from the weight when you type it. Picks the right price when booking.") : t("Picks the right price when booking.")}>
         <Select name="size_class" defaultValue={initial?.size_class ?? ""}>
           <option value="">{t("Not set")}</option>
-          {sizesFor(metric).map((s) => (
+          {sizesFor(region).map((s) => (
             <option key={s.value} value={s.value}>
               {t(s.label)}
             </option>
@@ -192,9 +193,8 @@ export function PetForm({
         </Select>
       </Field>
       <div className="grid grid-cols-3 gap-3">
-        <Field label={metric ? t("Weight (kg)") : t("Weight (lb)")}>
-          <Input name="weight_lbs" inputMode="decimal"
-            defaultValue={initial?.weight_lbs ? (metric ? String(Math.round((Number(initial.weight_lbs) / LB_PER_KG) * 10) / 10) : initial.weight_lbs) : ""} />
+        <Field label={region.kg ? t("Weight (kg)") : t("Weight (lb)")}>
+          <Input name="weight_lbs" inputMode="decimal" defaultValue={weightOut(initial?.weight_lbs, region.kg)} />
         </Field>
         <Field label={t("Sex")}>
           <Select name="sex" defaultValue={initial?.sex ?? ""}>

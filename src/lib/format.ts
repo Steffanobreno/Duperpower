@@ -118,11 +118,38 @@ const SIZES_CM: Record<SizeClass, string> = {
   large: msg("Large (40–50 cm)"),
   xlarge: msg("X-Large (50 cm or up)"),
 };
-/** The sizes with their heights in inches, or in centimeters (`metric`). */
-export const sizesFor = (metric: boolean) => SIZES.map((s) => ({ value: s.value, label: metric ? SIZES_CM[s.value] : s.label }));
-export const sizeLabel = (s: string | null, metric: boolean = currentRegion().metric) =>
-  sizesFor(metric).find((x) => x.value === s)?.label ?? msg("Size not set");
+const SIZES_LB: Record<SizeClass, string> = {
+  small: msg("Small (up to 20 lb)"),
+  medium: msg("Medium (21–50 lb)"),
+  large: msg("Large (51–90 lb)"),
+  xlarge: msg("X-Large (91 lb or more)"),
+};
+const SIZES_KG: Record<SizeClass, string> = {
+  small: msg("Small (up to 9 kg)"),
+  medium: msg("Medium (10–22 kg)"),
+  large: msg("Large (23–40 kg)"),
+  xlarge: msg("X-Large (41 kg or more)"),
+};
+type SizeUnits = Pick<Region, "metric" | "kg" | "sizeBy">;
+/** The sizes as the business measures them: height in inches or cm, or weight in lb or kg. */
+export const sizesFor = (r: SizeUnits) => SIZES.map((s) => ({
+  value: s.value,
+  label: r.sizeBy === "weight" ? (r.kg ? SIZES_KG : SIZES_LB)[s.value] : r.metric ? SIZES_CM[s.value] : s.label,
+}));
+export const sizeLabel = (s: string | null, r: SizeUnits = currentRegion()) =>
+  sizesFor(r).find((x) => x.value === s)?.label ?? msg("Size not set");
 
 export const LB_PER_KG = 2.20462;
+/** The size class for a weight in pounds (for businesses that size dogs by weight). */
+export const sizeFromWeight = (lbs: number): SizeClass => (lbs <= 20 ? "small" : lbs <= 50 ? "medium" : lbs <= 90 ? "large" : "xlarge");
+/** Pounds (as stored) → the number shown in the business's unit. */
+export const weightOut = (lbs: number | string | null | undefined, kg: boolean) =>
+  lbs == null || lbs === "" ? "" : kg ? String(Math.round((Number(lbs) / LB_PER_KG) * 10) / 10) : String(Number(lbs));
+/** A weight typed in the business's unit ("8,5") → pounds to store, or null. */
+export function weightIn(text: string | null | undefined, kg: boolean): number | null {
+  const n = Number(String(text ?? "").trim().replace(",", "."));
+  if (!String(text ?? "").trim() || !Number.isFinite(n) || n <= 0 || n > 400) return null;
+  return Math.round(n * (kg ? LB_PER_KG : 1) * 10) / 10;
+}
 
 export const WEEKDAYS = [msg("Sunday"), msg("Monday"), msg("Tuesday"), msg("Wednesday"), msg("Thursday"), msg("Friday"), msg("Saturday")];

@@ -267,4 +267,18 @@ export const te: Messages = {
   "Please check your mobile number.": "దయచేసి మీ మొబైల్ నంబర్ చూడండి.",
   "We couldn't find that postal code. Please check it, or text us to book.": "ఆ పిన్ కోడ్ మాకు దొరకలేదు. దయచేసి చూడండి, లేదా బుక్ చేయడానికి మాకు మెసేజ్ చేయండి.",
   "Please check the postal code.": "దయచేసి పిన్ కోడ్ చూడండి.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "మీ కుక్క బరువు ఆధారంగా.",
+  "Small (up to 20 lb)": "చిన్నది (20 lb వరకు)",
+  "Medium (21–50 lb)": "మధ్యస్థం (21–50 lb)",
+  "Large (51–90 lb)": "పెద్దది (51–90 lb)",
+  "X-Large (91 lb or more)": "చాలా పెద్దది (91 lb లేదా ఎక్కువ)",
+  "Small (up to 9 kg)": "చిన్నది (9 kg వరకు)",
+  "Medium (10–22 kg)": "మధ్యస్థం (10–22 kg)",
+  "Large (23–40 kg)": "పెద్దది (23–40 kg)",
+  "X-Large (41 kg or more)": "చాలా పెద్దది (41 kg లేదా ఎక్కువ)",
+  "Small (30 cm or less)": "చిన్నది (30 సెం.మీ. లేదా తక్కువ)",
+  "Medium (30–40 cm)": "మధ్యస్థం (30–40 సెం.మీ.)",
+  "Large (40–50 cm)": "పెద్దది (40–50 సెం.మీ.)",
+  "X-Large (50 cm or up)": "చాలా పెద్దది (50 సెం.మీ. లేదా ఎక్కువ)",
 };

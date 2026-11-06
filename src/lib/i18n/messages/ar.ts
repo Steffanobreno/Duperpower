@@ -267,4 +267,18 @@ export const ar: Messages = {
   "Please check your mobile number.": "يرجى التحقق من رقم جوالك.",
   "We couldn't find that postal code. Please check it, or text us to book.": "لم نجد هذا الرمز البريدي. يرجى التحقق منه، أو راسلنا للحجز.",
   "Please check the postal code.": "يرجى التحقق من الرمز البريدي.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "حسب وزن كلبك.",
+  "Small (up to 20 lb)": "صغير (حتى 20 رطل)",
+  "Medium (21–50 lb)": "متوسط (21–50 رطل)",
+  "Large (51–90 lb)": "كبير (51–90 رطل)",
+  "X-Large (91 lb or more)": "كبير جدًا (91 رطل أو أكثر)",
+  "Small (up to 9 kg)": "صغير (حتى 9 كغ)",
+  "Medium (10–22 kg)": "متوسط (10–22 كغ)",
+  "Large (23–40 kg)": "كبير (23–40 كغ)",
+  "X-Large (41 kg or more)": "كبير جدًا (41 كغ أو أكثر)",
+  "Small (30 cm or less)": "صغير (30 سم أو أقل)",
+  "Medium (30–40 cm)": "متوسط (30–40 سم)",
+  "Large (40–50 cm)": "كبير (40–50 سم)",
+  "X-Large (50 cm or up)": "كبير جدًا (50 سم أو أكثر)",
 };

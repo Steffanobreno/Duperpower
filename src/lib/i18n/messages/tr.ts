@@ -267,4 +267,18 @@ export const tr: Messages = {
   "Please check your mobile number.": "Lütfen cep telefonu numaranızı kontrol edin.",
   "We couldn't find that postal code. Please check it, or text us to book.": "Bu posta kodunu bulamadık. Lütfen kontrol edin veya randevu için bize mesaj atın.",
   "Please check the postal code.": "Lütfen posta kodunu kontrol edin.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "Köpeğinizin kilosuna göre.",
+  "Small (up to 20 lb)": "Küçük (20 lb'ye kadar)",
+  "Medium (21–50 lb)": "Orta (21–50 lb)",
+  "Large (51–90 lb)": "Büyük (51–90 lb)",
+  "X-Large (91 lb or more)": "Çok büyük (91 lb ve üstü)",
+  "Small (up to 9 kg)": "Küçük (9 kg'a kadar)",
+  "Medium (10–22 kg)": "Orta (10–22 kg)",
+  "Large (23–40 kg)": "Büyük (23–40 kg)",
+  "X-Large (41 kg or more)": "Çok büyük (41 kg ve üstü)",
+  "Small (30 cm or less)": "Küçük (30 cm veya altı)",
+  "Medium (30–40 cm)": "Orta (30–40 cm)",
+  "Large (40–50 cm)": "Büyük (40–50 cm)",
+  "X-Large (50 cm or up)": "Çok büyük (50 cm veya üstü)",
 };

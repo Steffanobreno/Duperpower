@@ -4,7 +4,7 @@ import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { requireStaff, requirePermission } from "@/lib/auth";
 import { isUniqueViolation, sql } from "@/lib/db";
-import { LB_PER_KG, normalizePhone, parseMoney, SIZES } from "@/lib/format";
+import { normalizePhone, parseMoney, SIZES, sizeFromWeight, weightIn } from "@/lib/format";
 import { geocode } from "@/lib/maps";
 import { savePetPhoto } from "@/lib/pet-photos";
 import { sendEmail } from "@/lib/email";
@@ -112,12 +112,15 @@ export async function addNoteAction(clientId: string, form: FormData) {
   revalidatePath(`/clients/${clientId}`);
 }
 
-function readPet(form: FormData, metric = false) {
+function readPet(form: FormData, units: { kg: boolean; sizeBy: "height" | "weight" } = { kg: false, sizeBy: "height" }) {
   const name = text(form, "name");
   if (!name) return { error: "The pet's name is required." } as const;
   const size = text(form, "size_class");
   if (size && !SIZES.some((s) => s.value === size)) return { error: "Pick a size from the list." } as const;
   const weight = text(form, "weight_lbs");
+  const lbs = weightIn(weight, units.kg);
+  // Sized by weight: the weight decides the size (the size box is only a fallback).
+  const sizeClass = units.sizeBy === "weight" && lbs ? sizeFromWeight(lbs) : size;
   const rebook = text(form, "rebook_every_days");
   const rebookDays = rebook ? Number(rebook) : null;
   if (rebookDays !== null && !(rebookDays >= 7 && rebookDays <= 365))
@@ -126,8 +129,8 @@ function readPet(form: FormData, metric = false) {
     values: {
       name,
       breed: text(form, "breed"),
-      size_class: size,
-      weight_lbs: weight && Number.isFinite(Number(weight.replace(",", "."))) ? Math.round(Number(weight.replace(",", ".")) * (metric ? LB_PER_KG : 1) * 10) / 10 : null,
+      size_class: sizeClass,
+      weight_lbs: lbs,
       coat_type: text(form, "coat_type"),
       birth_date: text(form, "birth_date"),
       sex: text(form, "sex"),
@@ -144,7 +147,7 @@ function readPet(form: FormData, metric = false) {
 
 export async function savePetAction(clientId: string, petId: string | null, _: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();
-  const parsed = readPet(form, staff.region.metric);
+  const parsed = readPet(form, staff.region);
   if ("error" in parsed) return { error: parsed.error };
   const v = parsed.values;
   const [owner] = await sql`select id from clients where id = ${clientId} and business_id = ${staff.businessId}`;

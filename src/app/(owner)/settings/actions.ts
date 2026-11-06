@@ -98,6 +98,8 @@ export async function saveBusinessAction(_: FormState, form: FormData): Promise<
   const name = text("name", 80);
   const country = isCountry(form.get("country")) ? String(form.get("country")) : staff.region.country;
   const currency = isCurrency(form.get("currency")) ? String(form.get("currency")) : currencyOf(country);
+  // A new country brings its own units (pounds or kilos, inches or cm) unless picked again later.
+  const countryChanged = country !== staff.region.country;
   const rawPhone = String(form.get("phone") ?? "").trim();
   const phone = rawPhone ? normalizePhone(rawPhone, country) : null;
   const slug = String(form.get("booking_slug") ?? "").trim().toLowerCase();
@@ -117,6 +119,9 @@ export async function saveBusinessAction(_: FormState, form: FormData): Promise<
     await sql`
       update businesses set name = ${name}, phone = ${phone}, booking_slug = ${slug}, timezone = ${timezone},
         country = ${country}, currency = ${currency},
+        size_by = ${form.get("size_by") === "weight" ? "weight" : "height"},
+        weight_unit = ${countryChanged ? null : form.get("weight_unit") === "kg" ? "kg" : form.get("weight_unit") === "lb" ? "lb" : null},
+        length_unit = ${countryChanged ? null : form.get("length_unit") === "cm" ? "cm" : form.get("length_unit") === "in" ? "in" : null},
         address_line = ${text("address_line")}, city = ${text("city", 60)}, state = ${text("state", 20)}, zip = ${zip},
         website_url = ${links.website_url}, facebook_url = ${links.facebook_url}, instagram_url = ${links.instagram_url},
         yelp_url = ${links.yelp_url}, google_url = ${links.google_url}

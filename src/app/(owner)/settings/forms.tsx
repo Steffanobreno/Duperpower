@@ -25,7 +25,7 @@ export type ServiceValues = {
 
 export function ServiceForm({ action, initial, categories }: { action: Action; initial?: ServiceValues; categories: string[] }) {
   const { t } = useT();
-  const { metric } = useRegion();
+  const region = useRegion();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-4">
@@ -52,7 +52,7 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
       <Field label={t("Pet size")} hint={t("Leave as 'Any size' for services that cost the same for every dog.")}>
         <Select name="size_class" defaultValue={initial?.size_class ?? ""}>
           <option value="">{t("Any size")}</option>
-          {sizesFor(metric).map((s) => (
+          {sizesFor(region).map((s) => (
             <option key={s.value} value={s.value}>
               {t(s.label)}
             </option>

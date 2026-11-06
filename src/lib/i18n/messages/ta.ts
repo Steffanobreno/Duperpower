@@ -267,4 +267,18 @@ export const ta: Messages = {
   "Please check your mobile number.": "உங்கள் மொபைல் எண்ணைச் சரிபாருங்கள்.",
   "We couldn't find that postal code. Please check it, or text us to book.": "அந்த அஞ்சல் குறியீடு கிடைக்கவில்லை. சரிபாருங்கள், அல்லது முன்பதிவுக்கு எங்களுக்குக் குறுஞ்செய்தி அனுப்புங்கள்.",
   "Please check the postal code.": "அஞ்சல் குறியீட்டைச் சரிபாருங்கள்.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "உங்கள் நாயின் எடையின்படி.",
+  "Small (up to 20 lb)": "சிறியது (20 lb வரை)",
+  "Medium (21–50 lb)": "நடுத்தரம் (21–50 lb)",
+  "Large (51–90 lb)": "பெரியது (51–90 lb)",
+  "X-Large (91 lb or more)": "மிகப் பெரியது (91 lb அல்லது மேல்)",
+  "Small (up to 9 kg)": "சிறியது (9 kg வரை)",
+  "Medium (10–22 kg)": "நடுத்தரம் (10–22 kg)",
+  "Large (23–40 kg)": "பெரியது (23–40 kg)",
+  "X-Large (41 kg or more)": "மிகப் பெரியது (41 kg அல்லது மேல்)",
+  "Small (30 cm or less)": "சிறியது (30 செ.மீ. அல்லது குறைவு)",
+  "Medium (30–40 cm)": "நடுத்தரம் (30–40 செ.மீ.)",
+  "Large (40–50 cm)": "பெரியது (40–50 செ.மீ.)",
+  "X-Large (50 cm or up)": "மிகப் பெரியது (50 செ.மீ. அல்லது மேல்)",
 };

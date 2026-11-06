@@ -154,7 +154,7 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   if (!token) return null;
   const [row] = await sql`
     select s.id as staff_id, s.name as staff_name, s.role, s.language, b.id as business_id, b.name as business_name,
-           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded, b.country, b.currency,
+           b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit,
            (b.last_active_at is null or b.last_active_at < now() - interval '1 hour') as stale,
            -- In the same trip: what this role may do (the owner may do everything).
            array(select rp.perm from role_permissions rp where rp.business_id = b.id and rp.role = s.role) as perms
@@ -173,7 +173,7 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   const allowed = row.role === "owner" ? new Set<string>(ALL_PERMISSIONS) : new Set(perms);
   const langPicked = isLang(row.language);
   const lang = langPicked ? (row.language as Lang) : fromAcceptLanguage((await headers()).get("accept-language"));
-  const region = regionOf(row.country, row.currency, lang);
+  const region = regionOf(row.country, row.currency, lang, row);
   setRegion(region);
   return {
     staffId: row.staff_id,

@@ -267,4 +267,18 @@ export const ru: Messages = {
   "Please check your mobile number.": "Проверьте номер мобильного.",
   "We couldn't find that postal code. Please check it, or text us to book.": "Мы не нашли этот почтовый индекс. Проверьте его или напишите нам, чтобы записаться.",
   "Please check the postal code.": "Проверьте почтовый индекс.",
+  // Sizes by weight, and heights in cm
+  "By your dog's weight.": "По весу вашей собаки.",
+  "Small (up to 20 lb)": "Маленькая (до 20 lb)",
+  "Medium (21–50 lb)": "Средняя (21–50 lb)",
+  "Large (51–90 lb)": "Крупная (51–90 lb)",
+  "X-Large (91 lb or more)": "Очень крупная (91 lb и больше)",
+  "Small (up to 9 kg)": "Маленькая (до 9 кг)",
+  "Medium (10–22 kg)": "Средняя (10–22 кг)",
+  "Large (23–40 kg)": "Крупная (23–40 кг)",
+  "X-Large (41 kg or more)": "Очень крупная (41 кг и больше)",
+  "Small (30 cm or less)": "Маленькая (30 см или меньше)",
+  "Medium (30–40 cm)": "Средняя (30–40 см)",
+  "Large (40–50 cm)": "Крупная (40–50 см)",
+  "X-Large (50 cm or up)": "Очень крупная (50 см и больше)",
 };

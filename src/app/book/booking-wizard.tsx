@@ -125,7 +125,7 @@ export function BookingWizard({
   const phoneOk = (p: string) => digits(p).length >= (us ? 10 : 7);
   const zipOk = (z: string) => (country === "US" ? z.length === 5 : z.trim().length >= 2);
   const price = usePrice();
-  const sizeName = (size: string) => t(sizesFor(false).find((x) => x.value === size)?.label.split(" (")[0] ?? "");
+  const sizeName = (size: string) => t(sizesFor({ metric: false, kg: false, sizeBy: "height" }).find((x) => x.value === size)?.label.split(" (")[0] ?? "");
   /** The time of an open slot in the client's language ("10:00 AM", "上午10:00"). */
   const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", timeZone: timezone });
   const dayOf = (ymd: string, long = false) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(locale,
@@ -787,23 +787,35 @@ function PetTabs({ pets, current, hint }: { pets: Pet[]; current: number; hint: 
 
 function SizePicker({ value, onChange }: { value: string; onChange: (size: string) => void }) {
   const { t } = useT();
-  const { metric } = useRegion();
+  const region = useRegion();
   return (
     <div>
       <span className="block font-semibold">{t("Size")}</span>
-      <span className="block text-sm text-muted">{t("Measured along the back, from the neck to the base of the tail.")}</span>
-      {/* eslint-disable-next-line @next/next/no-img-element -- static chart */}
-      <img src="/size-chart.jpg" alt={t("Size chart: Small 12 inches or less, Medium 12 to 16, Large 16 to 20, X-Large 20 inches or up")}
-        width={900} height={304} className="my-3 w-full" />
+      {region.sizeBy === "weight" ? (
+        <span className="mb-3 block text-sm text-muted">{t("By your dog's weight.")}</span>
+      ) : (
+        <>
+          <span className="block text-sm text-muted">{t("Measured along the back, from the neck to the base of the tail.")}</span>
+          {!region.metric && (
+            // eslint-disable-next-line @next/next/no-img-element -- static chart, in inches
+            <img src="/size-chart.jpg" alt={t("Size chart: Small 12 inches or less, Medium 12 to 16, Large 16 to 20, X-Large 20 inches or up")}
+              width={900} height={304} className="my-3 w-full" />
+          )}
+          {region.metric && <span className="mb-3 block" />}
+        </>
+      )}
       <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("Size")}>
-        {sizesFor(metric).map((s) => {
-          const [name, inches] = s.label.replace(")", "").split(" (");
+        {sizesFor(region).map((s) => {
+          // "Small (up to 9 kg)" → "Small" and "up to 9 kg", both in the client's language when known.
+          const whole = t(s.label);
+          const [en, detail] = (whole !== s.label ? whole : s.label).replace(/\)$/, "").split(" (");
+          const name = whole !== s.label ? en : t(en);
           return (
-            <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={`${t(name)} (${inches})`}
+            <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={`${name} (${detail})`}
               onClick={() => onChange(s.value)}
               className={`rounded-2xl border-2 px-3 py-3 text-left ${value === s.value ? "border-brand bg-brand-soft" : "border-line"}`}>
-              <span className="block font-bold">{t(name)}</span>
-              <span className="block text-sm text-muted">{inches}</span>
+              <span className="block font-bold">{name}</span>
+              <span className="block text-sm text-muted">{detail}</span>
             </button>
           );
         })}
