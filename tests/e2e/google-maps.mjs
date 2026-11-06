@@ -67,6 +67,7 @@ await owner.fill('input[name="password"]', "correct horse battery");
 await owner.click('button[type="submit"]');
 await owner.waitForURL(/\/today/);
 await owner.goto(`${BASE}/clients/new`);
+await owner.waitForLoadState("networkidle"); // typing before the page is running loses the letters
 await owner.getByLabel("Street address").pressSequentially("1 Main", { delay: 40 });
 await owner.getByRole("option", { name: /1 Main St San Mateo/ }).click();
 await owner.waitForFunction(() => document.querySelector('input[name="zip"]')?.value === "94401");
