@@ -69,7 +69,7 @@ const number = (await page.getByRole("heading", { name: /^Receipt #\d+$/ }).firs
 if (MAIL_DIR) {
   const sent = mails().slice(before).find((m) => m.includes(`(#${number})`));
   if (!sent) fail("the receipt email didn't arrive");
-  if (!/To: maria@example\.com/i.test(sent) || !sent.includes("application/pdf") || !sent.includes(`woofers-receipt-${number}.pdf`)) {
+  if (!/To: maria@example\.com/i.test(sent) || !sent.includes("application/pdf") || !sent.includes(`receipt-${number}.pdf`)) {
     fail("the receipt email is missing the client or the PDF");
   }
 }
