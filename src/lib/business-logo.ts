@@ -1,6 +1,7 @@
 import "server-only";
 import { sql } from "./db";
 import { sniff } from "./pet-photos";
+import { hasBuiltInArtwork } from "./product";
 
 /** Saves (or replaces) the business logo. Returns an error message, or null when saved. */
 export async function saveLogo(businessId: string, bytes: Uint8Array) {
@@ -25,4 +26,9 @@ export async function logoUrl(businessId: string) {
 export async function logoBytes(businessId: string) {
   const [r] = await sql<{ content_type: string; data: Buffer }[]>`select content_type, data from business_logos where business_id = ${businessId}`;
   return r ? { type: r.content_type, data: new Uint8Array(r.data) } : null;
+}
+
+/** The logo to put on top of emails: the uploaded one, the built-in one of the first business, or none. */
+export async function emailLogo(businessId: string, businessName: string) {
+  return (await logoUrl(businessId)) ?? (hasBuiltInArtwork(businessName) ? "/logo.png" : null);
 }

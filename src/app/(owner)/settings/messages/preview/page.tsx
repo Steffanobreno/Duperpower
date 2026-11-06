@@ -46,7 +46,7 @@ export default async function EmailPreviewPage({ searchParams }: PageProps<"/set
     date: fmt(start, { weekday: "short", month: "short", day: "numeric" }),
     time: fmt(start, { hour: "numeric", minute: "2-digit" }),
     link: `${appUrl}/a/${latest?.public_token ?? "0".repeat(24)}`,
-    booking_url: b.website_url ?? `${appUrl}/book`,
+    booking_url: b.website_url ?? `${appUrl}/book/${staff.bookingSlug}`,
     review_url: b.review_url ?? "",
     days: 42,
   };

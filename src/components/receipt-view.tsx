@@ -1,3 +1,4 @@
+import { hasBuiltInArtwork } from "@/lib/product";
 import type { Receipt } from "@/lib/data/receipts";
 import { money } from "@/lib/format";
 import type { T } from "@/lib/i18n";
@@ -13,8 +14,10 @@ export function ReceiptView({ r, t = (s) => s, locale = "en-US" }: { r: Receipt;
   return (
     <div className="space-y-4">
       <div className="text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element -- small logo */}
-        <img src={r.business.logo ?? "/logo.png"} alt="" width={400} height={380} className="mx-auto h-20 w-auto" />
+        {(r.business.logo || hasBuiltInArtwork(r.business.name)) && (
+          // eslint-disable-next-line @next/next/no-img-element -- small logo
+          <img src={r.business.logo ?? "/logo.png"} alt="" width={400} height={380} className="mx-auto h-20 w-auto" />
+        )}
         <p className="mt-2 text-lg font-extrabold">{r.business.name}</p>
         {(r.business.address || r.business.phone) && (
           <p className="text-xs text-muted">

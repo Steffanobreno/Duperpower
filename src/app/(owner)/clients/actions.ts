@@ -328,6 +328,7 @@ export async function emailSignLinkAction(clientId: string) {
         subject: `Please sign the service agreement from ${c.business}`,
         text: `Hi ${c.first_name}! Please read and sign our service agreement here:\n${url}\n\nThank you!\n${c.business}`,
         fromName: c.business,
+        businessId: staff.businessId,
       });
       result = "sent";
     } catch {}

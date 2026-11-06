@@ -1,4 +1,5 @@
 "use client";
+import { hasBuiltInArtwork, initialsOf } from "@/lib/product";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,8 +40,14 @@ export function SideMenu({ staffName, businessName, requests, role, can, logo }:
       <nav aria-label="Menu" onClick={(e) => e.stopPropagation()}
         className="flex h-full w-[78%] max-w-xs flex-col overflow-y-auto bg-navy-deep pb-[env(safe-area-inset-bottom)] pt-[max(1.5rem,env(safe-area-inset-top))] text-white shadow-2xl">
         <div className="px-6 pb-6 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
-          <img src={logo ?? "/logo.png"} alt="" width={400} height={380} className="mx-auto h-24 w-24 rounded-full bg-white object-contain p-3.5" />
+          {logo || hasBuiltInArtwork(businessName) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small logo
+            <img src={logo ?? "/logo.png"} alt="" width={400} height={380} className="mx-auto h-24 w-24 rounded-full bg-white object-contain p-3.5" />
+          ) : (
+            <span aria-hidden className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white text-3xl font-extrabold text-navy">
+              {initialsOf(businessName)}
+            </span>
+          )}
           <p className="mt-3 font-bold">{staffName} <span className="font-normal text-white/60">({role[0].toUpperCase() + role.slice(1)})</span></p>
           <p className="text-sm text-white/60">{businessName}</p>
         </div>

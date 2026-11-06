@@ -13,7 +13,7 @@ const text = (form: FormData, k: string, max = 120) => String(form.get(k) ?? "")
  * a client already on file, matched by phone), and tells the owner. No booking.
  */
 export async function submitIntakeAction(_: IntakeState, form: FormData): Promise<IntakeState> {
-  const b = await getPublicBusiness();
+  const b = await getPublicBusiness(String(form.get("slug") ?? "") || null);
   if (!b) return { error: "Something went wrong. Please try again." };
   if (text(form, "website")) return { ok: true }; // a bot filled the hidden field
   const first = text(form, "first_name", 60);

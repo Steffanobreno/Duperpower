@@ -1,4 +1,5 @@
 "use server";
+import { emailLogo } from "@/lib/business-logo";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
@@ -74,13 +75,13 @@ export async function sendTestAction(id: string, _: CampaignState, form: FormDat
   const to = String(form.get("to") ?? "").trim();
   if (!/^\S+@\S+\.\S+$/.test(to)) return { error: "Type the email to send the test to." };
   const [b] = await sql`select name, phone, mailing_address, website_url from businesses where id = ${staff.businessId}`;
-  const vars = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book` };
+  const vars = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book/${staff.bookingSlug}` };
   const content = { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
   const unsubscribeUrl = `${appUrl()}/marketing`;
   const [error] = await sendMany(b.name, [{
     to,
     subject: `[Test] ${fillVars(c.subject || c.name, vars)}`,
-    html: marketingEmailHtml({ appUrl: appUrl(), content, vars, phone: phoneLabel(b.phone) || null, mailingAddress: b.mailing_address, unsubscribeUrl }),
+    html: marketingEmailHtml({ appUrl: appUrl(), logo: await emailLogo(staff.businessId, b.name), content, vars, phone: phoneLabel(b.phone) || null, mailingAddress: b.mailing_address, unsubscribeUrl }),
     text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: b.mailing_address }),
   }]);
   return error ? { error: `Gmail said: ${error}` } : { sent: to };

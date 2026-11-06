@@ -34,13 +34,19 @@ export type PublicBusiness = {
   staff_id: string;
 };
 
-export async function getPublicBusiness() {
+/**
+ * The business a client page is for: by its booking link (/book/<slug>), or, for the plain
+ * /book of the first install, the first business.
+ */
+export async function getPublicBusiness(slug?: string | null) {
+  const key = typeof slug === "string" && /^[a-z0-9-]{2,60}$/.test(slug) ? slug : null;
   const [b] = await sql<PublicBusiness[]>`
     select b.id, b.name, b.phone, b.timezone, b.website_url, b.email, b.buffer_minutes,
            b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles, b.online_booking_enabled,
            (select s.id from staff s where s.business_id = b.id and s.active order by (s.role = 'owner') desc, s.created_at limit 1) as staff_id
-    from businesses b order by b.created_at limit 1`;
+    from businesses b where ${key}::text is null or b.booking_slug = ${key}
+    order by b.created_at limit 1`;
   return b ?? null;
 }
 

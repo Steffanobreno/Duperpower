@@ -1,3 +1,4 @@
+import { logoUrl } from "./business-logo";
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
 
@@ -109,11 +110,11 @@ ${d.businessPhone ? `<p style="margin:8px 0 0;color:#5d6b80;font-size:13px">Ques
 }
 
 /**
- * The Woofers email: logo on top, the message, then (for appointment emails) a card with
+ * A business's email: its logo on top (when it has one), the message, then (for appointment emails) a card with
  * the date, address, pets and services, total and a button to see, confirm or cancel; the
  * business name at the bottom. Inline styles only, since email apps ignore style sheets.
  */
-export function emailHtml(text: string, fromName: string, details?: EmailDetails | null) {
+export function emailHtml(text: string, fromName: string, details?: EmailDetails | null, logoSrc?: string | null) {
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   const link = details ? null : text.match(/https?:\/\/\S+\/a\/[0-9a-f]+/)?.[0];
   // With the card, the raw link in the text is redundant: the button opens it.
@@ -121,7 +122,7 @@ export function emailHtml(text: string, fromName: string, details?: EmailDetails
   const body = escape(shown)
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#0a84cc;word-break:break-all">$1</a>')
     .replace(/\n/g, "<br>");
-  const logo = appUrl ? `<img src="${appUrl}/logo.png" width="120" alt="${escape(fromName)}" style="display:block;margin:0 auto 12px;border:0">` : "";
+  const logo = appUrl && logoSrc ? `<img src="${appUrl}${logoSrc}" width="120" alt="${escape(fromName)}" style="display:block;margin:0 auto 12px;border:0">` : "";
   const button = link
     ? `<p style="margin:24px 0 0;text-align:center"><a href="${link}" style="display:inline-block;background:#0a84cc;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:999px">See my appointment</a></p>`
     : "";
@@ -129,22 +130,24 @@ export function emailHtml(text: string, fromName: string, details?: EmailDetails
 <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:20px;padding:28px 24px;color:#132039;font-size:16px;line-height:1.55">
 ${logo}<div>${body}</div>${details ? detailsHtml(details) : button}
 </div>
-<p style="max-width:520px;margin:16px auto 0;text-align:center;color:#5d6b80;font-size:13px">${escape(fromName)} · Mobile dog grooming in the Bay Area</p>
+<p style="max-width:520px;margin:16px auto 0;text-align:center;color:#5d6b80;font-size:13px">${escape(fromName)}</p>
 </div>`;
 }
 
 export async function sendEmail({
-  to, subject, text, fromName, details, attachments = [],
+  to, subject, text, fromName, details, attachments = [], businessId,
 }: {
   to: string; subject: string; text: string; fromName: string; details?: EmailDetails | null;
+  /** Whose email it is: its logo goes on top. */
+  businessId?: string;
   attachments?: { filename: string; content: Buffer; contentType: string }[];
 }) {
   const mail: Mail = {
-    to, subject, text, html: emailHtml(text, fromName, details),
+    to, subject, text, html: emailHtml(text, fromName, details, businessId ? await logoUrl(businessId) : null),
     // Gmail and Apple Mail show the attached visit with an "Add to calendar" option.
     attachments: [
       ...(details?.calendar
-        ? [{ filename: "woofers-visit.ics", content: details.calendar.ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }]
+        ? [{ filename: "visit.ics", content: details.calendar.ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }]
         : []),
       ...attachments,
     ],

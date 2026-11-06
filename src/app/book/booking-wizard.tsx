@@ -1,4 +1,5 @@
 "use client";
+import { hasBuiltInArtwork } from "@/lib/product";
 import { useState, useTransition, type ReactNode } from "react";
 import { StepCard } from "@/components/client-shell";
 import { DOG_BREEDS } from "@/lib/breeds";
@@ -80,7 +81,10 @@ export function BookingWizard({
   agreement,
   initialPhone = "",
   timezone,
+  slug = null,
 }: {
+  /** The business's booking link (/book/<slug>); null on the plain /book. */
+  slug?: string | null;
   initialPhone?: string; // from the "finish booking" link
   timezone: string; // the business's, for showing open times
   services: Service[];
@@ -147,11 +151,11 @@ export function BookingWizard({
   const lookup = () =>
     startTransition(async () => {
       setError(null);
-      const res = await lookupClientAction(phone);
+      const res = await lookupClientAction(phone, slug);
       if (res.error || res.known === undefined) return setError(res.error ? serverMessage(res.error) : t("Something went wrong. Please try again."));
       setWho(res);
       // Remember how far they got, for the "finish booking" message (best effort).
-      void trackDraftAction({ phone, step: "phone" });
+      void trackDraftAction({ slug, phone, step: "phone" });
       if (res.known) {
         setPets(res.pets.map((p) => ({
           key: p.id, petId: p.id, on: res.pets.length === 1, name: p.name, breed: p.breed ?? "", size: p.size ?? "",
@@ -166,8 +170,8 @@ export function BookingWizard({
     });
 
   const afterAddress = () => {
-    void trackDraftAction(fileAddress ? { phone, step: "address" }
-      : { phone, step: "address", zip: address.zip, addressLine: street, city: address.city });
+    void trackDraftAction(fileAddress ? { slug, phone, step: "address" }
+      : { slug, phone, step: "address", zip: address.zip, addressLine: street, city: address.city });
     if (pets.length === 0) {
       setDraft(blankPet());
       go({ name: "newpet" });
@@ -186,14 +190,14 @@ export function BookingWizard({
   const findTimes = () =>
     startTransition(async () => {
       setError(null);
-      void trackDraftAction({
+      void trackDraftAction({ slug, 
         phone, step: "times", pets: chosen.map((p) => p.name).join(" & "),
         petDetails: chosen.map((p) => ({
           name: p.name, breed: p.breed, size: p.size,
           service: byId.get(p.mainId)?.name ?? "", addons: p.extraIds.map((id) => byId.get(id)?.name ?? "").filter(Boolean),
         })),
       });
-      const res = await availabilityAction({ phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
+      const res = await availabilityAction({ slug, phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
       if (res.error) return setError(serverMessage(res.error));
       setDays(res.days ?? []);
       // Start on a day we're already nearby, when there is one.
@@ -207,6 +211,7 @@ export function BookingWizard({
       setError(null);
       if (!start) return;
       const res = await requestBookingAction({
+        slug,
         phone,
         pets: requests,
         start,
@@ -237,7 +242,7 @@ export function BookingWizard({
     setContact({ ...contact, notes: "" });
   };
 
-  if (done) return <Submitted when={done} accepted={accepted} pets={chosen.map((p) => p.name)} businessPhone={businessPhone} onAgain={startOver} />;
+  if (done) return <Submitted artwork={hasBuiltInArtwork(businessName)} when={done} accepted={accepted} pets={chosen.map((p) => p.name)} businessPhone={businessPhone} onAgain={startOver} />;
 
   const errorBox = error && (
     <p role="alert" className="mt-4 rounded-2xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
@@ -260,10 +265,12 @@ export function BookingWizard({
     case "phone":
       return (
         <StepCard flush>
-          <div className="px-4 pt-4">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
-            <img src="/van.jpg" alt={t("The Woofers Dog Spa grooming van")} width={900} height={507} className="mx-auto w-full max-w-sm" />
-          </div>
+          {hasBuiltInArtwork(businessName) && (
+            <div className="px-4 pt-4">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
+              <img src="/van.jpg" alt={t("The Woofers Dog Spa grooming van")} width={900} height={507} className="mx-auto w-full max-w-sm" />
+            </div>
+          )}
           <div className="p-5 pt-2 sm:p-7 sm:pt-2">
           <h1 className="text-[32px] font-extrabold leading-tight tracking-tight">{t("Welcome!")}</h1>
           <p className="mt-2 text-muted">
@@ -319,7 +326,7 @@ export function BookingWizard({
             disabled={!contact.firstName.trim() || !contact.lastName.trim() || !contact.email.trim()}
             onClick={() => {
               if (!/^\S+@\S+\.\S+$/.test(contact.email.trim())) return setError(t("Please check your email address."));
-              void trackDraftAction({ phone, step: "contact", firstName: contact.firstName, lastName: contact.lastName, email: contact.email });
+              void trackDraftAction({ slug, phone, step: "contact", firstName: contact.firstName, lastName: contact.lastName, email: contact.email });
               go({ name: "address" });
             }}
           >
@@ -592,7 +599,7 @@ export function BookingWizard({
                 pets={chosen.map((p) => ({ name: p.name, services: serviceIdsOf(p).map((id) => byId.get(id)?.name ?? "") }))}
                 total={total}
               />
-              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ phone, step: "review", start: start ?? undefined }); go({ name: "review" }); }}>{t("Continue")}</BigButton>
+              <BigButton className="mt-6" onClick={() => { setSheet(null); void trackDraftAction({ slug, phone, step: "review", start: start ?? undefined }); go({ name: "review" }); }}>{t("Continue")}</BigButton>
             </Sheet>
           )}
         </StepCard>
@@ -1015,16 +1022,19 @@ function AgreementSheet({
   );
 }
 
-function Submitted({ when, accepted, pets, businessPhone, onAgain }: {
+function Submitted({ when, accepted, pets, businessPhone, onAgain, artwork = false }: {
+  artwork?: boolean;
   when: string; accepted: boolean; pets: string[]; businessPhone: string; onAgain: () => void;
 }) {
   const { t } = useT();
   return (
     <StepCard flush>
-      <div className="px-4 pt-4" aria-hidden>
-        {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
-        <img src="/van.jpg" alt="" width={900} height={507} className="mx-auto w-full max-w-sm" />
-      </div>
+      {artwork && (
+        <div className="px-4 pt-4" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static photo */}
+          <img src="/van.jpg" alt="" width={900} height={507} className="mx-auto w-full max-w-sm" />
+        </div>
+      )}
       <div className="p-6 sm:p-8">
         <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">
           {accepted ? t("Yay! You're booked. 🎉") : t("Yay! Your booking request was sent. 🎉")}

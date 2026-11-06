@@ -1,3 +1,4 @@
+import { hasBuiltInArtwork, initialsOf } from "@/lib/product";
 import type { ReactNode } from "react";
 import { Phone } from "./icons";
 import { LanguagePicker } from "./i18n";
@@ -48,16 +49,23 @@ export function ClientShell({
       {back}
       <header className="sticky top-0 z-20 bg-navy">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
-          <a href={website ?? "#"} aria-label={`${brand?.name ?? "Woofers Dog Spa"} home`} className="flex min-w-0 items-center gap-2">
+          <a href={website ?? "#"} aria-label={`${brand?.name ?? "Home"} home`} className="flex min-w-0 items-center gap-2">
             {brand?.logo ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element -- small logo */}
                 <img src={brand.logo} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full bg-white object-contain p-0.5" />
                 <span className="truncate font-extrabold text-white">{brand.name}</span>
               </>
-            ) : (
+            ) : hasBuiltInArtwork(brand?.name) ? (
               // eslint-disable-next-line @next/next/no-img-element -- small static logo
-              <img src="/logo-light.png" alt={brand?.name ?? "Woofers Dog Spa"} width={594} height={160} className="h-11 w-auto" />
+              <img src="/logo-light.png" alt={brand?.name ?? ""} width={594} height={160} className="h-11 w-auto" />
+            ) : (
+              <>
+                <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white font-extrabold text-navy">
+                  {initialsOf(brand?.name ?? "")}
+                </span>
+                <span className="truncate font-extrabold text-white">{brand?.name}</span>
+              </>
             )}
           </a>
           {phone && (
@@ -73,13 +81,13 @@ export function ClientShell({
       <main lang={i18n?.lang} className="mx-auto w-full max-w-lg flex-1 px-3 py-5">{picker}{children}</main>
       <footer className="bg-navy-deep text-white/75">
         <div className="mx-auto max-w-lg space-y-4 px-5 py-8 text-sm">
-          {brand?.logo ? (
-            <p className="text-lg font-extrabold text-white">{brand.name}</p>
-          ) : (
+          {hasBuiltInArtwork(brand?.name) && !brand?.logo ? (
             // eslint-disable-next-line @next/next/no-img-element -- small static logo
             <img src="/logo-light.png" alt="" width={594} height={160} className="h-12 w-auto" />
+          ) : (
+            <p className="text-lg font-extrabold text-white">{brand?.name}</p>
           )}
-          <p>{t("Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.")}</p>
+          {hasBuiltInArtwork(brand?.name) && <p>{t("Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.")}</p>}
           {phone && (
             <a href={`tel:${phone}`} className="flex items-center gap-2 text-white">
               <Phone size={16} /> {phoneLabel}

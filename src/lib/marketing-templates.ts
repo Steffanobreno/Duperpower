@@ -107,8 +107,8 @@ export const MARKETING_TEMPLATES: MarketingTemplate[] = [
     filters: { lastVisit: "never", upcoming: "none" },
     subject: "Your first spa day is waiting 🛁",
     preheader: "Mobile grooming, right outside your door.",
-    headline: "Welcome to Woofers!",
-    body: "Hi {first_name},\n\nThanks for your interest in Woofers Dog Spa! Here's how it works: we park our fully equipped van at your home, and your pup gets a calm, one-on-one grooming session. No cages, no long waits, no car rides.\n\nBath, haircut, nails, ears and lots of love, usually in about two hours." + sign,
+    headline: "Welcome to {business}!",
+    body: "Hi {first_name},\n\nThanks for your interest in {business}! Here's how it works: we park our fully equipped van at your home, and your pup gets a calm, one-on-one grooming session. No cages, no long waits, no car rides.\n\nBath, haircut, nails, ears and lots of love, usually in about two hours." + sign,
     button: "Book the first visit",
   },
 

@@ -4,9 +4,9 @@ import { readFileSync, readdirSync } from "node:fs";
 
 const files = [
   "src/app/book/booking-wizard.tsx", "src/app/book/month-calendar.tsx", "src/app/book/signature-pad.tsx",
-  "src/app/book/page.tsx", "src/app/a/[token]/page.tsx", "src/app/r/[token]/page.tsx",
+  "src/app/book/page.tsx", "src/app/book/book-screen.tsx", "src/app/a/[token]/page.tsx", "src/app/r/[token]/page.tsx",
   "src/components/client-shell.tsx", "src/components/receipt-view.tsx", "src/lib/i18n/index.ts",
-  "src/app/intake/intake-form.tsx", "src/app/intake/page.tsx", "src/app/s/[token]/page.tsx",
+  "src/app/intake/intake-form.tsx", "src/app/intake/page.tsx", "src/app/intake/intake-screen.tsx", "src/app/s/[token]/page.tsx",
 ];
 const unescape = (s) => s.replace(/\\(.)/g, "$1");
 const used = new Set();

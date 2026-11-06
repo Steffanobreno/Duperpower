@@ -36,7 +36,8 @@ export async function emailReceipt(businessId: string, invoiceId: string, { only
       subject: `Your receipt from ${r.business.name} (#${r.number})`,
       text,
       fromName: r.business.name,
-      attachments: [{ filename: `woofers-receipt-${r.number}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" }],
+      businessId: r.business.id,
+      attachments: [{ filename: `receipt-${r.number}.pdf`, content: Buffer.from(pdf), contentType: "application/pdf" }],
     });
   } catch (e) {
     console.error("receipt email failed", e);

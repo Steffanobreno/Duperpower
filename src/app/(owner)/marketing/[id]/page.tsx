@@ -1,3 +1,4 @@
+import { emailLogo } from "@/lib/business-logo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,7 +38,7 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
     sql`select name, phone, email, mailing_address, website_url from businesses where id = ${staff.businessId}`,
   ]);
   if (!c) notFound();
-  const sample = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book` };
+  const sample = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book/${staff.bookingSlug}` };
   const editable = c.status === "draft" || c.status === "scheduled";
   const step = STEPS.find((s) => s.key === sp.step)?.key ?? "edit";
 
@@ -59,6 +60,7 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
     ]);
     const html = marketingEmailHtml({
       appUrl: appUrl(),
+      logo: await emailLogo(staff.businessId, b.name),
       content: { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url },
       vars: sample, phone: phoneLabel(b.phone) || null, mailingAddress: b.mailing_address, unsubscribeUrl: "#",
     });
@@ -141,6 +143,7 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
             campaign={{ name: c.name, subject: c.subject, preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, button_label: c.button_label, button_url: c.button_url }}
             banners={MARKETING_TEMPLATES.filter((t) => t.banner).map((t) => ({ src: t.banner!, name: t.name }))}
             appUrl={appUrl()}
+            logo={await emailLogo(staff.businessId, b.name)}
             sample={sample}
             phone={phoneLabel(b.phone) || null}
             mailingAddress={b.mailing_address}

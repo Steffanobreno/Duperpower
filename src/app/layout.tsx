@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { APP_NAME, APP_TAGLINE } from "@/lib/product";
 
 export const metadata: Metadata = {
-  title: { default: "Woofers Dog Spa", template: "%s · Woofers" },
-  description: "Scheduling, routes and checkout for Woofers Dog Spa.",
-  appleWebApp: { capable: true, title: "Woofers", statusBarStyle: "default" },
+  title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
+  description: APP_TAGLINE,
+  appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

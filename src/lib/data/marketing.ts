@@ -1,3 +1,4 @@
+import { emailLogo } from "../business-logo";
 import "server-only";
 import { sql } from "../db";
 import { sendMany } from "../email";
@@ -104,8 +105,8 @@ export async function startCampaign(campaignId: string) {
 
 /** Sends the next few emails of a campaign. Returns how many are still waiting. */
 export async function sendCampaignBatch(campaignId: string, max = 8) {
-  const [c] = await sql<(Campaign & { name: string; phone: string | null; mailing_address: string | null; website_url: string | null })[]>`
-    select c.*, b.name, b.phone, b.mailing_address, b.website_url from campaigns c join businesses b on b.id = c.business_id
+  const [c] = await sql<(Campaign & { name: string; phone: string | null; mailing_address: string | null; website_url: string | null; booking_slug: string })[]>`
+    select c.*, b.name, b.phone, b.mailing_address, b.website_url, b.booking_slug from campaigns c join businesses b on b.id = c.business_id
     where c.id = ${campaignId}`;
   if (!c || c.status !== "sending") return 0;
   // Emails claimed by a run that never finished (a timeout) go back in the queue.
@@ -123,14 +124,15 @@ export async function sendCampaignBatch(campaignId: string, max = 8) {
         (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = cl.id and p.deceased_at is null) as pet_name`;
     const content: CampaignContent = { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
     // The button goes straight to the booking page: one less click than the website.
-    const booking = `${appUrl()}/book`;
+    const booking = `${appUrl()}/book/${c.booking_slug}`;
+    const logo = await emailLogo(c.business_id, c.name);
     const mails = batch.map((r) => {
       const vars = { first_name: r.first_name, pet_name: r.pet_name ?? "your pup", business: c.name, booking_link: booking };
       const unsubscribeUrl = `${appUrl()}/u/${r.token}`;
       return {
         to: r.email,
         subject: fillVars(c.subject, vars),
-        html: marketingEmailHtml({ appUrl: appUrl(), content, vars, phone: phoneLabel(c.phone) || null, mailingAddress: c.mailing_address, unsubscribeUrl }),
+        html: marketingEmailHtml({ appUrl: appUrl(), logo, content, vars, phone: phoneLabel(c.phone) || null, mailingAddress: c.mailing_address, unsubscribeUrl }),
         text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: c.mailing_address }),
         // Gmail and Apple Mail show their own "Unsubscribe" button with these.
         headers: { "List-Unsubscribe": `<${appUrl()}/api/unsubscribe/${r.token}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },

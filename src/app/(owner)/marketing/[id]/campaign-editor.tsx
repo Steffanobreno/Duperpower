@@ -12,8 +12,9 @@ export type EditorCampaign = {
   name: string; subject: string; preheader: string; banner: string | null; headline: string; body: string; button_label: string | null; button_url: string | null;
 };
 
-export function CampaignEditor({ campaign, banners, appUrl, sample, phone, mailingAddress, save }: {
+export function CampaignEditor({ campaign, banners, appUrl, sample, phone, mailingAddress, save, logo = null }: {
   campaign: EditorCampaign;
+  logo?: string | null;
   banners: { src: string; name: string }[];
   appUrl: string;
   sample: MarketingVars;
@@ -26,6 +27,7 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
   const set = (k: keyof EditorCampaign) => (e: { target: { value: string } }) => setC({ ...c, [k]: e.target.value });
   const html = marketingEmailHtml({
     appUrl,
+    logo,
     content: { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url },
     vars: sample, phone, mailingAddress, unsubscribeUrl: "#",
   });
@@ -66,7 +68,7 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
         <Field label="Headline">
           <Input name="headline" value={c.headline} onChange={set("headline")} placeholder="Happy Halloween!" />
         </Field>
-        <Field label="Message" hint="{first_name} = client's first name · {pet_name} = their pets · {business} = Woofers Dog Spa">
+        <Field label="Message" hint="{first_name} = client's first name · {pet_name} = their pets · {business} = your business name">
           <Textarea name="body" rows={9} value={c.body} onChange={set("body")} />
         </Field>
         <div className="grid grid-cols-2 gap-3">

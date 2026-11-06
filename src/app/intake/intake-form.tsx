@@ -16,7 +16,7 @@ function Text({ label, ...props }: { label: string } & React.ComponentProps<"inp
 }
 
 /** The new-client form: you, your address, up to three pets. */
-export function IntakeForm({ bookUrl }: { bookUrl: string }) {
+export function IntakeForm({ bookUrl, slug = null }: { bookUrl: string; slug?: string | null }) {
   const { t, serverMessage } = useT();
   const [count, setCount] = useState(1);
   const [state, action, pending] = useActionState(submitIntakeAction, undefined);
@@ -31,6 +31,7 @@ export function IntakeForm({ bookUrl }: { bookUrl: string }) {
   }
   return (
     <form action={action} className="space-y-5">
+      {slug && <input type="hidden" name="slug" value={slug} />}
       <div>
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">{t("New client form")}</h1>
         <p className="mt-1 text-muted">{t("Tell us about you and your pets, so we're ready for the first visit.")}</p>

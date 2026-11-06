@@ -1,4 +1,5 @@
 // iCalendar (.ics) helpers (RFC 5545): the owner's calendar feed and the "add to my calendar"
+import { APP_NAME } from "./product";
 // file sent to clients both use these.
 
 export const icsEscape = (s: string) =>
@@ -53,7 +54,7 @@ export function icsCalendar(name: string, timezone: string, events: string[][]) 
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Woofers//Appointments//EN",
+    `PRODID:-//${APP_NAME}//Appointments//EN`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${icsEscape(name)}`,

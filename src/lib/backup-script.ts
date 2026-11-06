@@ -3,10 +3,10 @@
 // Drive: everything as JSON, and the client list as a spreadsheet. It keeps the last 12 weeks.
 // If a backup fails, Google emails the account owner on its own.
 
-export function backupScript(feedUrl: string, timezone: string) {
-  return `// Woofers → Google Drive backup. Paste this in a NEW project, Save, choose "setup" and press Run once.
+export function backupScript(feedUrl: string, timezone: string, business: string) {
+  return `// ${business} → Google Drive backup. Paste this in a NEW project, Save, choose "setup" and press Run once.
 const FEED = ${JSON.stringify(feedUrl)};
-const FOLDER = "Woofers backups";
+const FOLDER = ${JSON.stringify(`${business} backups`)};
 const TIMEZONE = ${JSON.stringify(timezone)};
 const KEEP_WEEKS = 12;
 

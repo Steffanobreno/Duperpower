@@ -1,10 +1,11 @@
+import { APP_NAME, APP_TAGLINE } from "@/lib/product";
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Woofers Dog Spa",
-    short_name: "Woofers",
-    description: "Scheduling, routes and checkout for Woofers Dog Spa.",
+    name: APP_NAME,
+    short_name: APP_NAME,
+    description: APP_TAGLINE,
     start_url: "/today",
     display: "standalone",
     background_color: "#f3f5f8",

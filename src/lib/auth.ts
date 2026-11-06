@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { sql } from "./db";
 import { ALL_PERMISSIONS, DEFAULT_PERMISSIONS, type Permission, type Role } from "./permissions";
+import { createBusiness } from "./new-business";
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 const COOKIE = "wds_session";
@@ -82,6 +83,40 @@ export async function createOwner(email: string, password: string) {
   await sql`update staff set user_id = ${user.id}
             where id = (select id from staff where role = 'owner' and user_id is null order by created_at limit 1)`;
   await startSession(user.id);
+}
+
+/** A unique booking link name from the business name: "Happy Paws" → "happy-paws" (or "happy-paws-2"). */
+async function freeSlug(name: string) {
+  const base = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "").slice(0, 40) || "groomer";
+  const taken = new Set((await sql<{ s: string }[]>`
+    select booking_slug as s from businesses where booking_slug = ${base} or booking_slug like ${base + "-%"}`).map((r) => r.s));
+  if (!taken.has(base)) return base;
+  for (let i = 2; ; i++) if (!taken.has(`${base}-${i}`)) return `${base}-${i}`;
+}
+
+/**
+ * Signup from the sales page: a new business with its owner login, ready to book (services,
+ * hours, messages and agreement from the starter set), and the owner logged in.
+ * Returns an error message, or null when done.
+ */
+export async function signUpBusiness(input: { businessName: string; ownerName: string; email: string; password: string;
+  phone: string | null; zip: string | null; timezone: string }) {
+  const email = input.email.trim().toLowerCase();
+  const [exists] = await sql`select 1 from users where email = ${email}`;
+  if (exists) return "There's already an account with that email. Log in instead.";
+  const slug = await freeSlug(input.businessName);
+  const hash = await hashPassword(input.password);
+  const userId = await sql.begin(async (tx) => {
+    const [user] = await tx`insert into users (email, password_hash) values (${email}, ${hash}) returning id`;
+    await createBusiness(tx, {
+      name: input.businessName.trim(), phone: input.phone, slug, timezone: input.timezone, zip: input.zip,
+      ownerName: input.ownerName.trim(), ownerUserId: user.id,
+    });
+    return user.id as string;
+  });
+  await startSession(userId);
+  return null;
 }
 
 export async function hasAnyUser() {

@@ -5,6 +5,7 @@ import type { Receipt } from "./data/receipts";
 import { money } from "./format";
 import { RECEIPT_LOGO_PNG_BASE64 } from "./receipt-logo";
 import { logoBytes } from "./business-logo";
+import { hasBuiltInArtwork } from "./product";
 
 // Receipts as a PDF, one per page (US Letter): logo, business, receipt number, client, times,
 // services by pet, totals and payments. Built here on the server with pdf-lib.
@@ -25,7 +26,7 @@ const safe = (s: string) =>
 
 type Fonts = { regular: PDFFont; bold: PDFFont };
 
-function draw(page: PDFPage, fonts: Fonts, logo: PDFImage, r: Receipt) {
+function draw(page: PDFPage, fonts: Fonts, logo: PDFImage | null, r: Receipt) {
   const tz = r.business.timezone;
   const when = (d: Date | null) => (d ? formatInTimeZone(d, tz, "EEE, MMM d, yyyy h:mm a") : "—");
   let y = H - 56;
@@ -65,10 +66,12 @@ function draw(page: PDFPage, fonts: Fonts, logo: PDFImage, r: Receipt) {
   };
 
   // Fit the logo in an 80×76 box, keeping its shape.
-  const scale = Math.min(80 / logo.width, 76 / logo.height);
-  const lw = logo.width * scale, lh = logo.height * scale;
-  page.drawImage(logo, { x: (W - lw) / 2, y: y - 76 + (76 - lh) / 2, width: lw, height: lh });
-  y -= 96;
+  if (logo) {
+    const scale = Math.min(80 / logo.width, 76 / logo.height);
+    const lw = logo.width * scale, lh = logo.height * scale;
+    page.drawImage(logo, { x: (W - lw) / 2, y: y - 76 + (76 - lh) / 2, width: lw, height: lh });
+    y -= 96;
+  }
   center(r.business.name, 15, fonts.bold);
   y -= 16;
   const contact = [r.business.phone ? r.business.phone.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3") : null, r.business.address]
@@ -131,13 +134,13 @@ function draw(page: PDFPage, fonts: Fonts, logo: PDFImage, r: Receipt) {
 export async function receiptsPdf(receipts: Receipt[], title = "Receipts"): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(safe(title));
-  doc.setCreator("Woofers Dog Spa");
+  doc.setCreator(receipts[0]?.business.name ?? "Receipts");
   const fonts = { regular: await doc.embedFont(StandardFonts.Helvetica), bold: await doc.embedFont(StandardFonts.HelveticaBold) };
   // The business's own logo when it has one (all receipts here are from one business).
   const own = receipts[0] ? await logoBytes(receipts[0].business.id) : null;
   const logo = own
     ? await (own.type === "image/png" ? doc.embedPng(own.data) : doc.embedJpg(own.data))
-    : await doc.embedPng(Buffer.from(RECEIPT_LOGO_PNG_BASE64, "base64"));
+    : hasBuiltInArtwork(receipts[0]?.business.name) ? await doc.embedPng(Buffer.from(RECEIPT_LOGO_PNG_BASE64, "base64")) : null;
   for (const r of receipts) draw(doc.addPage([W, H]), fonts, logo, r);
   if (receipts.length === 0) {
     const page = doc.addPage([W, H]);

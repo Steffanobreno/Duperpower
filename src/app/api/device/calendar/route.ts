@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/product";
 import { sql } from "@/lib/db";
 import { businessForDeviceKey } from "@/lib/device";
 import { icsCalendar, icsEventLines } from "@/lib/ics";
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     `${r.status === "requested" ? "[Request] " : ""}${r.client} ${r.dogs}Dog${r.dogs === 1 ? "" : "s"}${r.groomer ? ` (${r.groomer})` : ""}`;
   const descriptionOf = (r: (typeof rows)[number]) =>
     [r.detail, r.phone, r.notes, appUrl && `Open in the app: ${appUrl}/appointments/${r.id}`,
-     "Make changes in the Woofers app: changes made here are overwritten at the next sync."]
+     `Make changes in the ${APP_NAME} app: changes made here are overwritten at the next sync.`]
       .filter(Boolean).join("\n\n");
 
   if (url.searchParams.get("format") === "json") {
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
           start: t.start_at.toISOString(),
           end: t.end_at.toISOString(),
           location: "",
-          description: "Blocked time in the Woofers app.",
+          description: `Blocked time in the ${APP_NAME} app.`,
         }))),
       },
       { headers: { "Cache-Control": "no-store" } },

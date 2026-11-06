@@ -53,7 +53,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
   // Everything that only needs the date, in one go (each trip to the database costs time).
-  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings] = await Promise.all([
+  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start]] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
@@ -71,6 +71,12 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     listRange(staff, monthGridStart(date), 42),
     // Spots that opened for someone on the waitlist.
     waitlistOpenings(staff),
+    // A new account: the first steps, until it has a few visits.
+    sql<{ fresh: boolean; logo: boolean; visits: number }[]>`
+      select b.created_at > now() - interval '30 days' as fresh,
+             exists (select 1 from business_logos l where l.business_id = b.id) as logo,
+             (select count(*)::int from appointments a where a.business_id = b.id) as visits
+      from businesses b where b.id = ${staff.businessId}`,
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.
   // Without "see every groomer's visits", only their own route.
@@ -215,6 +221,27 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </div>
         )}
 
+        {staff.role === "owner" && start && (sp.welcome === "1" || (start.fresh && start.visits < 3)) && (
+          <section aria-label="Get started" className="card space-y-2 border-[#d4af37] p-4">
+            <p className="text-lg font-extrabold">👋 Welcome! Set up in a few minutes</p>
+            <ol className="space-y-1.5 text-sm">
+              {[
+                { done: start.logo, href: "/settings/business", label: "Add your logo, address and phone" },
+                { done: false, href: "/settings/services", label: "Check your services and prices" },
+                { done: false, href: "/settings/hours", label: "Set your working hours" },
+                { done: false, href: "/settings/booking", label: "Share your booking link with clients" },
+                { done: start.visits > 0, href: "/settings/import", label: "Bring your clients from another app" },
+              ].map((x) => (
+                <li key={x.href}>
+                  <Link href={x.href} className="flex items-center gap-2 font-semibold text-brand">
+                    <span aria-hidden className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${x.done ? "bg-success text-white" : "border border-line"}`}>{x.done ? "✓" : ""}</span>
+                    {x.label} ›
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
         {sp.reordered === "1" && <Toast>The visits are in the new order, with their new times.</Toast>}
         {canOptimize && sp.optimize !== "1" && (
           <Link href={q({ optimize: "1" })}

@@ -63,8 +63,8 @@ async function mustSignFor(b: PublicBusiness, clientId: string | null) {
   return { agreement, mustSign: !signed };
 }
 
-export async function lookupClientAction(rawPhone: string): Promise<LookupResult> {
-  const b = await getPublicBusiness();
+export async function lookupClientAction(rawPhone: string, slug: string | null = null): Promise<LookupResult> {
+  const b = await getPublicBusiness(slug);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   const phone = normalizePhone(rawPhone);
   if (!phone) return { error: "Please enter your 10-digit mobile number." };
@@ -133,8 +133,9 @@ export async function availabilityAction(input: {
   useFileAddress: boolean;
   zip: string;
   pets: PetRequest[];
+  slug?: string | null; // the business's booking link (/book/<slug>)
 }): Promise<{ error?: string; days?: DaySlots[] }> {
-  const b = await getPublicBusiness();
+  const b = await getPublicBusiness(input.slug);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   const zip = await zipFor(b, normalizePhone(input.phone), input.useFileAddress, input.zip);
   const problem = await zipProblem(b, zip);
@@ -147,6 +148,7 @@ export async function availabilityAction(input: {
 }
 
 export type BookingRequest = {
+  slug?: string | null; // the business's booking link (/book/<slug>)
   phone: string;
   pets: PetRequest[];
   start: string; // ISO time picked from the list
@@ -166,7 +168,7 @@ export type BookingRequest = {
 };
 
 export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string }> {
-  const b = await getPublicBusiness();
+  const b = await getPublicBusiness(input.slug);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
 
@@ -318,10 +320,10 @@ export type DraftPet = { name: string; breed: string; size: string; service: str
 
 export async function trackDraftAction(input: {
   phone: string; step: DraftStep; firstName?: string; lastName?: string; email?: string; zip?: string; pets?: string;
-  addressLine?: string; city?: string; petDetails?: DraftPet[]; start?: string;
+  addressLine?: string; city?: string; petDetails?: DraftPet[]; start?: string; slug?: string | null;
 }) {
   try {
-    const b = await getPublicBusiness();
+    const b = await getPublicBusiness(input.slug);
     const phone = normalizePhone(input.phone);
     if (!b || !phone || !["phone", "contact", "address", "times", "review"].includes(input.step)) return;
     const cut = (v: string | undefined, n: number) => (v ?? "").trim().slice(0, n) || null;

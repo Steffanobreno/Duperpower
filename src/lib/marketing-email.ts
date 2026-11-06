@@ -18,8 +18,10 @@ export const fillVars = (text: string, v: MarketingVars) =>
 
 const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-export function marketingEmailHtml({ appUrl, content, vars, phone, mailingAddress, unsubscribeUrl }: {
+export function marketingEmailHtml({ appUrl, content, vars, phone, mailingAddress, unsubscribeUrl, logo }: {
   appUrl: string;
+  /** The business's logo (path or address), or none. */
+  logo?: string | null;
   content: CampaignContent;
   vars: MarketingVars;
   phone: string | null;
@@ -41,7 +43,7 @@ export function marketingEmailHtml({ appUrl, content, vars, phone, mailingAddres
     : "";
   return `${preheader}<div style="background:#f3f5f8;padding:24px 12px;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;padding:24px 20px;color:#132039;font-size:16px;line-height:1.6">
-<img src="${escape(appUrl)}/logo.png" width="110" alt="${escape(vars.business)}" style="display:block;margin:0 auto 16px;border:0">
+${logo ? `<img src="${escape(logo.startsWith("http") ? logo : appUrl + logo)}" width="110" alt="${escape(vars.business)}" style="display:block;margin:0 auto 16px;border:0">` : ""}
 ${banner}
 ${content.headline ? `<h1 style="margin:0 0 14px;font-size:24px;line-height:1.25">${escape(fillVars(content.headline, vars))}</h1>` : ""}
 <div>${body}</div>

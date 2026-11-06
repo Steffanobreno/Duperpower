@@ -19,7 +19,7 @@ export default async function BookingSettingsPage() {
            cancellation_hours, start_zip, slot_minutes, auto_accept, name
     from businesses where id = ${staff.businessId}`;
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
-  const bookUrl = `${appUrl}/book`;
+  const bookUrl = `${appUrl}/book/${staff.bookingSlug}`;
   const [svg, logo] = await Promise.all([
     QRCode.toString(bookUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0b1f3a", light: "#ffffff" } }),
     logoUrl(staff.businessId),
@@ -33,7 +33,7 @@ export default async function BookingSettingsPage() {
           <h2 className="font-bold">Your booking page</h2>
           <CopyField label="Link for the Book Now button" value={bookUrl} />
           <CopyField label="Or embed it inside a page of your site" value={embed} />
-          <CopyField label="New client form (pet and contact info, no booking)" value={`${appUrl}/intake`} />
+          <CopyField label="New client form (pet and contact info, no booking)" value={`${appUrl}/intake/${staff.bookingSlug}`} />
         </Card>
         <Card className="space-y-3">
           <h2 className="font-bold">QR code</h2>

@@ -68,6 +68,7 @@ type ApptContext = {
   business_phone: string | null;
   timezone: string;
   website_url: string | null;
+  booking_slug: string | null;
   review_url: string | null;
   client_id: string;
   first_name: string;
@@ -83,7 +84,7 @@ type ApptContext = {
 /** Client-level context: their last visit date from the old app, all their pets. */
 async function clientContext(clientId: string, lastVisit: Date) {
   const [row] = await sql<Omit<ApptContext, "id" | "start_at" | "status" | "public_token" | "source">[]>`
-    select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
+    select b.id as business_id, b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.booking_slug, b.review_url,
            b.arrival_before_min, b.arrival_after_min, c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
            (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = c.id and p.deceased_at is null) as pets
@@ -100,7 +101,7 @@ async function autoMessagesOn(businessId: string) {
 async function appointmentContext(appointmentId: string) {
   const [row] = await sql<ApptContext[]>`
     select a.id, a.business_id, a.start_at, a.status, a.public_token, a.source,
-           b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.review_url,
+           b.name as business_name, b.phone as business_phone, b.timezone, b.website_url, b.booking_slug, b.review_url,
            b.arrival_before_min, b.arrival_after_min,
            c.id as client_id, c.first_name, c.phone, c.email,
            (c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok,
@@ -113,7 +114,9 @@ async function appointmentContext(appointmentId: string) {
   return row ?? null;
 }
 
-export const bookingUrl = (b: { website_url: string | null }) => b.website_url ?? `${appUrl()}/book`;
+/** The business's booking page: its website (where its Book Now button is), or its own /book/<slug>. */
+export const bookingUrl = (b: { website_url: string | null; booking_slug?: string | null }) =>
+  b.website_url ?? `${appUrl()}/book${b.booking_slug ? `/${b.booking_slug}` : ""}`;
 export const appointmentLink = (token: string) => `${appUrl()}/a/${token}`;
 
 /** "10:00 AM", or with an arrival window "10:00 AM – 10:45 AM". */
@@ -359,10 +362,11 @@ export async function sendQueuedEmails(businessId: string) {
       select id from messages where business_id = ${businessId} and channel = 'email' and status = 'queued'
       order by created_at limit 50 for update skip locked)
     returning m.id, m.to_email, m.subject, m.body, b.name, m.appointment_id, m.template_trigger`;
+  // (every row here is this business's)
   for (const r of rows) {
     try {
       const details = r.appointment_id && r.template_trigger ? await emailDetails(r.appointment_id, r.template_trigger) : null;
-      await sendEmail({ to: r.to_email, subject: r.subject, text: r.body, fromName: r.name, details });
+      await sendEmail({ to: r.to_email, subject: r.subject, text: r.body, fromName: r.name, details, businessId });
       await sql`update messages set status = 'sent', sent_at = now() where id = ${r.id}`;
     } catch (e) {
       await sql`update messages set status = 'failed', error = ${String((e as Error).message).slice(0, 500)} where id = ${r.id}`;
@@ -445,7 +449,7 @@ export async function monthlyMarketingReminder(businessId: string) {
 export async function remindAbandoned(businessId: string, t: Template) {
   const minutes = t.offset_minutes ?? 120;
   const drafts = await sql<{ id: string; phone: string; first_name: string | null; email: string | null; pets: string | null;
-                            step: string; client_id: string | null; sms_ok: boolean; business: string; business_phone: string | null }[]>`
+                            step: string; client_id: string | null; sms_ok: boolean; business: string; business_phone: string | null; booking_slug: string }[]>`
     update booking_drafts d set reminded_at = now()
     from businesses b
     where b.id = d.business_id and d.id in (
@@ -456,7 +460,7 @@ export async function remindAbandoned(businessId: string, t: Template) {
         and not exists (select 1 from appointments a join clients c on c.id = a.client_id
                         where c.business_id = x.business_id and c.phone = x.phone and a.created_at > x.created_at)
       for update skip locked)
-    returning d.id, d.phone, d.first_name, d.email, d.pets, d.step, d.client_id, b.name as business, b.phone as business_phone,
+    returning d.id, d.phone, d.first_name, d.email, d.pets, d.step, d.client_id, b.name as business, b.phone as business_phone, b.booking_slug,
       exists (select 1 from clients c where c.id = d.client_id and c.sms_consent_at is not null and c.sms_opted_out_at is null) as sms_ok`;
   for (const d of drafts) {
     const vars = {
@@ -464,7 +468,7 @@ export async function remindAbandoned(businessId: string, t: Template) {
       pet: d.pets ?? "your pup",
       business: d.business,
       business_phone: phoneLabel(d.business_phone),
-      booking_url: `${appUrl()}/book?phone=${d.phone.replace(/^\+1/, "")}`,
+      booking_url: `${appUrl()}/book/${d.booking_slug}?phone=${d.phone.replace(/^\+1/, "")}`,
     };
     const body = render(t.body, vars);
     // Text only to clients who agreed to texts before; everyone else who left an email gets an email.

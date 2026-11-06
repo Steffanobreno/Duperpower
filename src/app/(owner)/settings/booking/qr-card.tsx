@@ -1,4 +1,5 @@
 "use client";
+import { hasBuiltInArtwork } from "@/lib/product";
 import { ShareReceiptButton } from "@/components/share-receipt";
 
 /** The QR code poster: clients scan it to open the booking page. Share, save or print it. */
@@ -8,8 +9,10 @@ export function QrCard({ svg, name, logo, url }: { svg: string; name: string; lo
       <div id="qr-poster" className="mx-auto max-w-xs rounded-3xl bg-navy p-5 text-center text-white">
         <p className="text-2xl font-extrabold tracking-tight">BOOK NOW</p>
         <div className="mt-3 flex items-center justify-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element -- small logo */}
-          <img src={logo ?? "/logo.png"} alt="" width={40} height={40} className="h-10 w-10 rounded-full bg-white object-contain p-0.5" />
+          {logo || hasBuiltInArtwork(name) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- small logo
+            <img src={logo ?? "/logo.png"} alt="" width={40} height={40} className="h-10 w-10 rounded-full bg-white object-contain p-0.5" />
+          ) : null}
           <span className="font-bold">{name}</span>
         </div>
         <div className="mt-4 rounded-2xl bg-white p-3" role="img" aria-label={`QR code for ${url}`}

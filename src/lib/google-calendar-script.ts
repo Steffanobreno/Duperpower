@@ -5,7 +5,7 @@
 // It skips the night so the free database can sleep.
 
 export function googleCalendarScript(feedUrl: string, calendarName: string, timezone: string) {
-  return `// Woofers → Google Calendar. Paste this, Save, choose "setup" and press Run once.
+  return `// ${calendarName} → Google Calendar. Paste this, Save, choose "setup" and press Run once.
 const FEED = ${JSON.stringify(feedUrl)};
 const CALENDAR = ${JSON.stringify(calendarName)};
 const TIMEZONE = ${JSON.stringify(timezone)};

@@ -266,8 +266,9 @@ export async function sendTestEmailAction(): Promise<FormState & { sentTo?: stri
     await sendEmail({
       to,
       subject: `Test email from ${b.name}`,
-      text: `This is how your clients see emails from ${b.name}. When it's about an appointment, the button below opens their page to see, confirm or cancel it.\n\nYour booking page: ${appUrl}/book`,
+      text: `This is how your clients see emails from ${b.name}. When it's about an appointment, the button below opens their page to see, confirm or cancel it.\n\nYour booking page: ${appUrl}/book/${staff.bookingSlug}`,
       fromName: b.name,
+      businessId: staff.businessId,
     });
   } catch (e) {
     return { error: `The email didn't go out: ${(e as Error).message}. Check the email settings on Netlify (RESEND_API_KEY and EMAIL_FROM, or GMAIL_USER and GMAIL_APP_PASSWORD).` };
