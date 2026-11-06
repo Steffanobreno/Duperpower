@@ -1,8 +1,10 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 // Shown the moment a tab or link is tapped, while the server prepares the page,
 // so the app answers right away instead of looking frozen.
-export function PageSkeleton() {
+export async function PageSkeleton() {
+  const { t } = await getOwnerI18n();
   return (
-    <div aria-busy="true" aria-label="Loading">
+    <div aria-busy="true" aria-label={t("Loading")}>
       <div className="sticky top-0 z-10 h-[60px] bg-navy" />
       <div className="mx-auto max-w-3xl animate-pulse space-y-4 px-4 py-4">
         <div className="h-24 rounded-[var(--radius-card)] bg-surface shadow-[var(--shadow-card)]" />

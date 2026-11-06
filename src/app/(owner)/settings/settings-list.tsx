@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -6,6 +7,7 @@ export type SettingsGroup = { title: string; links: { href: string; title: strin
 
 /** The settings menu in groups, with a search box that narrows it as you type. */
 export function SettingsList({ groups }: { groups: SettingsGroup[] }) {
+  const { t } = useT();
   const [q, setQ] = useState("");
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   const shown = groups
@@ -17,12 +19,12 @@ export function SettingsList({ groups }: { groups: SettingsGroup[] }) {
   return (
     <div className="space-y-4">
       <label className="block">
-        <span className="sr-only">Search settings</span>
+        <span className="sr-only">{t("Search settings")}</span>
         <input
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search settings"
+          placeholder={t("Search settings")}
           className="block w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-ink placeholder:text-muted focus:border-brand focus:outline-none"
         />
       </label>
@@ -44,7 +46,7 @@ export function SettingsList({ groups }: { groups: SettingsGroup[] }) {
           </ul>
         </section>
       ))}
-      {!shown.length && <p className="py-6 text-center text-sm text-muted">Nothing matches “{q}”.</p>}
+      {!shown.length && <p className="py-6 text-center text-sm text-muted">{t("Nothing matches “{q}”.", { q: q })}</p>}
     </div>
   );
 }

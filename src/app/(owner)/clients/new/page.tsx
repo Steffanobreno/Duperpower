@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requireStaff } from "@/lib/auth";
 import { allOptions } from "@/lib/data/options";
@@ -9,14 +10,15 @@ import { ClientForm } from "../forms";
 export const metadata: Metadata = { title: "New client" };
 
 export default async function NewClientPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const lists = await allOptions(staff.businessId);
   return (
     <>
-      <PageHeader title="New client" back="/clients" />
+      <PageHeader title={t("New client")} back="/clients" />
       <Page>
         <Card>
-          <ClientForm action={createClientAction} submitLabel="Save and add a pet" options={clientOptions(lists)} />
+          <ClientForm action={createClientAction} submitLabel={t("Save and add a pet")} options={clientOptions(lists)} />
         </Card>
       </Page>
     </>

@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useState } from "react";
 import type { FormState } from "../../actions";
 import { PetCodeForm } from "./code-form";
@@ -11,9 +12,10 @@ export function PetCodeRow({ code, save, move, remove, first, last }: {
   remove: () => Promise<void>;
   first: boolean; last: boolean;
 }) {
+  const { t } = useT();
   const [editing, setEditing] = useState(false);
   const icon = "rounded-lg px-2 py-1 text-sm font-semibold hover:bg-bg disabled:opacity-30";
-  if (editing) return <li className="px-4 py-3"><PetCodeForm action={save} initial={code} submitLabel="Save code" onDone={() => setEditing(false)} /></li>;
+  if (editing) return <li className="px-4 py-3"><PetCodeForm action={save} initial={code} submitLabel={t("Save code")} onDone={() => setEditing(false)} /></li>;
   return (
     <li className="flex items-center gap-2 px-4 py-2.5">
       <button type="button" onClick={() => setEditing(true)} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-label={`Edit ${code.label}`}>
@@ -24,7 +26,7 @@ export function PetCodeRow({ code, save, move, remove, first, last }: {
       <button type="button" className={icon} disabled={last} onClick={() => move("down")} aria-label={`Move ${code.label} down`}>↓</button>
       <button type="button" className={`${icon} text-danger`} aria-label={`Remove ${code.label}`}
         onClick={() => { if (window.confirm(`Remove the “${code.label}” code from every pet?`)) remove(); }}>
-        Remove
+        {t("Remove")}
       </button>
     </li>
   );

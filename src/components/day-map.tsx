@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import "leaflet/dist/leaflet.css";
@@ -34,6 +35,7 @@ export function DayMap({ stops, path, route, compact = false }: {
   /** Smaller, when the whole month is open above it. */
   compact?: boolean;
 }) {
+  const { t } = useT();
   const outer = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const rail = useRef<HTMLDivElement>(null);
@@ -110,15 +112,15 @@ export function DayMap({ stops, path, route, compact = false }: {
     // Fills the screen between the week and the tab bar.
     <div ref={outer} className="relative isolate z-0 overflow-hidden"
       style={compact ? { height: 330 } : { height: height ?? "calc(100dvh - 18rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
-      <div ref={box} className="absolute inset-0" role="img" aria-label="Map of the day's visits" />
+      <div ref={box} className="absolute inset-0" role="img" aria-label={t("Map of the day's visits")} />
       {route && (
         <a href={route} target="_blank" rel="noopener"
           className="absolute right-3 top-3 z-[500] rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">
-          Route in Google Maps ↗
+          {t("Route in Google Maps ↗")}
         </a>
       )}
       {stops.length > 0 && (
-        <div ref={rail} role="list" aria-label="Visits"
+        <div ref={rail} role="list" aria-label={t("Visits")}
           className="absolute inset-x-0 bottom-3 z-[500] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[7.5%] pb-1 [scrollbar-width:none]">
           {stops.map((s, i) => <Card key={s.id} s={s} active={i === active} />)}
         </div>
@@ -128,6 +130,7 @@ export function DayMap({ stops, path, route, compact = false }: {
 }
 
 function Card({ s, active }: { s: DayStop; active: boolean }) {
+  const { t } = useT();
   const [contact, setContact] = useState(false);
   const [pending, start] = useTransition();
   const button = "flex flex-1 flex-col items-center gap-1 py-2.5 text-sm font-semibold text-brand disabled:opacity-50";
@@ -143,7 +146,7 @@ function Card({ s, active }: { s: DayStop; active: boolean }) {
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
             <span className="truncate text-lg font-bold">{s.client}</span>
-            {s.isNew && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-white">New</span>}
+            {s.isNew && <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-white">{t("New")}</span>}
           </span>
           <span className="block truncate text-sm font-semibold text-muted">{s.pets}</span>
           {s.codes.length > 0 && (
@@ -159,22 +162,22 @@ function Card({ s, active }: { s: DayStop; active: boolean }) {
       </Link>
       {contact ? (
         <div className="flex border-t border-line">
-          <a href={`tel:${s.phone}`} className={button}>Call</a>
-          <a href={`sms:${s.phone}`} className={button}>Text</a>
-          <button type="button" onClick={() => setContact(false)} className={`${button} text-muted`}>Close</button>
+          <a href={`tel:${s.phone}`} className={button}>{t("Call")}</a>
+          <a href={`sms:${s.phone}`} className={button}>{t("Text")}</a>
+          <button type="button" onClick={() => setContact(false)} className={`${button} text-muted`}>{t("Close")}</button>
         </div>
       ) : (
         <div className="flex border-t border-line">
-          <button type="button" onClick={() => setContact(true)} className={button}>Contact</button>
-          {s.directions ? <a href={s.directions} target="_blank" rel="noopener" className={button}>Directions</a>
-            : <span className={`${button} text-muted`}>No address</span>}
+          <button type="button" onClick={() => setContact(true)} className={button}>{t("Contact")}</button>
+          {s.directions ? <a href={s.directions} target="_blank" rel="noopener" className={button}>{t("Directions")}</a>
+            : <span className={`${button} text-muted`}>{t("No address")}</span>}
           {s.next ? (
             <button type="button" disabled={pending} className={button}
               onClick={() => start(() => setStatusAction(s.id, s.next!.to))}>
               {pending ? "…" : s.next.label}
             </button>
           ) : (
-            <Link href={`/appointments/${s.id}`} className={button}>Open</Link>
+            <Link href={`/appointments/${s.id}`} className={button}>{t("Open")}</Link>
           )}
         </div>
       )}

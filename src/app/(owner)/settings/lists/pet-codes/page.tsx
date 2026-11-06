@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { listPetCodes } from "@/lib/data/options";
@@ -9,14 +10,15 @@ import { PetCodeRow } from "./code-row";
 export const metadata: Metadata = { title: "Pet codes" };
 
 export default async function PetCodesPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const codes = await listPetCodes(staff.businessId);
   return (
     <>
-      <PageHeader title="Pet codes" back="/settings/lists" />
+      <PageHeader title={t("Pet codes")} back="/settings/lists" />
       <Page>
         <p className="text-sm text-muted">
-          Short colored labels you put on a pet (Matted, Biter, Senior, #7 blade…). They show on the pet, the visit and Today.
+          {t("Short colored labels you put on a pet (Matted, Biter, Senior, #7 blade…). They show on the pet, the visit and Today.")}
         </p>
         {codes.length ? (
           <ul className="card divide-y divide-line overflow-hidden">
@@ -28,12 +30,12 @@ export default async function PetCodesPage() {
             ))}
           </ul>
         ) : (
-          <Empty title="No pet codes yet">Add your first one below.</Empty>
+          <Empty title={t("No pet codes yet")}>{t("Add your first one below.")}</Empty>
         )}
         <section className="space-y-2">
-          <h2 className="section-label">New code</h2>
+          <h2 className="section-label">{t("New code")}</h2>
           <Card>
-            <PetCodeForm action={savePetCodeAction.bind(null, null)} submitLabel="Add code" />
+            <PetCodeForm action={savePetCodeAction.bind(null, null)} submitLabel={t("Add code")} />
           </Card>
         </section>
       </Page>

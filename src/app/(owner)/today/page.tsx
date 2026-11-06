@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Toast } from "@/components/toast";
@@ -47,6 +48,7 @@ const CARD_STATUS: Record<string, { label: string; className: string }> = {
 };
 
 export default async function TodayPage({ searchParams }: PageProps<"/today">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const sp = await searchParams;
   const tz = staff.timezone;
@@ -157,35 +159,35 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   return (
     <>
       <PageHeader
-        title={date === today ? "Today" : "Route"}
-        action={<ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>}
+        title={date === today ? t("Today") : t("Route")}
+        action={<ButtonLink href={`/appointments/new?date=${date}`}>{t("Book")}</ButtonLink>}
       />
       <Page>
         {clock.enabled && date === today && (
           <form action={toggleClockAction} className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-2.5 shadow-[var(--shadow-card)]">
-            <span className="text-sm">{clock.since ? <>Clocked in since <strong>{timeLabel(clock.since, tz)}</strong></> : "Not clocked in"}</span>
+            <span className="text-sm">{clock.since ? <>{t("Clocked in since")}{" "} <strong>{timeLabel(clock.since, tz)}</strong></> : t("Not clocked in")}</span>
             <button type="submit" className={`rounded-full px-4 py-2 text-sm font-bold ${clock.since ? "bg-navy text-white" : "bg-success text-white"}`}>
-              {clock.since ? "Clock out" : "Clock in"}
+              {clock.since ? t("Clock out") : t("Clock in")}
             </button>
           </form>
         )}
-        {sp.denied && <Notice kind="warn">Your role can&apos;t open that page. Ask the owner if you need it.</Notice>}
-        {closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
+        {sp.denied && <Notice kind="warn">{t("Your role can't open that page. Ask the owner if you need it.")}</Notice>}
+        {closed.has(date) && <Notice kind="warn">{t("Closed · {get}. Clients can't book online.", { get: closed.get(date) })}</Notice>}
         {requests > 0 && (
           <GoldBanner href="/requests" count={requests} icon="bell" action="Review" compact={view !== "list"}
-            title={`${requests} booking request${requests > 1 ? "s" : ""} waiting`} text="Tap to accept or decline" />
+            title={`${requests} booking request${requests > 1 ? "s" : ""} waiting`} text={t("Tap to accept or decline")} />
         )}
         {openings.length > 0 && (
           <GoldBanner href="/waitlist" count={new Set(openings.map((o) => o.entry_id)).size} icon="bell" action="See" compact={view !== "list"}
-            title={`A spot opened · ${new Set(openings.map((o) => o.entry_id)).size} on the waitlist`} text="Text or book them" />
+            title={`A spot opened · ${new Set(openings.map((o) => o.entry_id)).size} on the waitlist`} text={t("Text or book them")} />
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
           href={(g) => `/today?date=${date}&groomer=${g ?? "all"}${view === "list" ? "&view=list" : ""}`} />
         <div className="flex items-center gap-1">
           <Link href={q({ date: monthOpen ? shiftMonth(date, -1) : addDaysYmd(date, -1) })}
-            aria-label={monthOpen ? "Previous month" : "Previous day"} className="rounded-full p-2 text-lg text-brand">‹</Link>
+            aria-label={monthOpen ? t("Previous month") : t("Previous day")} className="rounded-full p-2 text-lg text-brand">‹</Link>
           <Link href={q({ cal: monthOpen ? "" : "1" })} aria-expanded={monthOpen}
-            aria-label={monthOpen ? "Show one week" : "Show the whole month"}
+            aria-label={monthOpen ? t("Show one week") : t("Show the whole month")}
             className="flex min-w-0 flex-1 items-center justify-center gap-1.5 font-bold">
             <span className="truncate">{monthOpen
               ? new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })
@@ -193,8 +195,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
             <span aria-hidden className="text-brand">{monthOpen ? "▴" : "▾"}</span>
           </Link>
           <Link href={q({ date: monthOpen ? shiftMonth(date, 1) : addDaysYmd(date, 1) })}
-            aria-label={monthOpen ? "Next month" : "Next day"} className="rounded-full p-2 text-lg text-brand">›</Link>
-          {date !== today && <Link href={q({ date: today })} className="shrink-0 px-1 text-sm font-semibold text-brand">Today</Link>}
+            aria-label={monthOpen ? t("Next month") : t("Next day")} className="rounded-full p-2 text-lg text-brand">›</Link>
+          {date !== today && <Link href={q({ date: today })} className="shrink-0 px-1 text-sm font-semibold text-brand">{t("Today")}</Link>}
         </div>
         {monthOpen ? (
           <MonthStrip date={date} today={today} dots={dotsOn} href={(d) => q({ date: d })}
@@ -205,25 +207,25 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         {stops.length > 0 && (
           <div className="flex items-center gap-2 text-sm">
             <p className="min-w-0 flex-1 truncate text-muted">
-              <strong className="text-ink">{stops.length}</strong> stop{stops.length > 1 ? "s" : ""} · {done}/{stops.length} done · {money(expected)}
+              <strong className="text-ink">{stops.length}</strong> {" "}{t("stop")}{stops.length > 1 ? "s" : ""} {t("· {done}/{n} done · {money}", { done: done, n: stops.length, money: money(expected) })}
               {driving != null && <> · 🚐 {minutesLabel(driving)}</>}
             </p>
-            <nav aria-label="View" className="flex shrink-0 rounded-full bg-surface p-0.5 shadow-[var(--shadow-card)]">
+            <nav aria-label={t("View")} className="flex shrink-0 rounded-full bg-surface p-0.5 shadow-[var(--shadow-card)]">
               {(["map", "list"] as const).map((v) => (
                 <Link key={v} href={q({ view: v === "list" ? "list" : "" })} aria-current={v === view ? "page" : undefined}
                   className={`rounded-full px-3 py-1 font-semibold ${v === view ? "bg-navy text-white" : "text-muted"}`}>
-                  {v === "map" ? "Map" : "List"}
+                  {v === "map" ? t("Map") : t("List")}
                 </Link>
               ))}
               <Link href={`/calendar?view=day&date=${date}${groomer ? `&groomer=${groomer}` : ""}`}
-                className="rounded-full px-3 py-1 font-semibold text-muted">Agenda</Link>
+                className="rounded-full px-3 py-1 font-semibold text-muted">{t("Agenda")}</Link>
             </nav>
           </div>
         )}
 
         {staff.role === "owner" && start && (sp.welcome === "1" || (start.fresh && start.visits < 3)) && (
-          <section aria-label="Get started" className="card space-y-2 border-[#d4af37] p-4">
-            <p className="text-lg font-extrabold">👋 Welcome! Set up in a few minutes</p>
+          <section aria-label={t("Get started")} className="card space-y-2 border-[#d4af37] p-4">
+            <p className="text-lg font-extrabold">{t("👋 Welcome! Set up in a few minutes")}</p>
             <ol className="space-y-1.5 text-sm">
               {[
                 { done: start.logo, href: "/settings/business", label: "Add your logo, address and phone" },
@@ -242,63 +244,63 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
             </ol>
           </section>
         )}
-        {sp.reordered === "1" && <Toast>The visits are in the new order, with their new times.</Toast>}
+        {sp.reordered === "1" && <Toast>{t("The visits are in the new order, with their new times.")}</Toast>}
         {canOptimize && sp.optimize !== "1" && (
           <Link href={q({ optimize: "1" })}
             className="flex items-center justify-center gap-2 rounded-full border border-[#d4af37] bg-surface py-2 text-sm font-bold text-brand">
-            🧭 Find the best order
+            {t("🧭 Find the best order")}
           </Link>
         )}
         {sp.optimize === "1" && canOptimize && (
-          <section aria-label="Best order" className="card space-y-3 border-[#d4af37] p-4">
+          <section aria-label={t("Best order")} className="card space-y-3 border-[#d4af37] p-4">
             {!ends?.start_address ? (
-              <p className="text-sm">Set where your day starts (Settings → Team → your name → Van and route) to find the best order.</p>
+              <p className="text-sm">{t("Set where your day starts (Settings → Team → your name → Van and route) to find the best order.")}</p>
             ) : !best || !now ? (
-              <p className="text-sm">Google couldn&apos;t work out the route right now. Try again in a minute.</p>
+              <p className="text-sm">{t("Google couldn't work out the route right now. Try again in a minute.")}</p>
             ) : (() => {
               const before = now.minutes.reduce((a, b) => a + b, 0);
               const after = best.minutes.reduce((a, b) => a + b, 0);
               const same = best.order.every((v, i) => v === i);
               const ordered = best.order.map((i) => stops[i]);
-              if (same || after >= before) return <p className="font-semibold">✅ Your order is already the best one ({minutesLabel(before)} of driving).</p>;
+              if (same || after >= before) return <p className="font-semibold">{t("✅ Your order is already the best one ({minutesLabel} of driving).", { minutesLabel: minutesLabel(before) })}</p>;
               return (
                 <>
-                  <p className="font-bold">🧭 This order saves {minutesLabel(before - after)} of driving</p>
-                  <p className="text-sm text-muted">{minutesLabel(before)} now → {minutesLabel(after)}, from the start of your day and back.</p>
+                  <p className="font-bold">{t("🧭 This order saves {minutesLabel} of driving", { minutesLabel: minutesLabel(before - after) })}</p>
+                  <p className="text-sm text-muted">{t("{minutesLabel} now → {minutesLabel2}, from the start of your day and back.", { minutesLabel: minutesLabel(before), minutesLabel2: minutesLabel(after) })}</p>
                   <ol className="space-y-1 text-sm">
                     {ordered.map((s, i) => (
                       <li key={s.id} className="flex gap-2">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">{i + 1}</span>
                         <span className="min-w-0 flex-1 truncate"><strong>{s.client_name}</strong>{s.city && <span className="text-muted"> · {s.city}</span>}</span>
-                        <span className="shrink-0 text-muted">🚐 {best.minutes[i]}min</span>
+                        <span className="shrink-0 text-muted">{t("🚐 {i}min", { i: best.minutes[i] })}</span>
                       </li>
                     ))}
                   </ol>
                   <a href={routeUrl([...ordered.map(stopPlace), ...(ends.end_address ? [{ address: ends.end_address }] : [])], { address: ends.start_address }) ?? "#"}
                     target="_blank" rel="noopener" className="block rounded-full border-2 border-brand py-2 text-center text-sm font-bold text-brand">
-                    Open this route in Google Maps ↗
+                    {t("Open this route in Google Maps ↗")}
                   </a>
                   <form action={applyRouteOrderAction.bind(null, date)} className="space-y-2">
                     <input type="hidden" name="order" value={ordered.map((s) => s.id).join(",")} />
                     <input type="hidden" name="drive" value={best.minutes.slice(0, ordered.length).join(",")} />
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" /> Text the clients their new time
+                      <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" /> {" "}{t("Text the clients their new time")}
                     </label>
                     <button type="submit" className="w-full rounded-full bg-brand py-2.5 text-sm font-bold text-white">
-                      Use this order (moves the times)
+                      {t("Use this order (moves the times)")}
                     </button>
                   </form>
                 </>
               );
             })()}
-            {sp.clash === "1" && <Notice kind="error">Another visit is in the way of a new time. Move it first, or open the route in Google Maps only.</Notice>}
-            <Link href={q({ optimize: "" })} className="block text-center text-sm font-semibold text-muted">Close</Link>
+            {sp.clash === "1" && <Notice kind="error">{t("Another visit is in the way of a new time. Move it first, or open the route in Google Maps only.")}</Notice>}
+            <Link href={q({ optimize: "" })} className="block text-center text-sm font-semibold text-muted">{t("Close")}</Link>
           </section>
         )}
 
         {stops.length === 0 ? (
-          <Empty title="No appointments this day">
-            <Link href={`/appointments/new?date=${date}`} className="text-brand underline">Book one</Link>
+          <Empty title={t("No appointments this day")}>
+            <Link href={`/appointments/new?date=${date}`} className="text-brand underline">{t("Book one")}</Link>
           </Empty>
         ) : view === "map" ? (
           <>
@@ -309,22 +311,22 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         ) : (
           <>
             <div className={`grid ${driving != null ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center`}>
-              <Stat label="Stops" value={String(stops.length)} />
-              <Stat label="Done" value={`${done}/${stops.length}`} />
-              <Stat label="Expected" value={money(expected)} />
-              {driving != null && <Stat label="Driving" value={minutesLabel(driving)} />}
+              <Stat label={t("Stops")} value={String(stops.length)} />
+              <Stat label={t("Done")} value={`${done}/${stops.length}`} />
+              <Stat label={t("Expected")} value={money(expected)} />
+              {driving != null && <Stat label={t("Driving")} value={minutesLabel(driving)} />}
             </div>
 
             {pins.length > 0 && <RouteMap stops={pins} path={road?.path} />}
             {pins.length < stops.length && (
               <p className="-mt-2 text-center text-xs text-muted">
-                {stops.length - pins.length} stop{stops.length - pins.length > 1 ? "s" : ""} not on the map (address not found).
+                {stops.length - pins.length} {" "}{t("stop")}{stops.length - pins.length > 1 ? "s" : ""} {" "}{t("not on the map (address not found).")}
               </p>
             )}
 
             {route && (
               <ButtonLink href={route} target="_blank" className="w-full">
-                Open the whole route in Google Maps
+                {t("Open the whole route in Google Maps")}
               </ButtonLink>
             )}
 
@@ -332,7 +334,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               {stops.map((s, i) => (
                 <li key={s.id} className="space-y-3">
                   {driveTo(i) != null && (
-                    <p className="text-center text-xs font-semibold text-muted">🚐 {minutesLabel(driveTo(i)!)} drive{i === 0 ? " from the start" : ""}</p>
+                    <p className="text-center text-xs font-semibold text-muted">{t("🚐 {minutesLabel} drive", { minutesLabel: minutesLabel(driveTo(i)!) })}{i === 0 ? t(" from the start") : ""}</p>
                   )}
                   <div className="card overflow-hidden">
                   <Link href={`/appointments/${s.id}`} className="flex gap-3 p-4">
@@ -355,7 +357,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                           <span className="text-muted"> · {p.services.join(", ")}</span>
                         </div>
                       ))}
-                      <div className="truncate text-sm text-muted">{s.address_line ?? "No address"}</div>
+                      <div className="truncate text-sm text-muted">{s.address_line ?? t("No address")}</div>
                       {s.pets.flatMap((p) => vaccines.filter((v) => v.pet_id === p.id).map((v) => (
                         <div key={p.id + v.name} className={`text-xs font-semibold ${v.expired ? "text-danger" : "text-warn"}`}>
                           💉 {p.name}: {alertText(v)}
@@ -367,16 +369,16 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                     {s.address_line ? (
                       <a href={directionsUrl({ address: s.address_line, lat: s.lat, lng: s.lng })} target="_blank" rel="noreferrer"
                         className="flex items-center justify-center gap-1.5 py-3 hover:bg-brand-soft">
-                        <Pin size={16} /> Directions
+                        <Pin size={16} /> {" "}{t("Directions")}
                       </a>
                     ) : (
-                      <span className="flex items-center justify-center gap-1.5 py-3 text-muted">No address</span>
+                      <span className="flex items-center justify-center gap-1.5 py-3 text-muted">{t("No address")}</span>
                     )}
                     <a href={`sms:${s.client_phone}`} className="flex items-center justify-center gap-1.5 py-3 hover:bg-brand-soft">
-                      <Chat size={16} /> Text
+                      <Chat size={16} /> {" "}{t("Text")}
                     </a>
                     <a href={`tel:${s.client_phone}`} className="flex items-center justify-center gap-1.5 py-3 hover:bg-brand-soft">
-                      <Phone size={16} /> Call
+                      <Phone size={16} /> {" "}{t("Call")}
                     </a>
                   </div>
                   </div>
@@ -384,14 +386,14 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               ))}
             </ol>
             {ends?.end_address && legs && (
-              <p className="text-center text-xs font-semibold text-muted">🚐 {minutesLabel(legs.at(-1)!)} drive back to the end of the day</p>
+              <p className="text-center text-xs font-semibold text-muted">{t("🚐 {minutesLabel} drive back to the end of the day", { minutesLabel: minutesLabel(legs.at(-1)!) })}</p>
             )}
           </>
         )}
         {/* Off the route but still here, so a visit never just disappears: tap to see or restore it. */}
         {dropped.length > 0 && (
           <section className="space-y-2">
-            <h2 className="section-label">Cancelled or no-show</h2>
+            <h2 className="section-label">{t("Cancelled or no-show")}</h2>
             <ul className="card divide-y divide-line overflow-hidden">
               {dropped.map((s) => (
                 <li key={s.id}>
@@ -403,7 +405,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                 </li>
               ))}
             </ul>
-            <p className="text-center text-xs text-muted">Marked by mistake? Open it and tap Restore.</p>
+            <p className="text-center text-xs text-muted">{t("Marked by mistake? Open it and tap Restore.")}</p>
           </section>
         )}
       </Page>

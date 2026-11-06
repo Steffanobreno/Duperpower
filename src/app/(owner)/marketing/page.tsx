@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
@@ -19,6 +20,7 @@ const STATUS: Record<string, { label: string; className: string }> = {
 };
 
 export default async function MarketingPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("marketing");
   const tz = staff.timezone;
   const [[b], campaigns, left, lastSent] = await Promise.all([
@@ -39,14 +41,13 @@ export default async function MarketingPage() {
 
   return (
     <>
-      <PageHeader title="Marketing" action={<ButtonLink href="/marketing/new">New email</ButtonLink>} />
+      <PageHeader title={t("Marketing")} action={<ButtonLink href="/marketing/new">{t("New email")}</ButtonLink>} />
       <Page>
         {!b.mailing_address && (
           <Card className="space-y-2">
-            <h2 className="font-bold">Your mailing address</h2>
+            <h2 className="font-bold">{t("Your mailing address")}</h2>
             <p className="text-sm text-muted">
-              US law (CAN-SPAM) asks marketing emails to show a postal address: your street address or a PO box. It goes in
-              small print at the bottom.
+              {t("US law (CAN-SPAM) asks marketing emails to show a postal address: your street address or a PO box. It goes in small print at the bottom.")}
             </p>
             <MailingAddressForm value="" />
           </Card>
@@ -59,19 +60,19 @@ export default async function MarketingPage() {
               <img src={pick.banner} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" />
             )}
             <span className="min-w-0 flex-1">
-              <span className="block text-xs font-semibold uppercase text-brand">Suggested this month</span>
+              <span className="block text-xs font-semibold uppercase text-brand">{t("Suggested this month")}</span>
               <span className="block truncate font-bold">{pick.name}</span>
             </span>
             <form action={createCampaignAction.bind(null, pick.key)}>
-              <button type="submit" className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-on-brand">Start</button>
+              <button type="submit" className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-on-brand">{t("Start")}</button>
             </form>
           </Card>
         )}
 
         {campaigns.length === 0 ? (
-          <Empty title="No email campaigns yet">
-            Send a holiday hello, or a &quot;we miss you&quot; to clients who haven&apos;t booked in a while.
-            <div className="mt-3"><ButtonLink href="/marketing/new">Create your first email</ButtonLink></div>
+          <Empty title={t("No email campaigns yet")}>
+            {t("Send a holiday hello, or a \"we miss you\" to clients who haven't booked in a while.")}
+            <div className="mt-3"><ButtonLink href="/marketing/new">{t("Create your first email")}</ButtonLink></div>
           </Empty>
         ) : (
           <ul className="space-y-3">
@@ -91,7 +92,7 @@ export default async function MarketingPage() {
                         <span className="truncate font-bold">{c.name}</span>
                         <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.className}`}>{s.label}</span>
                       </span>
-                      <span className="block truncate text-sm text-muted">{c.subject || "No subject yet"}</span>
+                      <span className="block truncate text-sm text-muted">{c.subject || t("No subject yet")}</span>
                       <span className="block text-xs text-muted">
                         {c.status === "scheduled" && c.scheduled_at ? `Goes out ${dayLabel(c.scheduled_at, tz)} at ${timeLabel(c.scheduled_at, tz)}`
                           : c.status === "draft" ? `Created ${dayLabel(c.created_at, tz)}`
@@ -106,22 +107,22 @@ export default async function MarketingPage() {
         )}
 
         <p className="text-center text-xs text-muted">
-          Emails go out from your business email. Gmail sends about 450 a day, so bigger lists finish the next day.
+          {t("Emails go out from your business email. Gmail sends about 450 a day, so bigger lists finish the next day.")}
           {left < 450 && ` ${left} left today.`}
         </p>
         <form action={setMarketingReminderAction.bind(null, !b.marketing_reminder)} className="card flex items-center justify-between gap-3 px-4 py-3">
           <span>
-            <span className="block font-semibold">Monthly reminder</span>
-            <span className="block text-sm text-muted">On the 1st, a notification with this month&apos;s suggested email</span>
+            <span className="block font-semibold">{t("Monthly reminder")}</span>
+            <span className="block text-sm text-muted">{t("On the 1st, a notification with this month's suggested email")}</span>
           </span>
-          <button type="submit" role="switch" aria-checked={b.marketing_reminder} aria-label="Monthly reminder"
+          <button type="submit" role="switch" aria-checked={b.marketing_reminder} aria-label={t("Monthly reminder")}
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${b.marketing_reminder ? "bg-success" : "bg-line"}`}>
             <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${b.marketing_reminder ? "left-[22px]" : "left-0.5"}`} />
           </button>
         </form>
         {b.mailing_address && (
           <details className="card px-4 py-3 text-sm">
-            <summary className="cursor-pointer font-semibold">Mailing address in the emails</summary>
+            <summary className="cursor-pointer font-semibold">{t("Mailing address in the emails")}</summary>
             <div className="mt-2"><MailingAddressForm value={b.mailing_address} /></div>
           </details>
         )}

@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -9,6 +10,7 @@ import { ReceiptGenerator } from "./receipt-generator";
 export const metadata: Metadata = { title: "New receipt" };
 
 export default async function NewReceiptPage({ searchParams }: PageProps<"/receipts/new">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("payments");
   const sp = await searchParams;
   const [clients, pets, services, own] = await Promise.all([
@@ -25,11 +27,10 @@ export default async function NewReceiptPage({ searchParams }: PageProps<"/recei
   ]);
   return (
     <>
-      <PageHeader title="New receipt" back="/receipts" />
+      <PageHeader title={t("New receipt")} back="/receipts" />
       <Page>
         <p className="px-1 text-sm text-muted">
-          Write a paid receipt for a client: pick the dog, the services and how they paid. It&apos;s saved like a finished
-          order (it shows in Finance &amp; reports) and you can send it as a PDF.
+          {t("Write a paid receipt for a client: pick the dog, the services and how they paid. It's saved like a finished order (it shows in Finance & reports) and you can send it as a PDF.")}
         </p>
         <ReceiptGenerator
           clients={clients}

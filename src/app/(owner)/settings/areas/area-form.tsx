@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -12,17 +13,18 @@ export function AreaForm({ action, initial }: {
   action: (s: FormState, f: FormData) => Promise<FormState>;
   initial?: { name: string; color: string; weekdays: number[]; places: string };
 }) {
+  const { t } = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   const [color, setColor] = useState(initial?.color ?? AREA_COLORS[0]);
   return (
     <ActionForm action={formAction} className="space-y-4">
       <FormPopup state={state} />
-      <Field label="Area name"><Input name="name" defaultValue={initial?.name} required placeholder="Peninsula" maxLength={60} /></Field>
-      <Field label="ZIP codes or cities" hint="Separate with commas. A city name adds all its ZIP codes.">
-        <Textarea name="places" rows={4} defaultValue={initial?.places} placeholder="San Mateo, Burlingame, 94010, 94401" required />
+      <Field label={t("Area name")}><Input name="name" defaultValue={initial?.name} required placeholder={t("Peninsula")} maxLength={60} /></Field>
+      <Field label={t("ZIP codes or cities")} hint={t("Separate with commas. A city name adds all its ZIP codes.")}>
+        <Textarea name="places" rows={4} defaultValue={initial?.places} placeholder={t("San Mateo, Burlingame, 94010, 94401")} required />
       </Field>
       <fieldset>
-        <legend className="mb-1 text-sm font-medium">Days you go there</legend>
+        <legend className="mb-1 text-sm font-medium">{t("Days you go there")}</legend>
         <div className="flex flex-wrap gap-2">
           {DAYS.map((d, i) => (
             <label key={d} className="cursor-pointer">
@@ -35,7 +37,7 @@ export function AreaForm({ action, initial }: {
         </div>
       </fieldset>
       <fieldset>
-        <legend className="mb-1 text-sm font-medium">Color</legend>
+        <legend className="mb-1 text-sm font-medium">{t("Color")}</legend>
         <input type="hidden" name="color" value={color} />
         <div className="flex flex-wrap gap-2">
           {AREA_COLORS.map((c) => (
@@ -44,7 +46,7 @@ export function AreaForm({ action, initial }: {
           ))}
         </div>
       </fieldset>
-      <Button type="submit" disabled={pending} className="w-full">{pending ? "Saving…" : "Save area"}</Button>
+      <Button type="submit" disabled={pending} className="w-full">{pending ? t("Saving…") : t("Save area")}</Button>
     </ActionForm>
   );
 }

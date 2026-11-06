@@ -1,10 +1,12 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useRef, useState, useTransition } from "react";
 import { resizeImage } from "@/lib/resize-image";
 import { savePetPhotoAction } from "./actions";
 
 /** "Add photo" / "Change photo" for a pet: shrinks the picture on the phone, then saves it. */
 export function PetPhotoUpload({ petId, hasPhoto }: { petId: string; hasPhoto: boolean }) {
+  const { t } = useT();
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -15,7 +17,7 @@ export function PetPhotoUpload({ petId, hasPhoto }: { petId: string; hasPhoto: b
         type="file"
         accept="image/*"
         className="sr-only"
-        aria-label="Pet photo"
+        aria-label={t("Pet photo")}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (!file) return;
@@ -38,7 +40,7 @@ export function PetPhotoUpload({ petId, hasPhoto }: { petId: string; hasPhoto: b
         disabled={pending}
         className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-brand"
       >
-        {pending ? "Saving photo…" : hasPhoto ? "Change photo" : "Add photo"}
+        {pending ? t("Saving photo…") : hasPhoto ? t("Change photo") : t("Add photo")}
       </button>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </div>

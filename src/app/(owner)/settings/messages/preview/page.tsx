@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
@@ -22,6 +23,7 @@ const TRIGGERS: { trigger: Trigger; label: string }[] = [
 // Shows an email exactly as a client gets it, filled in with the latest visit
 // (or a made-up one when there are no visits yet).
 export default async function EmailPreviewPage({ searchParams }: PageProps<"/settings/messages/preview">) {
+  const { t: tr } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const sp = await searchParams;
   const trigger = TRIGGERS.find((t) => t.trigger === sp.trigger)?.trigger ?? "request_received";
@@ -66,9 +68,9 @@ export default async function EmailPreviewPage({ searchParams }: PageProps<"/set
 
   return (
     <>
-      <PageHeader title="Email preview" back="/settings/messages" />
+      <PageHeader title={tr("Email preview")} back="/settings/messages" />
       <Page>
-        <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" aria-label="Message">
+        <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" aria-label={tr("Message")}>
           {TRIGGERS.map((x) => (
             <Link key={x.trigger} href={`/settings/messages/preview?trigger=${x.trigger}`} aria-current={x.trigger === trigger ? "page" : undefined}
               className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${x.trigger === trigger ? "border-navy bg-navy text-white" : "border-line bg-surface"}`}>
@@ -77,13 +79,13 @@ export default async function EmailPreviewPage({ searchParams }: PageProps<"/set
           ))}
         </nav>
         <div className="card px-4 py-3 text-sm">
-          <p><span className="text-muted">From </span>{b.name}</p>
-          <p><span className="text-muted">Subject </span><strong>{subject}</strong></p>
+          <p><span className="text-muted">{tr("From")}{" "} </span>{b.name}</p>
+          <p><span className="text-muted">{tr("Subject")}{" "} </span><strong>{subject}</strong></p>
         </div>
-        <iframe title="Email preview" srcDoc={emailHtml(text, b.name, details)} className="h-[760px] w-full rounded-[var(--radius-card)] border border-line bg-white" />
+        <iframe title={tr("Email preview")} srcDoc={emailHtml(text, b.name, details)} className="h-[760px] w-full rounded-[var(--radius-card)] border border-line bg-white" />
         <Notice kind="info">
-          {latest ? "Filled in with your latest visit. " : "Filled in with a made-up visit. "}
-          To change the words, edit the message in Texts and email; the card with the date, pets and price is added by the app.
+          {latest ? tr("Filled in with your latest visit. ") : tr("Filled in with a made-up visit. ")}
+          {tr("To change the words, edit the message in Texts and email; the card with the date, pets and price is added by the app.")}
         </Notice>
       </Page>
     </>

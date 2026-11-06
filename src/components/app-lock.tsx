@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { unlockAction } from "@/app/(owner)/settings/account/actions";
@@ -12,6 +13,7 @@ const AWAY_MS = 5 * 60_000;
  * lost phone; the login itself stays the real protection.
  */
 export function AppLock() {
+  const { t } = useT();
   const [locked, setLocked] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +56,8 @@ export function AppLock() {
     setPin(next);
   };
   return (
-    <div role="dialog" aria-modal="true" aria-label="App locked" className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-navy-deep px-6 text-white">
-      <p className="text-xl font-bold">Enter your PIN</p>
+    <div role="dialog" aria-modal="true" aria-label={t("App locked")} className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-navy-deep px-6 text-white">
+      <p className="text-xl font-bold">{t("Enter your PIN")}</p>
       <form onSubmit={(e) => { e.preventDefault(); if (pin.length >= 4) submit(pin); }} className="flex flex-col items-center gap-4">
         <input type="password" inputMode="numeric" autoComplete="off" value={pin} aria-label="PIN" maxLength={6}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -65,7 +67,7 @@ export function AppLock() {
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
             <button key={d} type="button" onClick={() => press(d)} className="h-16 w-16 rounded-full bg-white/10 text-2xl font-semibold">{d}</button>
           ))}
-          <button type="button" onClick={() => setPin(pin.slice(0, -1))} className="h-16 w-16 rounded-full text-sm" aria-label="Delete">⌫</button>
+          <button type="button" onClick={() => setPin(pin.slice(0, -1))} className="h-16 w-16 rounded-full text-sm" aria-label={t("Delete")}>⌫</button>
           <button type="button" onClick={() => press("0")} className="h-16 w-16 rounded-full bg-white/10 text-2xl font-semibold">0</button>
           <button type="submit" disabled={pin.length < 4 || pending} className="h-16 w-16 rounded-full bg-sky text-sm font-bold text-navy disabled:opacity-40">OK</button>
         </div>

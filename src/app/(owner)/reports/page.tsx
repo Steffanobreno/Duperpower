@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -18,6 +19,7 @@ const bucketLabel = (d: string, g: Group) =>
       : fmt(d, { month: "long", year: "numeric" });
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("reports");
   const sp = await searchParams;
   const today = todayYmd(staff.timezone);
@@ -29,9 +31,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
 
   return (
     <>
-      <PageHeader title="Reports" action={<Link href="/reports/payroll" className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">Payroll</Link>} />
+      <PageHeader title={t("Reports")} action={<Link href="/reports/payroll" className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">{t("Payroll")}</Link>} />
       <Page>
-        <nav aria-label="Period" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <nav aria-label={t("Period")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {PERIODS.map((p) => (
             <Link key={p.key} href={`/reports?period=${p.key}`} aria-current={period === p.key ? "page" : undefined}
               className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${period === p.key ? "border-navy bg-navy text-white" : "border-line bg-surface"}`}>
@@ -41,14 +43,14 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         </nav>
         <form className="card flex flex-wrap items-end gap-2 px-4 py-3">
           <label className="min-w-0 flex-1">
-            <span className="text-xs font-semibold text-muted">From</span>
+            <span className="text-xs font-semibold text-muted">{t("From")}</span>
             <DateField name="from" defaultValue={from} required />
           </label>
           <label className="min-w-0 flex-1">
-            <span className="text-xs font-semibold text-muted">To</span>
+            <span className="text-xs font-semibold text-muted">{t("To")}</span>
             <DateField name="to" defaultValue={to} required />
           </label>
-          <Button type="submit" kind="secondary">Show</Button>
+          <Button type="submit" kind="secondary">{t("Show")}</Button>
         </form>
         <p className="px-1 text-sm text-muted">
           {from === to ? fmt(from, { weekday: "long", month: "long", day: "numeric", year: "numeric" })
@@ -58,45 +60,45 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         {/* The same period as a file: PDF to print or send, CSV for Excel. */}
         <div className="grid grid-cols-2 gap-2">
           <a href={`/reports/export?${rangeQuery}&group=${group}&format=pdf`} download
-            className="flex items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-bold text-white">⬇ Download PDF</a>
+            className="flex items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-bold text-white">{t("⬇ Download PDF")}</a>
           <a href={`/reports/export?${rangeQuery}&group=${group}&format=csv`} download
-            className="flex items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-bold text-white">⬇ Excel (CSV)</a>
+            className="flex items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-bold text-white">{t("⬇ Excel (CSV)")}</a>
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <Tile label="Collected" value={money(r.collected + r.tips)} sub={r.tips ? `incl. ${money(r.tips)} tips` : "payments received"} strong />
-          <Tile label="Expected" value={money(r.expected)} sub="services booked" />
-          <Tile label="Dogs groomed" value={String(r.dogs_done)} sub={`${r.pets} booked`} />
-          <Tile label="Appointments" value={String(r.appts)} sub={`${r.finished} finished`} />
-          <Tile label="Clients" value={String(r.clients)} sub={`${r.newClients} new`} />
-          <Tile label="Average visit" value={money(avg)} sub="expected per visit" />
+          <Tile label={t("Collected")} value={money(r.collected + r.tips)} sub={r.tips ? `incl. ${money(r.tips)} tips` : "payments received"} strong />
+          <Tile label={t("Expected")} value={money(r.expected)} sub="services booked" />
+          <Tile label={t("Dogs groomed")} value={String(r.dogs_done)} sub={`${r.pets} booked`} />
+          <Tile label={t("Appointments")} value={String(r.appts)} sub={`${r.finished} finished`} />
+          <Tile label={t("Clients")} value={String(r.clients)} sub={`${r.newClients} new`} />
+          <Tile label={t("Average visit")} value={money(avg)} sub="expected per visit" />
         </div>
 
         <section className="space-y-2">
-          <h2 className="section-label">Money</h2>
+          <h2 className="section-label">{t("Money")}</h2>
           <dl className="card divide-y divide-line">
-            <Row label="Expected service price" value={money(r.expected)} hint="Services on visits in this period (not cancelled)" />
-            <Row label="Collected (without tips)" value={money(r.collected)} hint={`${r.paymentsCount} payment${r.paymentsCount === 1 ? "" : "s"} received in this period`} />
-            <Row label="Tips" value={money(r.tips)} />
-            <Row label="Unpaid" value={money(r.unpaid)} hint="Finished visits not checked out yet" warn={r.unpaid > 0} />
+            <Row label={t("Expected service price")} value={money(r.expected)} hint={t("Services on visits in this period (not cancelled)")} />
+            <Row label={t("Collected (without tips)")} value={money(r.collected)} hint={`${r.paymentsCount} payment${r.paymentsCount === 1 ? "" : "s"} received in this period`} />
+            <Row label={t("Tips")} value={money(r.tips)} />
+            <Row label={t("Unpaid")} value={money(r.unpaid)} hint={t("Finished visits not checked out yet")} warn={r.unpaid > 0} />
           </dl>
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">Appointments</h2>
+          <h2 className="section-label">{t("Appointments")}</h2>
           <dl className="card divide-y divide-line">
-            <Row label="Booked" value={String(r.appts)} />
-            <Row label="Finished" value={String(r.finished)} />
-            <Row label="Cancelled" value={String(r.cancelled)} />
-            <Row label="No-show" value={String(r.no_show)} warn={r.no_show > 0} />
-            <Row label="New clients" value={String(r.newClients)} hint="Added in the app or online in this period" />
+            <Row label={t("Booked")} value={String(r.appts)} />
+            <Row label={t("Finished")} value={String(r.finished)} />
+            <Row label={t("Cancelled")} value={String(r.cancelled)} />
+            <Row label={t("No-show")} value={String(r.no_show)} warn={r.no_show > 0} />
+            <Row label={t("New clients")} value={String(r.newClients)} hint={t("Added in the app or online in this period")} />
           </dl>
         </section>
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="section-label">By {group}</h2>
-            <nav aria-label="Group by" className="flex gap-1 text-sm">
+            <h2 className="section-label">{t("By {group}", { group: group })}</h2>
+            <nav aria-label={t("Group by")} className="flex gap-1 text-sm">
               {(["day", "week", "month"] as const).map((g) => (
                 <Link key={g} href={`/reports?${rangeQuery}&group=${g}`} aria-current={g === group ? "true" : undefined}
                   className={`rounded-full px-3 py-1 font-semibold capitalize ${g === group ? "bg-brand-soft text-brand-strong" : "text-muted"}`}>
@@ -106,17 +108,17 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
             </nav>
           </div>
           {r.buckets.length === 0 ? (
-            <p className="card px-4 py-6 text-center text-sm text-muted">No visits or payments in this period.</p>
+            <p className="card px-4 py-6 text-center text-sm text-muted">{t("No visits or payments in this period.")}</p>
           ) : (
             <div className="card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-muted">
                     <th className="px-4 py-2 font-semibold">{group}</th>
-                    <th className="px-2 py-2 text-right font-semibold">Visits</th>
-                    <th className="px-2 py-2 text-right font-semibold">Dogs</th>
-                    <th className="px-2 py-2 text-right font-semibold">Expected</th>
-                    <th className="px-4 py-2 text-right font-semibold">Collected</th>
+                    <th className="px-2 py-2 text-right font-semibold">{t("Visits")}</th>
+                    <th className="px-2 py-2 text-right font-semibold">{t("Dogs")}</th>
+                    <th className="px-2 py-2 text-right font-semibold">{t("Expected")}</th>
+                    <th className="px-4 py-2 text-right font-semibold">{t("Collected")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -137,7 +139,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-line font-bold">
-                    <td className="px-4 py-2.5">Total</td>
+                    <td className="px-4 py-2.5">{t("Total")}</td>
                     <td className="px-2 py-2.5 text-right tabular-nums">{r.buckets.reduce((s, b) => s + b.appts, 0)}</td>
                     <td className="px-2 py-2.5 text-right tabular-nums">{r.buckets.reduce((s, b) => s + b.dogs, 0)}</td>
                     <td className="px-2 py-2.5 text-right tabular-nums">{money(r.buckets.reduce((s, b) => s + b.expected, 0))}</td>
@@ -150,9 +152,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">By payment method</h2>
+          <h2 className="section-label">{t("By payment method")}</h2>
           {r.methods.length === 0 ? (
-            <p className="card px-4 py-6 text-center text-sm text-muted">No payments in this period.</p>
+            <p className="card px-4 py-6 text-center text-sm text-muted">{t("No payments in this period.")}</p>
           ) : (
             <ul className="card divide-y divide-line">
               {r.methods.map((m) => (
@@ -172,7 +174,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
 
         {r.services.length > 0 && (
           <section className="space-y-2">
-            <h2 className="section-label">By service</h2>
+            <h2 className="section-label">{t("By service")}</h2>
             <ul className="card divide-y divide-line text-sm">
               {r.services.map((s) => (
                 <li key={s.name} className="flex items-center gap-3 px-4 py-2.5">
@@ -187,13 +189,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
 
         {r.topClients.length > 0 && (
           <section className="space-y-2">
-            <h2 className="section-label">Top clients by spending</h2>
+            <h2 className="section-label">{t("Top clients by spending")}</h2>
             <ul className="card divide-y divide-line text-sm">
               {r.topClients.map((c) => (
                 <li key={c.id}>
                   <Link href={`/clients/${c.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-bg">
                     <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
-                    <span className="text-muted">{c.visits} visit{c.visits > 1 ? "s" : ""}</span>
+                    <span className="text-muted">{t("{visits} visit", { visits: c.visits })}{c.visits > 1 ? "s" : ""}</span>
                     <span className="w-20 text-right font-semibold tabular-nums">{money(c.spent)}</span>
                   </Link>
                 </li>
@@ -202,7 +204,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           </section>
         )}
         <p className="text-center text-xs text-muted">
-          Collected counts payments recorded at checkout. Visits imported from the old app have no payments here.
+          {t("Collected counts payments recorded at checkout. Visits imported from the old app have no payments here.")}
         </p>
       </Page>
     </>

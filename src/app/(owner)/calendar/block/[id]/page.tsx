@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
@@ -10,6 +11,7 @@ import { BlockForm } from "../block-form";
 export const metadata: Metadata = { title: "Blocked time" };
 
 export default async function EditBlockPage({ params }: PageProps<"/calendar/block/[id]">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id } = await params;
   const block = await getTimeOff(staff, id);
@@ -19,7 +21,7 @@ export default async function EditBlockPage({ params }: PageProps<"/calendar/blo
   const remove = deleteBlockAction.bind(null, id);
   return (
     <>
-      <PageHeader title="Blocked time" back={`/calendar?date=${date}`} />
+      <PageHeader title={t("Blocked time")} back={`/calendar?date=${date}`} />
       <Page>
         <BlockForm
           action={updateBlockAction.bind(null, id)}
@@ -30,7 +32,7 @@ export default async function EditBlockPage({ params }: PageProps<"/calendar/blo
           <form action={remove}>
             <input type="hidden" name="date" value={date} />
             <button type="submit" className="w-full rounded-xl border border-line py-3 font-semibold text-danger hover:bg-danger-soft">
-              Remove this block
+              {t("Remove this block")}
             </button>
           </form>
           {block.series_id && (
@@ -38,7 +40,7 @@ export default async function EditBlockPage({ params }: PageProps<"/calendar/blo
               <input type="hidden" name="date" value={date} />
               <input type="hidden" name="scope" value="following" />
               <button type="submit" className="w-full rounded-xl border border-line py-3 font-semibold text-danger hover:bg-danger-soft">
-                Remove this and the next repeats
+                {t("Remove this and the next repeats")}
               </button>
             </form>
           )}

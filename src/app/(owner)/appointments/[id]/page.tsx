@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Toast } from "@/components/toast";
@@ -58,6 +59,7 @@ const MESSAGE_STATUS: Record<string, string> = {
 };
 
 export default async function AppointmentPage({ params, searchParams }: PageProps<"/appointments/[id]">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id } = await params;
   const sp = await searchParams;
@@ -115,24 +117,24 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
   return (
     <>
-      <PageHeader title="Appointment" back={`/today?date=${ymd(appt.start_at, tz)}`} />
+      <PageHeader title={t("Appointment")} back={`/today?date=${ymd(appt.start_at, tz)}`} />
       <Page>
-        {sp.booked === "1" && <Toast>Appointment booked.</Toast>}
+        {sp.booked === "1" && <Toast>{t("Appointment booked.")}</Toast>}
         {picked && canMove && (
-          <section className="card space-y-3 border-2 border-brand p-4" aria-label="Move this visit">
+          <section className="card space-y-3 border-2 border-brand p-4" aria-label={t("Move this visit")}>
             <p className="font-bold">
-              Move to {longDayLabel(zonedToUtc(picked.date, picked.time, tz), tz)} at {timeLabel(zonedToUtc(picked.date, picked.time, tz), tz)}?
+              {t("Move to {longDayLabel} at {timeLabel}?", { longDayLabel: longDayLabel(zonedToUtc(picked.date, picked.time, tz), tz), timeLabel: timeLabel(zonedToUtc(picked.date, picked.time, tz), tz) })}
             </p>
             <RescheduleForm action={rescheduleAction.bind(null, id)} date={picked.date} time={picked.time} notify={!finishedMove} primary />
-            <Link href={`/appointments/${id}?rs=${picked.date}#reschedule`} className="block text-center text-sm font-semibold text-brand">Pick another time</Link>
+            <Link href={`/appointments/${id}?rs=${picked.date}#reschedule`} className="block text-center text-sm font-semibold text-brand">{t("Pick another time")}</Link>
           </section>
         )}
-        {sp.conflict === "1" && <Notice kind="error">Another appointment already uses that time.</Notice>}
+        {sp.conflict === "1" && <Notice kind="error">{t("Another appointment already uses that time.")}</Notice>}
         {appt.reschedule_requested_at && (
           <div className="rounded-2xl border border-warn bg-warn-soft px-4 py-3 text-warn">
-            <p className="font-bold">The client asked for a different time</p>
+            <p className="font-bold">{t("The client asked for a different time")}</p>
             {appt.reschedule_note && <p className="mt-1 text-ink">&quot;{appt.reschedule_note}&quot;</p>}
-            <p className="mt-1 text-sm">Move it below in Reschedule (this note clears when you do), or text them.</p>
+            <p className="mt-1 text-sm">{t("Move it below in Reschedule (this note clears when you do), or text them.")}</p>
           </div>
         )}
 
@@ -161,69 +163,69 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           </div>
         </details>
 
-        <nav aria-label="Actions" className="card grid grid-cols-3 gap-1 p-2">
-          <a href={`sms:${c.phone}`} className={pillar}><Chat size={22} />Message</a>
-          <a href={`tel:${c.phone}`} className={pillar}><Phone size={22} />Call</a>
+        <nav aria-label={t("Actions")} className="card grid grid-cols-3 gap-1 p-2">
+          <a href={`sms:${c.phone}`} className={pillar}><Chat size={22} />{t("Message")}</a>
+          <a href={`tel:${c.phone}`} className={pillar}><Phone size={22} />{t("Call")}</a>
           {!paid && ["in_progress", "completed", "en_route", "confirmed", "unconfirmed"].includes(appt.status) && (
-            <Link href={`/appointments/${id}/checkout`} className={pillar}><Card2 size={22} />Take payment</Link>
+            <Link href={`/appointments/${id}/checkout`} className={pillar}><Card2 size={22} />{t("Take payment")}</Link>
           )}
           {appt.address_line ? (
             <AddressLink address={[appt.address_line, appt.zip].filter(Boolean).join(" ")} lat={appt.lat} lng={appt.lng} className={`${pillar} !text-center`}>
-              <Pin size={22} />Directions
+              <Pin size={22} />{t("Directions")}
             </AddressLink>
           ) : (
-            <span className={`${pillar} opacity-40`}><Pin size={22} />No address</span>
+            <span className={`${pillar} opacity-40`}><Pin size={22} />{t("No address")}</span>
           )}
           {["confirmed", "unconfirmed", "en_route"].includes(appt.status) && onMyWay && (
             <OnMyWayButton appointmentId={id} phone={c.phone} text={onMyWay} markEnRoute={appt.status !== "en_route"} className={pillar}>
-              <Van size={22} />On my way
+              <Van size={22} />{t("On my way")}
             </OnMyWayButton>
           )}
-          {canMove && <Link href={planHref} className={pillar}><Calendar size={22} />Reschedule</Link>}
-          {canEditServices && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />Edit services</Link>}
+          {canMove && <Link href={planHref} className={pillar}><Calendar size={22} />{t("Reschedule")}</Link>}
+          {canEditServices && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />{t("Edit services")}</Link>}
           <Link href={bookAgainHref} className={pillar}>
-            <Plus size={22} />Book again
+            <Plus size={22} />{t("Book again")}
           </Link>
           {canChange && (
             <form action={setStatusAction.bind(null, id, "cancelled")} className="contents">
-              <ConfirmButton question={TAKES_OFF.cancelled} className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />Cancel</ConfirmButton>
+              <ConfirmButton question={TAKES_OFF.cancelled} className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />{t("Cancel")}</ConfirmButton>
             </form>
           )}
           {canChange && appt.status !== "requested" && (
             <form action={setStatusAction.bind(null, id, "no_show")} className="contents">
-              <ConfirmButton question={TAKES_OFF.no_show} className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />No-show</ConfirmButton>
+              <ConfirmButton question={TAKES_OFF.no_show} className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />{t("No-show")}</ConfirmButton>
             </form>
           )}
           {closed && (
             <form action={setStatusAction.bind(null, id, "unconfirmed")} className="contents">
-              <button type="submit" className={pillar}><Check size={22} />Restore</button>
+              <button type="submit" className={pillar}><Check size={22} />{t("Restore")}</button>
             </form>
           )}
         </nav>
 
         <section className="space-y-2">
-          <h2 className="section-label">When</h2>
+          <h2 className="section-label">{t("When")}</h2>
           <div className="card flex items-center gap-3 px-4 py-4">
             <div className="flex-1">
               <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
               <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}</p>
             </div>
-            {canMove && <Link href={planHref} aria-label="Change the time" className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></Link>}
+            {canMove && <Link href={planHref} aria-label={t("Change the time")} className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></Link>}
           </div>
           {(groomers.length > 1 || appt.staff_id !== staff.staffId) && groomer && (
             <div className="card space-y-2 px-4 py-3">
-              {sp.groomerBusy && <Notice kind="error">That groomer already has a visit at this time.</Notice>}
+              {sp.groomerBusy && <Notice kind="error">{t("That groomer already has a visit at this time.")}</Notice>}
               <div className="flex items-center gap-3">
                 <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ background: groomer.color }} />
-                <span className="flex-1"><span className="text-sm text-muted">Groomer</span> <span className="font-semibold">{groomer.name}</span></span>
+                <span className="flex-1"><span className="text-sm text-muted">{t("Groomer")}</span> <span className="font-semibold">{groomer.name}</span></span>
               </div>
               {/* Finished visits too, so payroll credits whoever really did it. */}
               {otherGroomers.length > 0 && staff.can.all_appointments && !["cancelled", "no_show", "declined"].includes(appt.status) && (
                 <form action={assignGroomerAction.bind(null, id)} className="flex gap-2">
-                  <select name="staff_id" aria-label="Give to" className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm">
+                  <select name="staff_id" aria-label={t("Give to")} className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm">
                     {otherGroomers.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
-                  <Button type="submit" kind="secondary">Give to</Button>
+                  <Button type="submit" kind="secondary">{t("Give to")}</Button>
                 </form>
               )}
             </div>
@@ -232,11 +234,11 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             <Link href={`/appointments/${id}/repeat`} className="card flex items-center gap-3 px-4 py-3.5">
               <span aria-hidden className="text-xl text-success">↻</span>
               <span className="min-w-0 flex-1">
-                <span className="block font-semibold">{series ? "Repeat appointment" : "Repeat this appointment"}</span>
+                <span className="block font-semibold">{series ? t("Repeat appointment") : t("Repeat this appointment")}</span>
                 <span className="block truncate text-sm text-muted">
                   {series
                     ? `${ruleLabel(ymd(series.first, tz), { freq: series.freq, every: series.interval_n, count: series.occurrences, until: series.ends_on })} · ${series.upcoming} more after this one`
-                    : "Every week, every 2 weeks, every month…"}
+                    : t("Every week, every 2 weeks, every month…")}
                 </span>
               </span>
               <ChevronRight size={20} className="text-muted" />
@@ -246,8 +248,8 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="section-label">Pets and services</h2>
-            {canEditServices && <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">Edit</Link>}
+            <h2 className="section-label">{t("Pets and services")}</h2>
+            {canEditServices && <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">{t("Edit")}</Link>}
           </div>
           {appt.pets.map((p) => (
             <div key={p.appointment_pet_id} className="card divide-y divide-line">
@@ -263,10 +265,10 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <div className="space-y-1 px-4 py-3">
                   {vaccines.filter((v) => v.pet_id === p.pet_id).map((v) => (
                     <Notice key={v.name} kind={v.expired ? "error" : "warn"}>
-                      💉 {alertText(v)}{v.expired ? " — ask for the new certificate" : ""}
+                      💉 {alertText(v)}{v.expired ? t(" — ask for the new certificate") : ""}
                     </Notice>
                   ))}
-                  <Link href={`/clients/${c.id}/pets/${p.pet_id}`} className="block text-xs font-semibold text-brand">Update vaccines</Link>
+                  <Link href={`/clients/${c.id}/pets/${p.pet_id}`} className="block text-xs font-semibold text-brand">{t("Update vaccines")}</Link>
                 </div>
               )}
               {(p.behavior || p.notes) && (
@@ -287,14 +289,14 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             </div>
           ))}
           <div className="flex justify-between px-1 text-lg font-bold">
-            <span>Total</span>
+            <span>{t("Total")}</span>
             <span>{money(total)}</span>
           </div>
         </section>
 
         {appt.pets.length > 0 && !closed && (
-          <section className="space-y-2" aria-label="Cuts">
-            <h2 className="section-label">How they were groomed</h2>
+          <section className="space-y-2" aria-label={t("Cuts")}>
+            <h2 className="section-label">{t("How they were groomed")}</h2>
             <div className="card divide-y divide-line">
               {appt.pets.map((p) => {
                 const now = cuts.now.get(p.pet_id);
@@ -315,9 +317,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         )}
 
         <section className="space-y-2">
-          <h2 className="section-label">Customer</h2>
+          <h2 className="section-label">{t("Customer")}</h2>
           <div className="card divide-y divide-line">
-            <Link href={`/clients/${c.id}`} className="flex items-center gap-3 px-4 py-3" aria-label="Client profile">
+            <Link href={`/clients/${c.id}`} className="flex items-center gap-3 px-4 py-3" aria-label={t("Client profile")}>
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
                 {(c.first_name[0] ?? "") + (c.last_name[0] ?? "")}
               </span>
@@ -325,7 +327,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <span className="block font-semibold">{fullName(c)}</span>
                 <TagChips tags={tags.get(c.id)} />
               </span>
-              <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand-strong">every {rebookWeeks} weeks</span>
+              <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand-strong">{t("every {rebookWeeks} weeks", { rebookWeeks: rebookWeeks })}</span>
             </Link>
             <PhoneLink phone={c.phone} label={phoneLabel(c.phone)} className="flex w-full items-center gap-3 px-4 py-3 text-brand">
               <Phone size={18} /> {phoneLabel(c.phone)}
@@ -336,30 +338,30 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <Pin size={18} className="shrink-0" /> {appt.address_line}{appt.zip ? ` ${appt.zip}` : ""}
               </AddressLink>
             ) : (
-              <div className="flex items-center gap-3 px-4 py-3 text-muted"><Pin size={18} /> No address on file</div>
+              <div className="flex items-center gap-3 px-4 py-3 text-muted"><Pin size={18} /> {" "}{t("No address on file")}</div>
             )}
             {c.access_notes && <div className="px-4 py-3"><Notice kind="info">{c.access_notes}</Notice></div>}
           </div>
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">Visit notes</h2>
+          <h2 className="section-label">{t("Visit notes")}</h2>
           <form action={updateNotesAction.bind(null, id)} className="space-y-2">
-            <label className="sr-only" htmlFor="notes">Visit notes</label>
-            <Textarea id="notes" name="notes" defaultValue={appt.notes ?? ""} placeholder="Private notes for this visit" />
-            <Button type="submit" kind="secondary">Save notes</Button>
+            <label className="sr-only" htmlFor="notes">{t("Visit notes")}</label>
+            <Textarea id="notes" name="notes" defaultValue={appt.notes ?? ""} placeholder={t("Private notes for this visit")} />
+            <Button type="submit" kind="secondary">{t("Save notes")}</Button>
           </form>
         </section>
 
         {canMove && (
           <section className="scroll-mt-20 space-y-2" id="reschedule">
-            <h2 className="section-label">Reschedule</h2>
+            <h2 className="section-label">{t("Reschedule")}</h2>
             <Card className="space-y-3">
               <ReschedulePlanner staff={staff} day={planDay} monthOpen={sp.rsm === "1"}
                 appt={{ id, staff_id: appt.staff_id, start_at: appt.start_at, end_at: appt.end_at, client: c.first_name }} />
-              <Link href={moveHref} className="block text-center text-sm font-semibold text-brand">Open the full day calendar ›</Link>
+              <Link href={moveHref} className="block text-center text-sm font-semibold text-brand">{t("Open the full day calendar ›")}</Link>
               <details>
-                <summary className="cursor-pointer text-sm font-semibold text-muted">Or type the date and time</summary>
+                <summary className="cursor-pointer text-sm font-semibold text-muted">{t("Or type the date and time")}</summary>
                 <div className="pt-3">
                   <RescheduleForm action={rescheduleAction.bind(null, id)} date={day} time={hm(appt.start_at, tz)} notify={!finishedMove} />
                 </div>
@@ -370,12 +372,12 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
         {messages.length > 0 && (
           <section className="space-y-2">
-            <h2 className="section-label">Messages to the client</h2>
+            <h2 className="section-label">{t("Messages to the client")}</h2>
             <ul className="card divide-y divide-line overflow-hidden text-sm">
               {messages.map((m) => (
                 <li key={m.id} className="flex justify-between gap-3 px-4 py-2.5">
                   <span>
-                    {TRIGGER_LABEL[m.template_trigger ?? ""] ?? m.template_trigger} · {m.channel === "sms" ? "Text" : "Email"}
+                    {TRIGGER_LABEL[m.template_trigger ?? ""] ?? m.template_trigger} · {m.channel === "sms" ? t("Text") : t("Email")}
                   </span>
                   <span className="text-muted">{MESSAGE_STATUS[m.status] ?? m.status}</span>
                 </li>
@@ -384,7 +386,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           </section>
         )}
         <p className="text-center text-xs text-muted">
-          <Link href={`/calendar?date=${ymd(appt.start_at, tz)}`} className="underline">See this day in the calendar</Link>
+          <Link href={`/calendar?date=${ymd(appt.start_at, tz)}`} className="underline">{t("See this day in the calendar")}</Link>
         </p>
         {/* Room for the button fixed at the bottom. */}
         {(primary || appt.status === "completed") && <div aria-hidden className="h-16" />}
@@ -404,22 +406,22 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 {NEXT_STATUS[appt.status]?.includes("completed") && primary.to !== "completed" && (
                   <form action={setStatusAction.bind(null, id, "completed")}>
                     <button type="submit" className="h-full rounded-2xl border-2 border-danger px-4 text-sm font-bold text-danger">
-                      Finish order
+                      {t("Finish order")}
                     </button>
                   </form>
                 )}
               </div>
             ) : paid ? (
               <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-success py-3.5 text-center text-base font-bold text-white">
-                Order finished · See receipt
+                {t("Order finished · See receipt")}
               </Link>
             ) : checkout ? (
               <Link href={`/appointments/${id}/checkout`} className="block w-full rounded-2xl bg-danger py-3.5 text-center text-base font-bold text-white">
-                Collect payment {money(Math.max(checkout.invoice.total_cents - checkout.invoice.paid_cents, 0))}
+                {t("Collect payment {money}", { money: money(Math.max(checkout.invoice.total_cents - checkout.invoice.paid_cents, 0)) })}
               </Link>
             ) : (
               <form action={startCheckoutAction.bind(null, id)}>
-                <button type="submit" className="w-full rounded-2xl bg-danger py-3.5 text-base font-bold text-white">Collect payment {money(total)}</button>
+                <button type="submit" className="w-full rounded-2xl bg-danger py-3.5 text-base font-bold text-white">{t("Collect payment {money}", { money: money(total) })}</button>
               </form>
             )}
           </div>

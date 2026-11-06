@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
@@ -9,6 +10,7 @@ import { AddOption, OptionRow } from "../list-editor";
 export const metadata: Metadata = { title: "Client and pet options" };
 
 export default async function OptionListPage({ params }: PageProps<"/settings/lists/[kind]">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const { kind } = await params;
   if (!isOptionKind(kind)) notFound();
@@ -18,7 +20,7 @@ export default async function OptionListPage({ params }: PageProps<"/settings/li
     <>
       <PageHeader title={info.title} back="/settings/lists" />
       <Page>
-        <p className="text-sm text-muted">{info.hint} Tap a name to rename it; clients and pets that use it follow.</p>
+        <p className="text-sm text-muted">{t("{hint} Tap a name to rename it; clients and pets that use it follow.", { hint: info.hint })}</p>
         {items.length ? (
           <ul className="card divide-y divide-line overflow-hidden">
             {items.map((o, i) => (
@@ -29,7 +31,7 @@ export default async function OptionListPage({ params }: PageProps<"/settings/li
             ))}
           </ul>
         ) : (
-          <Empty title={`No ${info.one}s yet`}>Add the first one below.</Empty>
+          <Empty title={`No ${info.one}s yet`}>{t("Add the first one below.")}</Empty>
         )}
         <Card>
           <AddOption action={addOptionAction.bind(null, kind)} placeholder={`New ${info.one}`} />

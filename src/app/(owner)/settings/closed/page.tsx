@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
@@ -15,6 +16,7 @@ const dateLabel = (d: string) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 export default async function ClosedPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const today = todayYmd(staff.timezone);
   const year = Number(today.slice(0, 4));
@@ -27,13 +29,13 @@ export default async function ClosedPage() {
     .sort((x, y) => x.on.localeCompare(y.on));
   return (
     <>
-      <PageHeader title="Closed dates and holidays" back="/settings" />
+      <PageHeader title={t("Closed dates and holidays")} back="/settings" />
       <Page>
         <p className="text-sm text-muted">
-          On these days clients can&apos;t book online, and the calendar shows the day as closed.
+          {t("On these days clients can't book online, and the calendar shows the day as closed.")}
         </p>
         <section className="space-y-2">
-          <h2 className="section-label">Closed dates</h2>
+          <h2 className="section-label">{t("Closed dates")}</h2>
           {dates.length ? (
             <ul className="card divide-y divide-line overflow-hidden">
               {dates.map((d) => (
@@ -43,41 +45,41 @@ export default async function ClosedPage() {
                       {dateLabel(d.start_date)}
                       {d.end_date !== d.start_date && ` – ${dateLabel(d.end_date)}`}
                     </div>
-                    <div className="text-sm text-muted">{d.reason || "Closed"}{d.end_date < today && " · past"}</div>
+                    <div className="text-sm text-muted">{d.reason || t("Closed")}{d.end_date < today && t(" · past")}</div>
                   </div>
                   <form action={deleteClosedDatesAction.bind(null, d.id)}>
                     <button type="submit" className="rounded-lg px-2 py-1 text-sm font-semibold text-danger hover:bg-danger-soft"
                       aria-label={`Remove closed dates from ${d.start_date}`}>
-                      Remove
+                      {t("Remove")}
                     </button>
                   </form>
                 </li>
               ))}
             </ul>
           ) : (
-            <Empty title="No closed dates">Add your next vacation below.</Empty>
+            <Empty title={t("No closed dates")}>{t("Add your next vacation below.")}</Empty>
           )}
           <Card>
-            <SimpleForm action={addClosedDatesAction} submitLabel="Add closed dates" savedLabel="Added.">
+            <SimpleForm action={addClosedDatesAction} submitLabel={t("Add closed dates")} savedLabel={t("Added.")}>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="First day">
+                <Field label={t("First day")}>
                   <DateField name="start_date" min={today} required />
                 </Field>
-                <Field label="Last day">
+                <Field label={t("Last day")}>
                   <DateField name="end_date" min={today} />
                 </Field>
               </div>
-              <Field label="Reason (optional)" hint="Only you see it.">
-                <Input name="reason" placeholder="Vacation" maxLength={80} />
+              <Field label={t("Reason (optional)")} hint={t("Only you see it.")}>
+                <Input name="reason" placeholder={t("Vacation")} maxLength={80} />
               </Field>
             </SimpleForm>
           </Card>
         </section>
         <section className="space-y-2">
-          <h2 className="section-label">Holidays {year}–{year + 1}</h2>
+          <h2 className="section-label">{t("Holidays {year}–", { year: year })}{year + 1}</h2>
           <Card>
-            <SimpleForm action={saveHolidaysAction} submitLabel="Save holidays" savedLabel="Holidays saved.">
-              <p className="text-sm text-muted">Turn off the holidays you don&apos;t work. They repeat every year.</p>
+            <SimpleForm action={saveHolidaysAction} submitLabel={t("Save holidays")} savedLabel={t("Holidays saved.")}>
+              <p className="text-sm text-muted">{t("Turn off the holidays you don't work. They repeat every year.")}</p>
               <ul className="divide-y divide-line">
                 {next.map((h) => (
                   <li key={h.key}>
@@ -86,7 +88,7 @@ export default async function ClosedPage() {
                         <span className="block font-medium">{h.name}</span>
                         <span className="block text-xs text-muted">{dateLabel(h.on)}</span>
                       </span>
-                      <span className="text-sm text-muted">Closed</span>
+                      <span className="text-sm text-muted">{t("Closed")}</span>
                       <input type="checkbox" name={`closed:${h.key}`} defaultChecked={b.closed_holidays.includes(h.key)}
                         className="h-5 w-5" aria-label={`Closed on ${h.name}`} />
                     </label>

@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requireStaff } from "@/lib/auth";
 import { Page, PageHeader } from "@/components/ui";
@@ -67,13 +68,14 @@ const MINE: SettingsGroup[] = [
 ];
 
 export default async function SettingsPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title={t("Settings")} />
       <Page>
         <p className="text-sm text-muted">
-          {staff.businessName} · logged in as {staff.staffName}
+          {t("{businessName} · logged in as {staffName}", { businessName: staff.businessName, staffName: staff.staffName })}
         </p>
         <SettingsList groups={staff.can.settings ? GROUPS : MINE} />
       </Page>

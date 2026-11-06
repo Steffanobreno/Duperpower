@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
@@ -16,6 +17,7 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
   kind: keyof typeof ICON; title?: string; children: ReactNode; onClose: () => void;
   actions?: ReactNode; autoClose?: number;
 }) {
+  const { t: tr } = useT();
   const closeBtn = useRef<HTMLButtonElement>(null);
   const mounted = useSyncExternalStore(noop, () => true, () => false);
   useEffect(() => {
@@ -44,18 +46,18 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
   }
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-navy/50 p-6 animate-fade" onClick={onClose}>
-      <div role={kind === "success" ? "status" : "alertdialog"} aria-modal="true" aria-label={title ?? (kind === "error" ? "Error" : kind === "warn" ? "Heads up" : "Done")}
+      <div role={kind === "success" ? "status" : "alertdialog"} aria-modal="true" aria-label={title ?? (kind === "error" ? tr("Error") : kind === "warn" ? tr("Heads up") : tr("Done"))}
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-sm space-y-4 rounded-3xl bg-surface p-5 text-center shadow-2xl ring-1 ring-[#d4af37]/60 animate-sheet">
         <div aria-hidden className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
           kind === "warn" ? "bg-[#f7efd4]" : "bg-navy ring-2 ring-[#d4af37]"}`}>{ICON[kind]}</div>
-        {(title ?? (kind === "warn" ? "Just checking" : null)) && <p className="text-lg font-extrabold">{title ?? "Just checking"}</p>}
+        {(title ?? (kind === "warn" ? "Just checking" : null)) && <p className="text-lg font-extrabold">{title ?? tr("Just checking")}</p>}
         <div className="text-[15px] leading-snug">{children}</div>
         <div className="space-y-2">
           {actions}
           <button ref={closeBtn} type="button" onClick={onClose}
             className={`w-full rounded-full py-3 font-bold ${actions ? "border border-line text-ink" : "bg-brand text-white"}`}>
-            {actions ? (kind === "warn" ? "Change it" : "Close") : "OK"}
+            {actions ? (kind === "warn" ? tr("Change it") : tr("Close")) : tr("OK")}
           </button>
         </div>
       </div>
@@ -75,6 +77,7 @@ export function FormPopup({ state, override, overrideLabel = "Go ahead anyway", 
   /** The form field that means "do it anyway" (e.g. "override"). */
   override?: string; overrideLabel?: string; savedText?: string;
 }) {
+  const { t: tr } = useT();
   const [open, setOpen] = useState(!!state);
   const [shown, setShown] = useState(state);
   if (state !== shown) {
@@ -101,10 +104,10 @@ export function FormPopup({ state, override, overrideLabel = "Go ahead anyway", 
                 setOpen(false);
                 form?.requestSubmit();
               }}>
-              {overrideLabel}
+              {tr(overrideLabel)}
             </button>
           ) : undefined}>
-          {message}
+          {tr(message)}
         </Popup>
       )}
     </>

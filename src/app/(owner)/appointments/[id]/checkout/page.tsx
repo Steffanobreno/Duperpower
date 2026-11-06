@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,6 +29,7 @@ export const metadata: Metadata = { title: "Invoice" };
 // charges or taxes, tips, what was paid and what is still due.
 
 export default async function CheckoutPage({ params, searchParams }: PageProps<"/appointments/[id]/checkout">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id } = await params;
   const sp = await searchParams;
@@ -38,10 +40,10 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
   if (!data) {
     return (
       <>
-        <PageHeader title="Checkout" back={`/appointments/${id}`} />
+        <PageHeader title={t("Checkout")} back={`/appointments/${id}`} />
         <Page>
           <form action={startCheckoutAction.bind(null, id)}>
-            <Button type="submit" className="w-full">Start checkout</Button>
+            <Button type="submit" className="w-full">{t("Start checkout")}</Button>
           </form>
         </Page>
       </>
@@ -68,39 +70,39 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
 
   return (
     <>
-      <PageHeader title={open ? "Finish order" : `Receipt #${invoice.number}`} back={`/appointments/${id}`} />
+      <PageHeader title={open ? t("Finish order") : `Receipt #${invoice.number}`} back={`/appointments/${id}`} />
       <Page>
-        {!open && <Notice kind="success">Order finished · Paid in full. Thank you!</Notice>}
+        {!open && <Notice kind="success">{t("Order finished · Paid in full. Thank you!")}</Notice>}
         {open && (
-          <ol className="grid grid-cols-3 gap-1 text-center text-xs font-semibold" aria-label="Steps">
-            <li className="rounded-full bg-success-soft py-1.5 text-success">1 · Services</li>
-            <li className={`rounded-full py-1.5 ${balance > 0 ? "bg-brand text-white" : "bg-success-soft text-success"}`}>2 · Payment</li>
-            <li className="rounded-full bg-bg py-1.5 text-muted">3 · Receipt</li>
+          <ol className="grid grid-cols-3 gap-1 text-center text-xs font-semibold" aria-label={t("Steps")}>
+            <li className="rounded-full bg-success-soft py-1.5 text-success">{t("1 · Services")}</li>
+            <li className={`rounded-full py-1.5 ${balance > 0 ? "bg-brand text-white" : "bg-success-soft text-success"}`}>{t("2 · Payment")}</li>
+            <li className="rounded-full bg-bg py-1.5 text-muted">{t("3 · Receipt")}</li>
           </ol>
         )}
 
         <details className="card px-4 py-3">
           <summary className="flex cursor-pointer list-none items-center justify-between text-sm">
             <span className="space-y-1">
-              <span className="flex gap-6"><span className="w-24 text-muted">Checked in</span>{stamp(appt.checked_in_at)}</span>
-              <span className="flex gap-6"><span className="w-24 text-muted">Checked out</span>{stamp(appt.checked_out_at)}</span>
+              <span className="flex gap-6"><span className="w-24 text-muted">{t("Checked in")}</span>{stamp(appt.checked_in_at)}</span>
+              <span className="flex gap-6"><span className="w-24 text-muted">{t("Checked out")}</span>{stamp(appt.checked_out_at)}</span>
             </span>
-            <span className="font-semibold text-brand">Edit</span>
+            <span className="font-semibold text-brand">{t("Edit")}</span>
           </summary>
           <form action={saveVisitTimesAction.bind(null, id)} className="mt-3 grid grid-cols-2 gap-2">
-            <label className="text-xs font-semibold text-muted">Checked in
+            <label className="text-xs font-semibold text-muted">{t("Checked in")}
               <Input type="datetime-local" name="checked_in_at" defaultValue={local(appt.checked_in_at)} />
             </label>
-            <label className="text-xs font-semibold text-muted">Checked out
+            <label className="text-xs font-semibold text-muted">{t("Checked out")}
               <Input type="datetime-local" name="checked_out_at" defaultValue={local(appt.checked_out_at)} />
             </label>
-            <Button type="submit" kind="secondary" className="col-span-2">Save times</Button>
+            <Button type="submit" kind="secondary" className="col-span-2">{t("Save times")}</Button>
           </form>
         </details>
 
         <div className="flex items-center justify-between px-1">
-          <h2 className="section-label">Services</h2>
-          <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">Edit services &amp; prices</Link>
+          <h2 className="section-label">{t("Services")}</h2>
+          <Link href={`/appointments/${id}/services`} className="text-sm font-semibold text-brand">{t("Edit services & prices")}</Link>
         </div>
         <section className="card divide-y divide-line">
           {[...byPet.entries()].map(([pet, list]) => (
@@ -130,37 +132,37 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
           )}
           {open && (
             <div className="space-y-2 px-4 py-3">
-              <AddItem appointmentId={id} kind="discount" title="+ Add a discount" placeholder="One-time discount" tone="text-brand" />
-              <AddItem appointmentId={id} kind="fee" title="+ Add service charges" placeholder="Service charge" tone="text-success" />
-              <AddItem appointmentId={id} kind="tax" title="+ Add tax" placeholder="Sales tax" tone="text-muted" />
+              <AddItem appointmentId={id} kind="discount" title={t("+ Add a discount")} placeholder={t("One-time discount")} tone="text-brand" />
+              <AddItem appointmentId={id} kind="fee" title={t("+ Add service charges")} placeholder={t("Service charge")} tone="text-success" />
+              <AddItem appointmentId={id} kind="tax" title={t("+ Add tax")} placeholder={t("Sales tax")} tone="text-muted" />
             </div>
           )}
           <dl className="space-y-1.5 px-4 py-3 text-sm">
-            <Row label="Sub total" value={money(invoice.subtotal_cents)} />
-            {invoice.discount_cents > 0 && <Row label="Discount" value={`−${money(invoice.discount_cents)}`} />}
-            <Row label="Tax and charges" value={money(fees)} />
-            <Row label="Tips" value={money(invoice.tip_cents)} />
-            <Row label="Total" value={money(invoice.total_cents)} strong />
-            <Row label="Amount paid" value={money(invoice.paid_cents)} />
+            <Row label={t("Sub total")} value={money(invoice.subtotal_cents)} />
+            {invoice.discount_cents > 0 && <Row label={t("Discount")} value={`−${money(invoice.discount_cents)}`} />}
+            <Row label={t("Tax and charges")} value={money(fees)} />
+            <Row label={t("Tips")} value={money(invoice.tip_cents)} />
+            <Row label={t("Total")} value={money(invoice.total_cents)} strong />
+            <Row label={t("Amount paid")} value={money(invoice.paid_cents)} />
           </dl>
           <dl className="space-y-1.5 rounded-b-[var(--radius-card)] bg-bg px-4 py-3">
-            <Row label="Total collected" value={money(invoice.paid_cents)} strong />
+            <Row label={t("Total collected")} value={money(invoice.paid_cents)} strong />
             <div className="flex justify-between font-bold">
-              <dt>Balance outstanding</dt>
+              <dt>{t("Balance outstanding")}</dt>
               <dd className={balance > 0 ? "text-danger" : "text-success"}>{money(balance)}</dd>
             </div>
           </dl>
         </section>
 
         {open && balance > 0 && (
-          <section className="space-y-2" aria-label="Collect payment">
-            <h2 className="section-label px-1">Collect payment</h2>
+          <section className="space-y-2" aria-label={t("Collect payment")}>
+            <h2 className="section-label px-1">{t("Collect payment")}</h2>
             <div className="card px-4 py-5">
               <PaymentForm action={recordPaymentAction.bind(null, id)} balanceCents={balance}
                 serviceCents={serviceAfterDiscount} clientName={fullName(appt.client)} />
             </div>
             <Link href={`/appointments/${id}`} className="block py-2 text-center text-sm font-semibold text-muted">
-              The client will pay later (leave it unpaid)
+              {t("The client will pay later (leave it unpaid)")}
             </Link>
           </section>
         )}
@@ -168,14 +170,14 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
         {open && balance === 0 && (
           <form action={closeInvoiceAction.bind(null, id)}>
             <Button type="submit" className="w-full py-3.5 text-base">
-              {invoice.total_cents === 0 ? "Finish order (nothing to charge)" : "Finish order"}
+              {invoice.total_cents === 0 ? t("Finish order (nothing to charge)") : t("Finish order")}
             </Button>
           </form>
         )}
 
         {payments.length > 0 && (
           <section className="space-y-2">
-            <h2 className="section-label">Payments</h2>
+            <h2 className="section-label">{t("Payments")}</h2>
             <ul className="card divide-y divide-line overflow-hidden text-sm">
               {payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
@@ -189,11 +191,11 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
                   </div>
                   <div className="text-right">
                     <div className="font-semibold">{money(p.amount_cents + p.tip_cents)}</div>
-                    {p.tip_cents > 0 && <div className="text-muted">incl. {money(p.tip_cents)} tip</div>}
+                    {p.tip_cents > 0 && <div className="text-muted">{t("incl. {money} tip", { money: money(p.tip_cents) })}</div>}
                     <details className="mt-1">
-                      <summary className="cursor-pointer text-xs font-semibold text-danger">Remove</summary>
+                      <summary className="cursor-pointer text-xs font-semibold text-danger">{t("Remove")}</summary>
                       <form action={deletePaymentAction.bind(null, id, p.id)}>
-                        <button type="submit" className="mt-1 rounded-lg bg-danger px-2 py-1 text-xs font-bold text-white">Yes, remove it</button>
+                        <button type="submit" className="mt-1 rounded-lg bg-danger px-2 py-1 text-xs font-bold text-white">{t("Yes, remove it")}</button>
                       </form>
                     </details>
                   </div>
@@ -209,7 +211,7 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
 
         {!open && (
           <form action={reopenInvoiceAction.bind(null, id)}>
-            <Button type="submit" kind="ghost" className="w-full">Reopen to fix a mistake</Button>
+            <Button type="submit" kind="ghost" className="w-full">{t("Reopen to fix a mistake")}</Button>
           </form>
         )}
       </Page>
@@ -225,21 +227,22 @@ function RemoveButton({ appointmentId, itemId, label }: { appointmentId: string;
   );
 }
 
-function AddItem({ appointmentId, kind, title, placeholder, tone }: {
+async function AddItem({ appointmentId, kind, title, placeholder, tone }: {
   appointmentId: string; kind: "discount" | "fee" | "tax"; title: string; placeholder: string; tone: string;
 }) {
+  const { t } = await getOwnerI18n();
   return (
     <details>
       <summary className={`cursor-pointer list-none font-semibold ${tone}`}>{title}</summary>
       <form action={addInvoiceItemAction.bind(null, appointmentId)} className="mt-2 grid grid-cols-[1fr_5.5rem_4.5rem] gap-2">
         <input type="hidden" name="kind" value={kind} />
         <Input name="description" placeholder={placeholder} aria-label={`${title} description`} />
-        <Input name="amount" inputMode="decimal" placeholder="$ or %" required aria-label={`${title} amount`} />
-        <select name="unit" aria-label="Dollars or percent" className="rounded-xl border border-line bg-surface px-2">
+        <Input name="amount" inputMode="decimal" placeholder={t("$ or %")} required aria-label={`${title} amount`} />
+        <select name="unit" aria-label={t("Dollars or percent")} className="rounded-xl border border-line bg-surface px-2">
           <option value="dollars">$</option>
           <option value="percent">%</option>
         </select>
-        <Button type="submit" kind="secondary" className="col-span-3">Add</Button>
+        <Button type="submit" kind="secondary" className="col-span-3">{t("Add")}</Button>
       </form>
     </details>
   );

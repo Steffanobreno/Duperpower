@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
@@ -11,6 +12,7 @@ import { AreaForm } from "../area-form";
 export const metadata: Metadata = { title: "Service area" };
 
 export default async function AreaPage({ params }: PageProps<"/settings/areas/[id]">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const { id } = await params;
   const area = id === "new" ? null : (await serviceAreas(staff.businessId)).find((a) => a.id === id);
@@ -24,7 +26,7 @@ export default async function AreaPage({ params }: PageProps<"/settings/areas/[i
   const places = [...byCity.values()].flat().join(", ");
   return (
     <>
-      <PageHeader title={area?.name ?? "New area"} back="/settings/areas" />
+      <PageHeader title={area?.name ?? t("New area")} back="/settings/areas" />
       <Page>
         <Card>
           <AreaForm action={saveAreaAction.bind(null, area?.id ?? null)}
@@ -35,7 +37,7 @@ export default async function AreaPage({ params }: PageProps<"/settings/areas/[i
             <p className="px-1 text-sm text-muted">{[...byCity.keys()].filter(Boolean).join(", ")}</p>
             <form action={deleteAreaAction.bind(null, area.id)}>
               <ConfirmButton question={`Delete the ${area.name} area?`} className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft">
-                Delete area
+                {t("Delete area")}
               </ConfirmButton>
             </form>
           </>

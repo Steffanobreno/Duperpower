@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
@@ -11,6 +12,7 @@ import { PetForm } from "../../../forms";
 export const metadata: Metadata = { title: "New pet" };
 
 export default async function NewPetPage({ params, searchParams }: PageProps<"/clients/[id]/pets/new">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id } = await params;
   const first = (await searchParams).first === "1";
@@ -20,7 +22,7 @@ export default async function NewPetPage({ params, searchParams }: PageProps<"/c
     <>
       <PageHeader title={`New pet for ${fullName(client)}`} back={`/clients/${id}`} />
       <Page>
-        {first && <Notice kind="success">Client saved. Now add their pet.</Notice>}
+        {first && <Notice kind="success">{t("Client saved. Now add their pet.")}</Notice>}
         <Card>
           <PetForm action={savePetAction.bind(null, id, null)} offerBooking options={petOptions(lists)} />
         </Card>

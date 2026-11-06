@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
@@ -11,6 +12,7 @@ import { ServicesEditor } from "./services-editor";
 export const metadata: Metadata = { title: "Edit services" };
 
 export default async function EditServicesPage({ params }: PageProps<"/appointments/[id]/services">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id } = await params;
   const [appt, services, [invoice]] = await Promise.all([
@@ -28,13 +30,13 @@ export default async function EditServicesPage({ params }: PageProps<"/appointme
       .map((r) => [r.service_id, { priceCents: r.price_cents, minutes: r.duration_min }]));
   return (
     <>
-      <PageHeader title="Edit services" back={`/appointments/${id}`} />
+      <PageHeader title={t("Edit services")} back={`/appointments/${id}`} />
       <Page>
         {invoice && (
           <Notice kind="info">
             {invoice.status === "closed"
-              ? "This visit is paid. If the new total is higher, the bill opens again so you can collect the rest."
-              : "Changes update this visit's bill."}
+              ? t("This visit is paid. If the new total is higher, the bill opens again so you can collect the rest.")
+              : t("Changes update this visit's bill.")}
           </Notice>
         )}
         <ServicesEditor

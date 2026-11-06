@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -12,18 +13,19 @@ export function GroomerForm({ action, colors, initial, isOwner = false, submit }
   isOwner?: boolean;
   submit: string;
 }) {
+  const { t } = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   const [color, setColor] = useState(initial?.color ?? colors[1]);
   return (
     <ActionForm action={formAction} className="space-y-3" key={state?.saved ? "saved" : "form"}>
-      <FormPopup state={state} savedText="Added." />
-      <Field label="Name"><Input name="name" defaultValue={initial?.name} required placeholder="Maria" /></Field>
+      <FormPopup state={state} savedText={t("Added.")} />
+      <Field label={t("Name")}><Input name="name" defaultValue={initial?.name} required placeholder={t("Maria")} /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Mobile (optional)"><Input name="phone" defaultValue={initial?.phone} inputMode="tel" placeholder="(650) 555-0100" /></Field>
-        <Field label="Email (optional)"><Input name="email" type="email" defaultValue={initial?.email} placeholder="maria@gmail.com" /></Field>
+        <Field label={t("Mobile (optional)")}><Input name="phone" defaultValue={initial?.phone} inputMode="tel" placeholder="(650) 555-0100" /></Field>
+        <Field label={t("Email (optional)")}><Input name="email" type="email" defaultValue={initial?.email} placeholder={t("maria@gmail.com")} /></Field>
       </div>
       <div className="space-y-1">
-        <span className="text-sm font-medium">Color on the calendar</span>
+        <span className="text-sm font-medium">{t("Color on the calendar")}</span>
         <input type="hidden" name="color" value={color} />
         <div className="flex flex-wrap gap-2">
           {colors.map((c) => (
@@ -35,10 +37,10 @@ export function GroomerForm({ action, colors, initial, isOwner = false, submit }
       {initial && !isOwner && (
         <label className="flex items-center gap-3 text-sm">
           <input type="checkbox" name="active" defaultChecked={initial.active} className="h-5 w-5" />
-          Active (shows in the booking form and on the calendar)
+          {t("Active (shows in the booking form and on the calendar)")}
         </label>
       )}
-      <Button type="submit" disabled={pending} className="w-full">{pending ? "Saving…" : submit}</Button>
+      <Button type="submit" disabled={pending} className="w-full">{pending ? t("Saving…") : submit}</Button>
     </ActionForm>
   );
 }

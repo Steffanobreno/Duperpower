@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useState, useTransition } from "react";
 import { Button, Notice } from "@/components/ui";
 import { removePushSubscriptionAction, savePushSubscriptionAction, testPushAction } from "./actions";
@@ -15,6 +16,7 @@ const toKey = (base64: string) => {
 type State = "loading" | "unsupported" | "needs-home-screen" | "denied" | "off" | "on";
 
 export function PushSetup({ publicKey }: { publicKey: string }) {
+  const { t } = useT();
   const [state, setState] = useState<State>("loading");
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "success" | "error" | "info"; text: string } | null>(null);
@@ -77,26 +79,25 @@ export function PushSetup({ publicKey }: { publicKey: string }) {
   return (
     <div className="space-y-3">
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
-      {state === "loading" && <p className="text-sm text-muted">Checking this device…</p>}
+      {state === "loading" && <p className="text-sm text-muted">{t("Checking this device…")}</p>}
       {state === "needs-home-screen" && (
         <Notice kind="warn">
-          On the iPhone, notifications only work from the app on your Home Screen. In Safari tap Share → Add to Home Screen,
-          open the app from the Home Screen icon, and come back here.
+          {t("On the iPhone, notifications only work from the app on your Home Screen. In Safari tap Share → Add to Home Screen, open the app from the Home Screen icon, and come back here.")}
         </Notice>
       )}
-      {state === "unsupported" && <Notice kind="warn">This browser can&apos;t show notifications. Use Safari on the iPhone (from the Home Screen) or Chrome.</Notice>}
+      {state === "unsupported" && <Notice kind="warn">{t("This browser can't show notifications. Use Safari on the iPhone (from the Home Screen) or Chrome.")}</Notice>}
       {state === "denied" && (
         <Notice kind="warn">
-          Notifications are blocked for this app. iPhone: Settings → Notifications → this app → Allow Notifications. Then come back here.
+          {t("Notifications are blocked for this app. iPhone: Settings → Notifications → this app → Allow Notifications. Then come back here.")}
         </Notice>
       )}
-      {state === "off" && <Button className="w-full py-3.5 text-base" disabled={pending} onClick={turnOn}>{pending ? "…" : "Turn on notifications on this device"}</Button>}
+      {state === "off" && <Button className="w-full py-3.5 text-base" disabled={pending} onClick={turnOn}>{pending ? "…" : t("Turn on notifications on this device")}</Button>}
       {state === "on" && (
         <>
-          <Notice kind="success">This device gets notifications.</Notice>
+          <Notice kind="success">{t("This device gets notifications.")}</Notice>
           <div className="grid grid-cols-2 gap-2">
-            <Button kind="secondary" disabled={pending} onClick={test}>Send a test</Button>
-            <Button kind="danger" disabled={pending} onClick={turnOff}>Turn off here</Button>
+            <Button kind="secondary" disabled={pending} onClick={test}>{t("Send a test")}</Button>
+            <Button kind="danger" disabled={pending} onClick={turnOff}>{t("Turn off here")}</Button>
           </div>
         </>
       )}

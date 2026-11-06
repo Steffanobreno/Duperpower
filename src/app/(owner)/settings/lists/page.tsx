@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
@@ -12,11 +13,12 @@ const ROWS: { title: string; links: (OptionKind | "pet-codes")[] }[] = [
 ];
 
 export default async function ListsPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const [lists, codes] = await Promise.all([allOptions(staff.businessId), listPetCodes(staff.businessId)]);
   return (
     <>
-      <PageHeader title="Client and pet options" back="/settings" />
+      <PageHeader title={t("Client and pet options")} back="/settings" />
       <Page>
         {ROWS.map((row) => (
           <section key={row.title} className="space-y-2">
@@ -31,8 +33,8 @@ export default async function ListsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold">{title}</div>
                         <div className="truncate text-sm text-muted">
-                          {k === "pet-codes" && "Colored labels on the pet: Matted, Biter, Senior… · "}
-                          {sample.length ? sample.join(", ") : "None yet"}
+                          {k === "pet-codes" && t("Colored labels on the pet: Matted, Biter, Senior… · ")}
+                          {sample.length ? sample.join(", ") : t("None yet")}
                         </div>
                       </div>
                       <span aria-hidden className="text-muted">›</span>
@@ -44,8 +46,8 @@ export default async function ListsPage() {
                 <li>
                   <Link href="/settings/services" className="flex items-center gap-3 px-4 py-3 hover:bg-bg">
                     <div className="min-w-0 flex-1">
-                      <div className="font-semibold">Pet sizes</div>
-                      <div className="text-sm text-muted">Small, Medium, Large, X-Large by height. Each service has a price per size.</div>
+                      <div className="font-semibold">{t("Pet sizes")}</div>
+                      <div className="text-sm text-muted">{t("Small, Medium, Large, X-Large by height. Each service has a price per size.")}</div>
                     </div>
                     <span aria-hidden className="text-muted">›</span>
                   </Link>

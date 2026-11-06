@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -9,14 +10,15 @@ import { saveRolePermissionsAction } from "../actions";
 export const metadata: Metadata = { title: "Roles and permissions" };
 
 export default async function RolesPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const rows = await sql<{ role: string; perm: string }[]>`select role, perm from role_permissions where business_id = ${staff.businessId}`;
   const has = (role: string, perm: string) => rows.some((r) => r.role === role && r.perm === perm);
   return (
     <>
-      <PageHeader title="Roles and permissions" back="/settings/team" />
+      <PageHeader title={t("Roles and permissions")} back="/settings/team" />
       <Page>
-        <p className="text-sm text-muted">The owner can do everything. Choose what admins and groomers can do when they log in.</p>
+        <p className="text-sm text-muted">{t("The owner can do everything. Choose what admins and groomers can do when they log in.")}</p>
         {(["admin", "groomer"] as const).map((role) => (
           <section key={role} className="space-y-2">
             <h2 className="section-label">{ROLES[role]}</h2>

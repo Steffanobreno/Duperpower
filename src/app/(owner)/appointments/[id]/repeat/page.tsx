@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
@@ -11,6 +12,7 @@ import { RepeatForm } from "./repeat-form";
 export const metadata: Metadata = { title: "Repeat" };
 
 export default async function RepeatPage({ params }: PageProps<"/appointments/[id]/repeat">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id } = await params;
   const [a] = await sql<{ client_id: string; start_at: Date; series_id: string | null; freq: RepeatRule["freq"] | null; interval_n: number | null;
@@ -35,7 +37,7 @@ export default async function RepeatPage({ params }: PageProps<"/appointments/[i
       : { freq: "week", every: weeks, count: 10, until: null };
   return (
     <>
-      <PageHeader title="Repeat" back={`/appointments/${id}`} />
+      <PageHeader title={t("Repeat")} back={`/appointments/${id}`} />
       <Page>
         <RepeatForm
           appointmentId={id}

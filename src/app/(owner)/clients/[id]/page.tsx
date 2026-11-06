@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,6 +23,7 @@ import { activeAgreement, currentSignature } from "@/lib/agreement";
 export const metadata: Metadata = { title: "Client" };
 
 export default async function ClientPage({ params, searchParams }: PageProps<"/clients/[id]">) {
+  const { t } = await getOwnerI18n();
   const sp = await searchParams;
   const staff = await requireStaff();
   const { id } = await params;
@@ -60,7 +62,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       <PageHeader
         title={fullName(client)}
         back="/clients"
-        action={<ButtonLink kind="secondary" href={`/clients/${id}/edit`}>Edit</ButtonLink>}
+        action={<ButtonLink kind="secondary" href={`/clients/${id}/edit`}>{t("Edit")}</ButtonLink>}
       />
       <Page>
         <div className="card px-4 pb-4 pt-5">
@@ -70,10 +72,10 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xl font-bold">{fullName(client)}</p>
-              {client.archived_at && <span className="text-xs font-bold uppercase text-muted">Inactive</span>}
+              {client.archived_at && <span className="text-xs font-bold uppercase text-muted">{t("Inactive")}</span>}
             </div>
-            <a href={`sms:${client.phone}`} aria-label="Text" className="rounded-full p-2 text-brand hover:bg-brand-soft"><Chat size={24} /></a>
-            <a href={`tel:${client.phone}`} aria-label="Call" className="rounded-full p-2 text-brand hover:bg-brand-soft"><Phone size={24} /></a>
+            <a href={`sms:${client.phone}`} aria-label={t("Text")} className="rounded-full p-2 text-brand hover:bg-brand-soft"><Chat size={24} /></a>
+            <a href={`tel:${client.phone}`} aria-label={t("Call")} className="rounded-full p-2 text-brand hover:bg-brand-soft"><Phone size={24} /></a>
           </div>
           <dl className="mt-5 grid grid-cols-4 gap-y-4 text-center">
             {([
@@ -96,73 +98,73 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="section-label">Appointments</h2>
+            <h2 className="section-label">{t("Appointments")}</h2>
             <span className="flex gap-1">
-              <ButtonLink kind="ghost" href={`/waitlist/new?client=${id}`}>+ Waitlist</ButtonLink>
-              <ButtonLink kind="ghost" href={`/appointments/new?client=${id}`}>+ New appointment</ButtonLink>
+              <ButtonLink kind="ghost" href={`/waitlist/new?client=${id}`}>{t("+ Waitlist")}</ButtonLink>
+              <ButtonLink kind="ghost" href={`/appointments/new?client=${id}`}>{t("+ New appointment")}</ButtonLink>
             </span>
           </div>
           {upcoming[0] && (
             <Link href={`/appointments/${upcoming[0].id}`} className="block rounded-2xl bg-success-soft px-4 py-3">
-              <span className="block text-sm font-bold text-success">UPCOMING ({upcoming.length})</span>
+              <span className="block text-sm font-bold text-success">{t("UPCOMING ({n})", { n: upcoming.length })}</span>
               <span className="block font-semibold">{dayLabel(upcoming[0].start_at, tz)} · {timeLabel(upcoming[0].start_at, tz)}</span>
             </Link>
           )}
           {past[0] && (
             <Link href={`/appointments/${past[0].id}`} className="block rounded-2xl bg-bg px-4 py-3">
-              <span className="block text-sm font-bold text-muted">HISTORY ({past.length})</span>
+              <span className="block text-sm font-bold text-muted">{t("HISTORY ({n})", { n: past.length })}</span>
               <span className="block font-semibold">{dayLabel(past[0].start_at, tz)} · {timeLabel(past[0].start_at, tz)}</span>
             </Link>
           )}
         </section>
 
         <Card className="space-y-3">
-          <h2 className="font-bold">Profile</h2>
+          <h2 className="font-bold">{t("Profile")}</h2>
           <dl className="grid grid-cols-[6rem_1fr] gap-x-3 gap-y-2 text-sm">
-            <dt className="text-muted">Phone</dt>
+            <dt className="text-muted">{t("Phone")}</dt>
             <dd>
               {staff.can.client_contact
                 ? <PhoneLink phone={client.phone} label={phoneLabel(client.phone)} className="font-semibold text-brand" />
-                : <span className="text-muted">Hidden · use Call or Text above</span>}
+                : <span className="text-muted">{t("Hidden · use Call or Text above")}</span>}
             </dd>
             {client.email && staff.can.client_contact && (
               <>
-                <dt className="text-muted">Email</dt>
+                <dt className="text-muted">{t("Email")}</dt>
                 <dd className="break-all"><a href={`mailto:${client.email}`} className="font-semibold text-brand">{client.email}</a></dd>
               </>
             )}
-            <dt className="text-muted">Address</dt>
+            <dt className="text-muted">{t("Address")}</dt>
             <dd>
               {address ? (
                 <AddressLink address={address} lat={client.lat} lng={client.lng} className="font-semibold text-brand" />
-              ) : "Not set"}
+              ) : t("Not set")}
             </dd>
             {client.access_notes && (
               <>
-                <dt className="text-muted">Access</dt>
+                <dt className="text-muted">{t("Access")}</dt>
                 <dd className="whitespace-pre-line">{client.access_notes}</dd>
               </>
             )}
             {(tags.get(id)?.length ?? 0) > 0 && (
               <>
-                <dt className="text-muted">Tags</dt>
+                <dt className="text-muted">{t("Tags")}</dt>
                 <dd><TagChips tags={tags.get(id)} /></dd>
               </>
             )}
             {client.referral_source && (
               <>
-                <dt className="text-muted">Found you</dt>
+                <dt className="text-muted">{t("Found you")}</dt>
                 <dd>{client.referral_source}</dd>
               </>
             )}
-            <dt className="text-muted">Client since</dt>
+            <dt className="text-muted">{t("Client since")}</dt>
             <dd>{dayLabel(client.imported_last_service_at && client.imported_last_service_at < client.created_at ? client.imported_last_service_at : client.created_at, tz)}</dd>
           </dl>
           {agreement &&
             (signature ? (
               <div className="space-y-1">
                 <p className="text-sm text-success">
-                  Agreement signed {dayLabel(signature.signed_at, tz)} by &quot;{signature.signed_name}&quot;
+                  {t("Agreement signed {dayLabel} by \"{signed_name}\"", { dayLabel: dayLabel(signature.signed_at, tz), signed_name: signature.signed_name })}
                 </p>
                 {signature.signature_url && (
                   // eslint-disable-next-line @next/next/no-img-element -- the signature is a data URL
@@ -171,43 +173,43 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm text-muted">Agreement not signed yet (they&apos;ll be asked on their confirm link).</p>
+                <p className="text-sm text-muted">{t("Agreement not signed yet (they'll be asked on their confirm link).")}</p>
                 <div className="flex flex-wrap gap-2">
                   <a href={`sms:${client.phone}?&body=${encodeURIComponent(`Hi ${client.first_name}! Please sign our service agreement here: ${signUrl}`)}`}
-                    className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">Text sign link</a>
+                    className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">{t("Text sign link")}</a>
                   {client.email && (
                     <form action={emailSignLinkAction.bind(null, id)}>
-                      <button type="submit" className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">Email sign link</button>
+                      <button type="submit" className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">{t("Email sign link")}</button>
                     </form>
                   )}
-                  <CopyButton value={signUrl} label="Copy link" />
+                  <CopyButton value={signUrl} label={t("Copy link")} />
                 </div>
-                {sp.signLink === "sent" && <p role="status" className="text-sm text-success">Sign link emailed.</p>}
-                {sp.signLink === "failed" && <p role="alert" className="text-sm text-danger">The email didn&apos;t go out. Check the email setup in Texts and email.</p>}
+                {sp.signLink === "sent" && <p role="status" className="text-sm text-success">{t("Sign link emailed.")}</p>}
+                {sp.signLink === "failed" && <p role="alert" className="text-sm text-danger">{t("The email didn't go out. Check the email setup in Texts and email.")}</p>}
               </div>
             ))}
           {client.imported_last_service_at && history.length === 0 && (
-            <p className="text-sm text-muted">Last visit in the old app: {dayLabel(client.imported_last_service_at, tz)}</p>
+            <p className="text-sm text-muted">{t("Last visit in the old app: {dayLabel}", { dayLabel: dayLabel(client.imported_last_service_at, tz) })}</p>
           )}
-          {!client.sms_consent_at && <Notice kind="warn">No text consent recorded. Automatic texts will not be sent.</Notice>}
-          {client.sms_opted_out_at && <Notice kind="warn">This client replied STOP. Texts are blocked.</Notice>}
+          {!client.sms_consent_at && <Notice kind="warn">{t("No text consent recorded. Automatic texts will not be sent.")}</Notice>}
+          {client.sms_opted_out_at && <Notice kind="warn">{t("This client replied STOP. Texts are blocked.")}</Notice>}
         </Card>
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="section-label">Pets</h2>
-            <ButtonLink kind="ghost" href={`/clients/${id}/pets/new`}>Add pet</ButtonLink>
+            <h2 className="section-label">{t("Pets")}</h2>
+            <ButtonLink kind="ghost" href={`/clients/${id}/pets/new`}>{t("Add pet")}</ButtonLink>
           </div>
           {passed.length > 0 && (
             <p className="px-1 text-sm text-muted">
-              In memory 🌈{" "}
+              {t("In memory 🌈")}{" "}
               {passed.map((p, i) => (
                 <span key={p.id}>{i > 0 && ", "}<Link href={`/clients/${id}/pets/${p.id}`} className="underline">{p.name}</Link></span>
               ))}
             </p>
           )}
           {pets.length === 0 ? (
-            <Empty title="No pets yet">Add a pet before booking.</Empty>
+            <Empty title={t("No pets yet")}>{t("Add a pet before booking.")}</Empty>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
               {pets.map((p) => (
@@ -226,7 +228,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                       {p.behavior && <div className="mt-1 text-sm text-warn">{p.behavior}</div>}
                       {ownPriceCount(p.id) > 0 && (
                         <div className="text-xs font-semibold text-brand">
-                          {ownPriceCount(p.id)} price{ownPriceCount(p.id) > 1 ? "s" : ""} just for {p.name}
+                          {t("{ownPriceCount} price", { ownPriceCount: ownPriceCount(p.id) })}{ownPriceCount(p.id) > 1 ? "s" : ""} {t("just for {name}", { name: p.name })}
                         </div>
                       )}
                     </div>
@@ -238,9 +240,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">All appointments</h2>
+          <h2 className="section-label">{t("All appointments")}</h2>
           {history.length === 0 ? (
-            <Empty title="No appointments yet" />
+            <Empty title={t("No appointments yet")} />
           ) : (
             <ul className="card divide-y divide-line overflow-hidden">
               {[...upcoming, ...past].map((a) => (
@@ -264,21 +266,21 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">Payment history</h2>
+          <h2 className="section-label">{t("Payment history")}</h2>
           <div className="card divide-y divide-line">
             <div className="grid grid-cols-2 px-4 py-3 text-sm">
-              <span><span className="text-muted">Total paid </span><strong>{money(summary.paid + summary.tips)}</strong></span>
-              <span><span className="text-muted">Unpaid </span><strong className={summary.unpaid ? "text-danger" : ""}>{money(summary.unpaid)}</strong></span>
+              <span><span className="text-muted">{t("Total paid")}{" "} </span><strong>{money(summary.paid + summary.tips)}</strong></span>
+              <span><span className="text-muted">{t("Unpaid")}{" "} </span><strong className={summary.unpaid ? "text-danger" : ""}>{money(summary.unpaid)}</strong></span>
             </div>
             {summary.payments.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-muted">No payments recorded in this app yet.</p>
+              <p className="px-4 py-3 text-sm text-muted">{t("No payments recorded in this app yet.")}</p>
             ) : (
               summary.payments.map((p) => (
                 <Link key={p.id} href={p.appointment_id ? `/appointments/${p.appointment_id}/checkout` : "#"} className="flex justify-between gap-3 px-4 py-2.5 text-sm hover:bg-bg">
                   <span>{dayLabel(p.received_at, tz)} · {methodLabel(p.method)}</span>
                   <span className="font-semibold tabular-nums">
                     {money(p.amount_cents + p.tip_cents)}
-                    {p.tip_cents > 0 && <span className="font-normal text-muted"> (tip {money(p.tip_cents)})</span>}
+                    {p.tip_cents > 0 && <span className="font-normal text-muted"> {t("(tip {money})", { money: money(p.tip_cents) })}</span>}
                   </span>
                 </Link>
               ))
@@ -287,50 +289,49 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">Preference</h2>
+          <h2 className="section-label">{t("Preference")}</h2>
           <dl className="card divide-y divide-line text-sm">
             <div className="flex justify-between px-4 py-3">
-              <dt className="text-muted">Preferred frequency</dt>
-              <dd className="font-semibold">{preferredDays ? `${Math.round(preferredDays / 7)} weeks` : "Not set (edit the pet)"}</dd>
+              <dt className="text-muted">{t("Preferred frequency")}</dt>
+              <dd className="font-semibold">{preferredDays ? `${Math.round(preferredDays / 7)} weeks` : t("Not set (edit the pet)")}</dd>
             </div>
             <div className="flex justify-between px-4 py-3">
-              <dt className="text-muted">Actual frequency</dt>
+              <dt className="text-muted">{t("Actual frequency")}</dt>
               <dd className="font-semibold">{summary.actualDays ? `${summary.actualDays} days` : "—"}</dd>
             </div>
           </dl>
         </section>
 
         <section className="space-y-2">
-          <h2 className="section-label">Business control</h2>
+          <h2 className="section-label">{t("Business control")}</h2>
           <div className="card divide-y divide-line">
-            <Toggle clientId={id} control="inactive" on={!!client.archived_at} label="Inactive customer" hint="Hidden from the client list" />
-            <Toggle clientId={id} control="block_messages" on={!!client.sms_opted_out_at} label="Block messages" hint="No automatic texts" />
-            <Toggle clientId={id} control="block_online" on={client.online_booking_blocked} label="Block online booking" hint="They're asked to text you instead" />
-            <Toggle clientId={id} control="no_marketing" on={!!client.email_unsubscribed_at} label="No marketing emails" hint="Left out of email campaigns (they can unsubscribe themselves too)" />
+            <Toggle clientId={id} control="inactive" on={!!client.archived_at} label={t("Inactive customer")} hint={t("Hidden from the client list")} />
+            <Toggle clientId={id} control="block_messages" on={!!client.sms_opted_out_at} label={t("Block messages")} hint={t("No automatic texts")} />
+            <Toggle clientId={id} control="block_online" on={client.online_booking_blocked} label={t("Block online booking")} hint={t("They're asked to text you instead")} />
+            <Toggle clientId={id} control="no_marketing" on={!!client.email_unsubscribed_at} label={t("No marketing emails")} hint={t("Left out of email campaigns (they can unsubscribe themselves too)")} />
           </div>
         </section>
 
         <details className="card px-4 py-3">
-          <summary className="cursor-pointer font-semibold text-danger">Remove client</summary>
+          <summary className="cursor-pointer font-semibold text-danger">{t("Remove client")}</summary>
           <div className="mt-3 space-y-3 text-sm">
             <p>
-              This deletes {fullName(client)} for good, with {pets.length} pet{pets.length === 1 ? "" : "s"},{" "}
-              {history.length} visit{history.length === 1 ? "" : "s"}
-              {summary.paid + summary.tips > 0 ? ` and ${money(summary.paid + summary.tips)} in payments (they leave your reports)` : ""}.
-              It can&apos;t be undone. To just hide them, use <strong>Inactive customer</strong> above.
+              {t("This deletes {fullName} for good, with {n} pet", { fullName: fullName(client), n: pets.length })}{pets.length === 1 ? "" : "s"},{" "}
+              {t("{n} visit", { n: history.length })}{history.length === 1 ? "" : "s"}
+              {summary.paid + summary.tips > 0 ? ` and ${money(summary.paid + summary.tips)} in payments (they leave your reports)` : ""}{t(". It can't be undone. To just hide them, use")}{" "} <strong>{t("Inactive customer")}</strong> {" "}{t("above.")}
             </p>
             <form action={deleteClientAction.bind(null, id)}>
-              <button type="submit" className="w-full rounded-xl bg-danger py-3 font-bold text-white">Yes, remove {client.first_name} forever</button>
+              <button type="submit" className="w-full rounded-xl bg-danger py-3 font-bold text-white">{t("Yes, remove {first_name} forever", { first_name: client.first_name })}</button>
             </form>
           </div>
         </details>
 
         <section className="space-y-2">
-          <h2 className="section-label">Notes</h2>
+          <h2 className="section-label">{t("Notes")}</h2>
           <form action={addNoteAction.bind(null, id)} className="space-y-2">
-            <label className="sr-only" htmlFor="note">New note</label>
-            <Textarea id="note" name="body" placeholder="Add a note about this client" required />
-            <Button type="submit" kind="secondary">Add note</Button>
+            <label className="sr-only" htmlFor="note">{t("New note")}</label>
+            <Textarea id="note" name="body" placeholder={t("Add a note about this client")} required />
+            <Button type="submit" kind="secondary">{t("Add note")}</Button>
           </form>
           {notes.map((n) => (
             <Card key={n.id} className="text-sm">
@@ -341,7 +342,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                   {n.staff_name ? ` · ${n.staff_name}` : ""}
                 </span>
                 <form action={deleteNoteAction.bind(null, id, n.id)}>
-                  <button type="submit" className="font-semibold text-danger">Delete</button>
+                  <button type="submit" className="font-semibold text-danger">{t("Delete")}</button>
                 </form>
               </div>
             </Card>

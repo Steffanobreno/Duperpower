@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Swipe } from "./swipe";
@@ -31,6 +32,7 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
   /** A name for the field when no <label> wraps it. */
   label?: string;
 }) {
+  const { t: tr } = useT();
   const [own, setOwn] = useState(defaultValue ?? "");
   const v = value ?? own;
   // The real input isn't controlled by React (a re-render would wipe what was just typed into
@@ -93,7 +95,7 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
       </button>
       {/* The calendar is drawn outside the field's <label>, so tapping it never toggles the field. */}
       {open && at && createPortal(
-        <div ref={pop} role="dialog" aria-label="Pick a day" style={{ top: at.top, left: at.left }}
+        <div ref={pop} role="dialog" aria-label={tr("Pick a day")} style={{ top: at.top, left: at.left }}
           className="fixed z-50 w-[20rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-line bg-surface p-3 shadow-xl">
           <MonthPicker value={v} min={min} max={max} onPick={(d) => {
             set(d);
@@ -114,6 +116,7 @@ export function MonthPicker({ value, min, max, onPick, marked, start }: {
   /** The month to open on (yyyy-MM-dd), when nothing is chosen yet. */
   start?: string;
 }) {
+  const { t: tr } = useT();
   const today = localToday();
   const [month, setMonth] = useState((value || start || today).slice(0, 7));
   const chosen = new Set(marked ?? []);
@@ -130,15 +133,15 @@ export function MonthPicker({ value, min, max, onPick, marked, start }: {
   return (
     <div>
       <div className="mb-2 flex items-center gap-1">
-        <button type="button" className={arrow} aria-label="Previous month" disabled={!canPrev} onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
+        <button type="button" className={arrow} aria-label={tr("Previous month")} disabled={!canPrev} onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
         <span className="flex flex-1 items-center justify-center gap-1 font-bold">
           {fmt(`${month}-01`, { month: "long" })}
-          <select aria-label="Year" value={year} onChange={(e) => setMonth(`${e.target.value}${month.slice(4)}`)}
+          <select aria-label={tr("Year")} value={year} onChange={(e) => setMonth(`${e.target.value}${month.slice(4)}`)}
             className="rounded-lg bg-transparent py-1 font-bold text-ink">
             {Array.from({ length: Math.max(1, toYear - fromYear + 1) }, (_, i) => fromYear + i).map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
         </span>
-        <button type="button" className={arrow} aria-label="Next month" disabled={!canNext} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
+        <button type="button" className={arrow} aria-label={tr("Next month")} disabled={!canNext} onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
       </div>
       <Swipe className="grid grid-cols-7 gap-y-1 text-center" label={fmt(`${month}-01`, { month: "long", year: "numeric" })}
         prev={canPrev ? () => setMonth(shiftMonth(month, -1)) : null} next={canNext ? () => setMonth(shiftMonth(month, 1)) : null}>
@@ -160,7 +163,7 @@ export function MonthPicker({ value, min, max, onPick, marked, start }: {
         <button type="button" className="px-2 py-1 text-brand" onClick={() => {
           setMonth(today.slice(0, 7));
           if ((!min || today >= min) && (!max || today <= max)) onPick(today);
-        }}>Today</button>
+        }}>{tr("Today")}</button>
       </div>
     </div>
   );

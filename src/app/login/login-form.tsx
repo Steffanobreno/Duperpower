@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { ActionForm } from "@/components/action-form";
 import { useActionState } from "react";
@@ -6,15 +7,16 @@ import { Button, Field, Input } from "@/components/ui";
 import { loginAction, setupAction } from "./actions";
 
 export function LoginForm({ mode }: { mode: "login" | "setup" }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(mode === "login" ? loginAction : setupAction, undefined);
   return (
     // Just logged in with the password: the app lock doesn't ask for the PIN right away.
     <ActionForm action={(f) => { try { sessionStorage.setItem("woofers:unlocked-at", String(Date.now())); } catch {} action(f); }} className="space-y-4">
       <FormPopup state={state} />
-      <Field label="Email">
+      <Field label={t("Email")}>
         <Input name="email" type="email" autoComplete="email" required />
       </Field>
-      <Field label="Password" hint={mode === "setup" ? "At least 10 characters." : undefined}>
+      <Field label={t("Password")} hint={mode === "setup" ? t("At least 10 characters.") : undefined}>
         <Input
           name="password"
           type="password"
@@ -23,17 +25,17 @@ export function LoginForm({ mode }: { mode: "login" | "setup" }) {
         />
       </Field>
       {mode === "setup" && (
-        <Field label="Setup code" hint="The code you put in the server settings (SETUP_CODE).">
+        <Field label={t("Setup code")} hint={t("The code you put in the server settings (SETUP_CODE).")}>
           <Input name="setup_code" autoComplete="off" />
         </Field>
       )}
       {mode === "setup" && (
-        <Field label="Repeat password">
+        <Field label={t("Repeat password")}>
           <Input name="confirm" type="password" autoComplete="new-password" required />
         </Field>
       )}
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "One moment…" : mode === "login" ? "Log in" : "Create my account"}
+        {pending ? t("One moment…") : mode === "login" ? t("Log in") : t("Create my account")}
       </Button>
     </ActionForm>
   );

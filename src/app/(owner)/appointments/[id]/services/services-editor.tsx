@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,7 @@ export function ServicesEditor({
   appointmentId: string; startIso: string; timezone: string; pets: Pet[]; otherPets?: Pet[]; catalog: CatalogItem[];
   canKeepPrices?: boolean;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [state, setState] = useState<PetState[]>(() => pets.map(withKeys));
   const [result, setResult] = useState<{ error?: string; warning?: string } | null>(null);
@@ -85,10 +87,10 @@ export function ServicesEditor({
               <h2 className="section-label px-0">{p.name}</h2>
               {state.length > 1 && (
                 <button type="button" onClick={() => setState(state.filter((x) => x.petId !== p.petId))}
-                  className="text-sm font-semibold text-danger">Remove {p.name}</button>
+                  className="text-sm font-semibold text-danger">{t("Remove {name}", { name: p.name })}</button>
               )}
             </div>
-            {p.lines.length === 0 && <p className="px-1 text-sm text-muted">Pick {p.name}&apos;s service below.</p>}
+            {p.lines.length === 0 && <p className="px-1 text-sm text-muted">{t("Pick {name}'s service below.", { name: p.name })}</p>}
             {p.lines.map((l) => {
               const normal = usual(p, l.serviceId);
               const custom = !!normal && (l.priceCents !== normal.priceCents || l.minutes !== normal.minutes);
@@ -105,7 +107,7 @@ export function ServicesEditor({
                       {!options.some((c) => c.id === l.serviceId) && <option value={l.serviceId}>{l.name}</option>}
                       {options.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
-                    <span aria-hidden className="text-xs font-semibold text-brand">Change ▾</span>
+                    <span aria-hidden className="text-xs font-semibold text-brand">{t("Change ▾")}</span>
                     <button type="button" aria-label={`Remove ${l.name}`} disabled={p.lines.length === 1 && state.length === 1}
                       onClick={() => setPet(p.petId, (x) => ({ ...x, lines: x.lines.filter((y) => y.key !== l.key) }))}
                       className="rounded-full border-2 border-danger p-0.5 text-danger disabled:opacity-30">
@@ -113,7 +115,7 @@ export function ServicesEditor({
                     </button>
                   </div>
                   <label className="flex items-center justify-between gap-3 px-4 py-3">
-                    <span className="text-muted">Price</span>
+                    <span className="text-muted">{t("Price")}</span>
                     <span className="flex items-center gap-1">
                       $
                       <input key={`${l.key}:${l.serviceId}`} inputMode="decimal" aria-label={`Price of ${l.name}`}
@@ -126,11 +128,11 @@ export function ServicesEditor({
                     </span>
                   </label>
                   <div className="flex items-center justify-between gap-3 px-4 py-3">
-                    <span className="text-muted">Time</span>
+                    <span className="text-muted">{t("Time")}</span>
                     <span className="flex items-center gap-3">
                       <button type="button" aria-label={`Less time for ${l.name}`} className="stepper"
                         onClick={() => update(p.petId, l.key, { minutes: Math.max(0, l.minutes - STEP) })}>−</button>
-                      <span className="w-20 text-center font-semibold tabular-nums" aria-live="polite">{l.minutes} min</span>
+                      <span className="w-20 text-center font-semibold tabular-nums" aria-live="polite">{t("{minutes} min", { minutes: l.minutes })}</span>
                       <button type="button" aria-label={`More time for ${l.name}`} className="stepper"
                         onClick={() => update(p.petId, l.key, { minutes: Math.min(720, l.minutes + STEP) })}>+</button>
                     </span>
@@ -140,8 +142,8 @@ export function ServicesEditor({
                       <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[#12305a]" checked={!!l.keepForPet}
                         onChange={(e) => update(p.petId, l.key, { keepForPet: e.target.checked })} />
                       <span>
-                        <span className="block font-semibold">Keep {money(l.priceCents)}{l.minutes !== normal.minutes ? ` · ${l.minutes} min` : ""} for {p.name} on future visits</span>
-                        <span className="text-muted">Usually {money(normal.priceCents)} · {normal.minutes} min</span>
+                        <span className="block font-semibold">{t("Keep {money}", { money: money(l.priceCents) })}{l.minutes !== normal.minutes ? ` · ${l.minutes} min` : ""} {t("for {name} on future visits", { name: p.name })}</span>
+                        <span className="text-muted">{t("Usually {money} · {minutes} min", { money: money(normal.priceCents), minutes: normal.minutes })}</span>
                       </span>
                     </label>
                   )}
@@ -156,7 +158,7 @@ export function ServicesEditor({
                   if (!c) return;
                   setPet(p.petId, (x) => ({ ...x, lines: [...x.lines, { key: `k${nextKey++}`, serviceId: c.id, name: c.name, priceCents: c.priceCents, minutes: c.minutes }] }));
                 }}>
-                <option value="">Add a service</option>
+                <option value="">{t("Add a service")}</option>
                 {options.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} · {money(c.priceCents)}</option>
                 ))}
@@ -169,25 +171,25 @@ export function ServicesEditor({
       {addable.length > 0 && (
         <label className="card flex items-center gap-3 border-dashed px-4 py-3 text-brand">
           <Plus size={18} />
-          <select aria-label="Add a pet" className="w-0 min-w-0 flex-1 truncate bg-transparent font-semibold outline-none" value=""
+          <select aria-label={t("Add a pet")} className="w-0 min-w-0 flex-1 truncate bg-transparent font-semibold outline-none" value=""
             onChange={(e) => {
               const o = addable.find((x) => x.petId === e.target.value);
               if (o) setState([...state, withKeys(o)]);
             }}>
-            <option value="">Add a pet to this visit</option>
+            <option value="">{t("Add a pet to this visit")}</option>
             {addable.map((o) => <option key={o.petId} value={o.petId}>{o.name}{o.breed ? ` · ${o.breed}` : ""}</option>)}
           </select>
         </label>
       )}
 
       <div className="card space-y-1 px-4 py-3">
-        <p className="flex justify-between"><span className="text-muted">Total time</span><span className="font-semibold">{minutesLabel(totalMin)}</span></p>
-        <p className="flex justify-between"><span className="text-muted">Visit</span><span className="font-semibold">{time(start)} – {time(end)}</span></p>
-        <p className="flex justify-between text-lg font-bold"><span>Total</span><span>{money(total)}</span></p>
+        <p className="flex justify-between"><span className="text-muted">{t("Total time")}</span><span className="font-semibold">{minutesLabel(totalMin)}</span></p>
+        <p className="flex justify-between"><span className="text-muted">{t("Visit")}</span><span className="font-semibold">{time(start)} – {time(end)}</span></p>
+        <p className="flex justify-between text-lg font-bold"><span>{t("Total")}</span><span>{money(total)}</span></p>
       </div>
       <FormPopup state={result} />
       <Button className="w-full py-3.5 text-base" disabled={pending || state.some((p) => p.lines.length === 0)} onClick={save}>
-        {pending ? "Saving…" : state.some((p) => p.lines.length === 0) ? "Pick a service for each pet" : "Save changes"}
+        {pending ? t("Saving…") : state.some((p) => p.lines.length === 0) ? t("Pick a service for each pet") : t("Save changes")}
       </Button>
     </div>
   );

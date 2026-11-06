@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
@@ -21,6 +22,7 @@ import { PetForm } from "../../../forms";
 export const metadata: Metadata = { title: "Edit pet" };
 
 export default async function EditPetPage({ params }: PageProps<"/clients/[id]/pets/[petId]">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id, petId } = await params;
   const [pet, vaccines, services, own, lists, codes, petCodes, grooms] = await Promise.all([
@@ -47,8 +49,8 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
         </Card>
         <Card className="space-y-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-bold">Pet codes</h2>
-            <Link href="/settings/lists/pet-codes" className="text-sm font-semibold text-brand">Edit codes</Link>
+            <h2 className="font-bold">{t("Pet codes")}</h2>
+            <Link href="/settings/lists/pet-codes" className="text-sm font-semibold text-brand">{t("Edit codes")}</Link>
           </div>
           {codes.length ? (
             <form action={setPetCodesAction.bind(null, id, petId)} className="space-y-3">
@@ -63,10 +65,10 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                   </label>
                 ))}
               </div>
-              <button type="submit" className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-brand">Save codes</button>
+              <button type="submit" className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-brand">{t("Save codes")}</button>
             </form>
           ) : (
-            <p className="text-sm text-muted">No codes yet. Add some in Settings.</p>
+            <p className="text-sm text-muted">{t("No codes yet. Add some in Settings.")}</p>
           )}
         </Card>
         <Card>
@@ -74,9 +76,9 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
         </Card>
         <Card className="space-y-3" id="prices">
           <div>
-            <h2 className="font-bold">{pet.name}&apos;s prices</h2>
+            <h2 className="font-bold">{t("{name}'s prices", { name: pet.name })}</h2>
             <p className="text-sm text-muted">
-              A price just for {pet.name} (and, if you like, the time it takes). Booking uses it instead of the usual price, in the app and online.
+              {t("A price just for {name} (and, if you like, the time it takes). Booking uses it instead of the usual price, in the app and online.", { name: pet.name })}
             </p>
           </div>
           {custom.length > 0 && (
@@ -88,13 +90,13 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                     <span className="min-w-0">
                       <span className="block font-semibold">{s.name}</span>
                       <span className="block text-xs text-muted">
-                        Usually {money(s.price_cents)}{r.duration_min != null ? ` · ${minutesLabel(r.duration_min)} for ${pet.name}` : ""}
+                        {t("Usually {money}", { money: money(s.price_cents) })}{r.duration_min != null ? ` · ${minutesLabel(r.duration_min)} for ${pet.name}` : ""}
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
                       <span className="font-bold text-brand">{money(r.price_cents)}</span>
                       <form action={deletePetPriceAction.bind(null, id, petId, r.service_id)}>
-                        <button type="submit" aria-label={`Remove ${pet.name}'s price for ${s.name}`} className="text-xs font-semibold text-danger">Remove</button>
+                        <button type="submit" aria-label={`Remove ${pet.name}'s price for ${s.name}`} className="text-xs font-semibold text-danger">{t("Remove")}</button>
                       </form>
                     </span>
                   </li>
@@ -105,9 +107,9 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
           <PetPriceForm action={savePetPriceAction.bind(null, id, petId)} petName={pet.name} options={priceOptions} />
         </Card>
         <Card className="space-y-3">
-          <h2 className="font-bold">Grooming history</h2>
+          <h2 className="font-bold">{t("Grooming history")}</h2>
           {grooms.length === 0 ? (
-            <p className="text-sm text-muted">Nothing yet. On each visit, note the blade, the length and a photo under “How they were groomed”.</p>
+            <p className="text-sm text-muted">{t("Nothing yet. On each visit, note the blade, the length and a photo under “How they were groomed”.")}</p>
           ) : (
             <ul className="divide-y divide-line text-sm">
               {grooms.map((g) => (
@@ -130,9 +132,9 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
           )}
         </Card>
         <Card className="space-y-3">
-          <h2 className="font-bold">Vaccines</h2>
+          <h2 className="font-bold">{t("Vaccines")}</h2>
           {vaccines.length === 0 ? (
-            <p className="text-sm text-muted">None on file yet. Add them from the certificate: you&apos;ll see a warning when one expires, and the client gets a reminder.</p>
+            <p className="text-sm text-muted">{t("None on file yet. Add them from the certificate: you'll see a warning when one expires, and the client gets a reminder.")}</p>
           ) : (
             <ul className="divide-y divide-line text-sm">
               {vaccines.map((v) => {
@@ -142,17 +144,17 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                     <span>
                       <span className="font-semibold">{v.name}</span>
                       <span className="block text-xs text-muted">
-                        {v.expires_on ? `Expires ${fmt(v.expires_on)}` : "No expiry date"}{v.given_on ? ` · given ${fmt(v.given_on)}` : ""}
+                        {v.expires_on ? `Expires ${fmt(v.expires_on)}` : t("No expiry date")}{v.given_on ? ` · given ${fmt(v.given_on)}` : ""}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">
                       {state && (
                         <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${state === "expired" ? "bg-danger-soft text-danger" : state === "soon" ? "bg-warn-soft text-warn" : "bg-success-soft text-success"}`}>
-                          {state === "expired" ? "Expired" : state === "soon" ? "Expires soon" : "Up to date"}
+                          {state === "expired" ? t("Expired") : state === "soon" ? t("Expires soon") : t("Up to date")}
                         </span>
                       )}
                       <form action={deleteVaccineAction.bind(null, id, petId, v.id)}>
-                        <button type="submit" aria-label={`Delete ${v.name}`} className="text-xs font-semibold text-danger">Delete</button>
+                        <button type="submit" aria-label={`Delete ${v.name}`} className="text-xs font-semibold text-danger">{t("Delete")}</button>
                       </form>
                     </span>
                   </li>
@@ -166,7 +168,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
           <button type="submit" className="text-sm font-semibold text-muted underline">
             {pet.deceased_at ? `Undo: ${pet.name} is still with us` : `${pet.name} passed away 🌈`}
           </button>
-          {!pet.deceased_at && <p className="mt-1 text-xs text-muted">Hides {pet.name} from booking and stops reminders. Visit history stays.</p>}
+          {!pet.deceased_at && <p className="mt-1 text-xs text-muted">{t("Hides {name} from booking and stops reminders. Visit history stays.", { name: pet.name })}</p>}
         </form>
       </Page>
     </>

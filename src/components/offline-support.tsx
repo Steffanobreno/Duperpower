@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -9,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 type Notice = { offline: boolean; at: string | null } | null;
 
 export function OfflineSupport() {
+  const { t: tr } = useT();
   const router = useRouter();
   const path = usePathname();
   const [notice, setNotice] = useState<Notice>(null);
@@ -69,8 +71,8 @@ export function OfflineSupport() {
   return (
     <div role="status" className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-[env(safe-area-inset-top)]">
       <p className="mt-2 rounded-full bg-navy px-4 py-1.5 text-xs font-bold text-[#f7e7a1] shadow-lg ring-1 ring-[#d4af37]">
-        {notice.offline ? "📴 Offline" : "📶 Weak signal"} · {when ? `saved copy from ${when}` : "showing what's saved"}
-        {!notice.offline && " · updating…"}
+        {notice.offline ? tr("📴 Offline") : tr("📶 Weak signal")} · {when ? `saved copy from ${when}` : tr("showing what's saved")}
+        {!notice.offline && tr(" · updating…")}
       </p>
     </div>
   );

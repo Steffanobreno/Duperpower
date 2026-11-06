@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { DateField } from "@/components/date-field";
 import { useMemo, useState, useTransition } from "react";
 import { Button, Field, Input, Notice, Select } from "@/components/ui";
@@ -23,6 +24,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
   today: string;
   defaultClient: string;
 }) {
+  const { t } = useT();
   const [search, setSearch] = useState("");
   const [clientId, setClientId] = useState(clients.some((c) => c.id === defaultClient) ? defaultClient : "");
   const [lines, setLines] = useState<Line[]>([]);
@@ -60,15 +62,15 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
   return (
     <div className="space-y-4">
       <section className="card space-y-3 p-4">
-        <h2 className="font-bold">1. Client</h2>
+        <h2 className="font-bold">{t("1. Client")}</h2>
         {client ? (
           <div className="flex items-center justify-between gap-3">
             <span className="font-semibold">{client.name}</span>
-            <button type="button" className="text-sm font-semibold text-brand" onClick={() => { setClientId(""); setLines([]); }}>Change</button>
+            <button type="button" className="text-sm font-semibold text-brand" onClick={() => { setClientId(""); setLines([]); }}>{t("Change")}</button>
           </div>
         ) : (
           <>
-            <Input aria-label="Search clients" placeholder="Type the client's name" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input aria-label={t("Search clients")} placeholder={t("Type the client's name")} value={search} onChange={(e) => setSearch(e.target.value)} />
             <ul className="divide-y divide-line">
               {found.map((c) => (
                 <li key={c.id}>
@@ -84,8 +86,8 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
 
       {client && (
         <section className="card space-y-3 p-4">
-          <h2 className="font-bold">2. Dog and services</h2>
-          {clientPets.length === 0 && <Notice kind="warn">This client has no pets. Add one on their profile first.</Notice>}
+          <h2 className="font-bold">{t("2. Dog and services")}</h2>
+          {clientPets.length === 0 && <Notice kind="warn">{t("This client has no pets. Add one on their profile first.")}</Notice>}
           {clientPets.map((p) => {
             const mine = lines.filter((l) => l.petId === p.id);
             const options = services.filter((s) => s.kind === "addon" || !s.size || !p.size_class || s.size === p.size_class);
@@ -111,7 +113,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
                       const s = services.find((x) => x.id === e.target.value);
                       if (s) setLines([...lines, { key: nextKey++, petId: p.id, serviceId: s.id, name: s.name, price: (priceFor(p.id, s) / 100).toString() }]);
                     }}>
-                    <option value="">Add a service</option>
+                    <option value="">{t("Add a service")}</option>
                     {options.map((s) => <option key={s.id} value={s.id}>{s.name} · {money(priceFor(p.id, s))}</option>)}
                   </select>
                 </label>
@@ -123,38 +125,38 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
 
       {client && (
         <section className="card space-y-3 p-4">
-          <h2 className="font-bold">3. When and how they paid</h2>
-          <Field label="Date of the visit"><DateField value={date} onChange={setDate} /></Field>
+          <h2 className="font-bold">{t("3. When and how they paid")}</h2>
+          <Field label={t("Date of the visit")}><DateField value={date} onChange={setDate} /></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Check-in"><Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} /></Field>
-            <Field label="Check-out"><Input type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} /></Field>
+            <Field label={t("Check-in")}><Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} /></Field>
+            <Field label={t("Check-out")}><Input type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} /></Field>
           </div>
-          <Field label="Paid with">
+          <Field label={t("Paid with")}>
             <Select value={method} onChange={(e) => setMethod(e.target.value)}>
               {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
             </Select>
           </Field>
-          <Field label="Tip (leave empty for no tip)">
+          <Field label={t("Tip (leave empty for no tip)")}>
             <Input inputMode="decimal" placeholder="$0.00" value={tip} onChange={(e) => setTip(e.target.value)} />
           </Field>
           <label className="flex items-center gap-3 text-sm">
             <input type="checkbox" checked={email && !!client.email} disabled={!client.email} onChange={(e) => setEmail(e.target.checked)} className="h-4 w-4" />
-            {client.email ? `Email it to ${client.email}` : "No email on file (you can share the PDF after)"}
+            {client.email ? `Email it to ${client.email}` : t("No email on file (you can share the PDF after)")}
           </label>
         </section>
       )}
 
       {client && (
         <div className="card space-y-1 px-4 py-3">
-          <p className="flex justify-between"><span className="text-muted">Services</span><span>{money(servicesCents)}</span></p>
-          <p className="flex justify-between"><span className="text-muted">Tip</span><span>{money(tipCents)}</span></p>
-          <p className="flex justify-between text-lg font-bold"><span>Total paid</span><span>{money(servicesCents + tipCents)}</span></p>
+          <p className="flex justify-between"><span className="text-muted">{t("Services")}</span><span>{money(servicesCents)}</span></p>
+          <p className="flex justify-between"><span className="text-muted">{t("Tip")}</span><span>{money(tipCents)}</span></p>
+          <p className="flex justify-between text-lg font-bold"><span>{t("Total paid")}</span><span>{money(servicesCents + tipCents)}</span></p>
         </div>
       )}
       {error && <Notice kind="error">{error}</Notice>}
       {client && (
         <Button className="w-full py-3.5 text-base" disabled={pending || lines.length === 0} onClick={submit}>
-          {pending ? "Making the receipt…" : "Make receipt"}
+          {pending ? t("Making the receipt…") : t("Make receipt")}
         </Button>
       )}
     </div>

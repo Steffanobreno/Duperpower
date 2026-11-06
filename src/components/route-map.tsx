@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
@@ -12,6 +13,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 /** `path`: the road route from Google, drawn instead of straight dashes between the stops. */
 export function RouteMap({ stops, path }: { stops: MapStop[]; path?: [number, number][] }) {
+  const { t } = useT();
   const box = useRef<HTMLDivElement>(null);
   const key = JSON.stringify(stops) + (path?.length ?? 0);
 
@@ -56,5 +58,5 @@ export function RouteMap({ stops, path }: { stops: MapStop[]; path?: [number, nu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  return <div ref={box} className="relative isolate z-0 h-72 w-full overflow-hidden rounded-[var(--radius-card)] border border-line" role="img" aria-label="Map of the day's stops" />;
+  return <div ref={box} className="relative isolate z-0 h-72 w-full overflow-hidden rounded-[var(--radius-card)] border border-line" role="img" aria-label={t("Map of the day's stops")} />;
 }

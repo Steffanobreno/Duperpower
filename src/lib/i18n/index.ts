@@ -53,10 +53,10 @@ export function fromAcceptLanguage(header: string | null): Lang {
 }
 
 /** Fills "{name}" placeholders. */
-const fill = (s: string, vars?: Record<string, string | number>) =>
-  vars ? s.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m)) : s;
+const fill = (s: string, vars?: Record<string, string | number | null | undefined>) =>
+  vars ? s.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k] ?? "") : m)) : s;
 
-export type T = (english: string, vars?: Record<string, string | number>) => string;
+export type T = (english: string, vars?: Record<string, string | number | null | undefined>) => string;
 
 /** t("Welcome back, {name}!", { name }) in the chosen language, or in English when missing. */
 export const makeT = (messages: Messages): T => (english, vars) => fill(messages[english] ?? english, vars);
@@ -79,3 +79,6 @@ export function translateServerMessage(t: T, message: string) {
   }
   return t(message);
 }
+
+/** Marks a phrase to translate later with t(), for lists written outside a component. */
+export const msg = (english: string) => english;

@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
@@ -17,16 +18,17 @@ const SHOW = [
 ] as const;
 
 export default async function CalendarViewPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const v = await calendarView(staff.businessId);
   return (
     <>
-      <PageHeader title="Calendar look" back="/settings" />
+      <PageHeader title={t("Calendar look")} back="/settings" />
       <Page>
         <Card>
           <SimpleForm action={saveCalendarViewAction}>
             <fieldset className="space-y-1">
-              <legend className="mb-1 text-sm font-medium">Each visit on the calendar shows</legend>
+              <legend className="mb-1 text-sm font-medium">{t("Each visit on the calendar shows")}</legend>
               {SHOW.map(([name, label]) => (
                 <label key={name} className="flex items-center justify-between gap-3 rounded-xl px-1 py-2">
                   <span>{label}</span>
@@ -35,23 +37,23 @@ export default async function CalendarViewPage() {
               ))}
             </fieldset>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Day view starts at" hint="Empty: your working hours.">
+              <Field label={t("Day view starts at")} hint={t("Empty: your working hours.")}>
                 <Input type="time" name="view_start" step={3600} defaultValue={v.view_start ?? ""} />
               </Field>
-              <Field label="Day view ends at">
+              <Field label={t("Day view ends at")}>
                 <Input type="time" name="view_end" step={3600} defaultValue={v.view_end ?? ""} />
               </Field>
             </div>
-            <Field label="Color the visits by">
+            <Field label={t("Color the visits by")}>
               <Select name="color_by" defaultValue={v.color_by}>
-                <option value="status">Status (confirmed green, not confirmed red…)</option>
-                <option value="staff">Groomer</option>
-                <option value="service">Service</option>
+                <option value="status">{t("Status (confirmed green, not confirmed red…)")}</option>
+                <option value="staff">{t("Groomer")}</option>
+                <option value="service">{t("Service")}</option>
               </Select>
             </Field>
             <p className="text-xs text-muted">
-              Groomer colors are set in <Link href="/settings/team" className="underline">Team</Link>; service colors in{" "}
-              <Link href="/settings/services" className="underline">Services and prices</Link>. A visit with several services uses the first one&apos;s color.
+              {t("Groomer colors are set in")}{" "} <Link href="/settings/team" className="underline">{t("Team")}</Link>{t("; service colors in")}{" "}
+              <Link href="/settings/services" className="underline">{t("Services and prices")}</Link>{t(". A visit with several services uses the first one's color.")}
             </p>
           </SimpleForm>
         </Card>

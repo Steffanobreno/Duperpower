@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
@@ -15,6 +16,7 @@ type Row = {
 // What each team member earned in a period: commission on the services of their finished
 // visits, their share of the tips paid for those visits, and hours clocked × hourly pay.
 export default async function PayrollPage({ searchParams }: PageProps<"/reports/payroll">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("reports");
   const sp = await searchParams;
   const tz = staff.timezone;
@@ -46,12 +48,12 @@ export default async function PayrollPage({ searchParams }: PageProps<"/reports/
   const shown = rows.filter((r) => r.visits || r.tips_cents || r.minutes);
   return (
     <>
-      <PageHeader title="Payroll" back="/reports" />
+      <PageHeader title={t("Payroll")} back="/reports" />
       <Page>
         <form className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-          <label className="text-sm">From<DateField name="from" defaultValue={from} className="mt-1" /></label>
-          <label className="text-sm">To<DateField name="to" defaultValue={to} className="mt-1" /></label>
-          <Button type="submit" kind="secondary">Show</Button>
+          <label className="text-sm">{t("From")}<DateField name="from" defaultValue={from} className="mt-1" /></label>
+          <label className="text-sm">{t("To")}<DateField name="to" defaultValue={to} className="mt-1" /></label>
+          <Button type="submit" kind="secondary">{t("Show")}</Button>
         </form>
         {shown.length ? shown.map((r) => {
           const p = pay(r);
@@ -62,17 +64,17 @@ export default async function PayrollPage({ searchParams }: PageProps<"/reports/
                 <span className="text-xl font-extrabold">{money(p.total)}</span>
               </div>
               <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
-                <dt className="text-muted">Commission · {r.commission_pct}% of {money(r.services_cents)} ({r.visits} visit{r.visits === 1 ? "" : "s"})</dt>
+                <dt className="text-muted">{t("Commission · {commission_pct}% of {money} ({visits} visit", { commission_pct: r.commission_pct, money: money(r.services_cents), visits: r.visits })}{r.visits === 1 ? "" : "s"})</dt>
                 <dd className="text-right">{money(p.commission)}</dd>
-                <dt className="text-muted">Tips · {r.tips_pct}% of {money(r.tips_cents)}</dt>
+                <dt className="text-muted">{t("Tips · {tips_pct}% of {money}", { tips_pct: r.tips_pct, money: money(r.tips_cents) })}</dt>
                 <dd className="text-right">{money(p.tips)}</dd>
-                <dt className="text-muted">Hours · {(r.minutes / 60).toFixed(1)} h × {money(r.hourly_cents)}</dt>
+                <dt className="text-muted">{t("Hours · {x} h × {money}", { x: (r.minutes / 60).toFixed(1), money: money(r.hourly_cents) })}</dt>
                 <dd className="text-right">{money(p.hourly)}</dd>
               </dl>
             </Card>
           );
-        }) : <Empty title="Nothing to pay in these days" />}
-        <p className="px-1 text-xs text-muted">Set each person&apos;s commission, tips share and hourly pay in Settings → Team.</p>
+        }) : <Empty title={t("Nothing to pay in these days")} />}
+        <p className="px-1 text-xs text-muted">{t("Set each person's commission, tips share and hourly pay in Settings → Team.")}</p>
       </Page>
     </>
   );

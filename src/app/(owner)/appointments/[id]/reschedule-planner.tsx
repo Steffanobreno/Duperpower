@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import Link from "next/link";
 import type { StaffContext } from "@/lib/auth";
 import { listRange } from "@/lib/data/appointments";
@@ -22,6 +23,7 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
   day: string;
   monthOpen: boolean;
 }) {
+  const { t: tr } = await getOwnerI18n();
   const tz = staff.timezone;
   const today = todayYmd(tz);
   const minutes = Math.round((appt.end_at.getTime() - appt.start_at.getTime()) / 60000);
@@ -62,9 +64,9 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
     <div className="space-y-3">
       <div className="flex items-center gap-1">
         <Link href={href(monthOpen ? shiftMonth(day, -1) : addDaysYmd(day, -7))} scroll={false}
-          aria-label={monthOpen ? "Previous month" : "Previous week"} className="rounded-full px-3 py-1 text-2xl leading-none text-brand">‹</Link>
+          aria-label={monthOpen ? tr("Previous month") : tr("Previous week")} className="rounded-full px-3 py-1 text-2xl leading-none text-brand">‹</Link>
         <Link href={href(day, !monthOpen)} scroll={false} aria-expanded={monthOpen}
-          aria-label={monthOpen ? "Show one week" : "Show the whole month"}
+          aria-label={monthOpen ? tr("Show one week") : tr("Show the whole month")}
           className="flex min-w-0 flex-1 items-center justify-center gap-1.5 font-bold">
           <span className="truncate">
             {new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}
@@ -72,7 +74,7 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
           <span aria-hidden className="text-brand">{monthOpen ? "▴" : "▾"}</span>
         </Link>
         <Link href={href(monthOpen ? shiftMonth(day, 1) : addDaysYmd(day, 7))} scroll={false}
-          aria-label={monthOpen ? "Next month" : "Next week"} className="rounded-full px-3 py-1 text-2xl leading-none text-brand">›</Link>
+          aria-label={monthOpen ? tr("Next month") : tr("Next week")} className="rounded-full px-3 py-1 text-2xl leading-none text-brand">›</Link>
       </div>
       {monthOpen ? (
         <MonthStrip date={day} today={today} dots={(d) => onDay(d).length} href={(d) => href(d)}
@@ -81,12 +83,12 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
         <WeekStrip date={day} today={today} dots={(d) => onDay(d).length} href={(d) => href(d)} />
       )}
 
-      <section aria-label="Chosen day" className="space-y-2 border-t border-line pt-3">
+      <section aria-label={tr("Chosen day")} className="space-y-2 border-t border-line pt-3">
         <p className="font-bold">{longDayLabel(zonedToUtc(day, "12:00", tz), tz)}</p>
         {closed.has(day) ? (
-          <p className="text-sm text-warn">Closed · {closed.get(day)}</p>
+          <p className="text-sm text-warn">{tr("Closed · {get}", { get: closed.get(day) })}</p>
         ) : !h ? (
-          <p className="text-sm text-muted">Day off</p>
+          <p className="text-sm text-muted">{tr("Day off")}</p>
         ) : null}
         {list.length > 0 ? (
           <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line text-sm">
@@ -96,7 +98,7 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
                   className={`flex items-center gap-3 px-3 py-2 ${a.id === appt.id ? "bg-brand-soft" : ""}`}>
                   <span className="shrink-0 whitespace-nowrap font-semibold">{timeLabel(a.start_at, tz)} – {timeLabel(a.end_at, tz)}</span>
                   <span className="min-w-0 flex-1 truncate">
-                    {a.id === appt.id ? <strong>This visit</strong> : a.client_name}
+                    {a.id === appt.id ? <strong>{tr("This visit")}</strong> : a.client_name}
                     {a.city && <span className="text-muted"> · {a.city}</span>}
                   </span>
                 </Link>
@@ -104,11 +106,11 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
             ))}
           </ul>
         ) : h && !closed.has(day) ? (
-          <p className="text-sm text-muted">No visits yet this day.</p>
+          <p className="text-sm text-muted">{tr("No visits yet this day.")}</p>
         ) : null}
         {free.length > 0 && (
           <div className="space-y-1.5">
-            <p className="text-sm font-semibold">Free for {length} · tap to move {appt.client} there</p>
+            <p className="text-sm font-semibold">{tr("Free for {n} · tap to move {client} there", { n: length, client: appt.client })}</p>
             <div className="grid grid-cols-4 gap-1.5">
               {free.map((t) => (
                 <Link key={t} href={`/appointments/${appt.id}?move=1&date=${day}&time=${t}`}
@@ -120,7 +122,7 @@ export async function ReschedulePlanner({ staff, appt, day, monthOpen }: {
           </div>
         )}
         {h && !closed.has(day) && day >= today && free.length === 0 && (
-          <p className="text-sm text-muted">No free time for {length} this day.</p>
+          <p className="text-sm text-muted">{tr("No free time for {n} this day.", { n: length })}</p>
         )}
       </section>
     </div>

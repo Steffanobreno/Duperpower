@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useState } from "react";
 
 /**
@@ -6,6 +7,7 @@ import { useState } from "react";
  * `multiline` shows a block of code (a script to paste) instead of one line.
  */
 export function CopyField({ label, value, multiline = false }: { label: string; value: string; multiline?: boolean }) {
+  const { t } = useT();
   const [copied, setCopied] = useState(false);
   const box = "min-w-0 flex-1 rounded-xl border border-line bg-bg px-3 py-2 text-sm text-muted";
   return (
@@ -27,7 +29,7 @@ export function CopyField({ label, value, multiline = false }: { label: string; 
           }}
           className={`rounded-xl border border-line bg-surface px-3 text-sm font-semibold text-brand ${multiline ? "py-2.5" : ""}`}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("Copied") : t("Copy")}
         </button>
       </div>
     </div>
@@ -36,6 +38,7 @@ export function CopyField({ label, value, multiline = false }: { label: string; 
 
 /** Just a Copy button for a value that isn't shown (a link to send). */
 export function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+  const { t } = useT();
   const [copied, setCopied] = useState(false);
   return (
     <button type="button" onClick={async () => {
@@ -43,7 +46,7 @@ export function CopyButton({ value, label = "Copy" }: { value: string; label?: s
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     }} className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">
-      {copied ? "Copied" : label}
+      {copied ? t("Copied") : label}
     </button>
   );
 }

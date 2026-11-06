@@ -1,12 +1,13 @@
 import "server-only";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { sql } from "./db";
 import { ALL_PERMISSIONS, DEFAULT_PERMISSIONS, type Permission, type Role } from "./permissions";
 import { createBusiness } from "./new-business";
+import { fromAcceptLanguage, isLang, type Lang } from "./i18n";
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
 const COOKIE = "wds_session";
@@ -135,6 +136,10 @@ export type StaffContext = {
   role: Role;
   /** What this person may do (the owner: everything). */
   can: Record<Permission, boolean>;
+  /** The language they see the app in: the one they picked, else their phone's. */
+  lang: Lang;
+  /** Whether they picked it (false: it follows the phone). */
+  langPicked: boolean;
 };
 
 /** The logged-in staff member, or null. Cached per request. */
@@ -142,7 +147,7 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   const [row] = await sql`
-    select s.id as staff_id, s.name as staff_name, s.role, b.id as business_id, b.name as business_name,
+    select s.id as staff_id, s.name as staff_name, s.role, s.language, b.id as business_id, b.name as business_name,
            b.phone as business_phone, b.timezone, b.booking_slug, b.roles_seeded,
            -- In the same trip: what this role may do (the owner may do everything).
            array(select rp.perm from role_permissions rp where rp.business_id = b.id and rp.role = s.role) as perms
@@ -157,6 +162,8 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
     perms = (await sql`select perm from role_permissions where business_id = ${row.business_id} and role = ${row.role}`).map((r) => r.perm as string);
   }
   const allowed = row.role === "owner" ? new Set<string>(ALL_PERMISSIONS) : new Set(perms);
+  const langPicked = isLang(row.language);
+  const lang = langPicked ? (row.language as Lang) : fromAcceptLanguage((await headers()).get("accept-language"));
   return {
     staffId: row.staff_id,
     staffName: row.staff_name,
@@ -167,6 +174,8 @@ export const getStaff = cache(async (): Promise<StaffContext | null> => {
     bookingSlug: row.booking_slug,
     role: row.role,
     can: Object.fromEntries(ALL_PERMISSIONS.map((p) => [p, allowed.has(p)])) as Record<Permission, boolean>,
+    lang,
+    langPicked,
   };
 });
 

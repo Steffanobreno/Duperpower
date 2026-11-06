@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
@@ -6,6 +7,7 @@ export type AreaPoint = { lat: number; lng: number; color: string; label: string
 
 /** The ZIP codes of the service areas as colored dots on a map (OpenStreetMap, no key). */
 export function AreaMap({ points }: { points: AreaPoint[] }) {
+  const { t } = useT();
   const box = useRef<HTMLDivElement>(null);
   const key = JSON.stringify(points);
   useEffect(() => {
@@ -32,5 +34,5 @@ export function AreaMap({ points }: { points: AreaPoint[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- redraw only when the points change
   }, [key]);
   if (!points.length) return null;
-  return <div ref={box} className="h-64 w-full overflow-hidden rounded-[var(--radius-card)] border border-line" role="img" aria-label="Map of the service areas" />;
+  return <div ref={box} className="h-64 w-full overflow-hidden rounded-[var(--radius-card)] border border-line" role="img" aria-label={t("Map of the service areas")} />;
 }

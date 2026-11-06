@@ -1,7 +1,10 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
-import { fromAcceptLanguage, isLang, makeT, type Lang } from ".";
+import { cache } from "react";
+import { getStaff } from "@/lib/auth";
+import { dirOf, fromAcceptLanguage, isLang, LOCALES, makeT, type Lang } from ".";
 import { MESSAGES } from "./messages";
+import { OWNER_MESSAGES } from "./owner";
 
 /**
  * The client's language: ?lang= on the page, then the one they picked before (cookie), then the
@@ -30,3 +33,14 @@ export async function getI18n(param?: unknown) {
   const messages = MESSAGES[lang];
   return { lang, messages, t: makeT(messages) };
 }
+
+/**
+ * For the groomer's app: the logged-in person's language, its phrases (for the client parts)
+ * and t() for the server parts. Before login: the phone's language.
+ */
+export const getOwnerI18n = cache(async () => {
+  const staff = await getStaff();
+  const lang = staff?.lang ?? fromAcceptLanguage((await headers()).get("accept-language"));
+  const messages = OWNER_MESSAGES[lang];
+  return { lang, messages, t: makeT(messages), locale: LOCALES[lang], dir: dirOf(lang) };
+});

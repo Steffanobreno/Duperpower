@@ -3,6 +3,15 @@ import { revalidatePath } from "next/cache";
 import { accountEmail, changeEmail, changePassword, checkPin, logoutOthers, requireStaff, setPin } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { FormState } from "../actions";
+import { isLang } from "@/lib/i18n";
+
+export async function saveLanguageAction(_: FormState, form: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const lang = form.get("language");
+  await sql`update staff set language = ${isLang(lang) ? lang : null} where id = ${staff.staffId}`;
+  revalidatePath("/", "layout");
+  return { saved: true };
+}
 
 export async function saveAccountAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requireStaff();

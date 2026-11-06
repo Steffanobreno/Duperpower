@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -22,6 +23,7 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
   mailingAddress: string | null;
   save: (state: CampaignState, form: FormData) => Promise<CampaignState>;
 }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(save, undefined);
   const [c, setC] = useState(campaign);
   const set = (k: keyof EditorCampaign) => (e: { target: { value: string } }) => setC({ ...c, [k]: e.target.value });
@@ -33,26 +35,26 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
   });
   return (
     <ActionForm action={action} className="space-y-4">
-      <FormPopup state={state} savedText="Saved." />
+      <FormPopup state={state} savedText={t("Saved.")} />
       <Card className="space-y-3">
-        <Field label="Campaign name" hint="Only you see this.">
+        <Field label={t("Campaign name")} hint={t("Only you see this.")}>
           <Input name="name" value={c.name} onChange={set("name")} />
         </Field>
-        <Field label="Subject" hint="The first thing clients read in their inbox. {pet_name} and {first_name} work here too.">
-          <Input name="subject" value={c.subject} onChange={set("subject")} placeholder="We miss {pet_name}! 🐾" />
+        <Field label={t("Subject")} hint={t("The first thing clients read in their inbox. {pet_name} and {first_name} work here too.")}>
+          <Input name="subject" value={c.subject} onChange={set("subject")} placeholder={t("We miss {pet_name}! 🐾")} />
         </Field>
-        <Field label="Preview text" hint="The grey line after the subject in the inbox. A short teaser gets more opens.">
-          <Input name="preheader" value={c.preheader} onChange={set("preheader")} placeholder="Your spa day is just a few taps away." />
+        <Field label={t("Preview text")} hint={t("The grey line after the subject in the inbox. A short teaser gets more opens.")}>
+          <Input name="preheader" value={c.preheader} onChange={set("preheader")} placeholder={t("Your spa day is just a few taps away.")} />
         </Field>
       </Card>
 
       <Card className="space-y-2">
-        <span className="text-sm font-medium">Picture</span>
+        <span className="text-sm font-medium">{t("Picture")}</span>
         <input type="hidden" name="banner" value={c.banner ?? ""} />
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           <button type="button" onClick={() => setC({ ...c, banner: null })} aria-pressed={!c.banner}
             className={`flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border-2 bg-bg text-xs text-muted ${!c.banner ? "border-brand" : "border-transparent"}`}>
-            No picture
+            {t("No picture")}
           </button>
           {banners.map((b) => (
             <button key={b.src} type="button" onClick={() => setC({ ...c, banner: b.src })} aria-pressed={c.banner === b.src} title={b.name}
@@ -65,30 +67,30 @@ export function CampaignEditor({ campaign, banners, appUrl, sample, phone, maili
       </Card>
 
       <Card className="space-y-3">
-        <Field label="Headline">
-          <Input name="headline" value={c.headline} onChange={set("headline")} placeholder="Happy Halloween!" />
+        <Field label={t("Headline")}>
+          <Input name="headline" value={c.headline} onChange={set("headline")} placeholder={t("Happy Halloween!")} />
         </Field>
-        <Field label="Message" hint="{first_name} = client's first name · {pet_name} = their pets · {business} = your business name">
+        <Field label={t("Message")} hint={t("{first_name} = client's first name · {pet_name} = their pets · {business} = your business name")}>
           <Textarea name="body" rows={9} value={c.body} onChange={set("body")} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Button text" hint="Empty = no button">
-            <Input name="button_label" value={c.button_label ?? ""} onChange={set("button_label")} placeholder="Book now" />
+          <Field label={t("Button text")} hint={t("Empty = no button")}>
+            <Input name="button_label" value={c.button_label ?? ""} onChange={set("button_label")} placeholder={t("Book now")} />
           </Field>
-          <Field label="Button link" hint="Empty = your booking page">
+          <Field label={t("Button link")} hint={t("Empty = your booking page")}>
             <Input name="button_url" value={c.button_url ?? ""} onChange={set("button_url")} placeholder={sample.booking_link} inputMode="url" />
           </Field>
         </div>
       </Card>
 
       <section className="space-y-2">
-        <h2 className="section-label">Preview (sample client: {sample.first_name}, pet {sample.pet_name})</h2>
-        <iframe title="Email preview" srcDoc={html} className="h-[720px] w-full rounded-[var(--radius-card)] border border-line bg-white" />
+        <h2 className="section-label">{t("Preview (sample client: {first_name}, pet {pet_name})", { first_name: sample.first_name, pet_name: sample.pet_name })}</h2>
+        <iframe title={t("Email preview")} srcDoc={html} className="h-[720px] w-full rounded-[var(--radius-card)] border border-line bg-white" />
       </section>
 
       <div className="grid grid-cols-2 gap-2">
-        <Button type="submit" kind="secondary" disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
-        <Button type="submit" name="next" value="1" disabled={pending}>Next: who gets it →</Button>
+        <Button type="submit" kind="secondary" disabled={pending}>{pending ? t("Saving…") : t("Save")}</Button>
+        <Button type="submit" name="next" value="1" disabled={pending}>{t("Next: who gets it →")}</Button>
       </div>
     </ActionForm>
   );

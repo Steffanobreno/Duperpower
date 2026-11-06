@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClientFinder } from "@/components/client-finder";
@@ -18,6 +19,7 @@ export const metadata: Metadata = { title: "New appointment" };
 const initials = (c: { first_name: string; last_name: string | null }) => (c.first_name[0] ?? "") + (c.last_name?.[0] ?? "");
 
 export default async function NewAppointmentPage({ searchParams }: PageProps<"/appointments/new">) {
+  const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const sp = await searchParams;
   const clientId = typeof sp.client === "string" ? sp.client : null;
@@ -35,11 +37,11 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
     const keep = `&date=${date}&time=${time}${typeof sp.groomer === "string" ? `&groomer=${sp.groomer}` : ""}`;
     return (
       <>
-        <PageHeader title="Who is it for?" back="/calendar" />
+        <PageHeader title={t("Who is it for?")} back="/calendar" />
         <Page>
-          <ButtonLink kind="secondary" href="/clients/new" className="w-full">New client</ButtonLink>
+          <ButtonLink kind="secondary" href="/clients/new" className="w-full">{t("New client")}</ButtonLink>
           {clients.length === 0 ? (
-            <Empty title="No client found" />
+            <Empty title={t("No client found")} />
           ) : (
             <ClientFinder initialQuery={q} autoFocus form={<>
               <input type="hidden" name="date" value={date} />
@@ -110,7 +112,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
         </div>
         {nearby.length > 0 && pets.length > 0 && (
           <section className="card space-y-1 border-success bg-success-soft px-4 py-3">
-            <h2 className="text-sm font-bold text-success">🚐 You&apos;re already near {client.first_name} on</h2>
+            <h2 className="text-sm font-bold text-success">{t("🚐 You're already near {first_name} on", { first_name: client.first_name })}</h2>
             <ul className="divide-y divide-success/20 text-sm">
               {nearby.map((n) => (
                 <li key={n.date}>
@@ -118,27 +120,27 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
                     className="flex items-center justify-between gap-2 py-2">
                     <span>
                       <span className="font-semibold">{dayLabel(zonedToUtc(n.date, "12:00", staff.timezone), staff.timezone)}</span>
-                      <span className="text-muted"> · {n.miles < 1 ? "same area as" : `${Math.round(n.miles)} mi from`} {n.name}</span>
+                      <span className="text-muted"> · {n.miles < 1 ? t("same area as") : `${Math.round(n.miles)} mi from`} {n.name}</span>
                     </span>
                     <span className="shrink-0 font-semibold text-brand">{timeLabel(zonedToUtc(n.date, n.after, staff.timezone), staff.timezone)} →</span>
                   </Link>
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-muted">Tap one to book right after that visit.</p>
+            <p className="text-xs text-muted">{t("Tap one to book right after that visit.")}</p>
           </section>
         )}
         {pets.length > 0 && (
           <Link href={`/calendar?view=day&date=${date}&pick=book&client=${client.id}`}
             className="card flex items-center gap-3 px-4 py-3 font-semibold text-brand">
             <span aria-hidden>📅</span>
-            <span className="flex-1">Pick the day and time on the calendar</span>
+            <span className="flex-1">{t("Pick the day and time on the calendar")}</span>
             <span aria-hidden>›</span>
           </Link>
         )}
         {pets.length === 0 ? (
-          <Empty title="This client has no pets yet">
-            <ButtonLink href={`/clients/${client.id}/pets/new`} className="mt-2">Add a pet</ButtonLink>
+          <Empty title={t("This client has no pets yet")}>
+            <ButtonLink href={`/clients/${client.id}/pets/new`} className="mt-2">{t("Add a pet")}</ButtonLink>
           </Empty>
         ) : (
           <BookingForm

@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
@@ -9,11 +10,12 @@ import { moveServiceAction } from "../actions";
 export const metadata: Metadata = { title: "Services" };
 
 export default async function ServicesPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const services = await listServices(staff, { includeInactive: true });
   return (
     <>
-      <PageHeader title="Services and prices" back="/settings" action={<ButtonLink href="/settings/services/new">Add</ButtonLink>} />
+      <PageHeader title={t("Services and prices")} back="/settings" action={<ButtonLink href="/settings/services/new">{t("Add")}</ButtonLink>} />
       <Page>
         {groupByCategory(services).map(([category, list]) => (
           <section key={category} className="space-y-1">
@@ -25,7 +27,7 @@ export default async function ServicesPage() {
                     <div className={`truncate font-medium ${s.active ? "" : "text-muted line-through"}`}>{s.name}</div>
                     <div className="text-sm text-muted">
                       {minutesLabel(s.duration_min)}
-                      {!s.active && " · inactive"}
+                      {!s.active && t(" · inactive")}
                     </div>
                   </Link>
                   <span className="px-2 font-semibold text-brand">{money(s.price_cents)}</span>

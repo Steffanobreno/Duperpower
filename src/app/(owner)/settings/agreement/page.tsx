@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { activeAgreement } from "@/lib/agreement";
@@ -10,6 +11,7 @@ import { SimpleForm } from "../forms";
 export const metadata: Metadata = { title: "Service agreement" };
 
 export default async function AgreementPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const agreement = await activeAgreement(staff.businessId);
   const [{ signed }] = agreement
@@ -18,38 +20,37 @@ export default async function AgreementPage() {
     : [{ signed: 0 }];
   return (
     <>
-      <PageHeader title="Service agreement" back="/settings" />
+      <PageHeader title={t("Service agreement")} back="/settings" />
       <Page>
         <p className="text-sm text-muted">
-          Clients sign by typing their name: when they book online, and on their confirm link if they haven&apos;t signed in
-          the last 12 months. To ask a client to sign without booking, use “Send to sign” on their profile.{" "}
+          {t("Clients sign by typing their name: when they book online, and on their confirm link if they haven't signed in the last 12 months. To ask a client to sign without booking, use “Send to sign” on their profile.")}{" "}
           {agreement && `Version ${agreement.version}: signed by ${signed} client${signed === 1 ? "" : "s"}.`}
         </p>
         <Card>
           <SimpleForm action={saveAgreementAction}>
-            <Field label="Title">
+            <Field label={t("Title")}>
               <Input name="title" defaultValue={agreement?.title ?? ""} required />
             </Field>
-            <Field label="Text" hint='Start a line with "## " for a heading and "- " for a bullet. Wrap words in ** for bold.'>
+            <Field label={t("Text")} hint={t("Start a line with \"## \" for a heading and \"- \" for a bullet. Wrap words in ** for bold.")}>
               <Textarea name="body" rows={18} defaultValue={agreement?.body ?? ""} required />
             </Field>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" name="required_online" defaultChecked={agreement?.required_online ?? true} className="h-4 w-4" />
-              Clients must sign it to book online
+              {t("Clients must sign it to book online")}
             </label>
             <label className="flex items-start gap-3 text-sm">
               <input type="checkbox" name="sign_every_booking" defaultChecked={agreement?.sign_every_booking ?? false} className="mt-1 h-4 w-4" />
-              <span>Sign on every online booking (instead of once a year)</span>
+              <span>{t("Sign on every online booking (instead of once a year)")}</span>
             </label>
             <label className="flex items-start gap-3 text-sm">
               <input type="checkbox" name="resign" className="mt-1 h-4 w-4" />
-              <span>This is an important change: ask every client to sign again</span>
+              <span>{t("This is an important change: ask every client to sign again")}</span>
             </label>
           </SimpleForm>
         </Card>
         {agreement && (
           <Card>
-            <p className="mb-2 text-xs font-semibold uppercase text-muted">Preview</p>
+            <p className="mb-2 text-xs font-semibold uppercase text-muted">{t("Preview")}</p>
             <AgreementText title={agreement.title} body={agreement.body} />
           </Card>
         )}

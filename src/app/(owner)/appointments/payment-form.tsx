@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -26,6 +27,7 @@ export function PaymentForm({
   serviceCents: number; // the services after discounts: tips are a percent of this
   clientName: string;
 }) {
+  const { t } = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   const [step, setStep] = useState<"tip" | "method" | "details">("tip");
   const [tip, setTip] = useState(0);
@@ -40,7 +42,7 @@ export function PaymentForm({
   const change = toCents(tendered) - charge;
   const label = PAYMENT_METHODS.find((m) => m.value === method)?.label ?? "";
   const back = (to: typeof step) => (
-    <button type="button" onClick={() => setStep(to)} aria-label="Back" className="-ml-2 rounded-full p-2 hover:bg-bg">
+    <button type="button" onClick={() => setStep(to)} aria-label={t("Back")} className="-ml-2 rounded-full p-2 hover:bg-bg">
       <ArrowLeft size={22} />
     </button>
   );
@@ -55,8 +57,8 @@ export function PaymentForm({
       {step === "tip" && (
         <div className="space-y-3">
           <div className="text-center">
-            <h2 className="text-2xl font-extrabold">Add a tip</h2>
-            <p className="text-sm text-muted">Based on service total: {money(serviceCents)}</p>
+            <h2 className="text-2xl font-extrabold">{t("Add a tip")}</h2>
+            <p className="text-sm text-muted">{t("Based on service total: {money}", { money: money(serviceCents) })}</p>
           </div>
           {TIP_PERCENTS.map((p) => {
             const cents = Math.round((serviceCents * p) / 100);
@@ -67,19 +69,19 @@ export function PaymentForm({
             );
           })}
           {customTip === null ? (
-            <button type="button" className={pill} onClick={() => setCustomTip("")}>Custom tip amount</button>
+            <button type="button" className={pill} onClick={() => setCustomTip("")}>{t("Custom tip amount")}</button>
           ) : (
             <div className="flex gap-2">
               <label className="flex flex-1 items-center gap-1 rounded-full border-2 border-brand px-4">
                 $
-                <input autoFocus inputMode="decimal" aria-label="Tip amount" value={customTip} onChange={(e) => setCustomTip(e.target.value)}
+                <input autoFocus inputMode="decimal" aria-label={t("Tip amount")} value={customTip} onChange={(e) => setCustomTip(e.target.value)}
                   className="w-full bg-transparent py-3 font-bold outline-none" placeholder="0.00" />
               </label>
-              <button type="button" className="rounded-full bg-brand px-6 font-bold text-white" onClick={() => setStep("method")}>Next</button>
+              <button type="button" className="rounded-full bg-brand px-6 font-bold text-white" onClick={() => setStep("method")}>{t("Next")}</button>
             </div>
           )}
           <button type="button" className="block w-full py-3 text-center font-semibold text-muted" onClick={() => { setTip(0); setCustomTip(null); setStep("method"); }}>
-            No tip
+            {t("No tip")}
           </button>
         </div>
       )}
@@ -88,7 +90,7 @@ export function PaymentForm({
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             {back("tip")}
-            <h2 className="text-xl font-extrabold">Select payment method</h2>
+            <h2 className="text-xl font-extrabold">{t("Select payment method")}</h2>
           </div>
           <ul className="space-y-2">
             {PAYMENT_METHODS.map((m) => (
@@ -112,43 +114,43 @@ export function PaymentForm({
           </div>
           <div className="card divide-y divide-line">
             <label className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="font-semibold">Amount</span>
+              <span className="font-semibold">{t("Amount")}</span>
               <span className="flex items-center gap-1">$<input name="amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
                 className="w-28 rounded-lg border border-line px-2 py-1.5 text-right" /></span>
             </label>
             {tipCents > 0 && (
-              <div className="flex justify-between px-4 py-3 text-sm"><span className="text-muted">Tip</span><span>{money(tipCents)}</span></div>
+              <div className="flex justify-between px-4 py-3 text-sm"><span className="text-muted">{t("Tip")}</span><span>{money(tipCents)}</span></div>
             )}
             {method === "cash" && (
               <>
                 <label className="flex items-center justify-between gap-3 px-4 py-3">
-                  <span className="font-semibold">Cash tendered</span>
+                  <span className="font-semibold">{t("Cash tendered")}</span>
                   <span className="flex items-center gap-1">$<input inputMode="decimal" value={tendered} onChange={(e) => setTendered(e.target.value)} placeholder="0.00"
-                    aria-label="Cash tendered" className="w-28 rounded-lg border border-line px-2 py-1.5 text-right" /></span>
+                    aria-label={t("Cash tendered")} className="w-28 rounded-lg border border-line px-2 py-1.5 text-right" /></span>
                 </label>
                 {tendered && (
                   <div className={`flex justify-between px-4 py-3 font-bold ${change < 0 ? "text-danger" : "text-success"}`}>
-                    <span>{change < 0 ? "Still short" : "Change due"}</span><span>{money(Math.abs(change))}</span>
+                    <span>{change < 0 ? t("Still short") : t("Change due")}</span><span>{money(Math.abs(change))}</span>
                   </div>
                 )}
               </>
             )}
             {method !== "cash" && (
               <label className="flex items-center justify-between gap-3 px-4 py-3">
-                <span className="font-semibold">{method === "check" ? "Check number" : "Reference"}</span>
-                <input name="reference" autoComplete="off" placeholder="Optional" className="w-40 rounded-lg border border-line px-2 py-1.5 text-right" />
+                <span className="font-semibold">{method === "check" ? t("Check number") : t("Reference")}</span>
+                <input name="reference" autoComplete="off" placeholder={t("Optional")} className="w-40 rounded-lg border border-line px-2 py-1.5 text-right" />
               </label>
             )}
             <label className="flex items-center justify-between gap-3 px-4 py-3">
-              <span className="font-semibold">Paid by</span>
+              <span className="font-semibold">{t("Paid by")}</span>
               <input name="paid_by" defaultValue={clientName} className="w-48 rounded-lg border border-line px-2 py-1.5 text-right" />
             </label>
           </div>
-          <textarea name="note" rows={3} placeholder="Description" aria-label="Description"
+          <textarea name="note" rows={3} placeholder={t("Description")} aria-label={t("Description")}
             className="card block w-full px-4 py-3 outline-none focus:border-brand" />
           <button type="submit" disabled={pending || charge <= 0}
             className="block w-full rounded-full bg-brand py-4 text-lg font-bold text-white shadow-[0_6px_16px_rgb(11_31_58/0.3)] disabled:opacity-40">
-            {pending ? "Saving…" : `Charge ${money(charge)}`}
+            {pending ? t("Saving…") : `Charge ${money(charge)}`}
           </button>
         </div>
       )}

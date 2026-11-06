@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
@@ -6,6 +7,7 @@ import { useState, type ReactNode } from "react";
 // phone → Call, Text, Copy; address → Apple Maps, Google Maps, Copy.
 
 export function Sheet({ title, options, onClose }: { title: string; options: { label: string; href?: string; onClick?: () => void }[]; onClose: () => void }) {
+  const { t } = useT();
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy/40 animate-fade" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
@@ -31,7 +33,7 @@ export function Sheet({ title, options, onClose }: { title: string; options: { l
             ),
           )}
         </div>
-        <button type="button" onClick={onClose} className="block w-full rounded-2xl bg-surface py-3.5 text-lg font-bold">Cancel</button>
+        <button type="button" onClick={onClose} className="block w-full rounded-2xl bg-surface py-3.5 text-lg font-bold">{t("Cancel")}</button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // A client list you can search as you type (no waiting on the server: the list is already
@@ -20,6 +21,7 @@ export function ClientFinder({ children, initialQuery = "", placeholder = "Searc
   /** Hidden fields to keep when the search is sent to the server (Enter). */
   form?: ReactNode;
 }) {
+  const { t: tr } = useT();
   const [q, setQ] = useState(initialQuery);
   const list = useRef<HTMLDivElement>(null);
   const [present, setPresent] = useState<Set<string>>(new Set());
@@ -70,13 +72,13 @@ export function ClientFinder({ children, initialQuery = "", placeholder = "Searc
     <div className="space-y-3">
       <form role="search" onSubmit={(e) => e.preventDefault()}>
         {form}
-        <label className="sr-only" htmlFor="q">Search clients</label>
+        <label className="sr-only" htmlFor="q">{tr("Search clients")}</label>
         <input id="q" name="q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
           autoComplete="off" className="block w-full rounded-full border border-line bg-surface px-5 py-2.5 text-ink placeholder:text-muted focus:border-brand focus:outline-none" />
       </form>
       <div ref={list} className="pr-6">{children}</div>
       {present.size > 4 && (
-        <nav aria-label="Jump to letter"
+        <nav aria-label={tr("Jump to letter")}
           className="fixed right-0.5 top-1/2 z-20 flex -translate-y-1/2 touch-none select-none flex-col items-center rounded-full bg-surface/80 px-0.5 py-1 backdrop-blur"
           onTouchStart={(e) => fromTouch(e.touches[0].clientY, e.currentTarget)}
           onTouchMove={(e) => fromTouch(e.touches[0].clientY, e.currentTarget)}>

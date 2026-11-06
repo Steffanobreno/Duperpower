@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
@@ -12,11 +13,12 @@ import { GroomerForm } from "./groomer-form";
 export const metadata: Metadata = { title: "Team" };
 
 export default async function TeamPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const team = await listGroomers(staff);
   return (
     <>
-      <PageHeader title="Team" back="/settings" />
+      <PageHeader title={t("Team")} back="/settings" />
       <Page>
         <ul className="card divide-y divide-line overflow-hidden">
           {team.map((g) => (
@@ -28,7 +30,7 @@ export default async function TeamPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{g.name}</span>
                   <span className="block truncate text-sm text-muted">
-                    {!g.active && g.role !== "owner" ? "Not active" : ROLES[g.role as Role]}{g.phone ? ` · ${phoneLabel(g.phone)}` : ""}
+                    {!g.active && g.role !== "owner" ? t("Not active") : ROLES[g.role as Role]}{g.phone ? ` · ${phoneLabel(g.phone)}` : ""}
                   </span>
                 </span>
                 <ChevronRight size={20} className="text-muted" />
@@ -37,12 +39,11 @@ export default async function TeamPage() {
           ))}
         </ul>
         <Card className="space-y-3">
-          <h2 className="font-bold">Add a groomer</h2>
+          <h2 className="font-bold">{t("Add a groomer")}</h2>
           <p className="text-sm text-muted">
-            Each groomer gets their own color and their own route on Today. When booking, you choose who does the visit.
-            They start with your working hours.
+            {t("Each groomer gets their own color and their own route on Today. When booking, you choose who does the visit. They start with your working hours.")}
           </p>
-          <GroomerForm action={addGroomerAction} colors={GROOMER_COLORS} submit="Add groomer" />
+          <GroomerForm action={addGroomerAction} colors={GROOMER_COLORS} submit={t("Add groomer")} />
         </Card>
         <ul className="card divide-y divide-line overflow-hidden">
           {[
@@ -62,8 +63,7 @@ export default async function TeamPage() {
           ))}
         </ul>
         <p className="px-1 text-xs text-muted">
-          Give someone a login on their page to let them log in on their own phone. Online booking requests come to you, and you
-          can assign them to anyone.
+          {t("Give someone a login on their page to let them log in on their own phone. Online booking requests come to you, and you can assign them to anyone.")}
         </p>
       </Page>
     </>

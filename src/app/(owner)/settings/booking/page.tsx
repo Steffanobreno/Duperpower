@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -12,6 +13,7 @@ import { SimpleForm } from "../forms";
 export const metadata: Metadata = { title: "Online booking" };
 
 export default async function BookingSettingsPage() {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const [b] = await sql`
     select online_booking_enabled, buffer_minutes, max_cluster_miles::float8 as max_cluster_miles,
@@ -27,24 +29,24 @@ export default async function BookingSettingsPage() {
   const embed = `<iframe src="${bookUrl}" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`;
   return (
     <>
-      <PageHeader title="Online booking" back="/settings" />
+      <PageHeader title={t("Online booking")} back="/settings" />
       <Page>
         <Card className="space-y-3">
-          <h2 className="font-bold">Your booking page</h2>
-          <CopyField label="Link for the Book Now button" value={bookUrl} />
-          <CopyField label="Or embed it inside a page of your site" value={embed} />
-          <CopyField label="New client form (pet and contact info, no booking)" value={`${appUrl}/intake/${staff.bookingSlug}`} />
+          <h2 className="font-bold">{t("Your booking page")}</h2>
+          <CopyField label={t("Link for the Book Now button")} value={bookUrl} />
+          <CopyField label={t("Or embed it inside a page of your site")} value={embed} />
+          <CopyField label={t("New client form (pet and contact info, no booking)")} value={`${appUrl}/intake/${staff.bookingSlug}`} />
         </Card>
         <Card className="space-y-3">
-          <h2 className="font-bold">QR code</h2>
-          <p className="text-sm text-muted">Put it on the van, flyers or business cards. Clients scan it to book.</p>
+          <h2 className="font-bold">{t("QR code")}</h2>
+          <p className="text-sm text-muted">{t("Put it on the van, flyers or business cards. Clients scan it to book.")}</p>
           <QrCard svg={svg} name={b.name} logo={logo} url={bookUrl} />
         </Card>
         <Card className="space-y-3">
-          <h2 className="font-bold">Automation</h2>
+          <h2 className="font-bold">{t("Automation")}</h2>
           <SimpleForm action={saveAutoAcceptAction}>
             <fieldset className="space-y-2">
-              <legend className="mb-1 text-sm font-medium">When a client books online</legend>
+              <legend className="mb-1 text-sm font-medium">{t("When a client books online")}</legend>
               {([
                 ["none", "I accept or decline each request", "The time is held until you answer."],
                 ["returning", "Book clients I already know right away", "New clients still wait for you."],
@@ -65,39 +67,38 @@ export default async function BookingSettingsPage() {
           <SimpleForm action={saveBookingSettingsAction}>
             <label className="flex items-center gap-3 font-medium">
               <input type="checkbox" name="online_booking_enabled" defaultChecked={b.online_booking_enabled} className="h-5 w-5" />
-              Clients can request appointments online
+              {t("Clients can request appointments online")}
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Max miles between a day's stops" hint="New requests must be this close to the other visits that day.">
+              <Field label={t("Max miles between a day's stops")} hint={t("New requests must be this close to the other visits that day.")}>
                 <Input name="max_cluster_miles" inputMode="decimal" defaultValue={b.max_cluster_miles} />
               </Field>
-              <Field label="Driving time between visits (min)" hint="Kept free before and after each visit.">
+              <Field label={t("Driving time between visits (min)")} hint={t("Kept free before and after each visit.")}>
                 <Input name="buffer_minutes" inputMode="numeric" defaultValue={b.buffer_minutes} />
               </Field>
-              <Field label="Van's home ZIP" hint="Private. Used to check the service area.">
+              <Field label={t("Van's home ZIP")} hint={t("Private. Used to check the service area.")}>
                 <Input name="start_zip" inputMode="numeric" maxLength={5} defaultValue={b.start_zip ?? ""} />
               </Field>
-              <Field label="Service area (miles from home)">
+              <Field label={t("Service area (miles from home)")}>
                 <Input name="service_radius_miles" inputMode="decimal" defaultValue={b.service_radius_miles} />
               </Field>
-              <Field label="Start times every (min)" hint="120 = 7, 9, 11… After a visit ends, times restart from there.">
+              <Field label={t("Start times every (min)")} hint={t("120 = 7, 9, 11… After a visit ends, times restart from there.")}>
                 <Input name="slot_minutes" inputMode="numeric" defaultValue={b.slot_minutes} />
               </Field>
-              <Field label="Minimum notice (hours)">
+              <Field label={t("Minimum notice (hours)")}>
                 <Input name="min_notice_hours" inputMode="numeric" defaultValue={b.min_notice_hours} />
               </Field>
-              <Field label="Book up to (days ahead)" hint="365 = the whole year ahead.">
+              <Field label={t("Book up to (days ahead)")} hint={t("365 = the whole year ahead.")}>
                 <Input name="booking_days_ahead" inputMode="numeric" defaultValue={b.booking_days_ahead} />
               </Field>
-              <Field label="Clients can cancel up to (hours before)">
+              <Field label={t("Clients can cancel up to (hours before)")}>
                 <Input name="cancellation_hours" inputMode="numeric" defaultValue={b.cancellation_hours} />
               </Field>
             </div>
           </SimpleForm>
         </Card>
         <p className="text-center text-xs text-muted">
-          Requests show up in Today and in Requests. They hold the time until you accept or decline.
-          Bookings made right away show up on the calendar, and you get a notification.
+          {t("Requests show up in Today and in Requests. They hold the time until you accept or decline. Bookings made right away show up on the calendar, and you get a notification.")}
         </p>
       </Page>
     </>

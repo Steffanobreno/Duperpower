@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
@@ -10,6 +11,7 @@ import { ClockRow } from "./clock-row";
 export const metadata: Metadata = { title: "Clock in and out" };
 
 export default async function ClockPage({ searchParams }: PageProps<"/settings/team/clock">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const sp = await searchParams;
   const tz = staff.timezone;
@@ -26,24 +28,24 @@ export default async function ClockPage({ searchParams }: PageProps<"/settings/t
   for (const e of entries) if (e.out_at) hours.set(e.name, (hours.get(e.name) ?? 0) + (e.out_at.getTime() - e.in_at.getTime()) / 3600_000);
   return (
     <>
-      <PageHeader title="Clock in and out" back="/settings/team" />
+      <PageHeader title={t("Clock in and out")} back="/settings/team" />
       <Page>
         <Card className="space-y-3">
           <p className="text-sm text-muted">
             {b.clock_enabled
-              ? "On. Everyone has a Clock in / Clock out button on Today. Hours count in payroll."
-              : "Off. Turn it on to track hours (for hourly pay)."}
+              ? t("On. Everyone has a Clock in / Clock out button on Today. Hours count in payroll.")
+              : t("Off. Turn it on to track hours (for hourly pay).")}
           </p>
           <form action={setClockEnabledAction.bind(null, !b.clock_enabled)}>
             <Button type="submit" kind={b.clock_enabled ? "secondary" : "primary"} className="w-full">
-              {b.clock_enabled ? "Turn clock in/out off" : "Turn clock in/out on"}
+              {b.clock_enabled ? t("Turn clock in/out off") : t("Turn clock in/out on")}
             </Button>
           </form>
         </Card>
         <form className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-          <label className="text-sm">From<DateField name="from" defaultValue={from} className="mt-1" /></label>
-          <label className="text-sm">To<DateField name="to" defaultValue={to} className="mt-1" /></label>
-          <Button type="submit" kind="secondary">Show</Button>
+          <label className="text-sm">{t("From")}<DateField name="from" defaultValue={from} className="mt-1" /></label>
+          <label className="text-sm">{t("To")}<DateField name="to" defaultValue={to} className="mt-1" /></label>
+          <Button type="submit" kind="secondary">{t("Show")}</Button>
         </form>
         {hours.size > 0 && (
           <p className="px-1 text-sm">
@@ -58,7 +60,7 @@ export default async function ClockPage({ searchParams }: PageProps<"/settings/t
             ))}
           </ul>
         ) : (
-          <Empty title="No hours in these days" />
+          <Empty title={t("No hours in these days")} />
         )}
       </Page>
     </>

@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useRef, useState, useTransition } from "react";
 import { resizeImage } from "@/lib/resize-image";
 import { saveGroomAction } from "../groom-actions";
@@ -13,6 +14,7 @@ const BLADES = ["#10", "#7F", "#5F", "#4F", "#3F", "#30 + 1/2\" comb", "#30 + 3/
 export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
   appointmentPetId: string; pet: string; now: Cut | null; last: (Cut & { when: string; photoUrl: string | null }) | null; photoUrl: string | null;
 }) {
+  const { t } = useT();
   const [cut, setCut] = useState<Cut>(now ?? { blade: "", style: "", note: "" });
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(photoUrl);
@@ -37,11 +39,11 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
         });
       }}>
       <div className="flex items-center justify-between gap-2">
-        <p className="font-bold">✂️ {pet}&apos;s cut</p>
+        <p className="font-bold">{t("✂️ {pet}'s cut", { pet: pet })}</p>
         {last && (
           <button type="button" className="text-sm font-semibold text-brand"
             onClick={() => setCut({ blade: last.blade, style: last.style, note: last.note })}>
-            Same as last time
+            {t("Same as last time")}
           </button>
         )}
       </div>
@@ -52,26 +54,26 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
             <img src={last.photoUrl} alt={`${pet} last time`} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
           )}
           <p className="min-w-0">
-            <span className="block text-xs font-bold uppercase tracking-wide text-muted">Last time · {last.when}</span>
-            {[last.blade, last.style].filter(Boolean).join(" · ") || "No blade noted"}
+            <span className="block text-xs font-bold uppercase tracking-wide text-muted">{t("Last time · {when}", { when: last.when })}</span>
+            {[last.blade, last.style].filter(Boolean).join(" · ") || t("No blade noted")}
             {last.note && <span className="block text-muted">{last.note}</span>}
           </p>
         </div>
       )}
       <div className="grid grid-cols-2 gap-2">
-        <label className="text-sm font-medium" htmlFor={id("blade")}>Blade / comb
+        <label className="text-sm font-medium" htmlFor={id("blade")}>{t("Blade / comb")}
           <input id={id("blade")} list="blades" value={cut.blade ?? ""} onChange={(e) => setCut({ ...cut, blade: e.target.value })}
             className={field} placeholder="#7F" maxLength={60} />
         </label>
-        <label className="text-sm font-medium" htmlFor={id("style")}>Length / style
+        <label className="text-sm font-medium" htmlFor={id("style")}>{t("Length / style")}
           <input id={id("style")} value={cut.style ?? ""} onChange={(e) => setCut({ ...cut, style: e.target.value })}
-            className={field} placeholder="Teddy face, 1/2&quot; legs" maxLength={120} />
+            className={field} placeholder={t("Teddy face, 1/2\" legs")} maxLength={120} />
         </label>
       </div>
       <datalist id="blades">{BLADES.map((b) => <option key={b} value={b} />)}</datalist>
-      <label className="block text-sm font-medium" htmlFor={id("note")}>Note
+      <label className="block text-sm font-medium" htmlFor={id("note")}>{t("Note")}
         <textarea id={id("note")} value={cut.note ?? ""} onChange={(e) => setCut({ ...cut, note: e.target.value })}
-          className={field} rows={2} maxLength={500} placeholder="Short around the eyes, leave the tail fluffy" />
+          className={field} rows={2} maxLength={500} placeholder={t("Short around the eyes, leave the tail fluffy")} />
       </label>
       <div className="flex items-center gap-3">
         {preview && (
@@ -92,10 +94,10 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
           }} />
         <button type="button" onClick={() => file.current?.click()}
           className="rounded-xl border border-line bg-surface px-3 py-2 text-sm font-semibold text-brand">
-          📷 {preview ? "Change photo" : "Add photo"}
+          📷 {preview ? t("Change photo") : t("Add photo")}
         </button>
         <button type="submit" disabled={pending} className="ml-auto rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">
-          {pending ? "Saving…" : "Save cut"}
+          {pending ? t("Saving…") : t("Save cut")}
         </button>
       </div>
       {msg && <p role="status" className={`text-sm font-semibold ${msg.ok ? "text-success" : "text-danger"}`}>{msg.text}</p>}

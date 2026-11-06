@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { DateField } from "@/components/date-field";
 import { useActionState } from "react";
@@ -21,26 +22,27 @@ export function RescheduleForm({
   /** The main action on the screen (after picking a time on the calendar). */
   primary?: boolean;
 }) {
+  const { t } = useT();
   const [state, formAction, pending] = useActionState(action, undefined);
   return (
     <ActionForm action={formAction} className="space-y-3">
-      <FormPopup state={state} override="override" overrideLabel="Move it anyway" />
+      <FormPopup state={state} override="override" overrideLabel={t("Move it anyway")} />
       <div className="grid grid-cols-2 gap-3">
-        <Field label="New date">
+        <Field label={t("New date")}>
           <DateField name="date" defaultValue={date} required />
         </Field>
-        <Field label="New time">
+        <Field label={t("New time")}>
           <Input type="time" name="time" defaultValue={time} step={900} required />
         </Field>
       </div>
       {notify && (
         <label className="flex items-center gap-3 text-sm">
           <input type="checkbox" name="notify" defaultChecked className="h-4 w-4" />
-          Tell the client about the new time
+          {t("Tell the client about the new time")}
         </label>
       )}
       <Button type="submit" kind={primary ? "primary" : "secondary"} disabled={pending} className={primary ? "w-full py-3.5 text-base" : undefined}>
-        {pending ? "Moving…" : "Move appointment"}
+        {pending ? t("Moving…") : t("Move appointment")}
       </Button>
     </ActionForm>
   );

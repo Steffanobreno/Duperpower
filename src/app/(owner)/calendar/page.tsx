@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
@@ -63,6 +64,7 @@ const STATUS_BAR: Record<string, string> = {
 };
 
 export default async function CalendarPage({ searchParams }: PageProps<"/calendar">) {
+  const { t: tr } = await getOwnerI18n();
   const staff = await requireStaff();
   const sp = await searchParams;
   const tz = staff.timezone;
@@ -115,16 +117,16 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
   return (
     <>
-      <PageHeader title="Calendar" back={choosing?.cancel} action={
+      <PageHeader title={tr("Calendar")} back={choosing?.cancel} action={
         <span className="flex gap-2">
           {/* Quick switch back to the day on the map. */}
           <Link href={`/today?date=${date}${groomer ? `&groomer=${groomer}` : ""}`}
-            className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">Map</Link>
-          <ButtonLink href={`/appointments/new?date=${date}`}>Book</ButtonLink>
+            className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">{tr("Map")}</Link>
+          <ButtonLink href={`/appointments/new?date=${date}`}>{tr("Book")}</ButtonLink>
         </span>
       } />
       <Page>
-        <nav aria-label="View" className="grid grid-cols-4 gap-1 rounded-2xl bg-surface p-1 shadow-[var(--shadow-card)]">
+        <nav aria-label={tr("View")} className="grid grid-cols-4 gap-1 rounded-2xl bg-surface p-1 shadow-[var(--shadow-card)]">
           {VIEWS.map((v) => (
             <Link key={v.key} href={`/calendar?view=${v.key}&date=${date}${q}`} aria-current={v.key === view ? "page" : undefined}
               className={`rounded-xl py-2 text-center text-sm font-semibold ${v.key === view ? "bg-navy text-white" : "text-muted"}`}>
@@ -141,9 +143,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
           <div className="sticky top-16 z-10 flex items-center gap-3 rounded-2xl border border-brand bg-brand-soft px-4 py-3">
             <p className="min-w-0 flex-1 text-sm">
               <span className="block font-bold text-brand-strong">{choosing.title}</span>
-              <span className="text-muted">{view === "day" ? "Tap a free time to pick it." : "Open the Day view to pick a time."}</span>
+              <span className="text-muted">{view === "day" ? tr("Tap a free time to pick it.") : tr("Open the Day view to pick a time.")}</span>
             </p>
-            <Link href={choosing.cancel} className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-sm font-semibold">← Back</Link>
+            <Link href={choosing.cancel} className="shrink-0 rounded-full bg-surface px-3 py-1.5 text-sm font-semibold">{tr("← Back")}</Link>
           </div>
         )}
 
@@ -152,7 +154,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
             dots={(d) => onDay(d).filter((a) => !HIDDEN.includes(a.status)).length} />
         )}
 
-        {view === "day" && closed.has(date) && <Notice kind="warn">Closed · {closed.get(date)}. Clients can&apos;t book online.</Notice>}
+        {view === "day" && closed.has(date) && <Notice kind="warn">{tr("Closed · {get}. Clients can't book online.", { get: closed.get(date) })}</Notice>}
         {view === "day" && (
           <Swipe prev={`${base}date=${addDaysYmd(date, -1)}`} next={`${base}date=${addDaysYmd(date, 1)}`}>
             <DayTimeline date={date} appts={onDay(date)} blocks={blocksOn(date)} hours={hoursOf(date)} tz={tz} multi={multi} groomer={groomer}
@@ -276,10 +278,11 @@ function span(appts: AppointmentListItem[], tz: string, hours: { start: string; 
   return { first: Math.floor(first / 60) * 60, last: Math.ceil(last / 60) * 60 };
 }
 
-function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick, view }: {
+async function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick, view }: {
   date: string; appts: AppointmentListItem[]; blocks: TimeOff[]; hours: { start: string; end: string } | null; tz: string;
   multi: boolean; groomer: string | null; pick: Pick | null; view: CalendarView;
 }) {
+  const { t: tr } = await getOwnerI18n();
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
   // All-day blocks sit above the hours, like all-day events on a phone calendar; the rest share the lanes.
   const clipped = blocks.map((t) => ({ t, ...clip(t, date, tz)! }));
@@ -300,18 +303,18 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick, vie
   const dogs = visible.reduce((s, a) => s + a.pets.length, 0);
 
   return (
-    <section className="space-y-2" aria-label="Day schedule">
+    <section className="space-y-2" aria-label={tr("Day schedule")}>
       <div className="flex items-center justify-between gap-2 px-1">
         <p className="text-sm font-semibold">
-          {hours ? `${visible.length} appts · ${dogs} dog${dogs === 1 ? "" : "s"} · ${money(total)}` : "Day off"}
-          {appts.length > visible.length && <span className="font-normal text-muted"> · {appts.length - visible.length} cancelled</span>}
+          {hours ? `${visible.length} appts · ${dogs} dog${dogs === 1 ? "" : "s"} · ${money(total)}` : tr("Day off")}
+          {appts.length > visible.length && <span className="font-normal text-muted"> · {appts.length - visible.length} {" "}{tr("cancelled")}</span>}
         </p>
       </div>
       {allDay.map((t) => (
         <Link key={t.id} href={`/calendar/block/${t.id}`}
           className={`flex justify-between gap-3 rounded-[var(--radius-card)] border border-line px-4 py-2.5 text-sm ${BLOCK_STYLE}`}>
           <span className="truncate font-semibold text-ink">{blockTitle(t)}</span>
-          <span className="shrink-0">All day</span>
+          <span className="shrink-0">{tr("All day")}</span>
         </Link>
       ))}
       <div className="card relative overflow-hidden" style={{ height: ((last - first) / 60) * PX }}>
@@ -358,11 +361,11 @@ function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pick, vie
               }}>
               <div className="flex items-center justify-between gap-1">
                 <span className="truncate font-bold">{timeLabel(a.start_at, tz)} – {timeLabel(a.end_at, tz)}</span>
-                {a.paid && <span className="shrink-0 font-bold text-success">Paid</span>}
+                {a.paid && <span className="shrink-0 font-bold text-success">{tr("Paid")}</span>}
               </div>
               <div className="truncate text-sm font-bold">
                 {multi && <span aria-label={a.staff_name} title={a.staff_name} className="mr-1 inline-block h-2.5 w-2.5 rounded-full align-middle" style={{ background: a.staff_color }} />}
-                {a.series_id && <span aria-label="Repeats" className="text-success">↻ </span>}{view.show_client ? a.client_name : a.pets.map((p) => p.name).join(", ")}
+                {a.series_id && <span aria-label={tr("Repeats")} className="text-success">↻ </span>}{view.show_client ? a.client_name : a.pets.map((p) => p.name).join(", ")}
               </div>
               {(view.show_pets || view.show_services) && (
                 <div className="truncate text-muted">
@@ -460,10 +463,11 @@ function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz, view }: {
   );
 }
 
-function MonthGrid({ start, count, month, today, onDay, blocksOn, working }: {
+async function MonthGrid({ start, count, month, today, onDay, blocksOn, working }: {
   start: string; count: number; month: string; today: string; onDay: (d: string) => AppointmentListItem[];
   blocksOn: (d: string) => TimeOff[]; working: (d: string) => boolean;
 }) {
+  const { t: tr } = await getOwnerI18n();
   const days = Array.from({ length: count }, (_, i) => addDaysYmd(start, i));
   return (
     <div className="card overflow-hidden">
@@ -485,7 +489,7 @@ function MonthGrid({ start, count, month, today, onDay, blocksOn, working }: {
                 {list.slice(0, 3).map((a) => (
                   <span key={a.id} className="block truncate rounded bg-navy px-1 text-[10px] leading-4 text-white">{a.client_name}</span>
                 ))}
-                {list.length > 3 && <span className="block text-[10px] font-semibold text-muted">+{list.length - 3} more</span>}
+                {list.length > 3 && <span className="block text-[10px] font-semibold text-muted">+{list.length - 3} {" "}{tr("more")}</span>}
                 {blocksOn(d).length > 0 && (
                   <span className={`block truncate rounded px-1 text-[10px] leading-4 ${BLOCK_STYLE}`}>{blockTitle(blocksOn(d)[0])}</span>
                 )}
@@ -499,10 +503,11 @@ function MonthGrid({ start, count, month, today, onDay, blocksOn, working }: {
   );
 }
 
-function Agenda({ start, today, onDay, blocksOn, working, tz }: {
+async function Agenda({ start, today, onDay, blocksOn, working, tz }: {
   start: string; today: string; onDay: (d: string) => AppointmentListItem[]; blocksOn: (d: string) => TimeOff[];
   working: (d: string) => boolean; tz: string;
 }) {
+  const { t: tr } = await getOwnerI18n();
   const days = Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i));
   return (
     <>
@@ -515,10 +520,10 @@ function Agenda({ start, today, onDay, blocksOn, working, tz }: {
             <div className="flex items-baseline justify-between px-1">
               <h2 id={`day-${d}`} className={`font-bold ${d === today ? "text-brand" : ""}`}>
                 {fmt(d, { weekday: "short", month: "short", day: "numeric" })}
-                {d === today && <span className="ml-2 text-xs font-semibold uppercase">Today</span>}
+                {d === today && <span className="ml-2 text-xs font-semibold uppercase">{tr("Today")}</span>}
               </h2>
               <span className="text-sm text-muted">
-                {off ? "Day off" : active.length
+                {off ? tr("Day off") : active.length
                   ? `${active.length} appts · ${active.reduce((s, a) => s + a.pets.length, 0)} dogs · ${money(active.reduce((s, a) => s + a.total_cents, 0))}`
                   : ""}
               </span>
@@ -529,14 +534,14 @@ function Agenda({ start, today, onDay, blocksOn, working, tz }: {
                 <Link key={t.id} href={`/calendar/block/${t.id}`}
                   className={`flex justify-between gap-3 rounded-[var(--radius-card)] border border-line px-4 py-2.5 text-sm ${BLOCK_STYLE}`}>
                   <span className="truncate font-semibold text-ink">{blockTitle(t)}</span>
-                  <span className="shrink-0">{c.s === 0 && c.e === 1440 ? "All day" : `${timeLabel(t.start_at, tz)} – ${timeLabel(t.end_at, tz)}`}</span>
+                  <span className="shrink-0">{c.s === 0 && c.e === 1440 ? tr("All day") : `${timeLabel(t.start_at, tz)} – ${timeLabel(t.end_at, tz)}`}</span>
                 </Link>
               );
             })}
             {list.length === 0 ? (
               <Link href={`/appointments/new?date=${d}`}
                 className="block rounded-[var(--radius-card)] border border-dashed border-line px-4 py-3 text-sm text-muted hover:bg-surface">
-                {off ? "Day off · book anyway" : "Free · tap to book"}
+                {off ? tr("Day off · book anyway") : tr("Free · tap to book")}
               </Link>
             ) : (
               <ul className="card divide-y divide-line overflow-hidden">
