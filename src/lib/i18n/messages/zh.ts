@@ -14,6 +14,8 @@ export const zh: Messages = {
   "Welcome!": "欢迎！",
   "Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾":
     "上门美容，湾区各地均可。一分钟完成预约：我们把水疗带到您身边。🐾",
+  "Mobile grooming at your door. Book in a minute: we'll bring the spa to you. 🐾":
+    "上门移动美容。一分钟即可预约：我们把水疗带到您家门口。🐾",
   "Start with your phone number": "请先输入您的电话号码",
   "Mobile phone": "手机号码",
   "Been here before? We'll find your pets and address, so you don't type them again.": "以前来过？我们会找到您的宠物和地址，不用再输入一次。",

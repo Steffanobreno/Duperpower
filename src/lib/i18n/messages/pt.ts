@@ -15,6 +15,8 @@ export const pt: Messages = {
   "Welcome!": "Bem-vindo!",
   "Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾":
     "Banho e tosa na sua porta, em toda a Bay Area. Agende em um minuto: levamos o spa até você. 🐾",
+  "Mobile grooming at your door. Book in a minute: we'll bring the spa to you. 🐾":
+    "Banho e tosa na sua porta. Agende em um minuto: levamos o spa até você. 🐾",
   "Start with your phone number": "Comece com o seu telefone",
   "Mobile phone": "Celular",
   "Been here before? We'll find your pets and address, so you don't type them again.":

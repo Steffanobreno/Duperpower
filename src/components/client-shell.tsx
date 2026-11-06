@@ -2,7 +2,7 @@ import { hasBuiltInArtwork, initialsOf } from "@/lib/product";
 import type { ReactNode } from "react";
 import { Phone } from "./icons";
 import { LanguagePicker } from "./i18n";
-import type { Lang, T } from "@/lib/i18n";
+import { dirOf, type Lang, type T } from "@/lib/i18n";
 
 // The frame around every page clients see (booking, confirm, cancel): the Woofers navy
 // header and footer, like the website. `bare` drops both when the page sits inside the
@@ -43,7 +43,7 @@ export function ClientShell({
       <span className="min-w-0 truncate text-white/80">You&apos;re seeing the client&apos;s page</span>
     </div>
   );
-  if (bare) return <main lang={i18n?.lang} className="mx-auto w-full max-w-lg flex-1 px-3 py-4">{picker}{children}</main>;
+  if (bare) return <main lang={i18n?.lang} dir={i18n ? dirOf(i18n.lang) : undefined} className="mx-auto w-full max-w-lg flex-1 px-3 py-4">{picker}{children}</main>;
   return (
     <>
       {back}
@@ -78,7 +78,7 @@ export function ClientShell({
           )}
         </div>
       </header>
-      <main lang={i18n?.lang} className="mx-auto w-full max-w-lg flex-1 px-3 py-5">{picker}{children}</main>
+      <main lang={i18n?.lang} dir={i18n ? dirOf(i18n.lang) : undefined} className="mx-auto w-full max-w-lg flex-1 px-3 py-5">{picker}{children}</main>
       <footer className="bg-navy-deep text-white/75">
         <div className="mx-auto max-w-lg space-y-4 px-5 py-8 text-sm">
           {hasBuiltInArtwork(brand?.name) && !brand?.logo ? (

@@ -274,7 +274,9 @@ export function BookingWizard({
           <div className="p-5 pt-2 sm:p-7 sm:pt-2">
           <h1 className="text-[32px] font-extrabold leading-tight tracking-tight">{t("Welcome!")}</h1>
           <p className="mt-2 text-muted">
-            {t("Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾")}
+            {hasBuiltInArtwork(businessName)
+              ? t("Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾")
+              : t("Mobile grooming at your door. Book in a minute: we'll bring the spa to you. 🐾")}
           </p>
           <label className="mt-7 block">
             <span className="mb-2 block font-bold">{t("Start with your phone number")}</span>

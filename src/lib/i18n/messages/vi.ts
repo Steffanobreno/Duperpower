@@ -14,6 +14,8 @@ export const vi: Messages = {
   "Welcome!": "Chào mừng bạn!",
   "Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾":
     "Cắt tỉa tận nhà, khắp Bay Area. Đặt lịch trong một phút: chúng tôi mang spa đến cho bạn. 🐾",
+  "Mobile grooming at your door. Book in a minute: we'll bring the spa to you. 🐾":
+    "Chăm sóc thú cưng lưu động ngay trước cửa nhà bạn. Đặt lịch trong một phút: chúng tôi mang spa đến tận nơi. 🐾",
   "Start with your phone number": "Bắt đầu bằng số điện thoại của bạn",
   "Mobile phone": "Số điện thoại di động",
   "Been here before? We'll find your pets and address, so you don't type them again.": "Đã từng đặt lịch? Chúng tôi sẽ tìm thú cưng và địa chỉ của bạn, không cần nhập lại.",

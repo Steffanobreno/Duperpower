@@ -14,6 +14,8 @@ export const tl: Messages = {
   "Welcome!": "Maligayang pagdating!",
   "Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾":
     "Grooming sa mismong pinto ninyo, saanman sa Bay Area. Mag-book sa loob ng isang minuto: dadalhin namin ang spa sa inyo. 🐾",
+  "Mobile grooming at your door. Book in a minute: we'll bring the spa to you. 🐾":
+    "Mobile grooming sa mismong pintuan mo. Mag-book sa loob ng isang minuto: dadalhin namin ang spa sa iyo. 🐾",
   "Start with your phone number": "Magsimula sa inyong phone number",
   "Mobile phone": "Mobile number",
   "Been here before? We'll find your pets and address, so you don't type them again.": "Nakapag-book na dati? Hahanapin namin ang mga alaga at address ninyo para hindi na kayo mag-type ulit.",

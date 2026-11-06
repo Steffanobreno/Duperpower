@@ -1,5 +1,5 @@
-// The pages clients see (booking, their appointment link, receipts) in the languages most
-// spoken in the US and the Bay Area. English is the source: every phrase is written in English
+// The pages clients see (booking, their appointment link, receipts) in the 20 most spoken
+// languages in the world. English is the source: every phrase is written in English
 // in the code and looked up in the other languages' lists; a phrase that isn't translated yet
 // just shows in English. Owner screens stay in English.
 
@@ -11,6 +11,19 @@ export const LANGS = [
   { code: "vi", name: "Tiếng Việt" },
   { code: "ko", name: "한국어" },
   { code: "pt", name: "Português" },
+  { code: "hi", name: "हिन्दी" },
+  { code: "fr", name: "Français" },
+  { code: "ar", name: "العربية" },
+  { code: "bn", name: "বাংলা" },
+  { code: "ru", name: "Русский" },
+  { code: "ur", name: "اردو" },
+  { code: "id", name: "Bahasa Indonesia" },
+  { code: "de", name: "Deutsch" },
+  { code: "ja", name: "日本語" },
+  { code: "mr", name: "मराठी" },
+  { code: "te", name: "తెలుగు" },
+  { code: "tr", name: "Türkçe" },
+  { code: "ta", name: "தமிழ்" },
 ] as const;
 
 export type Lang = (typeof LANGS)[number]["code"];
@@ -21,13 +34,19 @@ export const isLang = (v: unknown): v is Lang => LANGS.some((l) => l.code === v)
 /** For dates and times (Intl). */
 export const LOCALES: Record<Lang, string> = {
   en: "en-US", es: "es-US", zh: "zh-CN", tl: "fil-PH", vi: "vi-VN", ko: "ko-KR", pt: "pt-BR",
+  hi: "hi-IN", fr: "fr-FR", ar: "ar", bn: "bn-BD", ru: "ru-RU", ur: "ur-PK", id: "id-ID",
+  de: "de-DE", ja: "ja-JP", mr: "mr-IN", te: "te-IN", tr: "tr-TR", ta: "ta-IN",
 };
+
+/** Languages written right to left. */
+export const RTL = new Set<Lang>(["ar", "ur"]);
+export const dirOf = (lang: Lang) => (RTL.has(lang) ? "rtl" : "ltr");
 
 /** The best language for an Accept-Language header ("es-MX,es;q=0.9,en;q=0.8" → es). */
 export function fromAcceptLanguage(header: string | null): Lang {
   for (const part of (header ?? "").split(",")) {
     const code = part.trim().split(";")[0].toLowerCase();
-    const base = code === "fil" ? "tl" : code.split("-")[0];
+    const base = code === "fil" ? "tl" : code === "in" ? "id" : code.split("-")[0];
     if (isLang(base)) return base;
   }
   return "en";

@@ -14,6 +14,8 @@ export const ko: Messages = {
   "Welcome!": "환영합니다!",
   "Mobile grooming at your door, anywhere in the Bay Area. Book in a minute: we'll bring the spa to you. 🐾":
     "베이 지역 어디든 집 앞으로 찾아가는 출장 미용. 1분이면 예약 끝: 스파를 직접 가져다 드려요. 🐾",
+  "Mobile grooming at your door. Book in a minute: we'll bring the spa to you. 🐾":
+    "집 앞까지 찾아가는 출장 미용. 1분이면 예약 완료: 스파를 바로 문 앞으로 가져갑니다. 🐾",
   "Start with your phone number": "전화번호부터 입력해 주세요",
   "Mobile phone": "휴대폰 번호",
   "Been here before? We'll find your pets and address, so you don't type them again.": "이용하신 적이 있나요? 반려동물과 주소를 찾아 드려서 다시 입력할 필요가 없어요.",
