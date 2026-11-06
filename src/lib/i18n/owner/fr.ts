@@ -1609,4 +1609,10 @@ export const fr: string[] = ["Réservation abandonnée",
 "Envoyer",
 "Aide et tutoriels",
 "Guides pas à pas, l'assistant, et une personne quand il le faut",
-"Taux horaire"];
+"Taux horaire",
+"+ Remise, frais ou taxe",
+"Plus d'actions",
+"Son animal (facultatif)",
+"Race, vaccins, notes et autres animaux peuvent être ajoutés plus tard.",
+"Plus de détails (facultatif)",
+"Enregistrer le client et l'animal"];

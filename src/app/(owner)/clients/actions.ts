@@ -74,6 +74,16 @@ export async function createClientAction(_: FormState, form: FormData): Promise<
     if (isUniqueViolation(e)) return { error: "A client with this phone number already exists." };
     throw e;
   }
+  // Their first pet, typed on the same screen: then straight to the client.
+  const petName = String(form.get("pet_name") ?? "").trim().slice(0, 80);
+  if (petName) {
+    const rg = staff.region;
+    const lbs = weightIn(String(form.get("pet_weight") ?? ""), rg.kg);
+    const size = String(form.get("pet_size") ?? "");
+    const sizeClass = rg.sizeBy === "weight" && lbs ? sizeFromWeight(lbs) : SIZES.some((s) => s.value === size) ? size : null;
+    await sql`insert into pets (client_id, name, size_class, weight_lbs) values (${id}, ${petName}, ${sizeClass}, ${lbs})`;
+    redirect(`/clients/${id}`);
+  }
   redirect(`/clients/${id}/pets/new?first=1`);
 }
 

@@ -1609,4 +1609,10 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Kirim",
 "Bantuan dan tutorial",
 "Panduan langkah demi langkah, asisten, dan orang saat Anda butuh",
-"Upah per jam"];
+"Upah per jam",
+"+ Diskon, biaya, atau pajak",
+"Tindakan lain",
+"Hewannya (opsional)",
+"Ras, vaksin, catatan, dan hewan lain bisa ditambahkan nanti.",
+"Detail lain (opsional)",
+"Simpan klien dan hewan"];

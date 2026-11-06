@@ -50,6 +50,7 @@ step("a booked visit shows Not confirmed (red); next step is I'm on the way");
 
 // No-show asks first. Saying no keeps the visit.
 page.once("dialog", (dlg) => dlg.dismiss());
+await page.getByText("More actions").click();
 await page.getByRole("button", { name: "No-show" }).click();
 await page.waitForTimeout(800);
 await page.reload();
@@ -58,6 +59,7 @@ step("No-show asks first; saying no keeps the visit");
 
 // Saying yes marks it, and Today still lists it (greyed) with a way back.
 page.once("dialog", (dlg) => dlg.accept());
+await page.getByText("More actions").click();
 await page.getByRole("button", { name: "No-show" }).click();
 await page.locator("summary", { hasText: "No-show" }).waitFor();
 await page.goto(`${BASE}/today?date=${date}&groomer=all`);

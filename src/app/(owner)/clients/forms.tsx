@@ -101,7 +101,22 @@ export function ClientForm({ action, initial, submitLabel, options }: {
   action: Action; initial?: ClientValues; submitLabel: string; options: ClientOptions;
 }) {
   const { t } = useT();
+  const region = useRegion();
   const [state, formAction, pending] = useActionState(action, undefined);
+  // A new client: their first pet on the same screen, and the rarely needed fields folded away.
+  const isNew = !initial;
+  const [petName, setPetName] = useState("");
+  const more = (
+    <>
+      <Field label={t("Parking and access notes")} hint={t("Gate code, where to park the van, water or power outlet.")}>
+        <Textarea name="access_notes" defaultValue={initial?.access_notes ?? ""} />
+      </Field>
+      <Field label={t("How they found you")}>
+        <ListSelect name="referral_source" options={options.sources} value={initial?.referral_source} empty={t("Not set")} />
+      </Field>
+      <ChipChecks name="tags" legend={t("Tags")} options={options.tags} checked={initial?.tags ?? []} />
+    </>
+  );
   return (
     <ActionForm action={formAction} className="space-y-4">
       <FormPopup state={state} />
@@ -124,15 +139,37 @@ export function ClientForm({ action, initial, submitLabel, options }: {
         <Input name="email" type="email" defaultValue={initial?.email ?? ""} />
       </Field>
       <AddressFields initial={initial} />
-      <Field label={t("Parking and access notes")} hint={t("Gate code, where to park the van, water or power outlet.")}>
-        <Textarea name="access_notes" defaultValue={initial?.access_notes ?? ""} />
-      </Field>
-      <Field label={t("How they found you")}>
-        <ListSelect name="referral_source" options={options.sources} value={initial?.referral_source} empty={t("Not set")} />
-      </Field>
-      <ChipChecks name="tags" legend={t("Tags")} options={options.tags} checked={initial?.tags ?? []} />
+      {isNew && (
+        <fieldset className="space-y-3 rounded-2xl border border-line p-3">
+          <legend className="px-1 font-semibold">🐾 {t("Their pet (optional)")}</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("Pet name")}>
+              <Input name="pet_name" value={petName} onChange={(e) => setPetName(e.target.value)} autoComplete="off" maxLength={80} />
+            </Field>
+            {region.sizeBy === "weight" ? (
+              <Field label={region.kg ? t("Weight (kg)") : t("Weight (lb)")}>
+                <Input name="pet_weight" inputMode="decimal" />
+              </Field>
+            ) : (
+              <Field label={t("Size")}>
+                <Select name="pet_size" defaultValue="">
+                  <option value="">{t("Not set")}</option>
+                  {sizesFor(region).map((s) => <option key={s.value} value={s.value}>{t(s.label)}</option>)}
+                </Select>
+              </Field>
+            )}
+          </div>
+          <p className="text-xs text-muted">{t("Breed, vaccines, notes and more pets can be added later.")}</p>
+        </fieldset>
+      )}
+      {isNew ? (
+        <details className="rounded-2xl border border-line p-3">
+          <summary className="cursor-pointer font-semibold">{t("More details (optional)")}</summary>
+          <div className="mt-3 space-y-4">{more}</div>
+        </details>
+      ) : more}
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? t("Saving…") : submitLabel}
+        {pending ? t("Saving…") : isNew && petName.trim() ? t("Save client and pet") : submitLabel}
       </Button>
     </ActionForm>
   );

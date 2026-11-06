@@ -187,25 +187,31 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           )}
           {canMove && <Link href={planHref} className={pillar}><Calendar size={22} />{t("Reschedule")}</Link>}
           {canEditServices && <Link href={`/appointments/${id}/services`} className={pillar}><Pencil size={22} />{t("Edit services")}</Link>}
-          <Link href={bookAgainHref} className={pillar}>
-            <Plus size={22} />{t("Book again")}
-          </Link>
-          {canChange && (
-            <form action={setStatusAction.bind(null, id, "cancelled")} className="contents">
-              <ConfirmButton question={t(TAKES_OFF.cancelled)} className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />{t("Cancel")}</ConfirmButton>
-            </form>
-          )}
-          {canChange && appt.status !== "requested" && (
-            <form action={setStatusAction.bind(null, id, "no_show")} className="contents">
-              <ConfirmButton question={t(TAKES_OFF.no_show)} className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />{t("No-show")}</ConfirmButton>
-            </form>
-          )}
           {closed && (
             <form action={setStatusAction.bind(null, id, "unconfirmed")} className="contents">
               <button type="submit" className={pillar}><Check size={22} />{t("Restore")}</button>
             </form>
           )}
         </nav>
+        {/* Less common actions, one tap away, so the everyday ones stay big and few. */}
+        <details className="card -mt-2 px-2 py-1">
+          <summary className="cursor-pointer list-none px-2 py-2 text-center text-sm font-semibold text-muted">{t("More actions")} ▾</summary>
+          <div className="grid grid-cols-3 gap-1 pb-1">
+            <Link href={bookAgainHref} className={pillar}>
+              <Plus size={22} />{t("Book again")}
+            </Link>
+            {canChange && (
+              <form action={setStatusAction.bind(null, id, "cancelled")} className="contents">
+                <ConfirmButton question={t(TAKES_OFF.cancelled)} className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />{t("Cancel")}</ConfirmButton>
+              </form>
+            )}
+            {canChange && appt.status !== "requested" && (
+              <form action={setStatusAction.bind(null, id, "no_show")} className="contents">
+                <ConfirmButton question={t(TAKES_OFF.no_show)} className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />{t("No-show")}</ConfirmButton>
+              </form>
+            )}
+          </div>
+        </details>
 
         <section className="space-y-2">
           <h2 className="section-label">{t("When")}</h2>
@@ -357,7 +363,8 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           </form>
         </section>
 
-        {canMove && (
+        {/* The planner opens when Reschedule is tapped (?rs=), instead of a whole calendar under every visit. */}
+        {canMove && (isYmd(sp.rs) || !!appt.reschedule_requested_at) && (
           <section className="scroll-mt-20 space-y-2" id="reschedule">
             <h2 className="section-label">{t("Reschedule")}</h2>
             <Card className="space-y-3">

@@ -45,6 +45,7 @@ await page.fill('input[name="phone"]', "(650) 555-0142");
 await page.fill('input[name="address_line"]', "450 Serra Mall");
 await page.fill('input[name="city"]', "Stanford");
 await page.fill('input[name="zip"]', "94305");
+await page.getByText("More details (optional)").click();
 await page.fill('textarea[name="access_notes"]', "Park in the driveway, outlet by the garage.");
 await page.click('button[type="submit"]');
 await page.waitForURL(/\/pets\/new/);
@@ -118,10 +119,11 @@ await page.waitForURL(/\/checkout/);
 step("status moved booked (not confirmed) → on the way → grooming → done");
 
 // A one-time 10% discount and a $5 service charge, then removed, so the bill stays $194.
+await page.getByText("+ Discount, charge or tax").click();
 await page.getByText("+ Add a discount").click();
 await page.getByLabel("+ Add a discount amount").fill("10");
-await page.locator("details[open] select[name=unit]").selectOption("percent");
-await page.locator("details[open]").getByRole("button", { name: "Add" }).click();
+await page.locator("details[open] details[open] select[name=unit]").selectOption("percent");
+await page.locator("details[open] details[open]").getByRole("button", { name: "Add" }).click();
 await page.getByText("Discount (10%)").waitFor();
 await page.getByText("−$19.40").waitFor();
 await page.getByRole("button", { name: "Remove Discount (10%)" }).click();

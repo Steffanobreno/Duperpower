@@ -134,19 +134,21 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
             </ul>
           )}
           {open && (
-            <div className="space-y-2 px-4 py-3">
-              <AddItem appointmentId={id} kind="discount" title={t("+ Add a discount")} placeholder={t("One-time discount")} tone="text-brand" />
-              <AddItem appointmentId={id} kind="fee" title={t("+ Add service charges")} placeholder={t("Service charge")} tone="text-success" />
-              <AddItem appointmentId={id} kind="tax" title={t("+ Add tax")} placeholder={t("Sales tax")} tone="text-muted" />
-            </div>
+            <details className="px-4 py-3">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-brand">{t("+ Discount, charge or tax")}</summary>
+              <div className="mt-2 space-y-2">
+                <AddItem appointmentId={id} kind="discount" title={t("+ Add a discount")} placeholder={t("One-time discount")} tone="text-brand" />
+                <AddItem appointmentId={id} kind="fee" title={t("+ Add service charges")} placeholder={t("Service charge")} tone="text-success" />
+                <AddItem appointmentId={id} kind="tax" title={t("+ Add tax")} placeholder={t("Sales tax")} tone="text-muted" />
+              </div>
+            </details>
           )}
           <dl className="space-y-1.5 px-4 py-3 text-sm">
             <Row label={t("Sub total")} value={money(invoice.subtotal_cents)} />
             {invoice.discount_cents > 0 && <Row label={t("Discount")} value={`−${money(invoice.discount_cents)}`} />}
-            <Row label={t("Tax and charges")} value={money(fees)} />
-            <Row label={t("Tips")} value={money(invoice.tip_cents)} />
+            {fees !== 0 && <Row label={t("Tax and charges")} value={money(fees)} />}
+            {invoice.tip_cents > 0 && <Row label={t("Tips")} value={money(invoice.tip_cents)} />}
             <Row label={t("Total")} value={money(invoice.total_cents)} strong />
-            <Row label={t("Amount paid")} value={money(invoice.paid_cents)} />
           </dl>
           <dl className="space-y-1.5 rounded-b-[var(--radius-card)] bg-bg px-4 py-3">
             <Row label={t("Total collected")} value={money(invoice.paid_cents)} strong />

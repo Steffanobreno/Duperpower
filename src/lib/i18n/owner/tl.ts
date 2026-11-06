@@ -1609,4 +1609,10 @@ export const tl: string[] = ["Naiwang booking",
 "Ipadala",
 "Tulong at mga tutorial",
 "Mga gabay na sunud-sunod, ang assistant, at tao kapag kailangan mo",
-"Bayad kada oras"];
+"Bayad kada oras",
+"+ Diskwento, singil o buwis",
+"Iba pang aksyon",
+"Ang alaga nila (opsyonal)",
+"Puwedeng idagdag mamaya ang lahi, bakuna, tala at iba pang alaga.",
+"Iba pang detalye (opsyonal)",
+"I-save ang kliyente at alaga"];

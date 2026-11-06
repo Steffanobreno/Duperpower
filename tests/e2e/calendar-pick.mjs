@@ -129,6 +129,7 @@ step("the full day calendar opens from the planner and its ← goes back to the 
 
 // Book again opens the calendar too, and the pick lands on the booking form.
 await page.goto(doneUrl);
+await page.getByText("More actions").click();
 await page.getByRole("link", { name: "Book again" }).click();
 await page.waitForURL(/pick=book/);
 await page.getByText("Booking Maria Lopez").waitFor();

@@ -1609,4 +1609,10 @@ export const pt: string[] = ["Agendamento abandonado",
 "Enviar",
 "Ajuda e tutoriais",
 "Guias passo a passo, o assistente, e uma pessoa quando precisar",
-"Valor por hora"];
+"Valor por hora",
+"+ Desconto, taxa ou imposto",
+"Mais ações",
+"O pet (opcional)",
+"Raça, vacinas, observações e mais pets dá para colocar depois.",
+"Mais detalhes (opcional)",
+"Salvar cliente e pet"];

@@ -1609,4 +1609,10 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Senden",
 "Hilfe und Anleitungen",
 "Schritt-für-Schritt-Anleitungen, der Assistent und ein Mensch, wenn nötig",
-"Stundenlohn"];
+"Stundenlohn",
+"+ Rabatt, Gebühr oder Steuer",
+"Weitere Aktionen",
+"Ihr Tier (optional)",
+"Rasse, Impfungen, Notizen und weitere Tiere kannst du später ergänzen.",
+"Weitere Angaben (optional)",
+"Kunde und Tier speichern"];

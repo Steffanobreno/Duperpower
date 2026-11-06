@@ -78,9 +78,15 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     // Spots that opened for someone on the waitlist.
     waitlistOpenings(staff),
     // A new account: the first steps, until it has a few visits.
-    sql<{ fresh: boolean; logo: boolean; visits: number; setup: boolean }[]>`
+    sql<{ fresh: boolean; logo: boolean; visits: number; setup: boolean; prices: boolean; hours: boolean; shared: boolean; clients: boolean }[]>`
       select b.created_at > now() - interval '30 days' as fresh, b.onboarded_at is null as setup,
              exists (select 1 from business_logos l where l.business_id = b.id) as logo,
+             -- Done for real: prices or hours saved after signup, a booking from the page, a client added.
+             exists (select 1 from services s where s.business_id = b.id and s.updated_at > b.created_at + interval '1 minute') as prices,
+             exists (select 1 from working_hours w join staff st on st.id = w.staff_id
+                     where st.business_id = b.id and w.created_at > b.created_at + interval '1 minute') as hours,
+             exists (select 1 from appointments a where a.business_id = b.id and a.source = 'online') as shared,
+             exists (select 1 from clients c where c.business_id = b.id) as clients,
              (select count(*)::int from appointments a where a.business_id = b.id) as visits
       from businesses b where b.id = ${staff.businessId}`,
   ]);
@@ -227,17 +233,17 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </div>
         )}
 
-        {staff.role === "owner" && start && (sp.welcome === "1" || start.setup || (start.fresh && start.visits < 3)) && (
+        {staff.role === "owner" && start && !(start.logo && start.prices && start.hours && start.shared && start.clients) && (sp.welcome === "1" || start.setup || (start.fresh && start.visits < 3)) && (
           <section aria-label={t("Get started")} className="card space-y-2 border-[#d4af37] p-4">
             <p className="text-lg font-extrabold">{t("👋 Welcome! Set up in a few minutes")}</p>
             {start.setup && <a href="/welcome" className="block rounded-full bg-navy py-2.5 text-center font-bold text-white">{t("Continue setup")} ›</a>}
             <ol className="space-y-1.5 text-sm">
               {[
                 { done: start.logo, href: "/settings/business", label: t("Add your logo, address and phone") },
-                { done: false, href: "/settings/services", label: t("Check your services and prices") },
-                { done: false, href: "/settings/hours", label: t("Set your working hours") },
-                { done: false, href: "/settings/booking", label: t("Share your booking link with clients") },
-                { done: start.visits > 0, href: "/settings/import", label: t("Bring your clients from another app") },
+                { done: start.prices, href: "/settings/services", label: t("Check your services and prices") },
+                { done: start.hours, href: "/settings/hours", label: t("Set your working hours") },
+                { done: start.shared, href: "/settings/booking", label: t("Share your booking link with clients") },
+                { done: start.clients, href: "/settings/import", label: t("Bring your clients from another app") },
               ].map((x) => (
                 <li key={x.href}>
                   <Link href={x.href} className="flex items-center gap-2 font-semibold text-brand">

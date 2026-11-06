@@ -1609,4 +1609,10 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Gửi",
 "Trợ giúp và hướng dẫn",
 "Hướng dẫn từng bước, trợ lý, và nhân viên khi bạn cần",
-"Lương theo giờ"];
+"Lương theo giờ",
+"+ Giảm giá, phụ phí hoặc thuế",
+"Thêm thao tác",
+"Thú cưng của họ (không bắt buộc)",
+"Giống, vắc-xin, ghi chú và thêm thú cưng có thể thêm sau.",
+"Thêm chi tiết (không bắt buộc)",
+"Lưu khách và thú cưng"];

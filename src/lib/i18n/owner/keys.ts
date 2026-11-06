@@ -1611,5 +1611,11 @@ export const OWNER_KEYS: string[] = [
  "Send",
  "Help and tutorials",
  "Step-by-step guides, the assistant, and a person when you need one",
- "Hourly pay"
+ "Hourly pay",
+ "+ Discount, charge or tax",
+ "More actions",
+ "Their pet (optional)",
+ "Breed, vaccines, notes and more pets can be added later.",
+ "More details (optional)",
+ "Save client and pet"
 ];

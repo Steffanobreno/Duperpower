@@ -1609,4 +1609,10 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Gönder",
 "Yardım ve eğitimler",
 "Adım adım rehberler, asistan ve gerektiğinde bir kişi",
-"Saatlik ücret"];
+"Saatlik ücret",
+"+ İndirim, ücret veya vergi",
+"Diğer işlemler",
+"Hayvanı (isteğe bağlı)",
+"Irk, aşılar, notlar ve diğer hayvanlar sonra eklenebilir.",
+"Diğer ayrıntılar (isteğe bağlı)",
+"Müşteriyi ve hayvanı kaydet"];
