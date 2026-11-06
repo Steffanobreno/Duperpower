@@ -6,7 +6,10 @@ import { backupScript } from "@/lib/backup-script";
 import { ButtonLink, Card, Notice, Page, PageHeader } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 
-export const metadata: Metadata = { title: "Backups" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Backups") };
+}
 
 export default async function BackupsPage() {
   const { t } = await getOwnerI18n();

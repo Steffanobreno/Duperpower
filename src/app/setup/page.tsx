@@ -5,7 +5,10 @@ import { hasAnyUser } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { LoginForm } from "../login/login-form";
 
-export const metadata: Metadata = { title: "Set up" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Set up") };
+}
 
 // Must check the database on every visit, never at build time.
 export const dynamic = "force-dynamic";

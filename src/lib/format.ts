@@ -1,5 +1,6 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
+import { msg } from "@/lib/i18n";
 export const money = (cents: number) =>
   (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -12,7 +13,7 @@ export function parseMoney(input: FormDataEntryValue | null): number | null {
 }
 
 export const minutesLabel = (min: number) => {
-  if (min === 0) return "no extra time";
+  if (min === 0) return msg("no extra time");
   const h = Math.floor(min / 60);
   const m = min % 60;
   return [h ? `${h}h` : "", m ? `${m}min` : ""].filter(Boolean).join(" ");
@@ -67,12 +68,12 @@ export function normalizePhone(input: FormDataEntryValue | null): string | null 
 }
 
 export const SIZES = [
-  { value: "small", label: 'Small (12" or less)' },
-  { value: "medium", label: 'Medium (12"–16")' },
-  { value: "large", label: 'Large (16"–20")' },
-  { value: "xlarge", label: 'X-Large (20" or up)' },
+  { value: "small", label: msg('Small (12" or less)') },
+  { value: "medium", label: msg('Medium (12"–16")') },
+  { value: "large", label: msg('Large (16"–20")') },
+  { value: "xlarge", label: msg('X-Large (20" or up)') },
 ] as const;
 export type SizeClass = (typeof SIZES)[number]["value"];
-export const sizeLabel = (s: string | null) => SIZES.find((x) => x.value === s)?.label ?? "Size not set";
+export const sizeLabel = (s: string | null) => SIZES.find((x) => x.value === s)?.label ?? msg("Size not set");
 
-export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export const WEEKDAYS = [msg("Sunday"), msg("Monday"), msg("Tuesday"), msg("Wednesday"), msg("Thursday"), msg("Friday"), msg("Saturday")];

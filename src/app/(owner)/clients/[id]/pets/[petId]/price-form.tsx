@@ -29,7 +29,7 @@ export function PetPriceForm({ action, petName, options }: {
         </Select>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={`${petName}'s price`}>
+        <Field label={t("{name}'s price", { name: petName })}>
           <Input name="price" inputMode="decimal" placeholder="$" required autoComplete="off" />
         </Field>
         <Field label={t("Time (optional)")}>

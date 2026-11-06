@@ -9,7 +9,10 @@ import { SimpleForm } from "../forms";
 import { saveLanguageAction, changePasswordAction, logoutOthersAction, saveAccountAction, savePinAction } from "./actions";
 import { sql } from "@/lib/db";
 
-export const metadata: Metadata = { title: "Account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Account") };
+}
 
 export default async function AccountPage() {
   const { t } = await getOwnerI18n();

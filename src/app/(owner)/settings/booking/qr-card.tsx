@@ -17,7 +17,7 @@ export function QrCard({ svg, name, logo, url }: { svg: string; name: string; lo
           ) : null}
           <span className="font-bold">{name}</span>
         </div>
-        <div className="mt-4 rounded-2xl bg-white p-3" role="img" aria-label={`QR code for ${url}`}
+        <div className="mt-4 rounded-2xl bg-white p-3" role="img" aria-label={t("QR code for {url}", { url })}
           dangerouslySetInnerHTML={{ __html: svg }} />
         <p className="mt-3 text-sm text-white/80">{t("Scan with your phone camera")}</p>
       </div>

@@ -9,7 +9,10 @@ import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { savePetAction } from "../../../actions";
 import { PetForm } from "../../../forms";
 
-export const metadata: Metadata = { title: "New pet" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("New pet") };
+}
 
 export default async function NewPetPage({ params, searchParams }: PageProps<"/clients/[id]/pets/new">) {
   const { t } = await getOwnerI18n();
@@ -20,7 +23,7 @@ export default async function NewPetPage({ params, searchParams }: PageProps<"/c
   if (!client) notFound();
   return (
     <>
-      <PageHeader title={`New pet for ${fullName(client)}`} back={`/clients/${id}`} />
+      <PageHeader title={t("New pet for {name}", { name: fullName(client) })} back={`/clients/${id}`} />
       <Page>
         {first && <Notice kind="success">{t("Client saved. Now add their pet.")}</Notice>}
         <Card>

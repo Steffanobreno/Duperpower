@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -12,26 +13,29 @@ import { CopyField } from "@/components/copy-field";
 import { newDeviceKeyAction, saveDeliveryAction, saveMessagingSettingsAction, saveTemplateAction, setAutoMessagesAction } from "../actions";
 import { SimpleForm } from "../forms";
 
-export const metadata: Metadata = { title: "Texts and email" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Texts and email") };
+}
 
 const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
-  booked: { title: "Booking confirmation", when: "When you book a visit or accept a request" },
-  request_received: { title: "Request received", when: "When a client sends a request online" },
-  request_declined: { title: "Request declined", when: "When you decline an online request" },
-  reminder: { title: "1st reminder", when: "Days before the visit, at a set time" },
-  reminder_2: { title: "2nd reminder", when: "Another reminder closer to the visit (ex. the day before)" },
-  confirmed: { title: "Confirmed", when: "When the client taps Confirm on their link" },
-  cancelled: { title: "Cancelled", when: "When the visit is cancelled" },
-  on_my_way: { title: "On my way", when: "You send it with the button on the appointment" },
-  rebook: { title: "Time to rebook", when: "When the pet's grooming frequency has passed, at a set time" },
-  review_request: { title: "Review request", when: "Minutes after checkout (needs the review link)" },
-  vaccine_due: { title: "Vaccine expiring", when: "Days before a pet's vaccine expires, at a set time" },
-  abandoned_booking: { title: "Didn't finish booking", when: "A while after someone stops halfway on the booking page (8am–8pm)" },
+  booked: { title: msg("Booking confirmation"), when: msg("When you book a visit or accept a request") },
+  request_received: { title: msg("Request received"), when: msg("When a client sends a request online") },
+  request_declined: { title: msg("Request declined"), when: msg("When you decline an online request") },
+  reminder: { title: msg("1st reminder"), when: msg("Days before the visit, at a set time") },
+  reminder_2: { title: msg("2nd reminder"), when: msg("Another reminder closer to the visit (ex. the day before)") },
+  confirmed: { title: msg("Confirmed"), when: msg("When the client taps Confirm on their link") },
+  cancelled: { title: msg("Cancelled"), when: msg("When the visit is cancelled") },
+  on_my_way: { title: msg("On my way"), when: msg("You send it with the button on the appointment") },
+  rebook: { title: msg("Time to rebook"), when: msg("When the pet's grooming frequency has passed, at a set time") },
+  review_request: { title: msg("Review request"), when: msg("Minutes after checkout (needs the review link)") },
+  vaccine_due: { title: msg("Vaccine expiring"), when: msg("Days before a pet's vaccine expires, at a set time") },
+  abandoned_booking: { title: msg("Didn't finish booking"), when: msg("A while after someone stops halfway on the booking page (8am–8pm)") },
 };
 const ORDER = Object.keys(TEMPLATE_INFO);
 
 export default async function MessagesSettingsPage() {
-  const { t: tr } = await getOwnerI18n();
+  const { t: tr, locale } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const [b] = await sql`select email, phone, review_url, website_url, device_key, auto_messages_enabled,
                                 arrival_before_min, arrival_after_min, receipt_email_enabled from businesses where id = ${staff.businessId}`;
@@ -77,8 +81,8 @@ export default async function MessagesSettingsPage() {
           </p>
           <CopyField label={tr("Link for the Shortcut")} value={outbox} />
           <p className="text-sm">
-            {waiting.n > 0 ? `${waiting.n} text${waiting.n > 1 ? "s" : ""} waiting for the iPhone.` : tr("No texts waiting.")}
-            {lastPickup.at && ` Last pickup by the iPhone: ${lastPickup.at.toLocaleString("en-US", { timeZone: staff.timezone, dateStyle: "medium", timeStyle: "short" })}.`}
+            {waiting.n > 1 ? tr("{n} texts waiting for the iPhone.", { n: waiting.n }) : waiting.n === 1 ? tr("1 text waiting for the iPhone.") : tr("No texts waiting.")}
+            {lastPickup.at && ` ${tr("Last pickup by the iPhone: {when}.", { when: lastPickup.at.toLocaleString(locale, { timeZone: staff.timezone, dateStyle: "medium", timeStyle: "short" }) })}`}
           </p>
           <TestTextForm defaultPhone={phoneLabel(b.phone)} />
           <form action={newDeviceKeyAction}>
@@ -149,7 +153,7 @@ export default async function MessagesSettingsPage() {
             return (
               <details key={t.id} className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
                 <summary className="cursor-pointer">
-                  <span className="font-semibold">{info.title}</span>
+                  <span className="font-semibold">{tr(info.title)}</span>
                   {t.enabled ? (
                     t.trigger !== "on_my_way" && (
                       <span className="ml-2 inline-flex gap-1 align-middle">
@@ -160,7 +164,7 @@ export default async function MessagesSettingsPage() {
                   ) : (
                     <span className="ml-2 rounded-full bg-bg px-2 py-0.5 text-[11px] font-semibold text-muted">{tr("Off")}</span>
                   )}
-                  <span className="block text-xs text-muted">{info.when}</span>
+                  <span className="block text-xs text-muted">{tr(info.when)}</span>
                 </summary>
                 <div className="mt-3">
                   <SimpleForm action={saveTemplateAction.bind(null, t.id)}>

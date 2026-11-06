@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { DateField, MonthPicker } from "@/components/date-field";
@@ -58,7 +59,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
       <div className="space-y-4">
         <Notice kind="success">
           {result.stopped ? tr("This visit no longer repeats. The later ones were removed.")
-            : `Booked ${result.created} more visit${result.created === 1 ? "" : "s"}: ${ruleLabel(first, rule).toLowerCase()}.`}
+            : (result.created === 1 ? tr("Booked 1 more visit: {rule}.", { rule: ruleLabel(first, rule, tr).toLowerCase() }) : tr("Booked {n} more visits: {rule}.", { n: result.created, rule: ruleLabel(first, rule, tr).toLowerCase() }))}
         </Notice>
         {result.skipped.length > 0 && (
           <Card className="space-y-2">
@@ -84,10 +85,10 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
         <FormPopup state={state} />
         <input type="hidden" name="mode" value={mode} />
         <nav aria-label={tr("How it repeats")} className="grid grid-cols-2 gap-1 rounded-2xl bg-surface p-1 shadow-[var(--shadow-card)]">
-          {([["rule", "Every few weeks"], ["dates", "Pick dates"]] as const).map(([m, label]) => (
+          {([["rule", msg("Every few weeks")], ["dates", msg("Pick dates")]] as const).map(([m, label]) => (
             <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}
               className={`rounded-xl py-2 text-sm font-semibold ${mode === m ? "bg-navy text-white" : "text-muted"}`}>
-              {label}
+              {tr(label)}
             </button>
           ))}
         </nav>
@@ -101,12 +102,12 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
                 {picked.map((d) => (
                   <li key={d} className="flex items-center gap-2 px-3 py-2 text-sm">
                     <span className="min-w-0 flex-1 font-semibold">{fmt(d)}</span>
-                    <select aria-label={`Time on ${fmt(d)}`} value={timeOf(d)} onChange={(e) => setTimes({ ...times, [d]: e.target.value })}
+                    <select aria-label={tr("Time on {date}", { date: fmt(d) })} value={timeOf(d)} onChange={(e) => setTimes({ ...times, [d]: e.target.value })}
                       className="rounded-lg border border-line bg-surface px-2 py-1.5 font-semibold">
                       {TIMES.includes(timeOf(d)) ? null : <option value={timeOf(d)}>{label12(timeOf(d))}</option>}
                       {TIMES.map((t) => <option key={t} value={t}>{label12(t)}</option>)}
                     </select>
-                    <button type="button" onClick={() => toggle(d)} aria-label={`Remove ${fmt(d)}`}
+                    <button type="button" onClick={() => toggle(d)} aria-label={tr("Remove {date}", { date: fmt(d) })}
                       className="rounded-full px-2 py-1 text-lg leading-none text-danger">✕</button>
                   </li>
                 ))}
@@ -130,10 +131,10 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
             </Field>
           </div>
           <div className="flex flex-wrap gap-2" aria-label={tr("Quick picks")}>
-            {([[1, "week", "Every week"], [2, "week", "Every 2 weeks"], [3, "week", "Every 3 weeks"], [4, "week", "Every 4 weeks"], [1, "month", "Every month"]] as const).map(([n, f, label]) => (
+            {([[1, "week", msg("Every week")], [2, "week", msg("Every 2 weeks")], [3, "week", msg("Every 3 weeks")], [4, "week", msg("Every 4 weeks")], [1, "month", msg("Every month")]] as const).map(([n, f, label]) => (
               <button key={label} type="button" onClick={() => { setEvery(n); setFreq(f); }}
                 className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${every === n && freq === f ? "border-brand bg-brand text-white" : "border-line"}`}>
-                {label}
+                {tr(label)}
               </button>
             ))}
           </div>
@@ -169,7 +170,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
         <Card className="space-y-2">
           <div className="flex items-baseline justify-between">
             <h2 className="font-bold">{tr("{n} visit", { n: dates.length })}{dates.length === 1 ? "" : "s"}</h2>
-            <span className="text-sm text-muted">{ruleLabel(first, rule)}</span>
+            <span className="text-sm text-muted">{ruleLabel(first, rule, tr)}</span>
           </div>
           <ol className="max-h-72 divide-y divide-line overflow-y-auto text-sm">
             {dates.map((d, i) => (
@@ -184,7 +185,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
           <Notice kind="warn">{tr("Saving replaces the later visits of this repeat that the client hasn't confirmed yet. Confirmed, checked-in and paid visits stay.")}</Notice>
         )}
         <Button type="submit" disabled={saving || dates.length < 2} className="w-full py-3.5 text-base">
-          {saving ? tr("Booking…") : `Save and book ${Math.max(dates.length - 1, 0)} more`}
+          {saving ? tr("Booking…") : tr("Save and book {max} more", { max: Math.max(dates.length - 1, 0) })}
         </Button>
       </ActionForm>
       {repeating && (

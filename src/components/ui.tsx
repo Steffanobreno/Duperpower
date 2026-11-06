@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { MenuButton } from "./side-menu";
@@ -35,7 +36,7 @@ export function PageHeader({ title, back, action }: { title: string; back?: stri
     <header className="sticky top-0 z-10 bg-navy text-white shadow-sm">
       <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
         {back ? (
-          <Link href={back} className="-ml-2 rounded-lg p-2 text-white hover:bg-white/10" aria-label="Back">
+          <Link href={back} className="-ml-2 rounded-lg p-2 text-white hover:bg-white/10" aria-label={msg("Back")}>
             <span aria-hidden>←</span>
           </Link>
         ) : (
@@ -106,25 +107,22 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
   );
 }
 
-const STATUS: Record<string, { label: string; className: string }> = {
-  requested: { label: "Requested", className: "bg-warn-soft text-warn" },
-  waitlist: { label: "Waitlist", className: "bg-bg text-muted" },
+export const STATUS: Record<string, { label: string; className: string }> = {
+  requested: { label: msg("Requested"), className: "bg-warn-soft text-warn" },
+  waitlist: { label: msg("Waitlist"), className: "bg-bg text-muted" },
   // Whether the client confirmed from the reminder; the visit is booked either way.
-  unconfirmed: { label: "Not confirmed", className: "bg-danger-soft text-danger" },
-  confirmed: { label: "Confirmed", className: "bg-success-soft text-success" },
-  en_route: { label: "On the way", className: "bg-brand text-on-brand" },
-  in_progress: { label: "Checked in", className: "bg-success text-white" },
-  completed_unpaid: { label: "Unpaid", className: "bg-danger-soft text-danger" },
-  completed: { label: "Done", className: "bg-success-soft text-success" },
-  paid: { label: "Paid", className: "bg-success-soft text-success" },
-  cancelled: { label: "Cancelled", className: "bg-bg text-muted line-through" },
-  no_show: { label: "No-show", className: "bg-danger-soft text-danger" },
-  declined: { label: "Declined", className: "bg-bg text-muted" },
+  unconfirmed: { label: msg("Not confirmed"), className: "bg-danger-soft text-danger" },
+  confirmed: { label: msg("Confirmed"), className: "bg-success-soft text-success" },
+  en_route: { label: msg("On the way"), className: "bg-brand text-on-brand" },
+  in_progress: { label: msg("Checked in"), className: "bg-success text-white" },
+  completed_unpaid: { label: msg("Unpaid"), className: "bg-danger-soft text-danger" },
+  completed: { label: msg("Done"), className: "bg-success-soft text-success" },
+  paid: { label: msg("Paid"), className: "bg-success-soft text-success" },
+  cancelled: { label: msg("Cancelled"), className: "bg-bg text-muted line-through" },
+  no_show: { label: msg("No-show"), className: "bg-danger-soft text-danger" },
+  declined: { label: msg("Declined"), className: "bg-bg text-muted" },
 };
 
-export function StatusBadge({ status }: { status: string }) {
-  const s = STATUS[status] ?? { label: status, className: "bg-bg text-muted" };
-  return <span className={`inline-block shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.className}`}>{s.label}</span>;
-}
+export { StatusBadge } from "./status-badge";
 
 export const statusLabel = (status: string) => STATUS[status]?.label ?? status;

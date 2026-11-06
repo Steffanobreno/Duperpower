@@ -30,7 +30,7 @@ export function ImportForm() {
         <div className="space-y-2">
           <Notice kind="success">
             {t("{created} clients and {pets} pets imported, {appointments} upcoming visits.", { created: r.created, pets: r.pets, appointments: r.appointments })}
-            {r.existing > 0 && ` ${r.existing} were already here and were left as they are.`}
+            {r.existing > 0 && t(" {existing} were already here and were left as they are.", { existing: r.existing })}
           </Notice>
           {r.moreUpcoming.length > 0 && (
             <Notice kind="warn">

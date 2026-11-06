@@ -10,7 +10,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { updateClientAction } from "../../actions";
 import { ClientForm } from "../../forms";
 
-export const metadata: Metadata = { title: "Edit client" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Edit client") };
+}
 
 export default async function EditClientPage({ params }: PageProps<"/clients/[id]/edit">) {
   const { t } = await getOwnerI18n();

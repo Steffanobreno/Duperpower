@@ -1,3 +1,4 @@
+import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
@@ -7,10 +8,14 @@ import { ReceiptView } from "@/components/receipt-view";
 import { ReceiptActions } from "@/components/receipt-actions";
 import { emailStandaloneReceiptAction } from "../actions";
 
-export const metadata: Metadata = { title: "Receipt" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Receipt") };
+}
 
 // A receipt from the receipt generator (finished orders show theirs on the order).
 export default async function ReceiptPage({ params, searchParams }: PageProps<"/receipts/[id]">) {
+  const { t } = await getOwnerI18n();
   const staff = await requirePermission("payments");
   const { id } = await params;
   const sp = await searchParams;
@@ -19,7 +24,7 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
   if (!r) notFound();
   return (
     <>
-      <PageHeader title={`Receipt #${r.number}`} back="/receipts" />
+      <PageHeader title={t("Receipt #{number}", { number: r.number })} back="/receipts" />
       <Page>
         <ReceiptActions r={r} emailAction={emailStandaloneReceiptAction.bind(null, id)} result={typeof sp.receipt === "string" ? sp.receipt : undefined} />
         <Card><ReceiptView r={r} /></Card>

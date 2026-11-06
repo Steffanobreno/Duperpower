@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,9 +8,12 @@ import { zipInfo } from "@/lib/geo/zip";
 import { ButtonLink, Empty, Page, PageHeader } from "@/components/ui";
 import { AreaMap } from "./area-map";
 
-export const metadata: Metadata = { title: "Service areas" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Service areas") };
+}
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS = [msg("Sun"), msg("Mon"), msg("Tue"), msg("Wed"), msg("Thu"), msg("Fri"), msg("Sat")];
 
 export default async function AreasPage() {
   const { t } = await getOwnerI18n();
@@ -34,7 +38,7 @@ export default async function AreasPage() {
                   <span className="min-w-0 flex-1">
                     <span className="block font-semibold">{a.name}</span>
                     <span className="block text-sm text-muted">
-                      {a.weekdays.length === 7 ? t("Every day") : a.weekdays.map((d) => DAYS[d]).join(", ")} {t("· {n} ZIP code", { n: a.zip_codes.length })}{a.zip_codes.length === 1 ? "" : "s"}
+                      {a.weekdays.length === 7 ? t("Every day") : a.weekdays.map((d) => t(DAYS[d])).join(", ")} · {a.zip_codes.length === 1 ? t("1 ZIP code") : t("{n} ZIP codes", { n: a.zip_codes.length })}
                     </span>
                   </span>
                   <span aria-hidden className="text-muted">›</span>

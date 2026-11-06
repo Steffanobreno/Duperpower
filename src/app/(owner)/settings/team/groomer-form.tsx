@@ -29,7 +29,7 @@ export function GroomerForm({ action, colors, initial, isOwner = false, submit }
         <input type="hidden" name="color" value={color} />
         <div className="flex flex-wrap gap-2">
           {colors.map((c) => (
-            <button key={c} type="button" onClick={() => setColor(c)} aria-label={`Color ${c}`} aria-pressed={color === c}
+            <button key={c} type="button" onClick={() => setColor(c)} aria-label={t("Color {c}", { c })} aria-pressed={color === c}
               className={`h-9 w-9 rounded-full border-4 ${color === c ? "border-ink" : "border-white"} shadow`} style={{ background: c }} />
           ))}
         </div>

@@ -2,6 +2,7 @@ import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
 import { isUuid } from "../format";
+import { msg } from "@/lib/i18n";
 
 // Abandoned online bookings: someone started on the booking page and stopped for more than
 // 20 minutes. Status: Recovered once that phone has a visit booked after it (online, by text,
@@ -61,9 +62,9 @@ export async function draftStats(staff: StaffContext) {
 }
 
 export const STEP_NAMES: Record<string, string> = {
-  phone: "Phone number",
-  contact: "Name and email",
-  address: "Address",
-  times: "Select time",
-  review: "Review and sign",
+  phone: msg("Phone number"),
+  contact: msg("Name and email"),
+  address: msg("Address"),
+  times: msg("Select time"),
+  review: msg("Review and sign"),
 };

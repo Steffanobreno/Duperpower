@@ -19,7 +19,10 @@ import { PetPhotoUpload } from "../../../pet-photo-upload";
 import { PetPhoto } from "@/components/pet-photo";
 import { PetForm } from "../../../forms";
 
-export const metadata: Metadata = { title: "Edit pet" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Edit pet") };
+}
 
 export default async function EditPetPage({ params }: PageProps<"/clients/[id]/pets/[petId]">) {
   const { t } = await getOwnerI18n();
@@ -41,7 +44,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
   const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
   return (
     <>
-      <PageHeader title={`Edit ${pet.name}`} back={`/clients/${id}`} />
+      <PageHeader title={t("Edit {name}", { name: pet.name })} back={`/clients/${id}`} />
       <Page>
         <Card className="flex items-center gap-4">
           <PetPhoto petId={petId} version={pet.photo_version} name={pet.name} size={88} />
@@ -90,13 +93,13 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                     <span className="min-w-0">
                       <span className="block font-semibold">{s.name}</span>
                       <span className="block text-xs text-muted">
-                        {t("Usually {money}", { money: money(s.price_cents) })}{r.duration_min != null ? ` · ${minutesLabel(r.duration_min)} for ${pet.name}` : ""}
+                        {t("Usually {amount}", { amount: money(s.price_cents) })}{r.duration_min != null ? ` · ${t("{duration} for {name}", { duration: t(minutesLabel(r.duration_min)), name: pet.name })}` : ""}
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
                       <span className="font-bold text-brand">{money(r.price_cents)}</span>
                       <form action={deletePetPriceAction.bind(null, id, petId, r.service_id)}>
-                        <button type="submit" aria-label={`Remove ${pet.name}'s price for ${s.name}`} className="text-xs font-semibold text-danger">{t("Remove")}</button>
+                        <button type="submit" aria-label={t("Remove {name}'s price for {name2}", { name: pet.name, name2: s.name })} className="text-xs font-semibold text-danger">{t("Remove")}</button>
                       </form>
                     </span>
                   </li>
@@ -117,7 +120,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                   <Link href={`/appointments/${g.appointment_id}`} className="flex items-center gap-3 py-2.5">
                     {g.has_photo ? (
                       // eslint-disable-next-line @next/next/no-img-element -- a small private photo
-                      <img src={`/api/grooms/${g.id}/photo?v=${g.v}`} alt={`${pet.name} on ${dayLabel(g.day, staff.timezone)}`}
+                      <img src={`/api/grooms/${g.id}/photo?v=${g.v}`} alt={t("{name} on {day}", { name: pet.name, day: dayLabel(g.day, staff.timezone) })}
                         className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                     ) : <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-bg text-xl">✂️</span>}
                     <span className="min-w-0">
@@ -144,7 +147,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                     <span>
                       <span className="font-semibold">{v.name}</span>
                       <span className="block text-xs text-muted">
-                        {v.expires_on ? `Expires ${fmt(v.expires_on)}` : t("No expiry date")}{v.given_on ? ` · given ${fmt(v.given_on)}` : ""}
+                        {v.expires_on ? t("Expires {date}", { date: fmt(v.expires_on) }) : t("No expiry date")}{v.given_on ? ` · given ${fmt(v.given_on)}` : ""}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">
@@ -154,7 +157,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
                         </span>
                       )}
                       <form action={deleteVaccineAction.bind(null, id, petId, v.id)}>
-                        <button type="submit" aria-label={`Delete ${v.name}`} className="text-xs font-semibold text-danger">{t("Delete")}</button>
+                        <button type="submit" aria-label={t("Delete {name}", { name: v.name })} className="text-xs font-semibold text-danger">{t("Delete")}</button>
                       </form>
                     </span>
                   </li>
@@ -166,7 +169,7 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
         </Card>
         <form action={setPetPassedAction.bind(null, id, petId, !pet.deceased_at)} className="text-center">
           <button type="submit" className="text-sm font-semibold text-muted underline">
-            {pet.deceased_at ? `Undo: ${pet.name} is still with us` : `${pet.name} passed away 🌈`}
+            {pet.deceased_at ? t("Undo: {name} is still with us", { name: pet.name }) : t("{name} passed away 🌈", { name: pet.name })}
           </button>
           {!pet.deceased_at && <p className="mt-1 text-xs text-muted">{t("Hides {name} from booking and stops reminders. Visit history stays.", { name: pet.name })}</p>}
         </form>

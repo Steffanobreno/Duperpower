@@ -6,7 +6,10 @@ import { sql } from "@/lib/db";
 import { dayRangeUtc, isYmd, money, todayYmd } from "@/lib/format";
 import { Button, Card, Empty, Page, PageHeader } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Payroll" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Payroll") };
+}
 
 type Row = {
   id: string; name: string; commission_pct: number; tips_pct: number; hourly_cents: number;

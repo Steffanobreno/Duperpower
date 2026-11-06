@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useRef, useState, useTransition } from "react";
 import { resizeImage } from "@/lib/resize-image";
@@ -29,7 +30,7 @@ export function PetPhotoUpload({ petId, hasPhoto }: { petId: string; hasPhoto: b
               const res = await savePetPhotoAction(petId, form);
               if (res.error) setError(res.error);
             } catch {
-              setError("Could not read that photo. Try another one.");
+              setError(msg("Could not read that photo. Try another one."));
             }
           });
         }}
@@ -42,7 +43,7 @@ export function PetPhotoUpload({ petId, hasPhoto }: { petId: string; hasPhoto: b
       >
         {pending ? t("Saving photo…") : hasPhoto ? t("Change photo") : t("Add photo")}
       </button>
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{t(error)}</p>}
     </div>
   );
 }

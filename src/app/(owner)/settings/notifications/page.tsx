@@ -7,7 +7,10 @@ import { pushKeys } from "@/lib/push";
 import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { PushSetup } from "./push-setup";
 
-export const metadata: Metadata = { title: "Notifications" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Notifications") };
+}
 
 export default async function NotificationsPage() {
   const { t } = await getOwnerI18n();
@@ -30,7 +33,7 @@ export default async function NotificationsPage() {
           <PushSetup publicKey={publicKey} />
           {devices.length > 0 && (
             <p className="text-xs text-muted">
-              {t("On for: {map}", { map: devices.map((d) => d.device ?? "Device").join(", ") })}
+              {t("On for: {devices}", { devices: devices.map((d) => d.device ?? t("Device")).join(", ") })}
             </p>
           )}
         </Card>

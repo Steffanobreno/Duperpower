@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useRef, useState, useTransition } from "react";
 import { resizeImage } from "@/lib/resize-image";
@@ -29,7 +30,7 @@ export function LogoUpload({ src }: { src: string | null }) {
                 const res = await saveLogoAction(form);
                 if (res.error) setError(res.error);
               } catch {
-                setError("Could not read that picture. Try another one.");
+                setError(msg("Could not read that picture. Try another one."));
               }
             });
           }} />
@@ -46,7 +47,7 @@ export function LogoUpload({ src }: { src: string | null }) {
           )}
         </div>
         <p className="text-xs text-muted">{t("Shows on your booking page, client links and receipts.")}</p>
-        {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+        {error && <p role="alert" className="text-sm text-danger">{t(error)}</p>}
       </div>
     </div>
   );

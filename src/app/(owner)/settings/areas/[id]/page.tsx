@@ -9,7 +9,10 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { deleteAreaAction, saveAreaAction } from "../actions";
 import { AreaForm } from "../area-form";
 
-export const metadata: Metadata = { title: "Service area" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Service area") };
+}
 
 export default async function AreaPage({ params }: PageProps<"/settings/areas/[id]">) {
   const { t } = await getOwnerI18n();
@@ -36,7 +39,7 @@ export default async function AreaPage({ params }: PageProps<"/settings/areas/[i
           <>
             <p className="px-1 text-sm text-muted">{[...byCity.keys()].filter(Boolean).join(", ")}</p>
             <form action={deleteAreaAction.bind(null, area.id)}>
-              <ConfirmButton question={`Delete the ${area.name} area?`} className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft">
+              <ConfirmButton question={t("Delete the {name} area?", { name: area.name })} className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft">
                 {t("Delete area")}
               </ConfirmButton>
             </form>

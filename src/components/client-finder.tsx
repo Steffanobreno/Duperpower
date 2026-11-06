@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -16,7 +17,7 @@ const letterOf = (s: string | undefined) => {
 };
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-export function ClientFinder({ children, initialQuery = "", placeholder = "Search by name, phone or pet", autoFocus = false, form }: {
+export function ClientFinder({ children, initialQuery = "", placeholder = msg("Search by name, phone or pet"), autoFocus = false, form }: {
   children: ReactNode; initialQuery?: string; placeholder?: string; autoFocus?: boolean;
   /** Hidden fields to keep when the search is sent to the server (Enter). */
   form?: ReactNode;
@@ -73,7 +74,7 @@ export function ClientFinder({ children, initialQuery = "", placeholder = "Searc
       <form role="search" onSubmit={(e) => e.preventDefault()}>
         {form}
         <label className="sr-only" htmlFor="q">{tr("Search clients")}</label>
-        <input id="q" name="q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} autoFocus={autoFocus}
+        <input id="q" name="q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(placeholder)} autoFocus={autoFocus}
           autoComplete="off" className="block w-full rounded-full border border-line bg-surface px-5 py-2.5 text-ink placeholder:text-muted focus:border-brand focus:outline-none" />
       </form>
       <div ref={list} className="pr-6">{children}</div>
@@ -83,7 +84,7 @@ export function ClientFinder({ children, initialQuery = "", placeholder = "Searc
           onTouchStart={(e) => fromTouch(e.touches[0].clientY, e.currentTarget)}
           onTouchMove={(e) => fromTouch(e.touches[0].clientY, e.currentTarget)}>
           {LETTERS.map((l) => (
-            <button key={l} type="button" onClick={() => jump(l)} aria-label={`Jump to ${l === "#" ? "other" : l}`}
+            <button key={l} type="button" onClick={() => jump(l)} aria-label={l === "#" ? tr("Jump to other") : tr("Jump to {letter}", { letter: l })}
               className={`h-[1.05rem] w-5 text-[11px] font-bold leading-none ${present.has(l) ? "text-brand" : "text-muted/40"}`}>
               {l}
             </button>

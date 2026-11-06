@@ -7,7 +7,10 @@ import { Card, Empty, Page, PageHeader } from "@/components/ui";
 import { addOptionAction, deleteOptionAction, moveOptionAction, renameOptionAction } from "../actions";
 import { AddOption, OptionRow } from "../list-editor";
 
-export const metadata: Metadata = { title: "Client and pet options" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Client and pet options") };
+}
 
 export default async function OptionListPage({ params }: PageProps<"/settings/lists/[kind]">) {
   const { t } = await getOwnerI18n();
@@ -18,9 +21,9 @@ export default async function OptionListPage({ params }: PageProps<"/settings/li
   const items = (await allOptions(staff.businessId))[kind];
   return (
     <>
-      <PageHeader title={info.title} back="/settings/lists" />
+      <PageHeader title={t(info.title)} back="/settings/lists" />
       <Page>
-        <p className="text-sm text-muted">{t("{hint} Tap a name to rename it; clients and pets that use it follow.", { hint: info.hint })}</p>
+        <p className="text-sm text-muted">{t("{hint} Tap a name to rename it; clients and pets that use it follow.", { hint: t(info.hint) })}</p>
         {items.length ? (
           <ul className="card divide-y divide-line overflow-hidden">
             {items.map((o, i) => (
@@ -31,10 +34,10 @@ export default async function OptionListPage({ params }: PageProps<"/settings/li
             ))}
           </ul>
         ) : (
-          <Empty title={`No ${info.one}s yet`}>{t("Add the first one below.")}</Empty>
+          <Empty title={t("Nothing in this list yet")}>{t("Add the first one below.")}</Empty>
         )}
         <Card>
-          <AddOption action={addOptionAction.bind(null, kind)} placeholder={`New ${info.one}`} />
+          <AddOption action={addOptionAction.bind(null, kind)} placeholder={t("New {one}", { one: t(info.one) })} />
         </Card>
       </Page>
     </>

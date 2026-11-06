@@ -53,9 +53,9 @@ export function PushSetup({ publicKey }: { publicKey: string }) {
         if (res?.error) return setMessage({ kind: "error", text: res.error });
         setEndpoint(sub.endpoint);
         setState("on");
-        setMessage({ kind: "success", text: "Notifications are on for this device." });
+        setMessage({ kind: "success", text: t("Notifications are on for this device.") });
       } catch {
-        setMessage({ kind: "error", text: "Couldn't turn notifications on. Try again, or check the phone's notification settings." });
+        setMessage({ kind: "error", text: t("Couldn't turn notifications on. Try again, or check the phone's notification settings.") });
       }
     });
 
@@ -73,7 +73,7 @@ export function PushSetup({ publicKey }: { publicKey: string }) {
   const test = () =>
     start(async () => {
       const { sent } = await testPushAction();
-      setMessage(sent ? { kind: "success", text: "Sent. It should pop up in a few seconds." } : { kind: "error", text: "No device has notifications on yet." });
+      setMessage(sent ? { kind: "success", text: t("Sent. It should pop up in a few seconds.") } : { kind: "error", text: t("No device has notifications on yet.") });
     });
 
   return (

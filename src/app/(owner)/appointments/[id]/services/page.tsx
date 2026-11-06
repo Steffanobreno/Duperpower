@@ -9,7 +9,10 @@ import { sql } from "@/lib/db";
 import { Notice, Page, PageHeader } from "@/components/ui";
 import { ServicesEditor } from "./services-editor";
 
-export const metadata: Metadata = { title: "Edit services" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Edit services") };
+}
 
 export default async function EditServicesPage({ params }: PageProps<"/appointments/[id]/services">) {
   const { t } = await getOwnerI18n();

@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,7 +15,10 @@ import { listGroomers } from "@/lib/data/staff";
 import { nearbyDays } from "@/lib/data/appointments";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 
-export const metadata: Metadata = { title: "New appointment" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("New appointment") };
+}
 
 const initials = (c: { first_name: string; last_name: string | null }) => (c.first_name[0] ?? "") + (c.last_name?.[0] ?? "");
 
@@ -89,7 +93,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
       .map((r) => [r.service_id, { price_cents: r.price_cents, duration_min: r.duration_min }]));
   return (
     <>
-      <PageHeader title={`Book ${fullName(client)}`} back={`/clients/${client.id}`} />
+      <PageHeader title={t("Book {name}", { name: fullName(client) })} back={`/clients/${client.id}`} />
       <Page>
         <div className="card px-4 pb-4 pt-5 text-center">
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-navy text-xl font-bold text-white">
@@ -98,14 +102,14 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
           <p className="mt-2 text-lg font-bold">{fullName(client)}</p>
           <dl className="mt-3 grid grid-cols-4 gap-1">
             {([
-              ["Upcoming", history.filter((a) => a.upcoming).length],
-              ["Finished", count("completed")],
-              ["Cancelled", count("cancelled")],
-              ["No-show", count("no_show")],
+              [msg("Upcoming"), history.filter((a) => a.upcoming).length],
+              [msg("Finished"), count("completed")],
+              [msg("Cancelled"), count("cancelled")],
+              [msg("No-show"), count("no_show")],
             ] as const).map(([label, n]) => (
               <div key={label}>
-                <dd className={`text-lg font-bold ${label === "No-show" && n > 0 ? "text-danger" : ""}`}>{n}</dd>
-                <dt className="text-xs text-muted">{label}</dt>
+                <dd className={`text-lg font-bold ${label === msg("No-show") && n > 0 ? "text-danger" : ""}`}>{n}</dd>
+                <dt className="text-xs text-muted">{t(label)}</dt>
               </div>
             ))}
           </dl>
@@ -120,7 +124,7 @@ export default async function NewAppointmentPage({ searchParams }: PageProps<"/a
                     className="flex items-center justify-between gap-2 py-2">
                     <span>
                       <span className="font-semibold">{dayLabel(zonedToUtc(n.date, "12:00", staff.timezone), staff.timezone)}</span>
-                      <span className="text-muted"> · {n.miles < 1 ? t("same area as") : `${Math.round(n.miles)} mi from`} {n.name}</span>
+                      <span className="text-muted"> · {n.miles < 1 ? t("same area as") : t("{round} mi from", { round: Math.round(n.miles) })} {n.name}</span>
                     </span>
                     <span className="shrink-0 font-semibold text-brand">{timeLabel(zonedToUtc(n.date, n.after, staff.timezone), staff.timezone)} →</span>
                   </Link>

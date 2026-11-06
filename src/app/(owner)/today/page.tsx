@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -25,30 +26,33 @@ import { PetCodeChips } from "@/components/chips";
 import { GoldBanner } from "@/components/gold-banner";
 import { waitlistOpenings } from "@/lib/data/waitlist";
 
-export const metadata: Metadata = { title: "Today" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Today") };
+}
 
 // The next step on a visit's card, as on the visit page.
 const NEXT: Record<string, { to: string; label: string }> = {
-  requested: { to: "unconfirmed", label: "Accept" },
-  unconfirmed: { to: "en_route", label: "On my way" },
-  confirmed: { to: "en_route", label: "On my way" },
-  en_route: { to: "in_progress", label: "Check in" },
-  in_progress: { to: "completed", label: "Finish" },
+  requested: { to: "unconfirmed", label: msg("Accept") },
+  unconfirmed: { to: "en_route", label: msg("On my way") },
+  confirmed: { to: "en_route", label: msg("On my way") },
+  en_route: { to: "in_progress", label: msg("Check in") },
+  in_progress: { to: "completed", label: msg("Finish") },
 };
 
 // The status on a card's dark header: red until the client confirms (like on the calendar).
 const CARD_STATUS: Record<string, { label: string; className: string }> = {
-  requested: { label: "REQUESTED", className: "bg-warn text-white" },
-  unconfirmed: { label: "UNCONFIRMED", className: "bg-danger text-white" },
-  confirmed: { label: "CONFIRMED", className: "bg-success text-white" },
-  en_route: { label: "ON THE WAY", className: "bg-sky text-navy" },
-  in_progress: { label: "CHECKED IN", className: "bg-success text-white" },
-  completed: { label: "UNPAID", className: "bg-danger text-white" },
-  paid: { label: "PAID", className: "bg-success text-white" },
+  requested: { label: msg("Requested"), className: "bg-warn text-white" },
+  unconfirmed: { label: msg("Unconfirmed"), className: "bg-danger text-white" },
+  confirmed: { label: msg("Confirmed"), className: "bg-success text-white" },
+  en_route: { label: msg("On the way"), className: "bg-sky text-navy" },
+  in_progress: { label: msg("Checked in"), className: "bg-success text-white" },
+  completed: { label: msg("Unpaid"), className: "bg-danger text-white" },
+  paid: { label: msg("Paid"), className: "bg-success text-white" },
 };
 
 export default async function TodayPage({ searchParams }: PageProps<"/today">) {
-  const { t } = await getOwnerI18n();
+  const { t, locale } = await getOwnerI18n();
   const staff = await requireStaff();
   const sp = await searchParams;
   const tz = staff.timezone;
@@ -139,7 +143,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     return {
       id: s.id, n: i + 1, lat: s.lat, lng: s.lng,
       time: `${timeLabel(s.start_at, tz)} – ${timeLabel(s.end_at, tz)}`,
-      status: CARD_STATUS[s.paid ? "paid" : s.status] ?? { label: s.status, className: "bg-white/20" },
+      status: ((st) => ({ ...st, label: t(st.label).toLocaleUpperCase(locale) }))(CARD_STATUS[s.paid ? "paid" : s.status] ?? { label: s.status, className: "bg-white/20" }),
       client: s.client_name,
       initials: s.client_name.split(/\s+/).map((w) => w[0] ?? "").slice(0, 2).join("").toUpperCase(),
       isNew: s.client_new,
@@ -147,8 +151,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       phone: s.client_phone,
       address: s.address_line,
       directions: s.address_line || s.lat != null ? directionsUrl({ address: s.address_line, lat: s.lat, lng: s.lng }) : null,
-      next,
-      drive: driveTo(i) != null ? `🚐 ${minutesLabel(driveTo(i)!)} drive` : null,
+      next: next && { ...next, label: t(next.label) },
+      drive: driveTo(i) != null ? `🚐 ${t("{duration} drive", { duration: t(minutesLabel(driveTo(i)!)) })}` : null,
       codes: s.pets.flatMap((p) => codes.get(p.id) ?? []).map((c) => ({ label: c.label, color: c.color })),
       alerts: s.pets.flatMap((p) => vaccines.filter((v) => v.pet_id === p.id).map((v) => `💉 ${p.name}: ${alertText(v)}`)),
     };
@@ -172,14 +176,14 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </form>
         )}
         {sp.denied && <Notice kind="warn">{t("Your role can't open that page. Ask the owner if you need it.")}</Notice>}
-        {closed.has(date) && <Notice kind="warn">{t("Closed · {get}. Clients can't book online.", { get: closed.get(date) })}</Notice>}
+        {closed.has(date) && <Notice kind="warn">{t("Closed · {name}. Clients can't book online.", { name: closed.get(date) })}</Notice>}
         {requests > 0 && (
-          <GoldBanner href="/requests" count={requests} icon="bell" action="Review" compact={view !== "list"}
-            title={`${requests} booking request${requests > 1 ? "s" : ""} waiting`} text={t("Tap to accept or decline")} />
+          <GoldBanner href="/requests" count={requests} icon="bell" action={t("Review")} compact={view !== "list"}
+            title={requests > 1 ? t("{n} booking requests waiting", { n: requests }) : t("1 booking request waiting")} text={t("Tap to accept or decline")} />
         )}
         {openings.length > 0 && (
-          <GoldBanner href="/waitlist" count={new Set(openings.map((o) => o.entry_id)).size} icon="bell" action="See" compact={view !== "list"}
-            title={`A spot opened · ${new Set(openings.map((o) => o.entry_id)).size} on the waitlist`} text={t("Text or book them")} />
+          <GoldBanner href="/waitlist" count={new Set(openings.map((o) => o.entry_id)).size} icon="bell" action={t("See")} compact={view !== "list"}
+            title={t("A spot opened · {n} on the waitlist", { n: new Set(openings.map((o) => o.entry_id)).size })} text={t("Text or book them")} />
         )}
         <GroomerFilter groomers={staff.can.all_appointments ? groomers : []} current={groomer}
           href={(g) => `/today?date=${date}&groomer=${g ?? "all"}${view === "list" ? "&view=list" : ""}`} />
@@ -208,7 +212,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           <div className="flex items-center gap-2 text-sm">
             <p className="min-w-0 flex-1 truncate text-muted">
               <strong className="text-ink">{stops.length}</strong> {" "}{t("stop")}{stops.length > 1 ? "s" : ""} {t("· {done}/{n} done · {money}", { done: done, n: stops.length, money: money(expected) })}
-              {driving != null && <> · 🚐 {minutesLabel(driving)}</>}
+              {driving != null && <> · 🚐 {t(minutesLabel(driving))}</>}
             </p>
             <nav aria-label={t("View")} className="flex shrink-0 rounded-full bg-surface p-0.5 shadow-[var(--shadow-card)]">
               {(["map", "list"] as const).map((v) => (
@@ -228,11 +232,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
             <p className="text-lg font-extrabold">{t("👋 Welcome! Set up in a few minutes")}</p>
             <ol className="space-y-1.5 text-sm">
               {[
-                { done: start.logo, href: "/settings/business", label: "Add your logo, address and phone" },
-                { done: false, href: "/settings/services", label: "Check your services and prices" },
-                { done: false, href: "/settings/hours", label: "Set your working hours" },
-                { done: false, href: "/settings/booking", label: "Share your booking link with clients" },
-                { done: start.visits > 0, href: "/settings/import", label: "Bring your clients from another app" },
+                { done: start.logo, href: "/settings/business", label: t("Add your logo, address and phone") },
+                { done: false, href: "/settings/services", label: t("Check your services and prices") },
+                { done: false, href: "/settings/hours", label: t("Set your working hours") },
+                { done: false, href: "/settings/booking", label: t("Share your booking link with clients") },
+                { done: start.visits > 0, href: "/settings/import", label: t("Bring your clients from another app") },
               ].map((x) => (
                 <li key={x.href}>
                   <Link href={x.href} className="flex items-center gap-2 font-semibold text-brand">
@@ -262,11 +266,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               const after = best.minutes.reduce((a, b) => a + b, 0);
               const same = best.order.every((v, i) => v === i);
               const ordered = best.order.map((i) => stops[i]);
-              if (same || after >= before) return <p className="font-semibold">{t("✅ Your order is already the best one ({minutesLabel} of driving).", { minutesLabel: minutesLabel(before) })}</p>;
+              if (same || after >= before) return <p className="font-semibold">{t("✅ Your order is already the best one ({minutesLabel} of driving).", { minutesLabel: t(minutesLabel(before)) })}</p>;
               return (
                 <>
-                  <p className="font-bold">{t("🧭 This order saves {minutesLabel} of driving", { minutesLabel: minutesLabel(before - after) })}</p>
-                  <p className="text-sm text-muted">{t("{minutesLabel} now → {minutesLabel2}, from the start of your day and back.", { minutesLabel: minutesLabel(before), minutesLabel2: minutesLabel(after) })}</p>
+                  <p className="font-bold">{t("🧭 This order saves {minutesLabel} of driving", { minutesLabel: t(minutesLabel(before - after)) })}</p>
+                  <p className="text-sm text-muted">{t("{minutesLabel} now → {minutesLabel2}, from the start of your day and back.", { minutesLabel: t(minutesLabel(before)), minutesLabel2: t(minutesLabel(after)) })}</p>
                   <ol className="space-y-1 text-sm">
                     {ordered.map((s, i) => (
                       <li key={s.id} className="flex gap-2">
@@ -314,7 +318,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               <Stat label={t("Stops")} value={String(stops.length)} />
               <Stat label={t("Done")} value={`${done}/${stops.length}`} />
               <Stat label={t("Expected")} value={money(expected)} />
-              {driving != null && <Stat label={t("Driving")} value={minutesLabel(driving)} />}
+              {driving != null && <Stat label={t("Driving")} value={t(minutesLabel(driving))} />}
             </div>
 
             {pins.length > 0 && <RouteMap stops={pins} path={road?.path} />}
@@ -334,7 +338,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               {stops.map((s, i) => (
                 <li key={s.id} className="space-y-3">
                   {driveTo(i) != null && (
-                    <p className="text-center text-xs font-semibold text-muted">{t("🚐 {minutesLabel} drive", { minutesLabel: minutesLabel(driveTo(i)!) })}{i === 0 ? t(" from the start") : ""}</p>
+                    <p className="text-center text-xs font-semibold text-muted">{t("🚐 {minutesLabel} drive", { minutesLabel: t(minutesLabel(driveTo(i)!)) })}{i === 0 ? t(" from the start") : ""}</p>
                   )}
                   <div className="card overflow-hidden">
                   <Link href={`/appointments/${s.id}`} className="flex gap-3 p-4">
@@ -386,7 +390,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               ))}
             </ol>
             {ends?.end_address && legs && (
-              <p className="text-center text-xs font-semibold text-muted">{t("🚐 {minutesLabel} drive back to the end of the day", { minutesLabel: minutesLabel(legs.at(-1)!) })}</p>
+              <p className="text-center text-xs font-semibold text-muted">{t("🚐 {minutesLabel} drive back to the end of the day", { minutesLabel: t(minutesLabel(legs.at(-1)!)) })}</p>
             )}
           </>
         )}

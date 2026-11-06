@@ -96,7 +96,7 @@ export function BookingForm({
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-bg"><Dog size={26} /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-bold">{pet.name}</span>
-                <span className="block truncate text-sm text-muted">{[pet.breed, sizeLabel(pet.size_class)].filter(Boolean).join(" · ")}</span>
+                <span className="block truncate text-sm text-muted">{[pet.breed, t(sizeLabel(pet.size_class))].filter(Boolean).join(" · ")}</span>
                 {pet.vaccineAlert && <span className="block text-xs font-semibold text-danger">💉 {pet.vaccineAlert}</span>}
               </span>
               <input
@@ -120,10 +120,10 @@ export function BookingForm({
                     <option value="" disabled>
                       {t("Choose a service")}
                     </option>
-                    <optgroup label={pet.size_class ? `For ${sizeLabel(pet.size_class)}` : t("Services")}>
+                    <optgroup label={pet.size_class ? t("For {sizeLabel}", { sizeLabel: t(sizeLabel(pet.size_class)) }) : t("Services")}>
                       {fits.map((x) => forPet(pet, x)).map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} — {money(s.price_cents)}{s.own ? ` (${pet.name}'s price)` : ""} · {minutesLabel(s.duration_min)}
+                          {s.name} — {money(s.price_cents)}{s.own ? ` (${pet.name}'s price)` : ""} · {t(minutesLabel(s.duration_min))}
                         </option>
                       ))}
                     </optgroup>
@@ -204,11 +204,11 @@ export function BookingForm({
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <span>
             <span className="block font-medium">{t("Time estimate")}</span>
-            <span className="block text-xs text-muted">{t("From the services")}{extraMin ? `, ${extraMin > 0 ? "+" : ""}${extraMin} min` : ""}</span>
+            <span className="block text-xs text-muted">{t("From the services")}{extraMin ? `, ${extraMin > 0 ? "+" : ""}${extraMin} ${t("min")}` : ""}</span>
           </span>
           <span className="flex items-center gap-3">
             <button type="button" className="stepper" aria-label={t("Less time")} onClick={() => setExtraMin(Math.max(extraMin - 15, 15 - minutes))}>−</button>
-            <span className="w-16 text-center font-semibold tabular-nums" aria-live="polite">{minutes > 0 ? `${visitMin} min` : "—"}</span>
+            <span className="w-16 text-center font-semibold tabular-nums" aria-live="polite">{minutes > 0 ? `${visitMin} ${t("min")}` : "—"}</span>
             <button type="button" className="stepper" aria-label={t("More time")} onClick={() => setExtraMin(extraMin + 15)}>+</button>
           </span>
           <input type="hidden" name="duration" value={minutes > 0 ? visitMin : ""} />
@@ -219,7 +219,7 @@ export function BookingForm({
       </Field>
 
       <div className="card flex items-center justify-between px-4 py-3">
-        <span className="text-muted">{minutes > 0 ? minutesLabel(visitMin) : t("No services yet")}</span>
+        <span className="text-muted">{minutes > 0 ? t(minutesLabel(visitMin)) : t("No services yet")}</span>
         <span className="text-xl font-bold">{money(cents)}</span>
       </div>
 

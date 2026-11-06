@@ -8,7 +8,10 @@ import { AgreementText } from "@/components/agreement-text";
 import { saveAgreementAction } from "../actions";
 import { SimpleForm } from "../forms";
 
-export const metadata: Metadata = { title: "Service agreement" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Service agreement") };
+}
 
 export default async function AgreementPage() {
   const { t } = await getOwnerI18n();
@@ -24,7 +27,7 @@ export default async function AgreementPage() {
       <Page>
         <p className="text-sm text-muted">
           {t("Clients sign by typing their name: when they book online, and on their confirm link if they haven't signed in the last 12 months. To ask a client to sign without booking, use “Send to sign” on their profile.")}{" "}
-          {agreement && `Version ${agreement.version}: signed by ${signed} client${signed === 1 ? "" : "s"}.`}
+          {agreement && (signed === 1 ? t("Version {version}: signed by 1 client.", { version: agreement.version }) : t("Version {version}: signed by {n} clients.", { version: agreement.version, n: signed }))}
         </p>
         <Card>
           <SimpleForm action={saveAgreementAction}>

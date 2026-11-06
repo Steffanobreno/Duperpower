@@ -183,7 +183,7 @@ export function PetForm({
           <option value="">{t("Not set")}</option>
           {SIZES.map((s) => (
             <option key={s.value} value={s.value}>
-              {s.label}
+              {t(s.label)}
             </option>
           ))}
         </Select>

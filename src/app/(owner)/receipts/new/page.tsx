@@ -7,7 +7,10 @@ import { todayYmd } from "@/lib/format";
 import { Page, PageHeader } from "@/components/ui";
 import { ReceiptGenerator } from "./receipt-generator";
 
-export const metadata: Metadata = { title: "New receipt" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("New receipt") };
+}
 
 export default async function NewReceiptPage({ searchParams }: PageProps<"/receipts/new">) {
   const { t } = await getOwnerI18n();

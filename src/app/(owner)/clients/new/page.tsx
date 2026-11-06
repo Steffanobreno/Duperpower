@@ -7,7 +7,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { createClientAction } from "../actions";
 import { ClientForm } from "../forms";
 
-export const metadata: Metadata = { title: "New client" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("New client") };
+}
 
 export default async function NewClientPage() {
   const { t } = await getOwnerI18n();

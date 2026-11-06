@@ -7,7 +7,10 @@ import { MARKETING_TEMPLATES, nextDate, suggestions, type MarketingTemplate } fr
 import { Page, PageHeader } from "@/components/ui";
 import { createCampaignAction } from "../actions";
 
-export const metadata: Metadata = { title: "New email" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("New email") };
+}
 
 const fmt = (d: string, o: Intl.DateTimeFormatOptions = { weekday: "short", month: "short", day: "numeric" }) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", ...o });

@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useState } from "react";
 
@@ -37,7 +38,7 @@ export function CopyField({ label, value, multiline = false }: { label: string; 
 }
 
 /** Just a Copy button for a value that isn't shown (a link to send). */
-export function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+export function CopyButton({ value, label = msg("Copy") }: { value: string; label?: string }) {
   const { t } = useT();
   const [copied, setCopied] = useState(false);
   return (
@@ -46,7 +47,7 @@ export function CopyButton({ value, label = "Copy" }: { value: string; label?: s
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     }} className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">
-      {copied ? t("Copied") : label}
+      {copied ? t("Copied") : t(label)}
     </button>
   );
 }

@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,16 +9,19 @@ import { emailDetails, render, type Trigger } from "@/lib/messaging";
 import { phoneLabel } from "@/lib/format";
 import { Notice, Page, PageHeader } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Email preview" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Email preview") };
+}
 
 const TRIGGERS: { trigger: Trigger; label: string }[] = [
-  { trigger: "request_received", label: "Request received" },
-  { trigger: "booked", label: "Booked" },
-  { trigger: "reminder", label: "Reminder" },
-  { trigger: "confirmed", label: "Confirmed" },
-  { trigger: "cancelled", label: "Cancelled" },
-  { trigger: "rebook", label: "Rebook" },
-  { trigger: "review_request", label: "Review" },
+  { trigger: "request_received", label: msg("Request received") },
+  { trigger: "booked", label: msg("Booked") },
+  { trigger: "reminder", label: msg("Reminder") },
+  { trigger: "confirmed", label: msg("Confirmed") },
+  { trigger: "cancelled", label: msg("Cancelled") },
+  { trigger: "rebook", label: msg("Rebook") },
+  { trigger: "review_request", label: msg("Review") },
 ];
 
 // Shows an email exactly as a client gets it, filled in with the latest visit
@@ -74,7 +78,7 @@ export default async function EmailPreviewPage({ searchParams }: PageProps<"/set
           {TRIGGERS.map((x) => (
             <Link key={x.trigger} href={`/settings/messages/preview?trigger=${x.trigger}`} aria-current={x.trigger === trigger ? "page" : undefined}
               className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold ${x.trigger === trigger ? "border-navy bg-navy text-white" : "border-line bg-surface"}`}>
-              {x.label}
+              {tr(x.label)}
             </Link>
           ))}
         </nav>

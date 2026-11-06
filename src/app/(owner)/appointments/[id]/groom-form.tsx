@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useRef, useState, useTransition } from "react";
 import { resizeImage } from "@/lib/resize-image";
@@ -9,7 +10,7 @@ import { saveGroomAction } from "../groom-actions";
 
 type Cut = { blade: string | null; style: string | null; note: string | null };
 
-const BLADES = ["#10", "#7F", "#5F", "#4F", "#3F", "#30 + 1/2\" comb", "#30 + 3/4\" comb", "#30 + 1\" comb", "Scissor cut", "Hand strip"];
+const BLADES = ["#10", "#7F", "#5F", "#4F", "#3F", "#30 + 1/2\" comb", "#30 + 3/4\" comb", "#30 + 1\" comb", msg("Scissor cut"), msg("Hand strip")];
 
 export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
   appointmentPetId: string; pet: string; now: Cut | null; last: (Cut & { when: string; photoUrl: string | null }) | null; photoUrl: string | null;
@@ -34,7 +35,7 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
         if (photo) form.set("photo", photo, "cut.jpg");
         start(async () => {
           const res = await saveGroomAction(appointmentPetId, form);
-          setMsg(res.error ? { ok: false, text: res.error } : { ok: true, text: "Saved ✓" });
+          setMsg(res.error ? { ok: false, text: res.error } : { ok: true, text: t("Saved ✓") });
           if (!res.error) setPhoto(null);
         });
       }}>
@@ -51,7 +52,7 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
         <div className="flex items-center gap-3 rounded-xl bg-brand-soft p-2 text-sm">
           {last.photoUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- a small private photo
-            <img src={last.photoUrl} alt={`${pet} last time`} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+            <img src={last.photoUrl} alt={t("{pet} last time", { pet })} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
           )}
           <p className="min-w-0">
             <span className="block text-xs font-bold uppercase tracking-wide text-muted">{t("Last time · {when}", { when: last.when })}</span>
@@ -78,9 +79,9 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
       <div className="flex items-center gap-3">
         {preview && (
           // eslint-disable-next-line @next/next/no-img-element -- a local preview or a small private photo
-          <img src={preview} alt={`${pet} after the cut`} className="h-16 w-16 rounded-lg object-cover" />
+          <img src={preview} alt={t("{pet} after the cut", { pet })} className="h-16 w-16 rounded-lg object-cover" />
         )}
-        <input ref={file} type="file" accept="image/*" capture="environment" className="sr-only" aria-label={`Photo of ${pet}'s cut`}
+        <input ref={file} type="file" accept="image/*" capture="environment" className="sr-only" aria-label={t("Photo of {pet}'s cut", { pet })}
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
@@ -89,7 +90,7 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
               setPhoto(small);
               setPreview(URL.createObjectURL(small));
             } catch {
-              setMsg({ ok: false, text: "Could not read that photo. Try another one." });
+              setMsg({ ok: false, text: t("Could not read that photo. Try another one.") });
             }
           }} />
         <button type="button" onClick={() => file.current?.click()}

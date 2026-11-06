@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { emailLogo } from "@/lib/business-logo";
 import type { Metadata } from "next";
@@ -18,12 +19,15 @@ import { AudienceForm } from "./audience-form";
 import { CampaignEditor } from "./campaign-editor";
 import { SendingProgress, SendStep } from "./send-step";
 
-export const metadata: Metadata = { title: "Email campaign" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Email campaign") };
+}
 
 const STEPS = [
-  { key: "edit", label: "1 Write" },
-  { key: "recipients", label: "2 Who" },
-  { key: "send", label: "3 Send" },
+  { key: "edit", label: msg("1 Write") },
+  { key: "recipients", label: msg("2 Who") },
+  { key: "send", label: msg("3 Send") },
 ] as const;
 
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -73,7 +77,7 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
           {c.status === "sending" ? (
             <SendingProgress sent={stats.sent} total={stats.total} next={sendNextBatchAction.bind(null, id)} />
           ) : (
-            <Notice kind="success">{tr("Sent")}{" "} {c.started_at ? `on ${dayLabel(c.started_at, tz)} at ${timeLabel(c.started_at, tz)}` : ""}.</Notice>
+            <Notice kind="success">{c.started_at ? tr("Sent on {day} at {time}.", { day: dayLabel(c.started_at, tz), time: timeLabel(c.started_at, tz) }) : tr("Sent.")}</Notice>
           )}
           <div className="grid grid-cols-3 gap-2 text-center">
             <Stat label={tr("Sent")} value={`${stats.sent}`} />
@@ -124,7 +128,7 @@ export default async function CampaignPage({ params, searchParams }: PageProps<"
           {STEPS.map((s) => (
             <Link key={s.key} href={`/marketing/${id}?step=${s.key}`} aria-current={s.key === step ? "step" : undefined}
               className={`rounded-xl py-2 text-center text-sm font-semibold ${s.key === step ? "bg-navy text-white" : "text-muted"}`}>
-              {s.label}
+              {tr(s.label)}
             </Link>
           ))}
         </nav>

@@ -6,7 +6,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { saveHoursAction } from "../actions";
 import { HoursForm } from "../forms";
 
-export const metadata: Metadata = { title: "Working hours" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Working hours") };
+}
 
 export default async function HoursPage() {
   const { t } = await getOwnerI18n();

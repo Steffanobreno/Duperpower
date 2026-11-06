@@ -6,7 +6,10 @@ import { Card, Notice, Page, PageHeader } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { googleCalendarScript } from "@/lib/google-calendar-script";
 
-export const metadata: Metadata = { title: "Google Calendar" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Google Calendar") };
+}
 
 export default async function CalendarSettingsPage() {
   const { t } = await getOwnerI18n();

@@ -10,7 +10,10 @@ import { saveBusinessAction } from "../actions";
 import { SimpleForm } from "../forms";
 import { LogoUpload } from "./logo-upload";
 
-export const metadata: Metadata = { title: "Business" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Business") };
+}
 
 type Business = {
   name: string; phone: string | null; booking_slug: string; timezone: string;

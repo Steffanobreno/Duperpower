@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -20,7 +21,10 @@ import { addNoteAction, deleteClientAction, deleteNoteAction, setClientControlAc
 import { PetPhoto } from "@/components/pet-photo";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 
-export const metadata: Metadata = { title: "Client" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Client") };
+}
 
 export default async function ClientPage({ params, searchParams }: PageProps<"/clients/[id]">) {
   const { t } = await getOwnerI18n();
@@ -79,17 +83,17 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           </div>
           <dl className="mt-5 grid grid-cols-4 gap-y-4 text-center">
             {([
-              ["Upcoming", String(upcoming.length), ""],
-              ["Finished", String(history.filter((a) => a.status === "completed").length), ""],
-              ["Cancelled", String(history.filter((a) => a.status === "cancelled").length), ""],
-              ["No-show", String(noShows), noShows ? "text-danger" : ""],
-              ["Total paid", money(summary.paid + summary.tips), ""],
-              ["Unpaid", money(summary.unpaid), summary.unpaid ? "text-danger" : ""],
-              ["Total appts", String(history.filter((a) => !["cancelled", "declined"].includes(a.status)).length), ""],
-              ["Old app", client.imported_total_sales_cents ? money(client.imported_total_sales_cents) : "—", ""],
+              [msg("Upcoming"), String(upcoming.length), ""],
+              [msg("Finished"), String(history.filter((a) => a.status === "completed").length), ""],
+              [msg("Cancelled"), String(history.filter((a) => a.status === "cancelled").length), ""],
+              [msg("No-show"), String(noShows), noShows ? "text-danger" : ""],
+              [msg("Total paid"), money(summary.paid + summary.tips), ""],
+              [msg("Unpaid"), money(summary.unpaid), summary.unpaid ? "text-danger" : ""],
+              [msg("Total appts"), String(history.filter((a) => !["cancelled", "declined"].includes(a.status)).length), ""],
+              [msg("Old app"), client.imported_total_sales_cents ? money(client.imported_total_sales_cents) : "—", ""],
             ] as const).map(([label, value, tone]) => (
               <div key={label} className="flex flex-col-reverse">
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</dt>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t(label)}</dt>
                 <dd className={`text-lg font-bold tabular-nums ${tone}`}>{value}</dd>
               </div>
             ))}
@@ -168,14 +172,14 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 </p>
                 {signature.signature_url && (
                   // eslint-disable-next-line @next/next/no-img-element -- the signature is a data URL
-                  <img src={signature.signature_url} alt={`Signature of ${signature.signed_name}`} className="h-16 rounded-lg border border-line bg-white" />
+                  <img src={signature.signature_url} alt={t("Signature of {signed_name}", { signed_name: signature.signed_name })} className="h-16 rounded-lg border border-line bg-white" />
                 )}
               </div>
             ) : (
               <div className="space-y-2">
                 <p className="text-sm text-muted">{t("Agreement not signed yet (they'll be asked on their confirm link).")}</p>
                 <div className="flex flex-wrap gap-2">
-                  <a href={`sms:${client.phone}?&body=${encodeURIComponent(`Hi ${client.first_name}! Please sign our service agreement here: ${signUrl}`)}`}
+                  <a href={`sms:${client.phone}?&body=${encodeURIComponent(t("Hi {first_name}! Please sign our service agreement here: {signUrl}", { first_name: client.first_name, signUrl }))}`}
                     className="rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-brand">{t("Text sign link")}</a>
                   {client.email && (
                     <form action={emailSignLinkAction.bind(null, id)}>
@@ -218,7 +222,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                     <PetPhoto petId={p.id} version={p.photo_version} name={p.name} />
                     <div className="min-w-0">
                       <div className="font-semibold">{p.name}</div>
-                      <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                      <div className="text-sm text-muted">{[p.breed, t(sizeLabel(p.size_class))].filter(Boolean).join(" · ")}</div>
                       {(codes.has(p.id) || p.behavior_tags.length > 0) && (
                         <div className="mt-1 flex flex-wrap gap-1"><PetCodeChips codes={codes.get(p.id)} /><TagChips tags={p.behavior_tags} /></div>
                       )}
@@ -277,7 +281,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             ) : (
               summary.payments.map((p) => (
                 <Link key={p.id} href={p.appointment_id ? `/appointments/${p.appointment_id}/checkout` : "#"} className="flex justify-between gap-3 px-4 py-2.5 text-sm hover:bg-bg">
-                  <span>{dayLabel(p.received_at, tz)} · {methodLabel(p.method)}</span>
+                  <span>{dayLabel(p.received_at, tz)} · {t(methodLabel(p.method))}</span>
                   <span className="font-semibold tabular-nums">
                     {money(p.amount_cents + p.tip_cents)}
                     {p.tip_cents > 0 && <span className="font-normal text-muted"> {t("(tip {money})", { money: money(p.tip_cents) })}</span>}
@@ -293,11 +297,11 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           <dl className="card divide-y divide-line text-sm">
             <div className="flex justify-between px-4 py-3">
               <dt className="text-muted">{t("Preferred frequency")}</dt>
-              <dd className="font-semibold">{preferredDays ? `${Math.round(preferredDays / 7)} weeks` : t("Not set (edit the pet)")}</dd>
+              <dd className="font-semibold">{preferredDays ? t("{n} weeks", { n: Math.round(preferredDays / 7) }) : t("Not set (edit the pet)")}</dd>
             </div>
             <div className="flex justify-between px-4 py-3">
               <dt className="text-muted">{t("Actual frequency")}</dt>
-              <dd className="font-semibold">{summary.actualDays ? `${summary.actualDays} days` : "—"}</dd>
+              <dd className="font-semibold">{summary.actualDays ? t("{n} days", { n: summary.actualDays }) : "—"}</dd>
             </div>
           </dl>
         </section>
@@ -318,7 +322,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             <p>
               {t("This deletes {fullName} for good, with {n} pet", { fullName: fullName(client), n: pets.length })}{pets.length === 1 ? "" : "s"},{" "}
               {t("{n} visit", { n: history.length })}{history.length === 1 ? "" : "s"}
-              {summary.paid + summary.tips > 0 ? ` and ${money(summary.paid + summary.tips)} in payments (they leave your reports)` : ""}{t(". It can't be undone. To just hide them, use")}{" "} <strong>{t("Inactive customer")}</strong> {" "}{t("above.")}
+              {summary.paid + summary.tips > 0 ? t(" and {amount} in payments (they leave your reports)", { amount: money(summary.paid + summary.tips) }) : ""}{t(". It can't be undone. To just hide them, use")}{" "} <strong>{t("Inactive customer")}</strong> {" "}{t("above.")}
             </p>
             <form action={deleteClientAction.bind(null, id)}>
               <button type="submit" className="w-full rounded-xl bg-danger py-3 font-bold text-white">{t("Yes, remove {first_name} forever", { first_name: client.first_name })}</button>

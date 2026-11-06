@@ -50,8 +50,16 @@ await login(other, "correct horse battery");
 await other.waitForURL(/\/today/);
 await page.goto(`${BASE}/settings/account`);
 await page.getByLabel("Your name").fill("Steffano M");
-await page.getByRole("button", { name: "Save", exact: true }).click();
+await page.getByRole("button", { name: "Save", exact: true }).first().click();
 await page.getByText("Saved.").waitFor();
+// The app's language is per person: Português, then back to the phone's language.
+await page.getByLabel("The app's language").selectOption("pt");
+await page.getByRole("button", { name: "Save", exact: true }).nth(1).click();
+await page.getByRole("heading", { name: "Idioma" }).waitFor();
+await page.getByRole("navigation", { name: "Main" }).getByText("Clientes").waitFor();
+await page.getByLabel("Idioma do app").selectOption("");
+await page.getByRole("button", { name: "Salvar", exact: true }).nth(1).click();
+await page.getByRole("heading", { name: "Language" }).waitFor();
 await page.getByLabel("Current password").fill("wrong password!!");
 await page.locator('input[name="password"]').fill("a brand new password");
 await page.getByLabel("New password again").fill("a brand new password");

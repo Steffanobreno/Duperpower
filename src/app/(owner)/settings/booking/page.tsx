@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
@@ -10,7 +11,10 @@ import { logoUrl } from "@/lib/business-logo";
 import { QrCard } from "./qr-card";
 import { SimpleForm } from "../forms";
 
-export const metadata: Metadata = { title: "Online booking" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Online booking") };
+}
 
 export default async function BookingSettingsPage() {
   const { t } = await getOwnerI18n();
@@ -26,7 +30,7 @@ export default async function BookingSettingsPage() {
     QRCode.toString(bookUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0b1f3a", light: "#ffffff" } }),
     logoUrl(staff.businessId),
   ]);
-  const embed = `<iframe src="${bookUrl}" title="Book a visit" style="width:100%;min-height:1400px;border:0"></iframe>`;
+  const embed = t("<iframe src=\"{bookUrl}\" title=\"Book a visit\" style=\"width:100%;min-height:1400px;border:0\"></iframe>", { bookUrl });
   return (
     <>
       <PageHeader title={t("Online booking")} back="/settings" />
@@ -48,15 +52,15 @@ export default async function BookingSettingsPage() {
             <fieldset className="space-y-2">
               <legend className="mb-1 text-sm font-medium">{t("When a client books online")}</legend>
               {([
-                ["none", "I accept or decline each request", "The time is held until you answer."],
-                ["returning", "Book clients I already know right away", "New clients still wait for you."],
-                ["all", "Book everyone right away", "Every online booking goes straight on the calendar."],
+                ["none", msg("I accept or decline each request"), msg("The time is held until you answer.")],
+                ["returning", msg("Book clients I already know right away"), msg("New clients still wait for you.")],
+                ["all", msg("Book everyone right away"), msg("Every online booking goes straight on the calendar.")],
               ] as const).map(([value, title, text]) => (
                 <label key={value} className="flex items-start gap-3 rounded-xl border border-line p-3 has-[:checked]:border-brand has-[:checked]:bg-brand-soft">
                   <input type="radio" name="auto_accept" value={value} defaultChecked={b.auto_accept === value} className="mt-1 h-4 w-4" />
                   <span>
-                    <span className="block font-semibold">{title}</span>
-                    <span className="block text-sm text-muted">{text}</span>
+                    <span className="block font-semibold">{t(title)}</span>
+                    <span className="block text-sm text-muted">{t(text)}</span>
                   </span>
                 </label>
               ))}

@@ -42,15 +42,16 @@ export function Sheet({ title, options, onClose }: { title: string; options: { l
 const copy = (text: string) => navigator.clipboard?.writeText(text).catch(() => {});
 
 export function PhoneLink({ phone, label, className = "", children }: { phone: string; label: string; className?: string; children?: ReactNode }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className}>{children ?? label}</button>
       {open && (
         <Sheet title={label} onClose={() => setOpen(false)} options={[
-          { label: "Call", href: `tel:${phone}` },
-          { label: "Text message", href: `sms:${phone}` },
-          { label: "Copy number", onClick: () => copy(label) },
+          { label: t("Call"), href: `tel:${phone}` },
+          { label: t("Text message"), href: `sms:${phone}` },
+          { label: t("Copy number"), onClick: () => copy(label) },
         ]} />
       )}
     </>
@@ -60,6 +61,7 @@ export function PhoneLink({ phone, label, className = "", children }: { phone: s
 export function AddressLink({ address, lat, lng, className = "", children }: {
   address: string; lat?: number | null; lng?: number | null; className?: string; children?: ReactNode;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const target = lat != null && lng != null ? `${lat},${lng}` : address;
   return (
@@ -67,9 +69,9 @@ export function AddressLink({ address, lat, lng, className = "", children }: {
       <button type="button" onClick={() => setOpen(true)} className={`text-left ${className}`}>{children ?? address}</button>
       {open && (
         <Sheet title={address} onClose={() => setOpen(false)} options={[
-          { label: "Open in Apple Maps", href: `https://maps.apple.com/?daddr=${encodeURIComponent(target)}&dirflg=d` },
-          { label: "Open in Google Maps", href: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}&travelmode=driving` },
-          { label: "Copy address", onClick: () => copy(address) },
+          { label: t("Open in Apple Maps"), href: `https://maps.apple.com/?daddr=${encodeURIComponent(target)}&dirflg=d` },
+          { label: t("Open in Google Maps"), href: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}&travelmode=driving` },
+          { label: t("Copy address"), onClick: () => copy(address) },
         ]} />
       )}
     </>

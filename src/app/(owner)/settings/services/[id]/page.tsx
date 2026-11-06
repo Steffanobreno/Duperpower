@@ -7,7 +7,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { saveServiceAction } from "../../actions";
 import { ServiceForm } from "../../forms";
 
-export const metadata: Metadata = { title: "Edit service" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Edit service") };
+}
 
 export default async function EditServicePage({ params }: PageProps<"/settings/services/[id]">) {
   const { t } = await getOwnerI18n();

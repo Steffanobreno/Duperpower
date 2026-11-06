@@ -7,7 +7,10 @@ import { createBlockAction } from "../actions";
 import { BlockForm } from "./block-form";
 import { listGroomers } from "@/lib/data/staff";
 
-export const metadata: Metadata = { title: "Block time" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Block time") };
+}
 
 const plusHour = (t: string) => `${String(Math.min(Number(t.slice(0, 2)) + 1, 23)).padStart(2, "0")}:${t.slice(3, 5)}`;
 

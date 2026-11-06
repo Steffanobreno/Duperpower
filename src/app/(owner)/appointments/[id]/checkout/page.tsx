@@ -23,7 +23,10 @@ import { getReceipt } from "@/lib/data/receipts";
 import { ReceiptActions } from "@/components/receipt-actions";
 
 
-export const metadata: Metadata = { title: "Invoice" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Invoice") };
+}
 
 // The bill of one visit: check-in and check-out times, services by pet, discounts, service
 // charges or taxes, tips, what was paid and what is still due.
@@ -70,7 +73,7 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
 
   return (
     <>
-      <PageHeader title={open ? t("Finish order") : `Receipt #${invoice.number}`} back={`/appointments/${id}`} />
+      <PageHeader title={open ? t("Finish order") : t("Receipt #{number}", { number: invoice.number })} back={`/appointments/${id}`} />
       <Page>
         {!open && <Notice kind="success">{t("Order finished · Paid in full. Thank you!")}</Notice>}
         {open && (
@@ -182,7 +185,7 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
               {payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div>
-                    <div className="font-medium">{methodLabel(p.method)}{p.paid_by ? ` · ${p.paid_by}` : ""}</div>
+                    <div className="font-medium">{t(methodLabel(p.method))}{p.paid_by ? ` · ${p.paid_by}` : ""}</div>
                     <div className="text-muted">
                       {dayLabel(p.received_at, tz)} {timeLabel(p.received_at, tz)}
                       {p.reference ? ` · ${p.reference}` : ""}
@@ -219,10 +222,11 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
   );
 }
 
-function RemoveButton({ appointmentId, itemId, label }: { appointmentId: string; itemId: string; label: string }) {
+async function RemoveButton({ appointmentId, itemId, label }: { appointmentId: string; itemId: string; label: string }) {
+  const { t } = await getOwnerI18n();
   return (
     <form action={removeInvoiceItemAction.bind(null, appointmentId, itemId)}>
-      <button type="submit" className="rounded-lg px-2 text-muted hover:text-danger" aria-label={`Remove ${label}`}>×</button>
+      <button type="submit" className="rounded-lg px-2 text-muted hover:text-danger" aria-label={t("Remove {label}", { label })}>×</button>
     </form>
   );
 }

@@ -47,7 +47,7 @@ export function OptionRow({ label, rename, move, remove, first, last }: {
       <li className="space-y-2 px-4 py-3">
         <FormPopup state={state} />
         <ActionForm action={formAction} className="flex gap-2">
-          <Input name="label" defaultValue={label} required maxLength={60} aria-label={`New name for ${label}`} className="flex-1" autoFocus />
+          <Input name="label" defaultValue={label} required maxLength={60} aria-label={t("New name for {label}", { label })} className="flex-1" autoFocus />
           <Button type="submit" disabled={pending}>{t("Save")}</Button>
           <Button type="button" kind="ghost" onClick={() => setEditing(false)}>{t("Cancel")}</Button>
         </ActionForm>
@@ -57,13 +57,13 @@ export function OptionRow({ label, rename, move, remove, first, last }: {
   return (
     <li className="flex items-center gap-1 px-4 py-2">
       <button type="button" onClick={() => setEditing(true)} className="min-w-0 flex-1 truncate py-1 text-left font-medium"
-        aria-label={`Rename ${label}`}>
+        aria-label={t("Rename {label}", { label })}>
         {label}
       </button>
-      <button type="button" className={icon} disabled={first} onClick={() => move("up")} aria-label={`Move ${label} up`}>↑</button>
-      <button type="button" className={icon} disabled={last} onClick={() => move("down")} aria-label={`Move ${label} down`}>↓</button>
-      <button type="button" className={`${icon} text-danger`} aria-label={`Remove ${label}`}
-        onClick={() => { if (window.confirm(`Remove “${label}” from the list?`)) remove(); }}>
+      <button type="button" className={icon} disabled={first} onClick={() => move("up")} aria-label={t("Move {label} up", { label })}>↑</button>
+      <button type="button" className={icon} disabled={last} onClick={() => move("down")} aria-label={t("Move {label} down", { label })}>↓</button>
+      <button type="button" className={`${icon} text-danger`} aria-label={t("Remove {label}", { label })}
+        onClick={() => { if (window.confirm(t("Remove “{label}” from the list?", { label }))) remove(); }}>
         {t("Remove")}
       </button>
     </li>

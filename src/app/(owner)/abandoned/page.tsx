@@ -1,3 +1,4 @@
+import { msg, type T } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -8,19 +9,22 @@ import { dayLabel, money, timeLabel } from "@/lib/format";
 import { Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setRecoveryAction } from "./recovery-actions";
 
-export const metadata: Metadata = { title: "Abandoned bookings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Abandoned bookings") };
+}
 
 const STATUS: Record<DraftStatus, { label: string; className: string }> = {
-  abandoned: { label: "Abandoned", className: "text-danger" },
-  contacted: { label: "Contacted", className: "text-brand" },
-  recovered: { label: "Recovered", className: "text-success" },
+  abandoned: { label: msg("Abandoned"), className: "text-danger" },
+  contacted: { label: msg("Contacted"), className: "text-brand" },
+  recovered: { label: msg("Recovered"), className: "text-success" },
 };
 const FILTERS: { key: DraftStatus | null; label: string }[] = [
-  { key: null, label: "All" }, { key: "abandoned", label: "Abandoned" }, { key: "contacted", label: "Contacted" }, { key: "recovered", label: "Recovered" },
+  { key: null, label: msg("All") }, { key: "abandoned", label: msg("Abandoned") }, { key: "contacted", label: msg("Contacted") }, { key: "recovered", label: msg("Recovered") },
 ];
-const ago = (d: Date) => {
+const ago = (d: Date, t: T) => {
   const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
-  return days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+  return days <= 0 ? t("today") : days === 1 ? t("yesterday") : t("{n} days ago", { n: days });
 };
 
 export default async function AbandonedPage({ searchParams }: PageProps<"/abandoned">) {
@@ -44,7 +48,7 @@ export default async function AbandonedPage({ searchParams }: PageProps<"/abando
           <span>
             <span className="block font-semibold">{t("Recovery message")}</span>
             <span className="block text-xs text-muted">
-              {on ? `Sent ${Math.round((tpl?.offset_minutes ?? 120) / 60 * 10) / 10}h after they stop (8am–8pm).` : t("Off: nobody gets a message.")}{" "}
+              {on ? t("Sent {n}h after they stop (8am–8pm).", { n: Math.round((tpl?.offset_minutes ?? 120) / 60 * 10) / 10 }) : t("Off: nobody gets a message.")}{" "}
               <Link href="/settings/messages" className="underline">{t("Edit the text")}</Link>
             </span>
           </span>
@@ -67,7 +71,7 @@ export default async function AbandonedPage({ searchParams }: PageProps<"/abando
           {FILTERS.map((f) => (
             <Link key={f.label} href={f.key ? `/abandoned?status=${f.key}` : "/abandoned"} aria-current={f.key === filter ? "true" : undefined}
               className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-semibold ${f.key === filter ? "border-navy bg-navy text-white" : "border-line bg-surface"}`}>
-              {f.label}
+              {t(f.label)}
             </Link>
           ))}
         </nav>
@@ -83,13 +87,13 @@ export default async function AbandonedPage({ searchParams }: PageProps<"/abando
                 <Link href={`/abandoned/${d.id}`} className="card block space-y-1 px-4 py-3 hover:bg-bg">
                   <span className="flex justify-between gap-2 text-sm text-muted">
                     <span>{dayLabel(d.updated_at, tz)} {timeLabel(d.updated_at, tz)}</span>
-                    <span className={`font-semibold ${STATUS[d.status].className}`}>{STATUS[d.status].label}</span>
+                    <span className={`font-semibold ${STATUS[d.status].className}`}>{t(STATUS[d.status].label)}</span>
                   </span>
                   <span className="block text-lg font-bold">{[d.first_name, d.last_name].filter(Boolean).join(" ") || t("Unknown name")}</span>
-                  <span className="block text-sm text-muted">{t("Abandoned step:")}{" "} {STEP_NAMES[d.step] ?? d.step}{d.pets ? ` · ${d.pets}` : ""}</span>
+                  <span className="block text-sm text-muted">{t("Abandoned step:")}{" "} {t(STEP_NAMES[d.step] ?? d.step)}{d.pets ? ` · ${d.pets}` : ""}</span>
                   <span className="block text-sm text-muted">
-                    {d.status === "recovered" ? `Booked · ${money(d.revenue_cents)}`
-                      : `Last contact: ${d.contacted_at ?? d.reminded_at ? ago((d.contacted_at ?? d.reminded_at)!) : "--"}`}
+                    {d.status === "recovered" ? t("Booked · {amount}", { amount: money(d.revenue_cents) })
+                      : t("Last contact: {when}", { when: d.contacted_at ?? d.reminded_at ? ago((d.contacted_at ?? d.reminded_at)!, t) : "--" })}
                   </span>
                 </Link>
               </li>

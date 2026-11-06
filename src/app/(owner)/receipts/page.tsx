@@ -7,7 +7,10 @@ import { listReceipts } from "@/lib/data/receipts";
 import { addDaysYmd, dayLabel, isYmd, money, todayYmd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Page, PageHeader } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Receipts" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Receipts") };
+}
 
 // Every paid receipt in a period: open one, or download them all as one PDF.
 export default async function ReceiptsPage({ searchParams }: PageProps<"/receipts">) {

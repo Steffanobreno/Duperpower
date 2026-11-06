@@ -71,7 +71,7 @@ export function OfflineSupport() {
   return (
     <div role="status" className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-[env(safe-area-inset-top)]">
       <p className="mt-2 rounded-full bg-navy px-4 py-1.5 text-xs font-bold text-[#f7e7a1] shadow-lg ring-1 ring-[#d4af37]">
-        {notice.offline ? tr("📴 Offline") : tr("📶 Weak signal")} · {when ? `saved copy from ${when}` : tr("showing what's saved")}
+        {notice.offline ? tr("📴 Offline") : tr("📶 Weak signal")} · {when ? tr("saved copy from {when}", { when }) : tr("showing what's saved")}
         {!notice.offline && tr(" · updating…")}
       </p>
     </div>

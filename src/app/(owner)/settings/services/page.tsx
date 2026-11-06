@@ -7,7 +7,10 @@ import { minutesLabel, money } from "@/lib/format";
 import { ButtonLink, Page, PageHeader } from "@/components/ui";
 import { moveServiceAction } from "../actions";
 
-export const metadata: Metadata = { title: "Services" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Services") };
+}
 
 export default async function ServicesPage() {
   const { t } = await getOwnerI18n();
@@ -26,17 +29,17 @@ export default async function ServicesPage() {
                   <Link href={`/settings/services/${s.id}`} className="min-w-0 flex-1 px-4 py-3 hover:bg-bg">
                     <div className={`truncate font-medium ${s.active ? "" : "text-muted line-through"}`}>{s.name}</div>
                     <div className="text-sm text-muted">
-                      {minutesLabel(s.duration_min)}
+                      {t(minutesLabel(s.duration_min))}
                       {!s.active && t(" · inactive")}
                     </div>
                   </Link>
                   <span className="px-2 font-semibold text-brand">{money(s.price_cents)}</span>
                   <div className="flex flex-col pr-2">
                     <form action={moveServiceAction.bind(null, s.id, "up")}>
-                      <button type="submit" disabled={i === 0} className="px-2 text-muted disabled:opacity-30" aria-label={`Move ${s.name} up`}>▲</button>
+                      <button type="submit" disabled={i === 0} className="px-2 text-muted disabled:opacity-30" aria-label={t("Move {name} up", { name: s.name })}>▲</button>
                     </form>
                     <form action={moveServiceAction.bind(null, s.id, "down")}>
-                      <button type="submit" disabled={i === list.length - 1} className="px-2 text-muted disabled:opacity-30" aria-label={`Move ${s.name} down`}>▼</button>
+                      <button type="submit" disabled={i === list.length - 1} className="px-2 text-muted disabled:opacity-30" aria-label={t("Move {name} down", { name: s.name })}>▼</button>
                     </form>
                   </div>
                 </li>

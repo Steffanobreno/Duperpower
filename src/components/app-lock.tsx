@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -47,7 +48,7 @@ export function AppLock() {
       router.replace("/login");
     } else {
       setPin("");
-      setError("Wrong PIN. After 5 wrong tries you'll need to log in again.");
+      setError(msg("Wrong PIN. After 5 wrong tries you'll need to log in again."));
     }
   });
   const press = (d: string) => {
@@ -62,7 +63,7 @@ export function AppLock() {
         <input type="password" inputMode="numeric" autoComplete="off" value={pin} aria-label="PIN" maxLength={6}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
           className="w-40 rounded-xl bg-white/10 px-3 py-3 text-center text-2xl tracking-[0.5em] text-white outline-none focus:ring-2 focus:ring-sky" />
-        {error && <p role="alert" className="max-w-xs text-center text-sm text-red-200">{error}</p>}
+        {error && <p role="alert" className="max-w-xs text-center text-sm text-red-200">{t(error)}</p>}
         <div className="grid grid-cols-3 gap-3">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
             <button key={d} type="button" onClick={() => press(d)} className="h-16 w-16 rounded-full bg-white/10 text-2xl font-semibold">{d}</button>

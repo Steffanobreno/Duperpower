@@ -18,14 +18,14 @@ export function PetCodeRow({ code, save, move, remove, first, last }: {
   if (editing) return <li className="px-4 py-3"><PetCodeForm action={save} initial={code} submitLabel={t("Save code")} onDone={() => setEditing(false)} /></li>;
   return (
     <li className="flex items-center gap-2 px-4 py-2.5">
-      <button type="button" onClick={() => setEditing(true)} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-label={`Edit ${code.label}`}>
+      <button type="button" onClick={() => setEditing(true)} className="flex min-w-0 flex-1 items-center gap-2 text-left" aria-label={t("Edit {label}", { label: code.label })}>
         <span className="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold text-white" style={{ background: code.color }}>{code.label}</span>
         <span className="truncate text-sm text-muted">{code.description}</span>
       </button>
-      <button type="button" className={icon} disabled={first} onClick={() => move("up")} aria-label={`Move ${code.label} up`}>↑</button>
-      <button type="button" className={icon} disabled={last} onClick={() => move("down")} aria-label={`Move ${code.label} down`}>↓</button>
-      <button type="button" className={`${icon} text-danger`} aria-label={`Remove ${code.label}`}
-        onClick={() => { if (window.confirm(`Remove the “${code.label}” code from every pet?`)) remove(); }}>
+      <button type="button" className={icon} disabled={first} onClick={() => move("up")} aria-label={t("Move {label} up", { label: code.label })}>↑</button>
+      <button type="button" className={icon} disabled={last} onClick={() => move("down")} aria-label={t("Move {label} down", { label: code.label })}>↓</button>
+      <button type="button" className={`${icon} text-danger`} aria-label={t("Remove {label}", { label: code.label })}
+        onClick={() => { if (window.confirm(t("Remove the “{label}” code from every pet?", { label: code.label }))) remove(); }}>
         {t("Remove")}
       </button>
     </li>

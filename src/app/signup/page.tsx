@@ -7,7 +7,10 @@ import { APP_NAME } from "@/lib/product";
 import { Card } from "@/components/ui";
 import { SignupForm } from "./signup-form";
 
-export const metadata: Metadata = { title: "Create your account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Create your account") };
+}
 export const dynamic = "force-dynamic";
 
 // A new groomer's account: the business and its owner login, ready to book in a minute.

@@ -97,7 +97,7 @@ export function PaymentForm({
               <li key={m.value}>
                 <button type="button" onClick={() => { setMethod(m.value); setStep("details"); }}
                   className="card flex w-full items-center justify-between px-4 py-4 text-left font-semibold hover:bg-bg">
-                  {m.value === "cash" || m.value === "check" ? `Check out with ${m.label}` : m.label}
+                  {m.value === "cash" || m.value === "check" ? t("Check out with {label}", { label: t(m.label) }) : t(m.label)}
                   <ChevronRight size={20} className="text-muted" />
                 </button>
               </li>
@@ -150,7 +150,7 @@ export function PaymentForm({
             className="card block w-full px-4 py-3 outline-none focus:border-brand" />
           <button type="submit" disabled={pending || charge <= 0}
             className="block w-full rounded-full bg-brand py-4 text-lg font-bold text-white shadow-[0_6px_16px_rgb(11_31_58/0.3)] disabled:opacity-40">
-            {pending ? t("Saving…") : `Charge ${money(charge)}`}
+            {pending ? t("Saving…") : t("Charge {amount}", { amount: money(charge) })}
           </button>
         </div>
       )}

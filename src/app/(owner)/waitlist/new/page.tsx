@@ -9,7 +9,10 @@ import { DateField } from "@/components/date-field";
 import { SimpleForm } from "../../settings/forms";
 import { addToWaitlistAction } from "../actions";
 
-export const metadata: Metadata = { title: "Add to waitlist" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Add to waitlist") };
+}
 
 export default async function NewWaitlistPage({ searchParams }: PageProps<"/waitlist/new">) {
   const { t } = await getOwnerI18n();

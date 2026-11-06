@@ -98,17 +98,17 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
                   <div key={l.key} className="flex items-center gap-2">
                     <span className="min-w-0 flex-1 text-sm">{l.name}</span>
                     <span className="flex items-center gap-1">$
-                      <input inputMode="decimal" aria-label={`Price of ${l.name} for ${p.name}`} value={l.price}
+                      <input inputMode="decimal" aria-label={t("Price of {name} for {name2}", { name: l.name, name2: p.name })} value={l.price}
                         onChange={(e) => setLines(lines.map((x) => (x.key === l.key ? { ...x, price: e.target.value } : x)))}
                         className="w-20 rounded-lg border border-line px-2 py-1.5 text-right" />
                     </span>
-                    <button type="button" aria-label={`Remove ${l.name}`} onClick={() => setLines(lines.filter((x) => x.key !== l.key))}
+                    <button type="button" aria-label={t("Remove {name}", { name: l.name })} onClick={() => setLines(lines.filter((x) => x.key !== l.key))}
                       className="rounded-full border-2 border-danger p-0.5 text-danger"><Close size={12} strokeWidth={3} /></button>
                   </div>
                 ))}
                 <label className="flex items-center gap-2 text-brand">
                   <Plus size={16} />
-                  <select aria-label={`Add a service for ${p.name}`} value="" className="w-0 min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none"
+                  <select aria-label={t("Add a service for {name}", { name: p.name })} value="" className="w-0 min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none"
                     onChange={(e) => {
                       const s = services.find((x) => x.id === e.target.value);
                       if (s) setLines([...lines, { key: nextKey++, petId: p.id, serviceId: s.id, name: s.name, price: (priceFor(p.id, s) / 100).toString() }]);
@@ -133,7 +133,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
           </div>
           <Field label={t("Paid with")}>
             <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-              {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{t(m.label)}</option>)}
             </Select>
           </Field>
           <Field label={t("Tip (leave empty for no tip)")}>
@@ -141,7 +141,7 @@ export function ReceiptGenerator({ clients, pets, services, ownPrices, today, de
           </Field>
           <label className="flex items-center gap-3 text-sm">
             <input type="checkbox" checked={email && !!client.email} disabled={!client.email} onChange={(e) => setEmail(e.target.checked)} className="h-4 w-4" />
-            {client.email ? `Email it to ${client.email}` : t("No email on file (you can share the PDF after)")}
+            {client.email ? t("Email it to {email}", { email: client.email }) : t("No email on file (you can share the PDF after)")}
           </label>
         </section>
       )}

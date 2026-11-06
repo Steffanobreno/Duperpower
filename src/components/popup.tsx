@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -51,7 +52,7 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
         className="w-full max-w-sm space-y-4 rounded-3xl bg-surface p-5 text-center shadow-2xl ring-1 ring-[#d4af37]/60 animate-sheet">
         <div aria-hidden className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
           kind === "warn" ? "bg-[#f7efd4]" : "bg-navy ring-2 ring-[#d4af37]"}`}>{ICON[kind]}</div>
-        {(title ?? (kind === "warn" ? "Just checking" : null)) && <p className="text-lg font-extrabold">{title ?? tr("Just checking")}</p>}
+        {(title ?? (kind === "warn" ? msg("Just checking") : null)) && <p className="text-lg font-extrabold">{title ?? tr("Just checking")}</p>}
         <div className="text-[15px] leading-snug">{children}</div>
         <div className="space-y-2">
           {actions}
@@ -72,7 +73,7 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
  * <form> and pass the action's state: every new result opens the window again, even with the
  * same text.
  */
-export function FormPopup({ state, override, overrideLabel = "Go ahead anyway", savedText = "Saved." }: {
+export function FormPopup({ state, override, overrideLabel = msg("Go ahead anyway"), savedText = msg("Saved.") }: {
   state: { error?: string; warning?: string; saved?: boolean } | null | undefined;
   /** The form field that means "do it anyway" (e.g. "override"). */
   override?: string; overrideLabel?: string; savedText?: string;

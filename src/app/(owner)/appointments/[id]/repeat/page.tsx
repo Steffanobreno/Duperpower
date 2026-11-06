@@ -9,7 +9,10 @@ import { Page, PageHeader } from "@/components/ui";
 import { saveRepeatAction, stopRepeatAction } from "../../repeat-actions";
 import { RepeatForm } from "./repeat-form";
 
-export const metadata: Metadata = { title: "Repeat" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Repeat") };
+}
 
 export default async function RepeatPage({ params }: PageProps<"/appointments/[id]/repeat">) {
   const { t } = await getOwnerI18n();

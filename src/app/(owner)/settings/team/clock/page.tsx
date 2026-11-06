@@ -8,7 +8,10 @@ import { Button, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setClockEnabledAction } from "../actions";
 import { ClockRow } from "./clock-row";
 
-export const metadata: Metadata = { title: "Clock in and out" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Clock in and out") };
+}
 
 export default async function ClockPage({ searchParams }: PageProps<"/settings/team/clock">) {
   const { t } = await getOwnerI18n();

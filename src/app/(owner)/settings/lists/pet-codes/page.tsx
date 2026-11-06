@@ -7,7 +7,10 @@ import { deletePetCodeAction, moveOptionAction, savePetCodeAction } from "../act
 import { PetCodeForm } from "./code-form";
 import { PetCodeRow } from "./code-row";
 
-export const metadata: Metadata = { title: "Pet codes" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Pet codes") };
+}
 
 export default async function PetCodesPage() {
   const { t } = await getOwnerI18n();

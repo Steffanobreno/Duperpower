@@ -1,4 +1,5 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
+import type { T } from "@/lib/i18n";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -9,13 +10,16 @@ import { money, todayYmd } from "@/lib/format";
 import { methodLabel } from "@/lib/payment-methods";
 import { Button, Page, PageHeader } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Reports" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Reports") };
+}
 
 const utc = (d: string) => new Date(`${d}T12:00:00Z`);
 const fmt = (d: string, o: Intl.DateTimeFormatOptions) => utc(d).toLocaleDateString("en-US", { timeZone: "UTC", ...o });
-const bucketLabel = (d: string, g: Group) =>
+const bucketLabel = (d: string, g: Group, t: T) =>
   g === "day" ? fmt(d, { weekday: "short", month: "short", day: "numeric" })
-    : g === "week" ? `Week of ${fmt(d, { month: "short", day: "numeric" })}`
+    : g === "week" ? t("Week of {date}", { date: fmt(d, { month: "short", day: "numeric" }) })
       : fmt(d, { month: "long", year: "numeric" });
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
@@ -68,17 +72,17 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Tile label={t("Collected")} value={money(r.collected + r.tips)} sub={r.tips ? `incl. ${money(r.tips)} tips` : "payments received"} strong />
           <Tile label={t("Expected")} value={money(r.expected)} sub="services booked" />
-          <Tile label={t("Dogs groomed")} value={String(r.dogs_done)} sub={`${r.pets} booked`} />
-          <Tile label={t("Appointments")} value={String(r.appts)} sub={`${r.finished} finished`} />
-          <Tile label={t("Clients")} value={String(r.clients)} sub={`${r.newClients} new`} />
-          <Tile label={t("Average visit")} value={money(avg)} sub="expected per visit" />
+          <Tile label={t("Dogs groomed")} value={String(r.dogs_done)} sub={t("{n} booked", { n: r.pets })} />
+          <Tile label={t("Appointments")} value={String(r.appts)} sub={t("{n} finished", { n: r.finished })} />
+          <Tile label={t("Clients")} value={String(r.clients)} sub={t("{n} new", { n: r.newClients })} />
+          <Tile label={t("Average visit")} value={money(avg)} sub={t("expected per visit")} />
         </div>
 
         <section className="space-y-2">
           <h2 className="section-label">{t("Money")}</h2>
           <dl className="card divide-y divide-line">
             <Row label={t("Expected service price")} value={money(r.expected)} hint={t("Services on visits in this period (not cancelled)")} />
-            <Row label={t("Collected (without tips)")} value={money(r.collected)} hint={`${r.paymentsCount} payment${r.paymentsCount === 1 ? "" : "s"} received in this period`} />
+            <Row label={t("Collected (without tips)")} value={money(r.collected)} hint={r.paymentsCount === 1 ? t("1 payment received in this period") : t("{n} payments received in this period", { n: r.paymentsCount })} />
             <Row label={t("Tips")} value={money(r.tips)} />
             <Row label={t("Unpaid")} value={money(r.unpaid)} hint={t("Finished visits not checked out yet")} warn={r.unpaid > 0} />
           </dl>
@@ -123,9 +127,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
                 </thead>
                 <tbody className="divide-y divide-line">
                   {r.buckets.map((b) => (
-                    <tr key={b.bucket} title={`${bucketLabel(b.bucket, group)}: ${b.appts} visits, ${b.dogs} dogs, ${money(b.expected)} expected, ${money(b.collected)} collected`}>
+                    <tr key={b.bucket} title={t("{when}: {visits} visits, {dogs} dogs, {expected} expected, {collected} collected", { when: bucketLabel(b.bucket, group, t), visits: b.appts, dogs: b.dogs, expected: money(b.expected), collected: money(b.collected) })}>
                       <td className="px-4 py-2.5">
-                        <div className="font-medium">{bucketLabel(b.bucket, group)}</div>
+                        <div className="font-medium">{bucketLabel(b.bucket, group, t)}</div>
                         <div className="mt-1 h-1.5 rounded-full bg-bg" aria-hidden>
                           <div className="h-1.5 rounded-full bg-brand" style={{ width: `${(Math.max(b.expected, b.collected) / maxBucket) * 100}%` }} />
                         </div>
@@ -158,9 +162,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           ) : (
             <ul className="card divide-y divide-line">
               {r.methods.map((m) => (
-                <li key={m.method} className="px-4 py-3" title={`${methodLabel(m.method)}: ${money(m.amount)} + ${money(m.tips)} tips`}>
+                <li key={m.method} className="px-4 py-3" title={t("{method}: {amount} + {tips} tips", { method: t(methodLabel(m.method)), amount: money(m.amount), tips: money(m.tips) })}>
                   <div className="flex justify-between text-sm">
-                    <span className="font-medium">{methodLabel(m.method)}</span>
+                    <span className="font-medium">{t(methodLabel(m.method))}</span>
                     <span className="font-semibold tabular-nums">{money(m.amount + m.tips)}</span>
                   </div>
                   <div className="mt-1.5 h-2 rounded-full bg-bg" aria-hidden>

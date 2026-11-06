@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -15,17 +16,20 @@ import { Swipe } from "@/components/swipe";
 import { GroomerFilter } from "@/components/groomer-filter";
 import { listGroomers } from "@/lib/data/staff";
 
-export const metadata: Metadata = { title: "Calendar" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Calendar") };
+}
 
 // Four ways to look at the schedule, like a phone calendar:
 // Day (hour by hour), Week (seven columns), Month (grid of days) and Agenda (list).
 
 type View = "day" | "week" | "month" | "agenda";
 const VIEWS: { key: View; label: string }[] = [
-  { key: "day", label: "Day" },
-  { key: "week", label: "Week" },
-  { key: "month", label: "Month" },
-  { key: "agenda", label: "Agenda" },
+  { key: "day", label: msg("Day") },
+  { key: "week", label: msg("Week") },
+  { key: "month", label: msg("Month") },
+  { key: "agenda", label: msg("Agenda") },
 ];
 const HIDDEN = ["cancelled", "no_show"];
 const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
@@ -46,7 +50,7 @@ function clip(t: TimeOff, d: string, tz: string) {
     e: t.end_at >= end ? 1440 : toMin(hm(t.end_at, tz)),
   };
 }
-const blockTitle = (t: TimeOff) => t.reason || "Blocked";
+const blockTitle = (t: TimeOff) => t.reason || msg("Blocked");
 
 /** The left bar of a visit: by status (default), by groomer or by the first service. */
 function bar(a: AppointmentListItem, view: CalendarView) {
@@ -130,7 +134,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
           {VIEWS.map((v) => (
             <Link key={v.key} href={`/calendar?view=${v.key}&date=${date}${q}`} aria-current={v.key === view ? "page" : undefined}
               className={`rounded-xl py-2 text-center text-sm font-semibold ${v.key === view ? "bg-navy text-white" : "text-muted"}`}>
-              {v.label}
+              {tr(v.label)}
             </Link>
           ))}
         </nav>
@@ -212,6 +216,7 @@ function WeekStrip({ date, today, view, q, dots }: { date: string; today: string
  * the day view then shows the schedule and turns a tap on a free time into that choice.
  */
 async function pickFor(staff: Awaited<ReturnType<typeof requireStaff>>, sp: Record<string, string | string[] | undefined>) {
+  const { t: tr } = await getOwnerI18n();
   const uuid = (v: unknown) => (typeof v === "string" && /^[0-9a-f-]{36}$/.test(v) ? v : null);
   if (sp.pick === "move" && uuid(sp.appt)) {
     const [a] = await sql<{ id: string; client: string; minutes: number }[]>`
@@ -222,9 +227,9 @@ async function pickFor(staff: Awaited<ReturnType<typeof requireStaff>>, sp: Reco
     if (!a) return null;
     return {
       q: `&pick=move&appt=${a.id}`,
-      title: `Moving ${a.client}'s visit (${a.minutes >= 60 ? `${Math.floor(a.minutes / 60)}h${a.minutes % 60 ? ` ${a.minutes % 60}min` : ""}` : `${a.minutes}min`})`,
+      title: tr("Moving {client}'s visit ({length})", { client: a.client, length: a.minutes >= 60 ? `${Math.floor(a.minutes / 60)}h${a.minutes % 60 ? ` ${a.minutes % 60}min` : ""}` : `${a.minutes}min` }),
       cancel: `/appointments/${a.id}`,
-      pick: { verb: "Move to", href: `/appointments/${a.id}?move=1&` },
+      pick: { verb: tr("Move to"), href: `/appointments/${a.id}?move=1&` },
     };
   }
   if (sp.pick === "book" && uuid(sp.client)) {
@@ -234,9 +239,9 @@ async function pickFor(staff: Awaited<ReturnType<typeof requireStaff>>, sp: Reco
     if (!c) return null;
     return {
       q: `&pick=book&client=${c.id}`,
-      title: `Booking ${c.client}`,
+      title: tr("Booking {client}", { client: c.client }),
       cancel: `/clients/${c.id}`,
-      pick: { verb: "Book at", href: `/appointments/new?client=${c.id}&` },
+      pick: { verb: tr("Book at"), href: `/appointments/new?client=${c.id}&` },
     };
   }
   return null;
@@ -313,7 +318,7 @@ async function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pic
       {allDay.map((t) => (
         <Link key={t.id} href={`/calendar/block/${t.id}`}
           className={`flex justify-between gap-3 rounded-[var(--radius-card)] border border-line px-4 py-2.5 text-sm ${BLOCK_STYLE}`}>
-          <span className="truncate font-semibold text-ink">{blockTitle(t)}</span>
+          <span className="truncate font-semibold text-ink">{tr(blockTitle(t))}</span>
           <span className="shrink-0">{tr("All day")}</span>
         </Link>
       ))}
@@ -341,7 +346,7 @@ async function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pic
                 top: top(s) + 1, height: Math.max(top(e) - top(s) - 2, 28),
                 left: `calc(3.5rem + (100% - 4rem) * ${l.lane / l.of})`, width: `calc((100% - 4rem) / ${l.of} - 4px)`,
               }}>
-              <div className="truncate font-bold text-ink">{blockTitle(t)}</div>
+              <div className="truncate font-bold text-ink">{tr(blockTitle(t))}</div>
               <div className="truncate">
                 {timeLabel(t.start_at, tz)} – {timeLabel(t.end_at, tz)}
               </div>
@@ -382,10 +387,11 @@ async function DayTimeline({ date, appts, blocks, hours, tz, multi, groomer, pic
   );
 }
 
-function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz, view }: {
+async function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz, view }: {
   start: string; today: string; appts: AppointmentListItem[]; blocksOn: (d: string) => TimeOff[];
   hoursOf: (d: string) => { start: string; end: string } | null; tz: string; view: CalendarView;
 }) {
+  const { t: tr } = await getOwnerI18n();
   const days = Array.from({ length: 7 }, (_, i) => addDaysYmd(start, i));
   const visible = appts.filter((a) => !HIDDEN.includes(a.status));
   const allHours = days.map(hoursOf).filter((h): h is { start: string; end: string } => !!h);
@@ -436,10 +442,10 @@ function WeekGrid({ start, today, appts, blocksOn, hoursOf, tz, view }: {
                 const s = Math.max(c.s, first), e = Math.min(c.e, last);
                 if (e <= s) return null;
                 return (
-                  <Link key={t.id} href={`/calendar/block/${t.id}`} title={blockTitle(t)}
+                  <Link key={t.id} href={`/calendar/block/${t.id}`} title={tr(blockTitle(t))}
                     className={`absolute inset-x-0 overflow-hidden px-0.5 text-[10px] leading-tight ${BLOCK_STYLE}`}
                     style={{ top: top(s), height: top(e) - top(s) }}>
-                    {blockTitle(t)}
+                    {tr(blockTitle(t))}
                   </Link>
                 );
               })}
@@ -533,7 +539,7 @@ async function Agenda({ start, today, onDay, blocksOn, working, tz }: {
               return (
                 <Link key={t.id} href={`/calendar/block/${t.id}`}
                   className={`flex justify-between gap-3 rounded-[var(--radius-card)] border border-line px-4 py-2.5 text-sm ${BLOCK_STYLE}`}>
-                  <span className="truncate font-semibold text-ink">{blockTitle(t)}</span>
+                  <span className="truncate font-semibold text-ink">{tr(blockTitle(t))}</span>
                   <span className="shrink-0">{c.s === 0 && c.e === 1440 ? tr("All day") : `${timeLabel(t.start_at, tz)} – ${timeLabel(t.end_at, tz)}`}</span>
                 </Link>
               );

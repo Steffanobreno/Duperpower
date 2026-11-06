@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -28,34 +29,37 @@ import { PetPhoto } from "@/components/pet-photo";
 import { ConfirmButton } from "@/components/confirm-button";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
 
-export const metadata: Metadata = { title: "Appointment" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Appointment") };
+}
 
 // The main next step for each status, shown as the big button.
 const PRIMARY: Record<string, { to: string; label: string } | undefined> = {
-  requested: { to: "unconfirmed", label: "Accept request" },
+  requested: { to: "unconfirmed", label: msg("Accept request") },
   // Accepted is booked: the client confirms from the reminder text, nothing to do here.
-  unconfirmed: { to: "en_route", label: "I'm on the way" },
-  confirmed: { to: "en_route", label: "I'm on the way" },
-  en_route: { to: "in_progress", label: "Check in" },
-  in_progress: { to: "completed", label: "Finish order" },
+  unconfirmed: { to: "en_route", label: msg("I'm on the way") },
+  confirmed: { to: "en_route", label: msg("I'm on the way") },
+  en_route: { to: "in_progress", label: msg("Check in") },
+  in_progress: { to: "completed", label: msg("Finish order") },
 };
 
 const TRIGGER_LABEL: Record<string, string> = {
-  booked: "Booking confirmation",
-  request_received: "Request received",
-  request_declined: "Request declined",
-  reminder: "Reminder",
-  confirmed: "Confirmed",
-  cancelled: "Cancelled",
-  rebook: "Time to rebook",
-  review_request: "Review request",
+  booked: msg("Booking confirmation"),
+  request_received: msg("Request received"),
+  request_declined: msg("Request declined"),
+  reminder: msg("Reminder"),
+  confirmed: msg("Confirmed"),
+  cancelled: msg("Cancelled"),
+  rebook: msg("Time to rebook"),
+  review_request: msg("Review request"),
 };
 const MESSAGE_STATUS: Record<string, string> = {
-  queued: "Waiting for your iPhone",
-  handed_off: "Sent from iPhone",
-  sent: "Sent",
-  failed: "Failed",
-  skipped: "Not sent (too late)",
+  queued: msg("Waiting for your iPhone"),
+  handed_off: msg("Sent from iPhone"),
+  sent: msg("Sent"),
+  failed: msg("Failed"),
+  skipped: msg("Not sent (too late)"),
 };
 
 export default async function AppointmentPage({ params, searchParams }: PageProps<"/appointments/[id]">) {
@@ -141,7 +145,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
         <details className="card group">
           <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
             <span aria-hidden className={`h-3 w-3 rounded-full ${STATUS_DOT[appt.status] ?? "bg-muted"}`} />
-            <span className="flex-1 font-bold uppercase tracking-wide">{STATUS_NAME[appt.status] ?? statusLabel(appt.status)}</span>
+            <span className="flex-1 font-bold uppercase tracking-wide">{t(STATUS_NAME[appt.status] ?? statusLabel(appt.status))}</span>
             {paid ? <span className="text-sm font-bold text-success">PAID</span>
               : appt.status === "completed" ? <span className="text-sm font-bold text-danger">UNPAID</span> : null}
             {(NEXT_STATUS[appt.status]?.length ?? 0) > 0 && <ChevronDown size={18} className="text-muted transition group-open:rotate-180" />}
@@ -150,12 +154,12 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             {(NEXT_STATUS[appt.status] ?? []).map((to) => (
               <form key={to} action={setStatusAction.bind(null, id, to)}>
                 {TAKES_OFF[to] ? (
-                  <ConfirmButton question={TAKES_OFF[to]} className="w-full rounded-full bg-danger-soft py-3 font-semibold text-danger">
-                    {STATUS_NAME[to] ?? statusLabel(to)}
+                  <ConfirmButton question={t(TAKES_OFF[to])} className="w-full rounded-full bg-danger-soft py-3 font-semibold text-danger">
+                    {t(STATUS_NAME[to] ?? statusLabel(to))}
                   </ConfirmButton>
                 ) : (
                   <button type="submit" className="w-full rounded-full bg-bg py-3 font-semibold">
-                    {MENU_NAME[`${appt.status}>${to}`] ?? STATUS_NAME[to] ?? statusLabel(to)}
+                    {t(MENU_NAME[`${appt.status}>${to}`] ?? STATUS_NAME[to] ?? statusLabel(to))}
                   </button>
                 )}
               </form>
@@ -188,12 +192,12 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           </Link>
           {canChange && (
             <form action={setStatusAction.bind(null, id, "cancelled")} className="contents">
-              <ConfirmButton question={TAKES_OFF.cancelled} className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />{t("Cancel")}</ConfirmButton>
+              <ConfirmButton question={t(TAKES_OFF.cancelled)} className={`${pillar} text-danger hover:bg-danger-soft`}><Close size={22} />{t("Cancel")}</ConfirmButton>
             </form>
           )}
           {canChange && appt.status !== "requested" && (
             <form action={setStatusAction.bind(null, id, "no_show")} className="contents">
-              <ConfirmButton question={TAKES_OFF.no_show} className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />{t("No-show")}</ConfirmButton>
+              <ConfirmButton question={t(TAKES_OFF.no_show)} className={`${pillar} text-danger hover:bg-danger-soft`}><Hourglass size={22} />{t("No-show")}</ConfirmButton>
             </form>
           )}
           {closed && (
@@ -208,7 +212,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           <div className="card flex items-center gap-3 px-4 py-4">
             <div className="flex-1">
               <p className="text-lg font-bold">{longDayLabel(appt.start_at, tz)}</p>
-              <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {minutesLabel(minutes)}</p>
+              <p className="text-muted">{timeLabel(appt.start_at, tz)} – {timeLabel(appt.end_at, tz)} · {t(minutesLabel(minutes))}</p>
             </div>
             {canMove && <Link href={planHref} aria-label={t("Change the time")} className="rounded-full p-2 text-muted hover:bg-bg"><Pencil size={20} /></Link>}
           </div>
@@ -237,7 +241,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <span className="block font-semibold">{series ? t("Repeat appointment") : t("Repeat this appointment")}</span>
                 <span className="block truncate text-sm text-muted">
                   {series
-                    ? `${ruleLabel(ymd(series.first, tz), { freq: series.freq, every: series.interval_n, count: series.occurrences, until: series.ends_on })} · ${series.upcoming} more after this one`
+                    ? t("{ruleLabel} · {upcoming} more after this one", { ruleLabel: ruleLabel(ymd(series.first, tz), { freq: series.freq, every: series.interval_n, count: series.occurrences, until: series.ends_on }, t), upcoming: series.upcoming })
                     : t("Every week, every 2 weeks, every month…")}
                 </span>
               </span>
@@ -257,7 +261,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <PetPhoto petId={p.pet_id} version={p.photo_version} name={p.name} />
                 <div className="min-w-0">
                   <div className="text-lg font-bold">{p.name}</div>
-                  <div className="text-sm text-muted">{[p.breed, sizeLabel(p.size_class)].filter(Boolean).join(" · ")}</div>
+                  <div className="text-sm text-muted">{[p.breed, t(sizeLabel(p.size_class))].filter(Boolean).join(" · ")}</div>
                   <PetCodeChips codes={codes.get(p.pet_id)} />
                 </div>
               </div>
@@ -281,7 +285,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 <div key={s.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">{s.name}</span>
-                    <span className="flex items-center gap-1 text-sm text-muted"><Clock size={14} />{minutesLabel(s.duration_min)}</span>
+                    <span className="flex items-center gap-1 text-sm text-muted"><Clock size={14} />{t(minutesLabel(s.duration_min))}</span>
                   </span>
                   <span className="font-semibold">{money(s.price_cents)}</span>
                 </div>
@@ -377,9 +381,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               {messages.map((m) => (
                 <li key={m.id} className="flex justify-between gap-3 px-4 py-2.5">
                   <span>
-                    {TRIGGER_LABEL[m.template_trigger ?? ""] ?? m.template_trigger} · {m.channel === "sms" ? t("Text") : t("Email")}
+                    {t(TRIGGER_LABEL[m.template_trigger ?? ""] ?? m.template_trigger ?? "")} · {m.channel === "sms" ? t("Text") : t("Email")}
                   </span>
-                  <span className="text-muted">{MESSAGE_STATUS[m.status] ?? m.status}</span>
+                  <span className="text-muted">{t(MESSAGE_STATUS[m.status] ?? m.status)}</span>
                 </li>
               ))}
             </ul>
@@ -399,7 +403,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               <div className="flex gap-2">
                 <form action={setStatusAction.bind(null, id, primary.to)} className="flex-1">
                   <button type="submit" className={`w-full rounded-2xl py-3.5 text-base font-bold text-white ${primary.to === "in_progress" ? "bg-success" : "bg-brand"}`}>
-                    {primary.label}
+                    {t(primary.label)}
                   </button>
                 </form>
                 {/* Forgot "on the way" or the check-in: finish the order straight away. */}
@@ -433,31 +437,31 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
 
 // Changes that take the visit off the day ask first: one stray tap shouldn't lose a client.
 const TAKES_OFF: Record<string, string> = {
-  cancelled: "Cancel this appointment? The client gets the cancellation text.",
-  no_show: "Mark as no-show? The visit comes off your day.",
-  declined: "Decline this request? The client gets a text to pick another time.",
+  cancelled: msg("Cancel this appointment? The client gets the cancellation text."),
+  no_show: msg("Mark as no-show? The visit comes off your day."),
+  declined: msg("Decline this request? The client gets a text to pick another time."),
 };
 
 // In the menu, the client's confirmation reads as what you are recording.
 const MENU_NAME: Record<string, string> = {
-  "unconfirmed>confirmed": "Client confirmed",
-  "confirmed>unconfirmed": "Client hasn't confirmed",
-  "unconfirmed>completed": "Finish order (skip the steps)",
-  "confirmed>completed": "Finish order (skip the steps)",
-  "en_route>completed": "Finish order (skip check-in)",
+  "unconfirmed>confirmed": msg("Client confirmed"),
+  "confirmed>unconfirmed": msg("Client hasn't confirmed"),
+  "unconfirmed>completed": msg("Finish order (skip the steps)"),
+  "confirmed>completed": msg("Finish order (skip the steps)"),
+  "en_route>completed": msg("Finish order (skip check-in)"),
 };
 
 // Names in the status menu, as the groomer says them.
 const STATUS_NAME: Record<string, string> = {
-  requested: "Requested",
-  unconfirmed: "Not confirmed",
-  confirmed: "Confirmed",
-  en_route: "On the way",
-  in_progress: "Checked in",
-  completed: "Finished",
-  cancelled: "Cancelled",
-  no_show: "No-show",
-  declined: "Declined",
+  requested: msg("Requested"),
+  unconfirmed: msg("Not confirmed"),
+  confirmed: msg("Confirmed"),
+  en_route: msg("On the way"),
+  in_progress: msg("Checked in"),
+  completed: msg("Finished"),
+  cancelled: msg("Cancelled"),
+  no_show: msg("No-show"),
+  declined: msg("Declined"),
 };
 
 const STATUS_DOT: Record<string, string> = {

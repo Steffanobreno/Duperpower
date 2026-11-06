@@ -8,7 +8,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { deleteBlockAction, updateBlockAction } from "../../actions";
 import { BlockForm } from "../block-form";
 
-export const metadata: Metadata = { title: "Blocked time" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Blocked time") };
+}
 
 export default async function EditBlockPage({ params }: PageProps<"/calendar/block/[id]">) {
   const { t } = await getOwnerI18n();

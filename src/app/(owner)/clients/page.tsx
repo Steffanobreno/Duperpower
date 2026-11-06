@@ -10,7 +10,10 @@ import { TagChips } from "@/components/chips";
 import { ButtonLink, Empty, Page, PageHeader } from "@/components/ui";
 import { ClientFinder } from "@/components/client-finder";
 
-export const metadata: Metadata = { title: "Clients" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Clients") };
+}
 
 export default async function ClientsPage({ searchParams }: PageProps<"/clients">) {
   const { t: tr } = await getOwnerI18n();

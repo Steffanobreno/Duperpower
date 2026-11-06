@@ -1,15 +1,16 @@
 import "server-only";
 import { sql } from "../db";
+import { msg } from "@/lib/i18n";
 
 // The owner's own lists for clients and pets. Each list starts with sensible defaults.
 
 export const OPTION_KINDS = {
-  client_tag: { title: "Client tags", one: "tag", hint: "Mark clients: VIP, generous tipper, every 4 weeks…" },
-  referral_source: { title: "Referral sources", one: "source", hint: "How clients found you. Pick it on the client." },
-  coat_type: { title: "Coat types", one: "coat type", hint: "The choices for a pet's coat." },
-  behavior: { title: "Behavior", one: "behavior", hint: "Quick behavior tags on the pet." },
-  vaccine: { title: "Vaccines", one: "vaccine", hint: "Suggested names when adding a vaccine." },
-  breed: { title: "Extra breeds", one: "breed", hint: "Breeds or mixes missing from the built-in list (300+ breeds)." },
+  client_tag: { title: msg("Client tags"), one: msg("tag"), hint: msg("Mark clients: VIP, generous tipper, every 4 weeks…") },
+  referral_source: { title: msg("Referral sources"), one: msg("source"), hint: msg("How clients found you. Pick it on the client.") },
+  coat_type: { title: msg("Coat types"), one: msg("coat type"), hint: msg("The choices for a pet's coat.") },
+  behavior: { title: msg("Behavior"), one: msg("behavior"), hint: msg("Quick behavior tags on the pet.") },
+  vaccine: { title: msg("Vaccines"), one: msg("vaccine"), hint: msg("Suggested names when adding a vaccine.") },
+  breed: { title: msg("Extra breeds"), one: msg("breed"), hint: msg("Breeds or mixes missing from the built-in list (300+ breeds).") },
 } as const;
 export type OptionKind = keyof typeof OPTION_KINDS;
 export const isOptionKind = (k: unknown): k is OptionKind => typeof k === "string" && k in OPTION_KINDS;

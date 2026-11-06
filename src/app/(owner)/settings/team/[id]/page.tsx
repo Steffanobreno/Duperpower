@@ -12,7 +12,10 @@ import { SimpleForm } from "../../forms";
 import { removeLoginAction, saveLoginAction, savePayAction, saveRoleAction, saveVanAction, updateGroomerAction } from "../actions";
 import { GroomerForm } from "../groomer-form";
 
-export const metadata: Metadata = { title: "Team member" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Team member") };
+}
 
 type Member = {
   name: string; role: "owner" | "admin" | "groomer"; color: string; phone: string | null; email: string | null; active: boolean;
@@ -52,15 +55,15 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
                 <SimpleForm action={saveRoleAction.bind(null, id)} submitLabel={t("Save role")}>
                   <Field label={t("Role")} hint={t("What each role can do is in Team → Roles and permissions.")}>
                     <Select name="role" defaultValue={g.role}>
-                      <option value="groomer">{ROLES.groomer}</option>
-                      <option value="admin">{ROLES.admin}</option>
+                      <option value="groomer">{t(ROLES.groomer)}</option>
+                      <option value="admin">{t(ROLES.admin)}</option>
                     </Select>
                   </Field>
                 </SimpleForm>
                 <SimpleForm action={saveLoginAction.bind(null, id)} submitLabel={g.login ? t("Change login") : t("Give a login")}
                   savedLabel={t("Login saved. Send them the email and password.")}>
                   <p className="text-sm">
-                    {g.login ? <>{t("Logs in as")}{" "} <strong>{g.login}</strong>.</> : `${g.name} can't log in yet.`}
+                    {g.login ? <>{t("Logs in as")}{" "} <strong>{g.login}</strong>.</> : t("{name} can't log in yet.", { name: g.name })}
                   </p>
                   <Field label={t("Login email")}>
                     <Input name="email" type="email" defaultValue={g.login ?? g.email ?? ""} required autoComplete="off" />
@@ -71,7 +74,7 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
                 </SimpleForm>
                 {g.login && (
                   <form action={removeLoginAction.bind(null, id)}>
-                    <ConfirmButton question={`${g.name} won't be able to log in anymore. Continue?`}
+                    <ConfirmButton question={t("{name} won't be able to log in anymore. Continue?", { name: g.name })}
                       className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger-soft">
                       {t("Remove login")}
                     </ConfirmButton>

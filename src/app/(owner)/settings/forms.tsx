@@ -1,4 +1,5 @@
 "use client";
+import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { useActionState } from "react";
@@ -52,7 +53,7 @@ export function ServiceForm({ action, initial, categories }: { action: Action; i
           <option value="">{t("Any size")}</option>
           {SIZES.map((s) => (
             <option key={s.value} value={s.value}>
-              {s.label}
+              {t(s.label)}
             </option>
           ))}
         </Select>
@@ -106,14 +107,14 @@ export function HoursForm({ action, hours }: { action: Action; hours: { weekday:
           <div key={d} className="grid grid-cols-[7.5rem_1fr_1fr] items-center gap-2">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input type="checkbox" name={`open:${d}`} defaultChecked={!!h} className="h-4 w-4" />
-              {WEEKDAYS[d]}
+              {t(WEEKDAYS[d])}
             </label>
             <label>
-              <span className="sr-only">{t("{d} start", { d: WEEKDAYS[d] })}</span>
+              <span className="sr-only">{t("{d} start", { d: t(WEEKDAYS[d]) })}</span>
               <Input type="time" name={`start:${d}`} defaultValue={h?.start ?? "07:00"} step={900} />
             </label>
             <label>
-              <span className="sr-only">{t("{d} end", { d: WEEKDAYS[d] })}</span>
+              <span className="sr-only">{t("{d} end", { d: t(WEEKDAYS[d]) })}</span>
               <Input type="time" name={`end:${d}`} defaultValue={h?.end ?? "19:00"} step={900} />
             </label>
           </div>
@@ -131,8 +132,8 @@ export function HoursForm({ action, hours }: { action: Action; hours: { weekday:
 export function SimpleForm({
   action,
   children,
-  submitLabel = "Save",
-  savedLabel = "Saved.",
+  submitLabel = msg("Save"),
+  savedLabel = msg("Saved."),
 }: {
   action: Action;
   children: React.ReactNode;
@@ -146,7 +147,7 @@ export function SimpleForm({
       <FormPopup state={state} savedText={savedLabel} />
       {children}
       <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? t("Saving…") : submitLabel}
+        {pending ? t("Saving…") : t(submitLabel)}
       </Button>
     </ActionForm>
   );

@@ -7,7 +7,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { SimpleForm } from "../../forms";
 import { saveRolePermissionsAction } from "../actions";
 
-export const metadata: Metadata = { title: "Roles and permissions" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Roles and permissions") };
+}
 
 export default async function RolesPage() {
   const { t } = await getOwnerI18n();
@@ -21,19 +24,19 @@ export default async function RolesPage() {
         <p className="text-sm text-muted">{t("The owner can do everything. Choose what admins and groomers can do when they log in.")}</p>
         {(["admin", "groomer"] as const).map((role) => (
           <section key={role} className="space-y-2">
-            <h2 className="section-label">{ROLES[role]}</h2>
+            <h2 className="section-label">{t(ROLES[role])}</h2>
             <Card>
-              <SimpleForm action={saveRolePermissionsAction.bind(null, role)} submitLabel={`Save ${ROLES[role].toLowerCase()} permissions`}>
+              <SimpleForm action={saveRolePermissionsAction.bind(null, role)} submitLabel={t("Save {role} permissions", { role: t(ROLES[role]).toLowerCase() })}>
                 <ul className="divide-y divide-line">
                   {(Object.entries(PERMISSIONS) as [Permission, { title: string; hint: string }][]).map(([perm, p]) => (
                     <li key={perm}>
                       <label className="flex items-center gap-3 py-2.5">
                         <span className="min-w-0 flex-1">
-                          <span className="block font-medium">{p.title}</span>
-                          {p.hint && <span className="block text-xs text-muted">{p.hint}</span>}
+                          <span className="block font-medium">{t(p.title)}</span>
+                          {p.hint && <span className="block text-xs text-muted">{t(p.hint)}</span>}
                         </span>
                         <input type="checkbox" name={perm} defaultChecked={has(role, perm)} className="h-5 w-5"
-                          aria-label={`${ROLES[role]}: ${p.title}`} />
+                          aria-label={`${t(ROLES[role])}: ${t(p.title)}`} />
                       </label>
                     </li>
                   ))}

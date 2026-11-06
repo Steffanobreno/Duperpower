@@ -17,13 +17,16 @@ export function ownerPhrases() {
   for (const f of ownerFiles()) {
     const src = readFileSync(f, "utf8");
     const isAction = /^\s*["']use server["']/.test(src);
-    for (const m of src.matchAll(/\b(?:t|tr|msg)\(\s*"((?:[^"\\]|\\.)*)"/g)) if (!used.has(unescape(m[1]))) used.set(unescape(m[1]), f);
+    for (const m of src.matchAll(/\b(?:t|tr|msg)\(\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')/g)) {
+      const k = unescape(m[1] ?? m[2]);
+      if (!used.has(k)) used.set(k, f);
+    }
     if (isAction) for (const m of src.matchAll(/\b(?:error|warning): "((?:[^"\\]|\\.)*)"/g)) if (!used.has(unescape(m[1]))) used.set(unescape(m[1]), f);
   }
   return used;
 }
 
-if (process.argv[1].endsWith("owner-phrases.mjs")) {
+if (process.argv[1]?.endsWith("owner-phrases.mjs")) {
   const used = ownerPhrases();
   if (process.argv[2] === "--json") console.log(JSON.stringify([...used.keys()], null, 1));
   else console.log(`${used.size} phrases, ${[...used.keys()].join(" ").split(/\s+/).length} words`);

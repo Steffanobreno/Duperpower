@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/i18n";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Sheet } from "@/components/contact-sheet";
 
@@ -19,6 +20,7 @@ export function SlotButton({ date, time, groomer, label, className, style, child
   date: string; time: string; groomer?: string | null; label: string; className: string; style: CSSProperties; children: ReactNode;
   pick?: Pick | null;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const options = pick
     ? [0, 15, 30, 45].map((m) => {
@@ -26,13 +28,13 @@ export function SlotButton({ date, time, groomer, label, className, style, child
         return { label: `${pick.verb} ${label12(t)}`, href: `${pick.href}date=${date}&time=${t}` };
       })
     : [
-        { label: "New appointment", href: `/appointments/new?date=${date}&time=${time}${groomer ? `&groomer=${groomer}` : ""}` },
-        { label: "Block time", href: `/calendar/block?date=${date}&start=${time}${groomer ? `&groomer=${groomer}` : ""}` },
+        { label: t("New appointment"), href: `/appointments/new?date=${date}&time=${time}${groomer ? `&groomer=${groomer}` : ""}` },
+        { label: t("Block time"), href: `/calendar/block?date=${date}&start=${time}${groomer ? `&groomer=${groomer}` : ""}` },
       ];
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className} style={style}
-        aria-label={pick ? `${label}: ${pick.verb.toLowerCase()} this hour` : `${label}: book or block`}>
+        aria-label={pick ? t("{label}: {n} this hour", { label, n: pick.verb.toLowerCase() }) : t("{label}: book or block", { label })}>
         {children}
       </button>
       {open && <Sheet title={label} onClose={() => setOpen(false)} options={options} />}

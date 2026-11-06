@@ -9,7 +9,10 @@ import { Button, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setStatusAction } from "../appointments/actions";
 import { listDrafts } from "@/lib/data/abandoned";
 
-export const metadata: Metadata = { title: "Requests" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Requests") };
+}
 
 export default async function RequestsPage() {
   const { t } = await getOwnerI18n();
@@ -89,8 +92,8 @@ export default async function RequestsPage() {
         )}
 
         {waiting > 0 && (
-          <GoldBanner href="/abandoned" count={waiting} icon="cart" action="See"
-            title={`${waiting} didn't finish booking online`} text={t("A quick call or text often gets the booking.")} />
+          <GoldBanner href="/abandoned" count={waiting} icon="cart" action={t("See")}
+            title={t("{waiting} didn't finish booking online", { waiting })} text={t("A quick call or text often gets the booking.")} />
         )}
       </Page>
     </>

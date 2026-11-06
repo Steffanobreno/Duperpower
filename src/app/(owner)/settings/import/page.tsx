@@ -4,7 +4,10 @@ import { requirePermission } from "@/lib/auth";
 import { ButtonLink, Card, Page, PageHeader } from "@/components/ui";
 import { ImportForm } from "./import-form";
 
-export const metadata: Metadata = { title: "Import and export clients" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Import and export clients") };
+}
 
 export default async function ImportPage() {
   const { t } = await getOwnerI18n();

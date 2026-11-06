@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,13 +11,16 @@ import { ButtonLink, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { MailingAddressForm } from "./mailing-address-form";
 import { createCampaignAction, setMarketingReminderAction } from "./actions";
 
-export const metadata: Metadata = { title: "Marketing" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Marketing") };
+}
 
 const STATUS: Record<string, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-bg text-muted" },
-  scheduled: { label: "Scheduled", className: "bg-brand-soft text-brand-strong" },
-  sending: { label: "Sending", className: "bg-warn-soft text-warn" },
-  sent: { label: "Sent", className: "bg-success-soft text-success" },
+  draft: { label: msg("Draft"), className: "bg-bg text-muted" },
+  scheduled: { label: msg("Scheduled"), className: "bg-brand-soft text-brand-strong" },
+  sending: { label: msg("Sending"), className: "bg-warn-soft text-warn" },
+  sent: { label: msg("Sent"), className: "bg-success-soft text-success" },
 };
 
 export default async function MarketingPage() {
@@ -90,13 +94,13 @@ export default async function MarketingPage() {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-start justify-between gap-2">
                         <span className="truncate font-bold">{c.name}</span>
-                        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.className}`}>{s.label}</span>
+                        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.className}`}>{t(s.label)}</span>
                       </span>
                       <span className="block truncate text-sm text-muted">{c.subject || t("No subject yet")}</span>
                       <span className="block text-xs text-muted">
-                        {c.status === "scheduled" && c.scheduled_at ? `Goes out ${dayLabel(c.scheduled_at, tz)} at ${timeLabel(c.scheduled_at, tz)}`
-                          : c.status === "draft" ? `Created ${dayLabel(c.created_at, tz)}`
-                            : `${c.sent}/${c.total} sent${c.started_at ? ` · ${dayLabel(c.started_at, tz)}` : ""} · ${c.booked} booked since`}
+                        {c.status === "scheduled" && c.scheduled_at ? t("Goes out {day} at {time}", { day: dayLabel(c.scheduled_at, tz), time: timeLabel(c.scheduled_at, tz) })
+                          : c.status === "draft" ? t("Created {day}", { day: dayLabel(c.created_at, tz) })
+                            : `${t("{sent}/{total} sent", { sent: c.sent, total: c.total })}${c.started_at ? ` · ${dayLabel(c.started_at, tz)}` : ""} · ${t("{n} booked since", { n: c.booked })}`}
                       </span>
                     </span>
                   </Link>
@@ -108,7 +112,7 @@ export default async function MarketingPage() {
 
         <p className="text-center text-xs text-muted">
           {t("Emails go out from your business email. Gmail sends about 450 a day, so bigger lists finish the next day.")}
-          {left < 450 && ` ${left} left today.`}
+          {left < 450 && t(" {left} left today.", { left })}
         </p>
         <form action={setMarketingReminderAction.bind(null, !b.marketing_reminder)} className="card flex items-center justify-between gap-3 px-4 py-3">
           <span>

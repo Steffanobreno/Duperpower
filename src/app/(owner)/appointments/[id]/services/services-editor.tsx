@@ -98,7 +98,7 @@ export function ServicesEditor({
                 <div key={l.key} className="card divide-y divide-line">
                   <div className="flex items-center gap-3 px-4 py-3">
                     {/* Change the service for another (keeps the line; price and time follow the new one). */}
-                    <select aria-label={`Change ${l.name}`} value={l.serviceId}
+                    <select aria-label={t("Change {name}", { name: l.name })} value={l.serviceId}
                       className="w-0 min-w-0 flex-1 appearance-none truncate bg-transparent font-semibold outline-none"
                       onChange={(e) => {
                         const c = options.find((x) => x.id === e.target.value) ?? catalog.find((x) => x.id === e.target.value);
@@ -108,7 +108,7 @@ export function ServicesEditor({
                       {options.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                     <span aria-hidden className="text-xs font-semibold text-brand">{t("Change ▾")}</span>
-                    <button type="button" aria-label={`Remove ${l.name}`} disabled={p.lines.length === 1 && state.length === 1}
+                    <button type="button" aria-label={t("Remove {name}", { name: l.name })} disabled={p.lines.length === 1 && state.length === 1}
                       onClick={() => setPet(p.petId, (x) => ({ ...x, lines: x.lines.filter((y) => y.key !== l.key) }))}
                       className="rounded-full border-2 border-danger p-0.5 text-danger disabled:opacity-30">
                       <Close size={14} strokeWidth={3} />
@@ -118,7 +118,7 @@ export function ServicesEditor({
                     <span className="text-muted">{t("Price")}</span>
                     <span className="flex items-center gap-1">
                       $
-                      <input key={`${l.key}:${l.serviceId}`} inputMode="decimal" aria-label={`Price of ${l.name}`}
+                      <input key={`${l.key}:${l.serviceId}`} inputMode="decimal" aria-label={t("Price of {name}", { name: l.name })}
                         className="w-24 rounded-lg border border-line px-2 py-1.5 text-right"
                         defaultValue={(l.priceCents / 100).toString()}
                         onChange={(e) => {
@@ -130,10 +130,10 @@ export function ServicesEditor({
                   <div className="flex items-center justify-between gap-3 px-4 py-3">
                     <span className="text-muted">{t("Time")}</span>
                     <span className="flex items-center gap-3">
-                      <button type="button" aria-label={`Less time for ${l.name}`} className="stepper"
+                      <button type="button" aria-label={t("Less time for {name}", { name: l.name })} className="stepper"
                         onClick={() => update(p.petId, l.key, { minutes: Math.max(0, l.minutes - STEP) })}>−</button>
                       <span className="w-20 text-center font-semibold tabular-nums" aria-live="polite">{t("{minutes} min", { minutes: l.minutes })}</span>
-                      <button type="button" aria-label={`More time for ${l.name}`} className="stepper"
+                      <button type="button" aria-label={t("More time for {name}", { name: l.name })} className="stepper"
                         onClick={() => update(p.petId, l.key, { minutes: Math.min(720, l.minutes + STEP) })}>+</button>
                     </span>
                   </div>
@@ -152,7 +152,7 @@ export function ServicesEditor({
             })}
             <label className="card flex items-center gap-3 px-4 py-3 text-brand">
               <Plus size={18} />
-              <select aria-label={`Add a service for ${p.name}`} className="w-0 min-w-0 flex-1 truncate bg-transparent font-semibold outline-none" value=""
+              <select aria-label={t("Add a service for {name}", { name: p.name })} className="w-0 min-w-0 flex-1 truncate bg-transparent font-semibold outline-none" value=""
                 onChange={(e) => {
                   const c = options.find((x) => x.id === e.target.value);
                   if (!c) return;
@@ -183,7 +183,7 @@ export function ServicesEditor({
       )}
 
       <div className="card space-y-1 px-4 py-3">
-        <p className="flex justify-between"><span className="text-muted">{t("Total time")}</span><span className="font-semibold">{minutesLabel(totalMin)}</span></p>
+        <p className="flex justify-between"><span className="text-muted">{t("Total time")}</span><span className="font-semibold">{t(minutesLabel(totalMin))}</span></p>
         <p className="flex justify-between"><span className="text-muted">{t("Visit")}</span><span className="font-semibold">{time(start)} – {time(end)}</span></p>
         <p className="flex justify-between text-lg font-bold"><span>{t("Total")}</span><span>{money(total)}</span></p>
       </div>

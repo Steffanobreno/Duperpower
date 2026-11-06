@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Receipt } from "@/lib/data/receipts";
 import { receiptUrl } from "@/lib/data/receipts";
@@ -6,10 +7,10 @@ import { Notice } from "@/components/ui";
 import { ShareReceiptButton } from "@/components/share-receipt";
 
 const RESULT: Record<string, string> = {
-  sent: "Receipt emailed.",
-  "no-email": "This client has no email on file. Add one on their profile, or send the receipt by text or WhatsApp.",
-  "not-set-up": "Email isn't set up yet (Settings → Texts and email). Send it by text or WhatsApp for now.",
-  failed: "The email didn't go out. Try again in a minute, or send it by text or WhatsApp.",
+  sent: msg("Receipt emailed."),
+  "no-email": msg("This client has no email on file. Add one on their profile, or send the receipt by text or WhatsApp."),
+  "not-set-up": msg("Email isn't set up yet (Settings → Texts and email). Send it by text or WhatsApp for now."),
+  failed: msg("The email didn't go out. Try again in a minute, or send it by text or WhatsApp."),
 };
 
 /** Ways to get a receipt to the client: share the PDF, text or WhatsApp the link, email it, download it. */
@@ -20,19 +21,19 @@ export async function ReceiptActions({ r, emailAction, result }: {
 }) {
   const { t } = await getOwnerI18n();
   const tz = r.business.timezone;
-  const text = `Here's your receipt from ${r.business.name}. Thank you! ${receiptUrl(r.token)}`;
+  const text = t("Here's your receipt from {name}. Thank you! {receiptUrl}", { name: r.business.name, receiptUrl: receiptUrl(r.token) });
   const phoneDigits = r.client.phone?.replace(/\D/g, "") ?? "";
   return (
     <section className="space-y-2" aria-label={t("Receipt")}>
       <h2 className="section-label px-1">{t("Receipt #{number}", { number: r.number })}</h2>
-      {result && RESULT[result] && <Notice kind={result === "sent" ? "success" : "warn"}>{RESULT[result]}</Notice>}
+      {result && RESULT[result] && <Notice kind={result === "sent" ? "success" : "warn"}>{t(RESULT[result])}</Notice>}
       <div className="card space-y-3 p-4">
         <p className="text-sm text-muted">
           {r.emailedAt
-            ? `Emailed to ${r.client.email} on ${dayLabel(r.emailedAt, tz)} ${timeLabel(r.emailedAt, tz)}.`
+            ? t("Emailed to {email} on {day} {time}.", { email: r.client.email, day: dayLabel(r.emailedAt, tz), time: timeLabel(r.emailedAt, tz) })
             : r.client.email
               // The receipt goes out right after the payment, in the background.
-              ? (r.justClosed ? `Sending to ${r.client.email}…` : t("Not emailed yet."))
+              ? (r.justClosed ? t("Sending to {email}…", { email: r.client.email }) : t("Not emailed yet."))
               : t("No email on file for this client: send it by text or WhatsApp.")}
         </p>
         <div className="grid grid-cols-2 gap-2 text-sm font-bold">

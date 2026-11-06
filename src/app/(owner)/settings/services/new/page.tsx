@@ -6,7 +6,10 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { saveServiceAction } from "../../actions";
 import { ServiceForm } from "../../forms";
 
-export const metadata: Metadata = { title: "New service" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("New service") };
+}
 
 export default async function NewServicePage() {
   const { t } = await getOwnerI18n();

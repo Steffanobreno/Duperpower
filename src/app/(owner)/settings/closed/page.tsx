@@ -10,7 +10,10 @@ import { Card, Empty, Field, Input, Page, PageHeader } from "@/components/ui";
 import { SimpleForm } from "../forms";
 import { addClosedDatesAction, deleteClosedDatesAction, saveHolidaysAction } from "./actions";
 
-export const metadata: Metadata = { title: "Closed dates and holidays" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Closed dates and holidays") };
+}
 
 const dateLabel = (d: string) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -49,7 +52,7 @@ export default async function ClosedPage() {
                   </div>
                   <form action={deleteClosedDatesAction.bind(null, d.id)}>
                     <button type="submit" className="rounded-lg px-2 py-1 text-sm font-semibold text-danger hover:bg-danger-soft"
-                      aria-label={`Remove closed dates from ${d.start_date}`}>
+                      aria-label={t("Remove closed dates from {start_date}", { start_date: d.start_date })}>
                       {t("Remove")}
                     </button>
                   </form>
@@ -90,7 +93,7 @@ export default async function ClosedPage() {
                       </span>
                       <span className="text-sm text-muted">{t("Closed")}</span>
                       <input type="checkbox" name={`closed:${h.key}`} defaultChecked={b.closed_holidays.includes(h.key)}
-                        className="h-5 w-5" aria-label={`Closed on ${h.name}`} />
+                        className="h-5 w-5" aria-label={t("Closed on {name}", { name: h.name })} />
                     </label>
                   </li>
                 ))}

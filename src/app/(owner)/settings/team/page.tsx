@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,7 +11,10 @@ import { ChevronRight } from "@/components/icons";
 import { addGroomerAction } from "./actions";
 import { GroomerForm } from "./groomer-form";
 
-export const metadata: Metadata = { title: "Team" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Team") };
+}
 
 export default async function TeamPage() {
   const { t } = await getOwnerI18n();
@@ -30,7 +34,7 @@ export default async function TeamPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold">{g.name}</span>
                   <span className="block truncate text-sm text-muted">
-                    {!g.active && g.role !== "owner" ? t("Not active") : ROLES[g.role as Role]}{g.phone ? ` · ${phoneLabel(g.phone)}` : ""}
+                    {!g.active && g.role !== "owner" ? t("Not active") : t(ROLES[g.role as Role])}{g.phone ? ` · ${phoneLabel(g.phone)}` : ""}
                   </span>
                 </span>
                 <ChevronRight size={20} className="text-muted" />
@@ -47,15 +51,15 @@ export default async function TeamPage() {
         </Card>
         <ul className="card divide-y divide-line overflow-hidden">
           {[
-            ["/settings/team/roles", "Roles and permissions", "What admins and groomers can see and do when they log in"],
-            ["/settings/team/clock", "Clock in and out", "Track hours for hourly pay"],
-            ["/reports/payroll", "Payroll", "Commission, tips and hours for any dates"],
+            ["/settings/team/roles", msg("Roles and permissions"), msg("What admins and groomers can see and do when they log in")],
+            ["/settings/team/clock", msg("Clock in and out"), msg("Track hours for hourly pay")],
+            ["/reports/payroll", msg("Payroll"), msg("Commission, tips and hours for any dates")],
           ].map(([href, title, text]) => (
             <li key={href}>
               <Link href={href} className="flex items-center gap-3 px-4 py-3 hover:bg-bg">
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">{title}</span>
-                  <span className="block text-sm text-muted">{text}</span>
+                  <span className="block font-semibold">{t(title)}</span>
+                  <span className="block text-sm text-muted">{t(text)}</span>
                 </span>
                 <ChevronRight size={20} className="text-muted" />
               </Link>

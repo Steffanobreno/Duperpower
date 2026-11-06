@@ -1,3 +1,4 @@
+import { msg, type T } from "@/lib/i18n";
 // Repeating visits ("every 2 weeks", "every month", "after 10 times"): the dates a rule gives.
 // Pure functions, used by the repeat form (live list) and the server (to book them).
 
@@ -48,18 +49,22 @@ export function repeatDates(first: string, rule: RepeatRule) {
   return out;
 }
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const WEEKDAYS = [msg("Sunday"), msg("Monday"), msg("Tuesday"), msg("Wednesday"), msg("Thursday"), msg("Friday"), msg("Saturday")];
 const fmt = (d: string, o: Intl.DateTimeFormatOptions) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", ...o });
 
-/** "Every 2 weeks on Friday, 10 times" */
-export function ruleLabel(first: string, rule: RepeatRule) {
+/** "Every 2 weeks on Friday, 10 times", in the language of t(). */
+export function ruleLabel(first: string, rule: RepeatRule, t: T = (s, v) => s.replace(/\{(\w+)\}/g, (m, k: string) => String(v?.[k] ?? m))) {
   if (rule.freq === "dates") {
     const n = rule.dates ? repeatDates(first, rule).length : rule.count ?? 0;
-    return `On ${n} chosen date${n === 1 ? "" : "s"}`;
+    return n === 1 ? t("On 1 chosen date") : t("On {n} chosen dates", { n });
   }
-  const unit = rule.every === 1 ? rule.freq : `${rule.every} ${rule.freq}s`;
-  const on = rule.freq === "week" ? ` on ${WEEKDAYS[new Date(`${first}T12:00:00Z`).getUTCDay()]}`
-    : rule.freq === "month" ? ` on day ${Number(first.slice(8))}` : "";
-  const ends = rule.count ? `, ${rule.count} times` : rule.until ? `, until ${fmt(rule.until, { month: "short", day: "numeric", year: "numeric" })}` : "";
-  return `Every ${unit}${on}${ends}`;
+  const day = t(WEEKDAYS[new Date(`${first}T12:00:00Z`).getUTCDay()]);
+  const d = Number(first.slice(8));
+  const n = rule.every;
+  const base = rule.freq === "week" ? (n === 1 ? t("Every week on {day}", { day }) : t("Every {n} weeks on {day}", { n, day }))
+    : rule.freq === "month" ? (n === 1 ? t("Every month on day {d}", { d }) : t("Every {n} months on day {d}", { n, d }))
+      : n === 1 ? t("Every day") : t("Every {n} days", { n });
+  const ends = rule.count ? t(", {n} times", { n: rule.count })
+    : rule.until ? t(", until {date}", { date: fmt(rule.until, { month: "short", day: "numeric", year: "numeric" }) }) : "";
+  return base + ends;
 }

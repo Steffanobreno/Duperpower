@@ -1,3 +1,4 @@
+import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -5,11 +6,14 @@ import { requirePermission } from "@/lib/auth";
 import { allOptions, listPetCodes, OPTION_KINDS, type OptionKind } from "@/lib/data/options";
 import { Page, PageHeader } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Client and pet options" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Client and pet options") };
+}
 
 const ROWS: { title: string; links: (OptionKind | "pet-codes")[] }[] = [
-  { title: "Clients", links: ["client_tag", "referral_source"] },
-  { title: "Pets", links: ["pet-codes", "coat_type", "behavior", "vaccine", "breed"] },
+  { title: msg("Clients"), links: ["client_tag", "referral_source"] },
+  { title: msg("Pets"), links: ["pet-codes", "coat_type", "behavior", "vaccine", "breed"] },
 ];
 
 export default async function ListsPage() {
@@ -22,10 +26,10 @@ export default async function ListsPage() {
       <Page>
         {ROWS.map((row) => (
           <section key={row.title} className="space-y-2">
-            <h2 className="section-label">{row.title}</h2>
+            <h2 className="section-label">{t(row.title)}</h2>
             <ul className="card divide-y divide-line overflow-hidden">
               {row.links.map((k) => {
-                const title = k === "pet-codes" ? "Pet codes" : OPTION_KINDS[k].title;
+                const title = t(k === "pet-codes" ? msg("Pet codes") : OPTION_KINDS[k].title);
                 const sample = k === "pet-codes" ? codes.map((c) => c.label) : lists[k].map((o) => o.label);
                 return (
                   <li key={k}>

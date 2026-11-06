@@ -8,7 +8,10 @@ import { hm, longDayLabel, phoneLabel, timeLabel, ymd } from "@/lib/format";
 import { Empty, Page, PageHeader } from "@/components/ui";
 import { removeFromWaitlistAction } from "./actions";
 
-export const metadata: Metadata = { title: "Waitlist" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getOwnerI18n();
+  return { title: t("Waitlist") };
+}
 
 const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" });
 

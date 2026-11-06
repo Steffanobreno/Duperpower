@@ -92,6 +92,13 @@ for (const file of process.argv.slice(2)) {
         usesMsg = true;
       }
     }
+    // Labels in lists written inside a component: { label: "Share your link" } → t("…").
+    if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) && !atModuleLevel(node) && english(node.text) && !looksTechnical(node.text)
+      && ts.isPropertyAssignment(node.parent) && node.parent.initializer === node && LABEL_KEYS.test(node.parent.name.getText(sf))
+      && !inside(node, (n) => ts.isCallExpression(n) && /^(t|tr|msg|sql)$/.test(n.expression.getText(sf)))) {
+      const fn = componentOf(node);
+      if (fn) { edits.push({ start: node.getStart(sf), end: node.end, text: `${tName}(${q(node.text)})` }); needs.add(fn); }
+    }
     ts.forEachChild(node, visit);
   };
   visit(sf);

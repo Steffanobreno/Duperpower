@@ -26,7 +26,7 @@ export function ClockRow({ id, name, date, inT, outT }: { id: string; name: stri
     return (
       <li>
         <button type="button" onClick={() => setEditing(true)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-bg"
-          aria-label={`Edit ${name} on ${day}`}>
+          aria-label={tr("Edit {name} on {day}", { name, day })}>
           <span className="min-w-0 flex-1">
             <span className="block font-semibold">{name}</span>
             <span className="block text-sm text-muted">{day} · {label(inT)} – {outT ? label(outT) : tr("still in")}</span>
@@ -49,7 +49,7 @@ export function ClockRow({ id, name, date, inT, outT }: { id: string; name: stri
         <div className="flex gap-2">
           <Button type="submit" disabled={pending} className="flex-1">{tr("Save")}</Button>
           <Button type="button" kind="secondary" onClick={() => setEditing(false)}>{tr("Cancel")}</Button>
-          <Button type="button" kind="danger" onClick={() => { if (window.confirm("Delete this entry?")) deleteClockEntryAction(id); }}>{tr("Delete")}</Button>
+          <Button type="button" kind="danger" onClick={() => { if (window.confirm(tr("Delete this entry?"))) deleteClockEntryAction(id); }}>{tr("Delete")}</Button>
         </div>
       </ActionForm>
     </li>
