@@ -9,7 +9,8 @@ import { createPortal } from "react-dom";
 // - a confirmation ("Saved."): a small window that closes by itself.
 
 const noop = () => () => {};
-const ICON = { error: "⛔", warn: "⚠️", success: "✅" } as const;
+// A warning is only a question (the owner may well mean it): a calm clock, not an alarm.
+const ICON = { error: "⛔", warn: "🕑", success: "✅" } as const;
 
 export function Popup({ kind, title, children, onClose, actions, autoClose }: {
   kind: keyof typeof ICON; title?: string; children: ReactNode; onClose: () => void;
@@ -46,8 +47,9 @@ export function Popup({ kind, title, children, onClose, actions, autoClose }: {
       <div role={kind === "success" ? "status" : "alertdialog"} aria-modal="true" aria-label={title ?? (kind === "error" ? "Error" : kind === "warn" ? "Heads up" : "Done")}
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-sm space-y-4 rounded-3xl bg-surface p-5 text-center shadow-2xl ring-1 ring-[#d4af37]/60 animate-sheet">
-        <div aria-hidden className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-navy text-2xl ring-2 ring-[#d4af37]">{ICON[kind]}</div>
-        {title && <p className="text-lg font-extrabold">{title}</p>}
+        <div aria-hidden className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
+          kind === "warn" ? "bg-[#f7efd4]" : "bg-navy ring-2 ring-[#d4af37]"}`}>{ICON[kind]}</div>
+        {(title ?? (kind === "warn" ? "Just checking" : null)) && <p className="text-lg font-extrabold">{title ?? "Just checking"}</p>}
         <div className="text-[15px] leading-snug">{children}</div>
         <div className="space-y-2">
           {actions}

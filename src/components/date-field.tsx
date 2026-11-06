@@ -88,7 +88,7 @@ export function DateField({ name, defaultValue, value, onChange, min, max, requi
         }} />
       <button type="button" id={id} aria-expanded={open} onClick={toggle}
         className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface px-3 py-2.5 text-left text-ink focus:border-brand focus:outline-none">
-        <span className={`min-w-0 truncate whitespace-nowrap ${v ? "" : "text-muted"}`}>{v ? fmt(v, { month: "short", day: "numeric", year: "numeric" }) : placeholder}</span>
+        <span className={`min-w-0 truncate whitespace-nowrap ${v ? "" : "text-muted"}`}>{v ? fmt(v, { weekday: "short", month: "short", day: "numeric", ...(v.slice(0, 4) === localToday().slice(0, 4) ? {} : { year: "numeric" }) }) : placeholder}</span>
         <span aria-hidden className="text-brand">📅</span>
       </button>
       {/* The calendar is drawn outside the field's <label>, so tapping it never toggles the field. */}
