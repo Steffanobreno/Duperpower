@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 import { APP_NAME } from "@/lib/product";
 import { LoginForm } from "./login-form";
+import { I18nProvider } from "@/components/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -16,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const { t } = await getOwnerI18n();
+  const { t, lang, messages } = await getOwnerI18n();
   if (!(await hasAnyUser())) redirect("/setup");
   if (await getStaff()) redirect("/today");
   return (
@@ -24,7 +25,7 @@ export default async function LoginPage() {
       <h1 className="mb-1 text-center text-2xl font-bold">{APP_NAME}</h1>
       <p className="mb-6 text-center text-muted">{t("Log in to see your day.")}</p>
       <Card>
-        <LoginForm mode="login" />
+        <I18nProvider lang={lang} messages={messages}><LoginForm mode="login" /></I18nProvider>
       </Card>
       <p className="mt-4 text-center text-sm text-muted">
         {t("New here?")}{" "} <Link href="/signup" className="font-semibold text-brand">{t("Create your business account")}</Link>
