@@ -40,6 +40,20 @@ Não há comparação com concorrentes: nenhuma afirmação sobre eles pôde ser
   - guias, sitemap, `llms.txt` e `robots.txt`.
 - A suíte completa rodou de novo depois das mudanças (resultado na mensagem da manhã).
 
+## Depois disso, ainda na mesma noite
+- **Telas do app em português e espanhol.** As páginas em pt agora mostram o app em português, num negócio de demonstração em São Paulo e em reais; as páginas em es mostram um na Cidade do México, em pesos. Os cartões flutuantes da página inicial usam os mesmos nomes. O script `scripts/site-shots.mjs` refaz essas fotos quando o app mudar.
+- **Cadastro:** "14 dias grátis · Sem cartão · Cancele quando quiser" logo abaixo do título, nos 20 idiomas.
+- **Página de agendamento de cada groomer:** agora diz ao Google e às IAs que aquilo é um negócio de banho e tosa: nome, telefone, cidade (nunca a rua), serviços com preços na moeda do groomer e um botão "agendar". Isso também é um argumento de venda do Fino.
+- **Página 404** com a cara do site, no idioma de quem visita e com links úteis. Termos e Privacidade ganharam o menu e o rodapé do site.
+- **Lighthouse** (build de produção, celular), todas as páginas públicas, inclusive cadastro e login:
+
+  | Velocidade | Acessibilidade | Boas práticas | SEO |
+  |---|---|---|---|
+  | 97 a 100 | 100 | 100 | 100 |
+
+- **Acessibilidade no app inteiro:** WCAG 2.2 AA em 37 telas (site, páginas do cliente e 20 telas do app do groomer), no celular e no computador. Para chegar lá, escureci o verde de "sucesso", corrigi a estrutura dos relatórios e deixei a tabela alcançável pelo teclado. Agora há um teste permanente (`tests/e2e/a11y.mjs`) para isso não voltar a quebrar.
+- **Testes de app ajustados:** dois testes antigos (`blocks` e `fixes`) às vezes conferiam a tela antes de ela terminar de carregar. Agora esperam; o app não mudou.
+
 ## Precisa de você
 1. **Ler os textos** das páginas novas (principalmente em português) e me dizer o que mudar.
 2. **Sua história:** uma página "Sobre" ("feito por quem faz banho e tosa móvel") só se for verdade e com o que você quiser contar. É o que mais dá confiança e o que as IAs mais gostam de citar.
