@@ -54,6 +54,20 @@ Não há comparação com concorrentes: nenhuma afirmação sobre eles pôde ser
 - **Acessibilidade no app inteiro:** WCAG 2.2 AA em 37 telas (site, páginas do cliente e 20 telas do app do groomer), no celular e no computador. Para chegar lá, escureci o verde de "sucesso", corrigi a estrutura dos relatórios e deixei a tabela alcançável pelo teclado. Agora há um teste permanente (`tests/e2e/a11y.mjs`) para isso não voltar a quebrar.
 - **Testes de app ajustados:** dois testes antigos (`blocks` e `fixes`) às vezes conferiam a tela antes de ela terminar de carregar. Agora esperam; o app não mudou.
 
+- **Importar clientes de qualquer planilha, em qualquer país.** Antes, o importador só entendia o arquivo de um app específico, com telefone dos EUA: um groomer no Brasil teria todos os clientes pulados. Agora ele lê:
+  - colunas com os nomes de costume em português, inglês e espanhol (Nome, Celular, Endereço, CEP, Nome do pet, Raça…);
+  - planilhas do Excel salvas com ponto e vírgula;
+  - os contatos do Google;
+  - telefones do país da empresa.
+
+  A página "Mudar para o Fino" agora é 100% verdadeira. Teste novo: `tests/e2e/import-world.mjs`.
+- **Celulares pequenos (320 px):** "Horário de trabalho" e a ficha do cliente vazavam para o lado e agora cabem. O teste de acessibilidade passou a conferir isso em todas as telas.
+- **"Quanto custa?"** virou a primeira pergunta do FAQ da página inicial, nos 3 idiomas. É a pergunta que mais gente faz ao Google e às IAs.
+
+## Ideias de recurso para você decidir (não fiz)
+- **Boletim pós-banho:** mandar ao dono do pet uma mensagem com a foto e as observações do banho. Alguns concorrentes têm, e o Fino já guarda a foto de cada tosa.
+- **Páginas com idioma no endereço** (`/pt/precos` em vez de `/pricing?lang=pt`): deixariam o site ainda mais rápido no Netlify, porque as páginas poderiam ficar prontas em cache. É uma mudança grande, para outro momento.
+
 ## Precisa de você
 1. **Ler os textos** das páginas novas (principalmente em português) e me dizer o que mudar.
 2. **Sua história:** uma página "Sobre" ("feito por quem faz banho e tosa móvel") só se for verdade e com o que você quiser contar. É o que mais dá confiança e o que as IAs mais gostam de citar.
