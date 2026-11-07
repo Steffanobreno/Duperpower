@@ -42,6 +42,7 @@ await page.getByLabel("Last name").fill("Test");
 await page.getByLabel("Mobile phone").fill("(650) 555-0177");
 await page.getByRole("button", { name: /Save/ }).first().click();
 await page.waitForURL(/\/pets\/new/);
+await page.getByLabel("Weight (kg)").waitFor();
 if (!(await page.getByRole("option", { name: "Medium (10–22 kg)" }).count())) fail("sizes should be weight bands in kg");
 await page.getByLabel("Pet name").fill("Pluma");
 await page.getByLabel("Weight (kg)").fill("15");
