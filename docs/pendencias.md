@@ -47,4 +47,7 @@ Atualizado em 2026-11-07, durante a revisão do site de prévia. Não começar a
 5. **SMS (decidido):** tirar o Atalho do iPhone do caminho principal. No plano de US$29 ficam e-mail, notificações e os botões "Enviar por WhatsApp" e "Enviar SMS", que abrem o celular do groomer com a mensagem pronta (grátis). **Depois:** um adicional pago com envio automático, por SMS (Twilio) e/ou WhatsApp (API oficial da Meta), em pacote mensal com margem, para aumentar o ticket médio. Levantar os preços atuais antes.
 6. **Apps na App Store e no Google Play:** embrulhar o app atual (Capacitor), com notificações nativas. O dono vai abrir as contas de desenvolvedor (Apple e Google), de preferência como empresa.
 7. **Página de agendamento embutida (decidido: liberar):** todo groomer assinante pode embutir a página de agendamento e a ficha de cliente novo no próprio site. As outras telas continuam proibidas de ser embutidas.
+9. **Configuração inicial, serviços:** o groomer tem que poder incluir e remover serviços e também categorias ali mesmo, sem ir aos Ajustes.
+10. **Primeiro cadastro de cão:** a raça é obrigatória.
+11. **Configuração inicial, clientes:** depois de cadastrar um cliente pela configuração inicial, voltar para a etapa de concluir a configuração, e não largar o groomer em outra tela.
 8. **Prévias do Netlify:** ligar "Deploy Previews" no site, para o PR #1 gerar o link de revisão (o dono está revisando pela prévia da sessão por enquanto).
