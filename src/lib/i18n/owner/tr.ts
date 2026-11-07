@@ -1674,4 +1674,5 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Kart",
 "14 gün ücretsiz",
 "Kart gerekmez",
-"İstediğin zaman iptal et"];
+"İstediğin zaman iptal et",
+"Ad ve telefon sütunu olan her tablo da olur: Excel, Numbers veya Google E-Tablolar'dan CSV olarak kaydet ya da telefonun kişilerini dışa aktar."];

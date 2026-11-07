@@ -1674,4 +1674,5 @@ export const es: string[] = ["Reserva abandonada",
 "Tarjeta",
 "14 días gratis",
 "Sin tarjeta",
-"Cancela cuando quieras"];
+"Cancela cuando quieras",
+"También sirve cualquier hoja de cálculo con una columna de nombre y otra de teléfono: guárdala como CSV desde Excel, Numbers o Google Sheets, o exporta los contactos del teléfono."];

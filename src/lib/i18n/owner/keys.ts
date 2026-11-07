@@ -1676,5 +1676,6 @@ export const OWNER_KEYS: string[] = [
  "Card",
  "14 days free",
  "No card needed",
- "Cancel anytime"
+ "Cancel anytime",
+ "Any spreadsheet with a name and a phone column works too: save it as CSV from Excel, Numbers or Google Sheets, or export your phone's contacts."
 ];

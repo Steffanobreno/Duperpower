@@ -1674,4 +1674,5 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Kartu",
 "Gratis 14 hari",
 "Tanpa kartu",
-"Batalkan kapan saja"];
+"Batalkan kapan saja",
+"Spreadsheet apa pun dengan kolom nama dan kolom telepon juga bisa: simpan sebagai CSV dari Excel, Numbers, atau Google Spreadsheet, atau ekspor kontak ponsel."];

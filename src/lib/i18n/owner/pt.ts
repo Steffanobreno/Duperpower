@@ -1674,4 +1674,5 @@ export const pt: string[] = ["Agendamento abandonado",
 "Cartão",
 "14 dias grátis",
 "Sem cartão",
-"Cancele quando quiser"];
+"Cancele quando quiser",
+"Qualquer planilha com uma coluna de nome e uma de telefone também serve: salve como CSV no Excel, Numbers ou Google Planilhas, ou exporte os contatos do celular."];

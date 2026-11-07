@@ -1674,4 +1674,5 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Thẻ",
 "Miễn phí 14 ngày",
 "Không cần thẻ",
-"Hủy bất cứ lúc nào"];
+"Hủy bất cứ lúc nào",
+"Bất kỳ bảng tính nào có cột tên và cột số điện thoại cũng dùng được: lưu dưới dạng CSV từ Excel, Numbers hoặc Google Trang tính, hoặc xuất danh bạ điện thoại."];

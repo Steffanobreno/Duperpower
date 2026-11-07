@@ -1674,4 +1674,5 @@ export const tl: string[] = ["Naiwang booking",
 "",
 "14 araw na libre",
 "Walang card na kailangan",
-"Puwedeng i-cancel anumang oras"];
+"Puwedeng i-cancel anumang oras",
+"Puwede rin ang kahit anong spreadsheet na may column ng pangalan at phone: i-save bilang CSV mula sa Excel, Numbers o Google Sheets, o i-export ang contacts ng phone mo."];

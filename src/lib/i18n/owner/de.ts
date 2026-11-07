@@ -1674,4 +1674,5 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Karte",
 "14 Tage kostenlos",
 "Keine Karte nötig",
-"Jederzeit kündbar"];
+"Jederzeit kündbar",
+"Jede Tabelle mit einer Namens- und einer Telefonspalte geht auch: als CSV aus Excel, Numbers oder Google Sheets speichern oder die Kontakte des Handys exportieren."];

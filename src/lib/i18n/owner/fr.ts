@@ -1674,4 +1674,5 @@ export const fr: string[] = ["Réservation abandonnée",
 "Carte",
 "14 jours gratuits",
 "Sans carte bancaire",
-"Résiliable à tout moment"];
+"Résiliable à tout moment",
+"Tout tableur avec une colonne nom et une colonne téléphone convient aussi : enregistrez-le en CSV depuis Excel, Numbers ou Google Sheets, ou exportez les contacts du téléphone."];
