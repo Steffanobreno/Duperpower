@@ -14,12 +14,15 @@ export async function clientIp() {
 
 /**
  * Counts one more try by this visitor for `action`; true when it went over `limit` within
- * `windowMs`. Requests with no IP at all (the local dev server and its tests) aren't counted.
+ * `windowMs`. This machine itself (the local dev server and its tests) isn't counted: on Netlify
+ * the visitor's real IP is always there.
  */
 export async function tooManyFromHere(action: string, limit: number, windowMs: number) {
   const ip = await clientIp();
-  return ip !== "local" && tooMany(`${action}:${ip}`, limit, windowMs);
+  return !LOCAL.test(ip) && tooMany(`${action}:${ip}`, limit, windowMs);
 }
+
+const LOCAL = /^(local|127\.\d+\.\d+\.\d+|::1|::ffff:127\.\d+\.\d+\.\d+)$/;
 
 function tooMany(key: string, limit: number, windowMs: number) {
   const now = Date.now();
