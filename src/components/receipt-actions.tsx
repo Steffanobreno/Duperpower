@@ -5,6 +5,7 @@ import { receiptUrl } from "@/lib/data/receipts";
 import { dayLabel, timeLabel } from "@/lib/format";
 import { Notice } from "@/components/ui";
 import { ShareReceiptButton } from "@/components/share-receipt";
+import { SendFromPhone } from "@/components/send-from-phone";
 
 const RESULT: Record<string, string> = {
   sent: msg("Receipt emailed."),
@@ -22,7 +23,6 @@ export async function ReceiptActions({ r, emailAction, result }: {
   const { t } = await getOwnerI18n();
   const tz = r.business.timezone;
   const text = t("Here's your receipt from {name}. Thank you! {receiptUrl}", { name: r.business.name, receiptUrl: receiptUrl(r.token) });
-  const phoneDigits = r.client.phone?.replace(/\D/g, "") ?? "";
   return (
     <section className="space-y-2" aria-label={t("Receipt")}>
       <h2 className="section-label px-1">{t("Receipt #{number}", { number: r.number })}</h2>
@@ -41,17 +41,7 @@ export async function ReceiptActions({ r, emailAction, result }: {
             className="col-span-2 rounded-full bg-brand py-3 text-white">
             {t("Share PDF (Messages, WhatsApp…)")}
           </ShareReceiptButton>
-          {r.client.phone && (
-            <a href={`sms:${r.client.phone}&body=${encodeURIComponent(text)}`} className="rounded-full border-2 border-brand py-2.5 text-center text-brand">
-              {t("Text the link")}
-            </a>
-          )}
-          {r.client.phone && (
-            <a href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer"
-              className="rounded-full border-2 border-[#13703a] py-2.5 text-center text-[#13703a]">
-              {t("WhatsApp")}
-            </a>
-          )}
+          <SendFromPhone phone={r.client.phone} text={text} t={t} />
           <form action={emailAction} className="contents">
             <button type="submit" className="rounded-full border-2 border-brand py-2.5 text-brand">
               {r.emailedAt ? t("Email again") : t("Email receipt")}

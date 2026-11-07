@@ -65,6 +65,13 @@ for (let i = 0; i < 20 && !(await page.getByText(/Emailed to maria@example\.com/
 }
 await page.getByText(/Emailed to maria@example\.com/).waitFor();
 await shot("R01-order-receipt");
+// The send-from-phone links: WhatsApp (digits only) and SMS (E.164, "?&body=").
+const waHref = await page.getByRole("link", { name: "WhatsApp" }).getAttribute("href");
+if (!waHref.startsWith("https://wa.me/1") || !waHref.includes("text=")) fail(`bad WhatsApp link: ${waHref}`);
+const smsLink = page.getByRole("link", { name: "Text message" });
+const smsHref = await smsLink.getAttribute("href");
+if (!/^sms:\+1\d{10}\?&body=/.test(smsHref)) fail(`bad SMS link: ${smsHref}`);
+step("the receipt's WhatsApp and text-message links are built by SendFromPhone");
 const number = (await page.getByRole("heading", { name: /^Receipt #\d+$/ }).first().textContent()).replace(/\D/g, "");
 if (MAIL_DIR) {
   const sent = mails().slice(before).find((m) => m.includes(`(#${number})`));
