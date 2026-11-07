@@ -284,4 +284,4 @@ export const landingCopy = (lang: string): { lang: (typeof LANDING_LANGS)[number
   lang === "pt" ? { lang: "pt", c: pt } : lang === "es" ? { lang: "es", c: es } : { lang: "en", c: en };
 
 /** Plan prices, in US dollars (null until they are set): the pricing section shows them when set. */
-export const PLAN_PRICES: { monthly: number | null; yearly: number | null } = { monthly: null, yearly: null };
+export const PLAN_PRICES: { monthly: number | null; yearly: number | null } = { monthly: 29, yearly: 290 };
