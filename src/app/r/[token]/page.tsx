@@ -29,7 +29,7 @@ export default async function ClientReceiptPage({ params, searchParams }: PagePr
           <a href={`/r/${token}/pdf?download=1`} className="rounded-full border-2 border-brand py-3 text-center font-bold text-brand">
             {t("Download PDF")}
           </a>
-          <ShareReceiptButton pdfUrl={`/r/${token}/pdf`} fileName={`woofers-receipt-${r.number}.pdf`} busyLabel={t("Preparing…")}
+          <ShareReceiptButton pdfUrl={`/r/${token}/pdf`} fileName={`receipt-${r.number}.pdf`} busyLabel={t("Preparing…")}
             className="rounded-full bg-brand py-3 text-center font-bold text-white">
             {t("Share")}
           </ShareReceiptButton>

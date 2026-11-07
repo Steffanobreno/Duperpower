@@ -37,7 +37,7 @@ export async function ReceiptActions({ r, emailAction, result }: {
               : t("No email on file for this client: send it by text or WhatsApp.")}
         </p>
         <div className="grid grid-cols-2 gap-2 text-sm font-bold">
-          <ShareReceiptButton pdfUrl={`/r/${r.token}/pdf`} fileName={`woofers-receipt-${r.number}.pdf`}
+          <ShareReceiptButton pdfUrl={`/r/${r.token}/pdf`} fileName={`receipt-${r.number}.pdf`}
             className="col-span-2 rounded-full bg-brand py-3 text-white">
             {t("Share PDF (Messages, WhatsApp…)")}
           </ShareReceiptButton>

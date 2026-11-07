@@ -20,7 +20,7 @@ function backup() {
   const found = DriveApp.getFoldersByName(FOLDER);
   const folder = found.hasNext() ? found.next() : DriveApp.createFolder(FOLDER);
   const stamp = Utilities.formatDate(new Date(), TIMEZONE, "yyyy-MM-dd");
-  [["data", "woofers-backup-" + stamp + ".json"], ["clients", "woofers-clients-" + stamp + ".csv"]].forEach(([file, name]) => {
+  [["data", "backup-" + stamp + ".json"], ["clients", "clients-" + stamp + ".csv"]].forEach(([file, name]) => {
     let res;
     for (let i = 0; i < 3; i++) { // the database may be asleep: try again
       res = UrlFetchApp.fetch(FEED + "&file=" + file, { muteHttpExceptions: true });
