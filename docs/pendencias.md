@@ -25,11 +25,15 @@ Atualizado em 2026-11-07, depois de publicar `ddeda90` na master. Marque com [x]
 - [ ] Bing Webmaster Tools: importar do Search Console.
 - [ ] Cadastrar o Fino no Capterra, G2 e GetApp, e pedir avaliações aos primeiros clientes.
 
+## Site (feito na noite de 2026-11-07, ver `docs/site-noite.md`)
+- [ ] Ler os textos das páginas novas (/features, /pricing, /mobile-grooming-software, /mobile-grooming-route-planner, /switch, /guides) e pedir ajustes.
+- [ ] Contar sua história para a página "Sobre" (opcional, só se quiser).
+- [ ] Decidir se quer capturas do app em português e espanhol nas páginas.
+- [ ] Publicar ("pode publicar") quando aprovar.
+
 ## Próximas etapas de código (pedir quando quiser)
-1. Páginas `/pricing`, `/mobile-grooming-software` e `/mobile-grooming-route-planner`, uma de cada vez.
-2. `/moego-alternative`, só com fatos conferidos no site oficial, com data.
-3. Reduzir o JavaScript da página de vendas.
-4. Importar planilhas do MoeGo e do DaySmart.
-5. Cobrança de cartão do cliente final (Stripe Connect: sinal e taxa de falta).
+1. `/moego-alternative`, só com fatos conferidos no site oficial, com data.
+2. Importar planilhas do MoeGo e do DaySmart.
+3. Cobrança de cartão do cliente final (Stripe Connect: sinal e taxa de falta).
 
 Detalhes em `docs/fino-technical-roadmap.md` e `docs/fino-audit.md`.
