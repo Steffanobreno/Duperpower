@@ -44,7 +44,7 @@ Atualizado em 2026-11-07, durante a revisão do site de prévia. Não começar a
 2. **Site "cru":** falta informação. Esperar a lista do dono sobre o que falta (textos, seções, fotos).
 3. **Logomarca nova:** o dono vai mandar as versões (fundo transparente, com fundo, cores). Aplicar no ícone do app, no site, na imagem de compartilhamento e nos e-mails.
 4. **Google Agenda com um clique (OAuth):** botão "Conectar Google Agenda", login e permissão do Google, e as visitas sincronizam sozinhas. Tirar o script colado. Precisa de um projeto no Google Cloud e da verificação do app pelo Google.
-5. **SMS:** tirar o Atalho do iPhone do caminho principal. Proposta: no plano, e-mail, notificações e botões "Enviar por WhatsApp/SMS" com a mensagem pronta (grátis); depois, SMS automático pelo Twilio como adicional pago (EUA primeiro). Decidir com o dono.
+5. **SMS (decidido):** tirar o Atalho do iPhone do caminho principal. No plano de US$29 ficam e-mail, notificações e os botões "Enviar por WhatsApp" e "Enviar SMS", que abrem o celular do groomer com a mensagem pronta (grátis). **Depois:** um adicional pago com envio automático, por SMS (Twilio) e/ou WhatsApp (API oficial da Meta), em pacote mensal com margem, para aumentar o ticket médio. Levantar os preços atuais antes.
 6. **Apps na App Store e no Google Play:** embrulhar o app atual (Capacitor), com notificações nativas. O dono vai abrir as contas de desenvolvedor (Apple e Google), de preferência como empresa.
-7. **Página de agendamento embutida em qualquer site:** esperando a decisão do dono ("pode liberar" ou "mantém").
-8. **Prévias do Netlify:** ligar "Deploy Previews" no site, para o PR #1 gerar o link de revisão.
+7. **Página de agendamento embutida (decidido: liberar):** todo groomer assinante pode embutir a página de agendamento e a ficha de cliente novo no próprio site. As outras telas continuam proibidas de ser embutidas.
+8. **Prévias do Netlify:** ligar "Deploy Previews" no site, para o PR #1 gerar o link de revisão (o dono está revisando pela prévia da sessão por enquanto).
