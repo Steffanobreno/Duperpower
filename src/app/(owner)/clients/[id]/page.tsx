@@ -101,9 +101,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </div>
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-x-2">
             <h2 className="section-label">{t("Appointments")}</h2>
-            <span className="flex gap-1">
+            <span className="flex flex-wrap justify-end gap-1">
               <ButtonLink kind="ghost" href={`/waitlist/new?client=${id}`}>{t("+ Waitlist")}</ButtonLink>
               <ButtonLink kind="ghost" href={`/appointments/new?client=${id}`}>{t("+ New appointment")}</ButtonLink>
             </span>
