@@ -269,6 +269,57 @@ export async function changePassword(staffId: string, current: string, next: str
   return true;
 }
 
+const RESET_MINUTES = 60;
+
+/**
+ * "Forgot your password?": a one-time link for this email, or null when no account has it (the
+ * page says the same thing either way) or 3 links were already sent in the last hour.
+ */
+export async function createPasswordReset(email: string) {
+  const address = email.trim().toLowerCase();
+  const [user] = await sql<{ id: string; language: string | null }[]>`
+    select u.id, (select s.language from staff s where s.user_id = u.id order by s.created_at limit 1) as language
+    from users u where u.email = ${address}`;
+  if (!user) return null;
+  const [{ n }] = await sql`select count(*)::int as n from password_resets where user_id = ${user.id} and created_at > now() - interval '1 hour'`;
+  if (n >= 3) return null;
+  const token = randomBytes(32).toString("base64url");
+  await sql`insert into password_resets (user_id, token_hash, expires_at)
+            values (${user.id}, ${hashToken(token)}, now() + make_interval(mins => ${RESET_MINUTES}))`;
+  return { token, language: user.language };
+}
+
+/** Whether this reset link can still be used (not used, not expired). */
+export async function resetLinkOk(token: string) {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return false;
+  const [r] = await sql`select 1 from password_resets where token_hash = ${hashToken(token)} and used_at is null and expires_at > now()`;
+  return !!r;
+}
+
+/**
+ * Sets the new password from a reset link: the link is spent, every other link and every
+ * session of that login ends (whoever had the old password is out), and this device logs in.
+ */
+export async function resetPassword(token: string, password: string) {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return false;
+  const hash = await hashPassword(password);
+  const userId = await sql.begin(async (tx) => {
+    const [r] = await tx<{ user_id: string }[]>`
+      update password_resets set used_at = now()
+      where token_hash = ${hashToken(token)} and used_at is null and expires_at > now()
+      returning user_id`;
+    if (!r) return null;
+    await tx`update users set password_hash = ${hash}, updated_at = now() where id = ${r.user_id}`;
+    await tx`update password_resets set used_at = coalesce(used_at, now()) where user_id = ${r.user_id}`;
+    await tx`delete from sessions where user_id = ${r.user_id}`;
+    await tx`delete from login_failures where email = (select email from users where id = ${r.user_id})`;
+    return r.user_id;
+  });
+  if (!userId) return false;
+  await startSession(userId);
+  return true;
+}
+
 /** Logs out every device except this one. */
 export async function logoutOthers(staffId: string) {
   const token = (await cookies()).get(COOKIE)?.value;

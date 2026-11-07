@@ -4,13 +4,13 @@ Data: 2026-11-07. Os números (#) se referem à tabela de `fino-audit.md`.
 
 ## Feito nesta etapa (branch `google-map-tiles`, ainda não publicado)
 - P0: webhook do Stripe lê a assinatura atual (#1); nodemailer 10.1.7 (#2); cabeçalhos de segurança (#3); limite por IP no autocompletar de endereço (#4) e no cadastro (#5).
+- P0: "Esqueci minha senha" (#6): link por e-mail que vale 1 hora e só uma vez; encerra as outras sessões; a resposta é a mesma se o e-mail não tiver conta.
 - P1: JSON-LD com os preços reais e Organization (#10); hreflang e x-default coerentes (#11); título e canonical por empresa no booking, `noindex` quando pausado e em `/book` (#12); 404 para slug malformado (#13).
 
 ## Precisa da sua aprovação (P0/P1)
 
 | # | Tarefa | Por que precisa de aprovação | Custo |
 |---|---|---|---|
-| 6 | "Esqueci minha senha" por e-mail | Nova tabela (migração aditiva) e e-mail novo | US$0 (usa o e-mail que já existe) |
 | 7 | Monitoramento de erros | Serviço externo (Sentry) ou e-mail ao admin | US$0 no plano grátis do Sentry, ou US$0 por e-mail |
 | 8 | Teste de restauração do backup | Precisa de acesso à Neon | US$0 |
 | 15 | Política de robôs de IA (GPTBot etc.) | Decisão de negócio | US$0 |
@@ -21,7 +21,7 @@ Data: 2026-11-07. Os números (#) se referem à tabela de `fino-audit.md`.
 
 **30 dias: poder vender**
 1. Domínio, `APP_URL`, chaves do Stripe ao vivo, Search Console e Bing.
-2. #6 senha, #7 erros, #8 restauração.
+2. #7 erros e #8 restauração.
 3. #16 funil e #17 e-mails do teste.
 4. Novo logo (#21).
 5. Cadastrar o Fino no Capterra, G2 e GetApp.

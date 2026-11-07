@@ -27,7 +27,10 @@ export default async function LoginPage() {
       <Card>
         <I18nProvider lang={lang} messages={messages}><LoginForm mode="login" /></I18nProvider>
       </Card>
-      <p className="mt-4 text-center text-sm text-muted">
+      <p className="mt-4 text-center text-sm">
+        <Link href="/login/forgot" className="font-semibold text-brand">{t("Forgot your password?")}</Link>
+      </p>
+      <p className="mt-2 text-center text-sm text-muted">
         {t("New here?")}{" "} <Link href="/signup" className="font-semibold text-brand">{t("Create your business account")}</Link>
       </p>
     </main>

@@ -1643,5 +1643,17 @@ export const OWNER_KEYS: string[] = [
  "Manage billing (card, invoices, cancel)",
  "Ask the business owner to choose a plan.",
  "Payments aren't set up yet. You can keep using the app.",
- "Back to the app"
+ "Back to the app",
+ "Reset your {app} password",
+ "To choose a new password, open this link (it works once, for one hour):",
+ "If you didn't ask for this, ignore this email: your password stays the same.",
+ "If an account has this email, a link is on its way. Check your inbox (and spam).",
+ "Send me the link",
+ "Forgot your password?",
+ "Type your account email. We'll send you a link to choose a new password.",
+ "Back to log in",
+ "This link has expired or was already used.",
+ "Choose a new password",
+ "Send a new link",
+ "Save and log in"
 ];

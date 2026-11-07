@@ -6,7 +6,7 @@ const base = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [{ userAgent: "*", allow: ["/", "/terms", "/privacy", "/signup", "/llms.txt"],
-      disallow: ["/today", "/calendar", "/clients", "/appointments", "/settings", "/admin", "/a/", "/r/", "/s/", "/u/", "/api/", "/welcome", "/help"] }],
+      disallow: ["/today", "/calendar", "/clients", "/appointments", "/settings", "/admin", "/a/", "/r/", "/s/", "/u/", "/api/", "/welcome", "/help", "/login/reset/"] }],
     sitemap: `${base()}/sitemap.xml`,
   };
 }
