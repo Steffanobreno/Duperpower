@@ -18,7 +18,7 @@ const AI_TRAINING = ["GPTBot", "ClaudeBot", "Google-Extended", "CCBot"];
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: ["/", "/terms", "/privacy", "/signup", "/llms.txt"], disallow: PRIVATE },
+      { userAgent: "*", allow: ["/", "/features", "/pricing", "/mobile-grooming-software", "/mobile-grooming-route-planner", "/switch", "/guides", "/terms", "/privacy", "/signup", "/llms.txt"], disallow: PRIVATE },
       { userAgent: [...AI_SEARCH, ...AI_TRAINING], allow: ["/", "/llms.txt"], disallow: PRIVATE },
     ],
     sitemap: `${base()}/sitemap.xml`,

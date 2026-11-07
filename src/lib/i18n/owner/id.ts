@@ -1670,4 +1670,9 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Klien dan kunjunganmu aman. Pilih paket untuk membuka aplikasi dan halaman pemesananmu lagi:",
 "Uji coba gratis {app} kamu berakhir besok",
 "Uji coba gratis {app} kamu berakhir dalam 3 hari",
-"Pilih paket agar kalender, pengingat, dan halaman pemesananmu tetap berjalan. Datamu tetap seperti sekarang:"];
+"Pilih paket agar kalender, pengingat, dan halaman pemesananmu tetap berjalan. Datamu tetap seperti sekarang:",
+"Kartu",
+"Gratis 14 hari",
+"Tanpa kartu",
+"Batalkan kapan saja",
+"Spreadsheet apa pun dengan kolom nama dan kolom telepon juga bisa: simpan sebagai CSV dari Excel, Numbers, atau Google Spreadsheet, atau ekspor kontak ponsel."];

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicBusiness } from "@/lib/booking";
+import { bookingStructuredData } from "@/lib/local-business-ld";
 import { BookScreen } from "../book-screen";
 
 export const dynamic = "force-dynamic";
@@ -27,5 +28,13 @@ export default async function BusinessBookPage({ params, searchParams }: PagePro
   const { slug } = await params;
   // A malformed link must not fall back to the first business on the app.
   if (!SLUG.test(slug)) notFound();
-  return BookScreen({ slug, query: await searchParams });
+  const b = await getPublicBusiness(slug);
+  // The groomer as a local business for search and AI answers, while booking is open.
+  const ld = b?.online_booking_enabled ? await bookingStructuredData(b.id, `${appUrl()}/book/${slug}`, appUrl()) : null;
+  return (
+    <>
+      {ld && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />}
+      {await BookScreen({ slug, query: await searchParams })}
+    </>
+  );
 }

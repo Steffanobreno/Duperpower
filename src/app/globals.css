@@ -21,7 +21,7 @@
   --color-sky: #19b2e6;
   --color-danger: #b42318;
   --color-danger-soft: #fdecea;
-  --color-success: #17803d;
+  --color-success: #13703a; /* 5.5:1 on success-soft, AA for small text */
   --color-success-soft: #e7f6ec;
   --color-warn: #9a5b00;
   --color-warn-soft: #fff4de;

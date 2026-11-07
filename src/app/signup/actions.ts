@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signUpBusiness } from "@/lib/auth";
 import { normalizePhone } from "@/lib/format";
 import { getOwnerI18n } from "@/lib/i18n/server";
+import { isLang, type Lang } from "@/lib/i18n";
 import { regionOf } from "@/lib/region";
 import { currencyOf, isCountry, isZone, mainZoneOf } from "@/lib/countries";
 import { tooManyFromHere } from "@/lib/rate-limit";
@@ -32,7 +33,7 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
   if (password.length < 10) return { error: "Use at least 10 characters for the password." };
   if (form.get("terms") !== "on") return { error: "Please accept the terms to create your account." };
   const error = await signUpBusiness({ businessName, ownerName, email, password, phone: normalizePhone(form.get("phone"), country), zip, timezone, country, currency: currencyOf(country),
-    lang: (await getOwnerI18n()).lang, metric: regionOf(country).metric,
+    lang: isLang(form.get("lang")) ? (form.get("lang") as Lang) : (await getOwnerI18n()).lang, metric: regionOf(country).metric,
     source: String(form.get("source") ?? "").trim().slice(0, 120) || null });
   if (error) return { error };
   // Came with a referral link (/signup?ref=<code>): the new business is noted as referred.

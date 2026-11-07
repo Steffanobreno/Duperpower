@@ -1670,4 +1670,9 @@ export const es: string[] = ["Reserva abandonada",
 "Tus clientes y visitas están guardados. Elige un plan para abrir la app y tu página de reservas otra vez:",
 "Tu prueba gratis de {app} termina mañana",
 "Tu prueba gratis de {app} termina en 3 días",
-"Elige un plan para que tu agenda, los recordatorios y tu página de reservas sigan funcionando. Tus datos se quedan como están:"];
+"Elige un plan para que tu agenda, los recordatorios y tu página de reservas sigan funcionando. Tus datos se quedan como están:",
+"Tarjeta",
+"14 días gratis",
+"Sin tarjeta",
+"Cancela cuando quieras",
+"También sirve cualquier hoja de cálculo con una columna de nombre y otra de teléfono: guárdala como CSV desde Excel, Numbers o Google Sheets, o exporta los contactos del teléfono."];

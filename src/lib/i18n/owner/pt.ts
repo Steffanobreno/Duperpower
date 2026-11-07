@@ -1670,4 +1670,9 @@ export const pt: string[] = ["Agendamento abandonado",
 "Seus clientes e visitas estão guardados. Escolha um plano para abrir o app e sua página de agendamento de novo:",
 "Seu teste grátis do {app} acaba amanhã",
 "Seu teste grátis do {app} acaba em 3 dias",
-"Escolha um plano para manter sua agenda, os lembretes e a página de agendamento funcionando. Seus dados continuam como estão:"];
+"Escolha um plano para manter sua agenda, os lembretes e a página de agendamento funcionando. Seus dados continuam como estão:",
+"Cartão",
+"14 dias grátis",
+"Sem cartão",
+"Cancele quando quiser",
+"Qualquer planilha com uma coluna de nome e uma de telefone também serve: salve como CSV no Excel, Numbers ou Google Planilhas, ou exporte os contatos do celular."];

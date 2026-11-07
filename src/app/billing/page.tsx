@@ -52,7 +52,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   return (
     <I18nProvider lang={lang} messages={messages}>
       <main className="mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-8">
-        <p className="text-center text-sm font-bold uppercase tracking-widest text-[#a8811f]">{APP_NAME}</p>
+        <p className="text-center text-sm font-bold uppercase tracking-widest text-[#7d5f10]">{APP_NAME}</p>
         <h1 className="text-center text-2xl font-extrabold">{t("Your plan")}</h1>
         {sp.done === "1" && <Notice kind="success">{t("Thank you! Your plan is being activated; it takes a few seconds.")}</Notice>}
         {sp.error === "1" && <Notice kind="error">{t("Stripe didn't open. Please try again in a minute.")}</Notice>}

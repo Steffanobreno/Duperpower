@@ -228,6 +228,15 @@ const breeds = await page.locator("#dog-breeds option").count();
 if (breeds < 300) fail(`expected the breed list, got ${breeds} options`);
 step(`breed suggestions loaded (${breeds} breeds)`);
 
+// The business's own booking link describes it for search: a local business with its services and prices.
+const own = await fetch(`${BASE}/book/woofers`).then((r) => r.text());
+const ld = [...own.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+const biz = ld.find((x) => x["@type"] === "LocalBusiness");
+if (!biz?.name || !biz.hasOfferCatalog?.itemListElement?.length || biz.potentialAction?.["@type"] !== "ReserveAction" || biz.address?.streetAddress) {
+  throw new Error(`the booking page should describe the business (no street): ${JSON.stringify(biz)?.slice(0, 300)}`);
+}
+step(`the booking page describes the business for search (${biz.hasOfferCatalog.itemListElement.length} services with prices, no street address)`);
+
 await browser.close();
 if (errors.length) {
   console.error("Browser errors:\n" + errors.join("\n"));

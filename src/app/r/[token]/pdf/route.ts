@@ -11,7 +11,7 @@ export async function GET(req: Request, { params }: RouteContext<"/r/[token]/pdf
   return new Response(Buffer.from(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `${download ? "attachment" : "inline"}; filename="woofers-receipt-${r.number}.pdf"`,
+      "Content-Disposition": `${download ? "attachment" : "inline"}; filename="receipt-${r.number}.pdf"`,
       "Cache-Control": "no-store",
     },
   });

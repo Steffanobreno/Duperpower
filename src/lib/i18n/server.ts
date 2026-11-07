@@ -44,3 +44,14 @@ export const getOwnerI18n = cache(async () => {
   const messages = OWNER_MESSAGES[lang];
   return { lang, messages, t: makeT(messages), locale: LOCALES[lang], dir: dirOf(lang) };
 });
+
+/**
+ * Like getOwnerI18n, for the pages before login that a site link can open in a language
+ * (/signup?lang=pt, /login?lang=es): ?lang= wins over the phone's language.
+ */
+export async function ownerI18nFor(param: unknown) {
+  const staff = await getStaff();
+  const lang: Lang = staff?.lang ?? (isLang(param) ? param : fromAcceptLanguage((await headers()).get("accept-language")));
+  const messages = OWNER_MESSAGES[lang];
+  return { lang, messages, t: makeT(messages), locale: LOCALES[lang], dir: dirOf(lang) };
+}

@@ -40,6 +40,9 @@ step("add and delete a client note");
 
 // Inactive
 await page.getByRole("switch", { name: /Inactive customer/ }).click();
+// Wait until the switch shows it saved, then look at the list.
+await page.locator('[role="switch"][aria-checked="true"]').filter({ hasText: /Inactive customer/ }).or(page.getByRole("switch", { name: /Inactive customer/, checked: true })).first().waitFor({ timeout: 10_000 }).catch(() => {});
+await page.waitForLoadState("networkidle").catch(() => {});
 await page.goto(`${BASE}/clients?q=Maria`);
 if (await page.getByRole("link", { name: /Maria Lopez/ }).count()) fail("inactive client still in the active list");
 await page.getByRole("link", { name: "Inactive clients" }).click();

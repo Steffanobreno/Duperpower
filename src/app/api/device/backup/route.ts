@@ -19,12 +19,12 @@ export async function GET(request: Request) {
   const stamp = formatInTimeZone(new Date(), business.timezone, "yyyy-MM-dd");
   if (url.searchParams.get("file") === "clients") {
     return new Response(await clientsCsv(business.id, business.timezone), {
-      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="woofers-clients-${stamp}.csv"`, "Cache-Control": "no-store" },
+      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="clients-${stamp}.csv"`, "Cache-Control": "no-store" },
     });
   }
   const backup = await buildBackup(business.id);
   await sql`update businesses set backup_at = now() where id = ${business.id}`;
   return new Response(JSON.stringify(backup), {
-    headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="woofers-backup-${stamp}.json"`, "Cache-Control": "no-store" },
+    headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="backup-${stamp}.json"`, "Cache-Control": "no-store" },
   });
 }

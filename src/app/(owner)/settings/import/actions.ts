@@ -12,7 +12,7 @@ export async function importClientsAction(_: ImportState, form: FormData): Promi
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "Choose the CSV file first." };
   if (file.size > 5_000_000) return { error: "That file is too big (over 5 MB)." };
-  const { clients, problems } = parseClientsCsv(await file.text());
+  const { clients, problems } = parseClientsCsv(await file.text(), staff.region.country);
   if (clients.length === 0) return { error: problems[0] ?? "No clients found in that file." };
   let report: ImportReport;
   try {

@@ -30,6 +30,9 @@ export default async function ImportPage() {
           <p className="text-sm text-muted">
             {t("Upload the client list exported from your old app. Clients are matched by phone number, so importing the same file twice does not create duplicates. Pets come with their breed and grooming frequency; set each pet's size when you see them.")}
           </p>
+          <p className="text-sm text-muted">
+            {t("Any spreadsheet with a name and a phone column works too: save it as CSV from Excel, Numbers or Google Sheets, or export your phone's contacts.")}
+          </p>
           <ImportForm />
         </Card>
       </Page>

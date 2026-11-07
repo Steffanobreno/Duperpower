@@ -105,18 +105,19 @@ export function HoursForm({ action, hours, submitLabel }: { action: Action; hour
       {order.map((d) => {
         const h = byDay.get(d);
         return (
-          <div key={d} className="grid grid-cols-[7.5rem_1fr_1fr] items-center gap-2">
-            <label className="flex items-center gap-2 text-sm font-medium">
+          // Phones: the day on its own line, its two times under it (they stay readable); wider: one line.
+          <div key={d} className="grid grid-cols-2 items-center gap-x-2 gap-y-1.5 min-[440px]:grid-cols-[7.5rem_1fr_1fr]">
+            <label className="col-span-2 flex min-w-0 items-center gap-2 text-sm font-medium min-[440px]:col-span-1">
               <input type="checkbox" name={`open:${d}`} defaultChecked={!!h} className="h-4 w-4" />
               {t(WEEKDAYS[d])}
             </label>
             <label>
               <span className="sr-only">{t("{d} start", { d: t(WEEKDAYS[d]) })}</span>
-              <Input type="time" name={`start:${d}`} defaultValue={h?.start ?? "07:00"} step={900} />
+              <Input type="time" name={`start:${d}`} defaultValue={h?.start ?? "07:00"} step={900} className="min-w-0 px-2" />
             </label>
             <label>
               <span className="sr-only">{t("{d} end", { d: t(WEEKDAYS[d]) })}</span>
-              <Input type="time" name={`end:${d}`} defaultValue={h?.end ?? "19:00"} step={900} />
+              <Input type="time" name={`end:${d}`} defaultValue={h?.end ?? "19:00"} step={900} className="min-w-0 px-2" />
             </label>
           </div>
         );

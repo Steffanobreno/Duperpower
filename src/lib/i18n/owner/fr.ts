@@ -1670,4 +1670,9 @@ export const fr: string[] = ["Réservation abandonnée",
 "Vos clients et vos visites sont conservés. Choisissez une formule pour rouvrir l'app et votre page de réservation :",
 "Votre essai gratuit de {app} se termine demain",
 "Votre essai gratuit de {app} se termine dans 3 jours",
-"Choisissez une formule pour garder votre agenda, vos rappels et votre page de réservation actifs. Vos données restent telles quelles :"];
+"Choisissez une formule pour garder votre agenda, vos rappels et votre page de réservation actifs. Vos données restent telles quelles :",
+"Carte",
+"14 jours gratuits",
+"Sans carte bancaire",
+"Résiliable à tout moment",
+"Tout tableur avec une colonne nom et une colonne téléphone convient aussi : enregistrez-le en CSV depuis Excel, Numbers ou Google Sheets, ou exportez les contacts du téléphone."];

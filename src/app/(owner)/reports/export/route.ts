@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const { from, to, group } = reportPeriod(sp, todayYmd(staff.timezone));
   const [r, d] = await Promise.all([report(staff, from, to, group), reportDetails(staff, from, to)]);
   const file = { business: staff.businessName, from, to, group, r, d };
-  const name = `woofers-report-${from}-to-${to}`;
+  const name = `report-${from}-to-${to}`;
   if (sp.format === "csv") {
     return new Response(reportCsv(file), {
       headers: {

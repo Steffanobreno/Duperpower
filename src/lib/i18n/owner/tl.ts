@@ -1670,4 +1670,9 @@ export const tl: string[] = ["Naiwang booking",
 "Ligtas ang mga client at visit mo. Pumili ng plan para mabuksan ulit ang app at ang booking page mo:",
 "Bukas na matatapos ang libreng trial mo sa {app}",
 "Matatapos ang libreng trial mo sa {app} sa loob ng 3 araw",
-"Pumili ng plan para tuloy-tuloy ang calendar, mga paalala at booking page mo. Hindi magbabago ang data mo:"];
+"Pumili ng plan para tuloy-tuloy ang calendar, mga paalala at booking page mo. Hindi magbabago ang data mo:",
+"",
+"14 araw na libre",
+"Walang card na kailangan",
+"Puwedeng i-cancel anumang oras",
+"Puwede rin ang kahit anong spreadsheet na may column ng pangalan at phone: i-save bilang CSV mula sa Excel, Numbers o Google Sheets, o i-export ang contacts ng phone mo."];

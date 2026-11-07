@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   return new Response(Buffer.from(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="woofers-receipts-${from}-to-${to}.pdf"`,
+      "Content-Disposition": `attachment; filename="receipts-${from}-to-${to}.pdf"`,
       "Cache-Control": "no-store",
     },
   });

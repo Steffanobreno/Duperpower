@@ -1672,5 +1672,10 @@ export const OWNER_KEYS: string[] = [
  "Your clients and visits are safe. Choose a plan to open the app and your booking page again:",
  "Your {app} free trial ends tomorrow",
  "Your {app} free trial ends in 3 days",
- "Choose a plan to keep your calendar, reminders and booking page working. Your data stays as it is:"
+ "Choose a plan to keep your calendar, reminders and booking page working. Your data stays as it is:",
+ "Card",
+ "14 days free",
+ "No card needed",
+ "Cancel anytime",
+ "Any spreadsheet with a name and a phone column works too: save it as CSV from Excel, Numbers or Google Sheets, or export your phone's contacts."
 ];
