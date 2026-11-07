@@ -1671,4 +1671,7 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Uji coba gratis {app} kamu berakhir besok",
 "Uji coba gratis {app} kamu berakhir dalam 3 hari",
 "Pilih paket agar kalender, pengingat, dan halaman pemesananmu tetap berjalan. Datamu tetap seperti sekarang:",
-"Kartu"];
+"Kartu",
+"Gratis 14 hari",
+"Tanpa kartu",
+"Batalkan kapan saja"];

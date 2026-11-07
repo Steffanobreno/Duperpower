@@ -1673,5 +1673,8 @@ export const OWNER_KEYS: string[] = [
  "Your {app} free trial ends tomorrow",
  "Your {app} free trial ends in 3 days",
  "Choose a plan to keep your calendar, reminders and booking page working. Your data stays as it is:",
- "Card"
+ "Card",
+ "14 days free",
+ "No card needed",
+ "Cancel anytime"
 ];

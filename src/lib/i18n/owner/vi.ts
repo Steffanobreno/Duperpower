@@ -1671,4 +1671,7 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Thời gian dùng thử miễn phí {app} kết thúc vào ngày mai",
 "Thời gian dùng thử miễn phí {app} kết thúc sau 3 ngày",
 "Chọn một gói để lịch, lời nhắc và trang đặt lịch tiếp tục hoạt động. Dữ liệu của bạn giữ nguyên:",
-"Thẻ"];
+"Thẻ",
+"Miễn phí 14 ngày",
+"Không cần thẻ",
+"Hủy bất cứ lúc nào"];

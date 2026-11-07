@@ -1671,4 +1671,7 @@ export const fr: string[] = ["Réservation abandonnée",
 "Votre essai gratuit de {app} se termine demain",
 "Votre essai gratuit de {app} se termine dans 3 jours",
 "Choisissez une formule pour garder votre agenda, vos rappels et votre page de réservation actifs. Vos données restent telles quelles :",
-"Carte"];
+"Carte",
+"14 jours gratuits",
+"Sans carte bancaire",
+"Résiliable à tout moment"];

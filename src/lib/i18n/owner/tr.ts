@@ -1671,4 +1671,7 @@ export const tr: string[] = ["Yarım kalan randevu",
 "{app} ücretsiz denemen yarın bitiyor",
 "{app} ücretsiz denemen 3 gün içinde bitiyor",
 "Takvimin, hatırlatmaların ve randevu sayfan çalışmaya devam etsin diye bir plan seç. Verilerin olduğu gibi kalır:",
-"Kart"];
+"Kart",
+"14 gün ücretsiz",
+"Kart gerekmez",
+"İstediğin zaman iptal et"];

@@ -1671,4 +1671,7 @@ export const pt: string[] = ["Agendamento abandonado",
 "Seu teste grátis do {app} acaba amanhã",
 "Seu teste grátis do {app} acaba em 3 dias",
 "Escolha um plano para manter sua agenda, os lembretes e a página de agendamento funcionando. Seus dados continuam como estão:",
-"Cartão"];
+"Cartão",
+"14 dias grátis",
+"Sem cartão",
+"Cancele quando quiser"];

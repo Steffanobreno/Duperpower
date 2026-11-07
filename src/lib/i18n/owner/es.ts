@@ -1671,4 +1671,7 @@ export const es: string[] = ["Reserva abandonada",
 "Tu prueba gratis de {app} termina mañana",
 "Tu prueba gratis de {app} termina en 3 días",
 "Elige un plan para que tu agenda, los recordatorios y tu página de reservas sigan funcionando. Tus datos se quedan como están:",
-"Tarjeta"];
+"Tarjeta",
+"14 días gratis",
+"Sin tarjeta",
+"Cancela cuando quieras"];

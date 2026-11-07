@@ -1671,4 +1671,7 @@ export const tl: string[] = ["Naiwang booking",
 "Bukas na matatapos ang libreng trial mo sa {app}",
 "Matatapos ang libreng trial mo sa {app} sa loob ng 3 araw",
 "Pumili ng plan para tuloy-tuloy ang calendar, mga paalala at booking page mo. Hindi magbabago ang data mo:",
-""];
+"",
+"14 araw na libre",
+"Walang card na kailangan",
+"Puwedeng i-cancel anumang oras"];
