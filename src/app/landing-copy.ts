@@ -1,6 +1,11 @@
 // The sales page's words, in English, Portuguese and Spanish (other languages read English).
 // Every claim here is something the app does today: no invented numbers, reviews or press.
 
+/** Plan prices, in US dollars (null until they are set): the pricing section shows them when set. */
+export const PLAN_PRICES: { monthly: number | null; yearly: number | null } = { monthly: 29, yearly: 290 };
+const M = PLAN_PRICES.monthly ?? 29;
+const Y = PLAN_PRICES.yearly ?? 290;
+
 export type LandingCopy = typeof en;
 
 const en = {
@@ -78,6 +83,7 @@ const en = {
   faq: {
     title: "Questions groomers ask.",
     items: [
+      { q: "How much does it cost?", a: `US$${M} a month, or US$${Y} a year (2 months free), for the whole business: every feature, every groomer, unlimited clients and visits. The first 14 days are free and no card is needed.` },
       { q: "Do my clients need to download an app?", a: "No. They book on your page in their phone's browser, in their own language, and get texts and emails with a link to confirm or cancel." },
       { q: "Can I bring my clients from another app?", a: "Yes. Export your client list as a CSV file and import it in Settings. Clients are matched by phone number, so nothing is duplicated." },
       { q: "Does it work outside the US?", a: "Yes. Pick your country and the app follows it: currency, phone numbers, postal codes, kilometers or miles, kilos or pounds, and local holidays." },
@@ -170,6 +176,7 @@ const pt: LandingCopy = {
   faq: {
     title: "Dúvidas de quem faz banho e tosa.",
     items: [
+      { q: "Quanto custa?", a: `US$${M} por mês, ou US$${Y} por ano (2 meses grátis), para o negócio inteiro: todos os recursos, todos os groomers, clientes e visitas ilimitados. Os primeiros 14 dias são grátis e não pedimos cartão.` },
       { q: "Meus clientes precisam baixar um app?", a: "Não. Eles agendam na sua página pelo navegador do celular, no idioma deles, e recebem mensagens e e-mails com um link para confirmar ou cancelar." },
       { q: "Consigo trazer meus clientes de outro app?", a: "Sim. Exporte a lista de clientes em CSV e importe em Ajustes. Os clientes são reconhecidos pelo telefone, então nada se duplica." },
       { q: "Funciona fora dos Estados Unidos?", a: "Sim. Escolha seu país e o app segue ele: moeda, telefones, CEP, quilômetros ou milhas, quilos ou libras e feriados locais." },
@@ -262,6 +269,7 @@ const es: LandingCopy = {
   faq: {
     title: "Preguntas de peluqueros.",
     items: [
+      { q: "¿Cuánto cuesta?", a: `US$${M} al mes, o US$${Y} al año (2 meses gratis), para todo el negocio: todas las funciones, todos los groomers, clientes y visitas ilimitados. Los primeros 14 días son gratis y no pedimos tarjeta.` },
       { q: "¿Mis clientes tienen que descargar una app?", a: "No. Reservan en tu página desde el navegador del teléfono, en su idioma, y reciben mensajes y emails con un enlace para confirmar o cancelar." },
       { q: "¿Puedo traer mis clientes de otra app?", a: "Sí. Exporta tu lista en CSV e impórtala en Ajustes. Los clientes se reconocen por el teléfono, así que nada se duplica." },
       { q: "¿Funciona fuera de Estados Unidos?", a: "Sí. Elige tu país y la app lo sigue: moneda, teléfonos, códigos postales, kilómetros o millas, kilos o libras y feriados." },
@@ -283,5 +291,3 @@ export const LANDING_LANGS = ["en", "pt", "es"] as const;
 export const landingCopy = (lang: string): { lang: (typeof LANDING_LANGS)[number]; c: LandingCopy } =>
   lang === "pt" ? { lang: "pt", c: pt } : lang === "es" ? { lang: "es", c: es } : { lang: "en", c: en };
 
-/** Plan prices, in US dollars (null until they are set): the pricing section shows them when set. */
-export const PLAN_PRICES: { monthly: number | null; yearly: number | null } = { monthly: 29, yearly: 290 };
