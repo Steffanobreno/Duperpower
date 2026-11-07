@@ -8,7 +8,7 @@ const PATH = "/mobile-grooming-route-planner";
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const lang = await pageLang(searchParams);
-  return siteMetadata(PATH, lang, routeCopy(lang).meta, routeCopy(lang).shot);
+  return siteMetadata(PATH, lang, routeCopy(lang).meta);
 }
 
 export default async function RoutePage({ searchParams }: Props) {

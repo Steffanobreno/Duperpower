@@ -34,6 +34,7 @@ for (const path of PAGES) {
       hreflang: [...document.querySelectorAll('link[rel="alternate"][hreflang]')].map((l) => l.getAttribute("hreflang")).sort().join(","),
       description: document.querySelector('meta[name="description"]')?.getAttribute("content") ?? "",
       og: document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
+      ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute("content"),
       ld: [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent),
     }));
     const where = `${path}?lang=${lang}`;
@@ -42,10 +43,17 @@ for (const path of PAGES) {
     if (head.lang !== lang) fail(`${where}: page language is ${head.lang}`);
     if (head.h1 !== 1) fail(`${where}: ${head.h1} h1`);
     const canonical = `${path}${lang === "en" ? "" : `?lang=${lang}`}`;
-    if (!head.canonical?.endsWith(canonical)) fail(`${where}: canonical ${head.canonical}`);
+    // The home page's canonical may come without the final slash: the same URL.
+    const canon = head.canonical && new URL(head.canonical);
+    if (!canon || `${canon.pathname}${canon.search}` !== canonical) fail(`${where}: canonical ${head.canonical}`);
     if (head.hreflang !== "en,es,pt,x-default") fail(`${where}: hreflang ${head.hreflang}`);
     if (head.description.length < 80 || head.description.length > 220) fail(`${where}: description length ${head.description.length}`);
     if (!head.og) fail(`${where}: no Open Graph title`);
+    // The share picture: this page's own, 1200×630 PNG (fetched on this server, whatever APP_URL says).
+    const img = head.ogImage && new URL(head.ogImage);
+    if (!img || img.pathname !== "/og") fail(`${where}: og:image ${head.ogImage}`);
+    const pic = await fetch(`${BASE}/og${img.search}`);
+    if (pic.status !== 200 || pic.headers.get("content-type") !== "image/png") fail(`${where}: share picture → ${pic.status}`);
     const ld = head.ld.flatMap((t) => [JSON.parse(t)].flat());
     if (!ld.length) fail(`${where}: no structured data`);
     if (path !== "/" && !ld.some((x) => x["@type"] === "BreadcrumbList")) fail(`${where}: no breadcrumb`);
@@ -56,7 +64,8 @@ for (const path of PAGES) {
     await page.close();
   }
 }
-step(`${PAGES.length} pages × 3 languages: 200, own title, one h1, canonical, hreflang, description, Open Graph, structured data`);
+if ((await fetch(`${BASE}/og?p=/anything-else`)).status !== 404) fail("the share picture only draws the site's own pages");
+step(`${PAGES.length} pages × 3 languages: 200, own title, one h1, canonical, hreflang, description, Open Graph with its own picture, structured data`);
 
 // No sideways scroll on small phones, tablets and desktops.
 for (const width of [320, 390, 768, 1440]) {

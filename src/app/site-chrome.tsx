@@ -31,7 +31,9 @@ export async function pageLang(searchParams: Promise<Record<string, string | str
 }
 
 /** Title, description, canonical, every language version and Open Graph for a site page. */
-export function siteMetadata(path: string, lang: SiteLang, meta: { title: string; description: string }, image = "/landing/today.png"): Metadata {
+export function siteMetadata(path: string, lang: SiteLang, meta: { title: string; description: string }): Metadata {
+  // The share picture with this page's own title (src/app/og).
+  const image = { url: `/og?p=${encodeURIComponent(path)}&lang=${lang}`, width: 1200, height: 630, alt: meta.title };
   const url = `${appUrl()}${hrefFor(path, lang)}`;
   const title = `${meta.title} · ${APP_NAME}`;
   return {

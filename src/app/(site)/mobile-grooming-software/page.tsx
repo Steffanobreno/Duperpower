@@ -8,7 +8,7 @@ const PATH = "/mobile-grooming-software";
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const lang = await pageLang(searchParams);
-  return siteMetadata(PATH, lang, mobileCopy(lang).meta, mobileCopy(lang).shot);
+  return siteMetadata(PATH, lang, mobileCopy(lang).meta);
 }
 
 export default async function MobilePage({ searchParams }: Props) {

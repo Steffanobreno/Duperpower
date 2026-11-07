@@ -8,7 +8,7 @@ const PATH = "/switch";
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const lang = await pageLang(searchParams);
-  return siteMetadata(PATH, lang, switchCopy(lang).meta, switchCopy(lang).shot);
+  return siteMetadata(PATH, lang, switchCopy(lang).meta);
 }
 
 export default async function SwitchPage({ searchParams }: Props) {
