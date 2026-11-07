@@ -28,7 +28,6 @@ Atualizado em 2026-11-07, depois de publicar `ddeda90` na master. Marque com [x]
 ## Site (feito na noite de 2026-11-07, ver `docs/site-noite.md`)
 - [ ] Ler os textos das páginas novas (/features, /pricing, /mobile-grooming-software, /mobile-grooming-route-planner, /switch, /guides) e pedir ajustes.
 - [ ] Contar sua história para a página "Sobre" (opcional, só se quiser).
-- [ ] Decidir se quer capturas do app em português e espanhol nas páginas.
 - [ ] Publicar ("pode publicar") quando aprovar.
 
 ## Próximas etapas de código (pedir quando quiser)

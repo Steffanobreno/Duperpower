@@ -58,5 +58,4 @@ Não há comparação com concorrentes: nenhuma afirmação sobre eles pôde ser
 1. **Ler os textos** das páginas novas (principalmente em português) e me dizer o que mudar.
 2. **Sua história:** uma página "Sobre" ("feito por quem faz banho e tosa móvel") só se for verdade e com o que você quiser contar. É o que mais dá confiança e o que as IAs mais gostam de citar.
 3. **Logo do Fino:** ele entra no menu, na imagem de compartilhamento e no ícone.
-4. **Capturas em português/espanhol:** as telas do celular nas páginas estão em inglês. Posso gerar versões em pt/es do app de demonstração quando você quiser.
-5. **Depoimentos reais:** assim que tiver os primeiros clientes, com autorização deles.
+4. **Depoimentos reais:** assim que tiver os primeiros clientes, com autorização deles.
