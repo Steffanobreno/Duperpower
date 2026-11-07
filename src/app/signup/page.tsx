@@ -1,4 +1,4 @@
-import { getOwnerI18n } from "@/lib/i18n/server";
+import { ownerI18nFor } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -26,17 +26,18 @@ import { cleanCode } from "@/lib/discounts";
 import { SignupForm } from "./signup-form";
 import { I18nProvider } from "@/components/i18n";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getOwnerI18n();
+export async function generateMetadata({ searchParams }: PageProps<"/signup">): Promise<Metadata> {
+  const { t } = await ownerI18nFor((await searchParams).lang);
   return { title: t("Create your account") };
 }
 export const dynamic = "force-dynamic";
 
 // A new groomer's account: the business and its owner login, ready to book in a minute.
 export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
-  const { t, lang, messages } = await getOwnerI18n();
-  if (await getStaff()) redirect("/today");
   const sp = await searchParams;
+  // In the language of the site page that sent them here (?lang=), else the phone's.
+  const { t, lang, messages } = await ownerI18nFor(sp.lang);
+  if (await getStaff()) redirect("/today");
   const ref = cleanCode(sp.ref);
   const [referrer] = /^[A-Z]+-\d{4}$/.test(ref) ? await sql<{ name: string }[]>`select name from businesses where referral_code = ${ref}` : [];
   return (
@@ -45,7 +46,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
       <h1 className="mt-1 text-center text-2xl font-extrabold">{t("Create your grooming business account")}</h1>
       <p className="mb-6 mt-1 text-center text-muted">{t("Your own booking page, calendar, route and checkout. Services and messages come ready; change them anytime.")}</p>
       {referrer && <div className="mb-4"><Notice kind="success">{t("Invited by {name}: your first month is free when you choose a plan.", { name: referrer.name })}</Notice></div>}
-      <Card><I18nProvider lang={lang} messages={messages}><SignupForm country={guessCountry(await headers())} names={placeNames(lang)} source={signupSource(sp, (await headers()).get("referer"))} /></I18nProvider></Card>
+      <Card><I18nProvider lang={lang} messages={messages}><SignupForm country={guessCountry(await headers())} names={placeNames(lang)} source={signupSource(sp, (await headers()).get("referer"))} lang={lang} /></I18nProvider></Card>
       <p className="mt-4 text-center text-sm text-muted">
         {t("Already have an account?")}{" "} <Link href="/login" className="font-semibold text-brand">{t("Log in")}</Link>
       </p>

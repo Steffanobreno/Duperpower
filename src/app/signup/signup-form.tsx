@@ -9,7 +9,7 @@ import { CountryFields, type PlaceNames } from "@/components/country-fields";
 import { currencyOf, mainZoneOf } from "@/lib/countries";
 import { signupAction } from "./actions";
 
-export function SignupForm({ country, names, source = "" }: { country: string; names: PlaceNames; source?: string }) {
+export function SignupForm({ country, names, source = "", lang }: { country: string; names: PlaceNames; source?: string; lang: string }) {
   const { t } = useT();
   const [state, action, pending] = useActionState(signupAction, undefined);
   return (
@@ -25,6 +25,8 @@ export function SignupForm({ country, names, source = "" }: { country: string; n
       </div>
       <CountryFields country={country} currency={currencyOf(country)} timezone={mainZoneOf(country)} guess names={names} />
       <input type="hidden" name="source" value={source} />
+      {/* The language the page is in: the new account's starter services and app use it. */}
+      <input type="hidden" name="lang" value={lang} />
       {/* People never see this field; bots fill it in. */}
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <label className="flex items-start gap-3 text-sm">

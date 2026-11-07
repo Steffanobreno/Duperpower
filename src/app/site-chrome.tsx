@@ -92,7 +92,7 @@ export function SiteNav({ c, lang, anchors }: { c: SiteChrome; lang: string; anc
         </Link>
         <span className="ml-auto hidden items-center gap-1 text-[15px] font-medium sm:flex">
           {links.map((l) => <a key={l.href} href={l.href} className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{l.label}</a>)}
-          <Link href="/login" className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.login}</Link>
+          <Link href={hrefFor("/login", lang)} className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.login}</Link>
         </span>
         <Link href={hrefFor("/signup", lang)} className="ml-auto rounded-full border border-black/50 px-4 py-2 text-[15px] font-semibold sm:ml-1">{c.nav.start}</Link>
         {/* Phones: the same links behind a menu button (opens without any script). */}
@@ -102,7 +102,7 @@ export function SiteNav({ c, lang, anchors }: { c: SiteChrome; lang: string; anc
             <span aria-hidden className="hidden text-[20px] leading-none group-open:inline">✕</span>
           </summary>
           <div className="absolute right-0 top-12 w-56 rounded-2xl bg-white p-2 text-[16px] font-medium" style={{ boxShadow: SHADOW }}>
-            {[...links, { href: "/login", label: c.nav.login }].map((l) => (
+            {[...links, { href: hrefFor("/login", lang), label: c.nav.login }].map((l) => (
               <a key={l.href} href={l.href} className="block rounded-xl px-4 py-3 hover:bg-[#faf8f7]">{l.label}</a>
             ))}
           </div>
@@ -137,7 +137,7 @@ export function SiteFooter({ c, lang, path }: { c: SiteChrome; lang: string; pat
           <ul className="mt-3 space-y-2">
             <li><Link href="/terms" className="hover:text-white">{f.terms}</Link></li>
             <li><Link href="/privacy" className="hover:text-white">{f.privacy}</Link></li>
-            <li><Link href="/login" className="hover:text-white">{f.login}</Link></li>
+            <li><Link href={hrefFor("/login", lang)} className="hover:text-white">{f.login}</Link></li>
           </ul>
         </nav>
       </div>

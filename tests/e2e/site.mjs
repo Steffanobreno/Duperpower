@@ -97,6 +97,15 @@ await phone.waitForURL(/\/pricing\?lang=es/);
 await phone.getByText("US$29").first().waitFor();
 step("the footer links every page in the page's language and they open; the phone menu works");
 
+// "Start free" from a Portuguese page opens the signup in Portuguese, even on an English phone.
+const en = await (await browser.newContext({ locale: "en-US", extraHTTPHeaders: { "Accept-Language": "en-US" } })).newPage();
+await en.goto(`${BASE}/pricing?lang=pt`);
+await en.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Começar grátis" }).click();
+await en.waitForURL(/\/signup\?lang=pt/);
+await en.getByRole("heading", { name: /Crie a conta do seu negócio/ }).waitFor();
+if ((await en.locator('input[name="lang"]').inputValue()) !== "pt") fail("the signup form should carry the page's language");
+step("Start free from a Portuguese page opens the signup in Portuguese (and the account gets it)");
+
 // Guides: the in-app-only one stays out; an unknown guide is a 404; a guide has its steps as HowTo.
 if ((await fetch(`${BASE}/guides/troubleshooting`)).status !== 404) fail("the troubleshooting guide is for inside the app");
 if ((await fetch(`${BASE}/guides/nope`)).status !== 404) fail("an unknown guide should be a 404");

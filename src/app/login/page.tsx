@@ -1,4 +1,4 @@
-import { getOwnerI18n } from "@/lib/i18n/server";
+import { ownerI18nFor } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getStaff, hasAnyUser } from "@/lib/auth";
@@ -8,16 +8,16 @@ import { APP_NAME } from "@/lib/product";
 import { LoginForm } from "./login-form";
 import { I18nProvider } from "@/components/i18n";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getOwnerI18n();
+export async function generateMetadata({ searchParams }: PageProps<"/login">): Promise<Metadata> {
+  const { t } = await ownerI18nFor((await searchParams).lang);
   return { title: t("Log in") };
 }
 
 // Must check the database on every visit, never at build time.
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
-  const { t, lang, messages } = await getOwnerI18n();
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const { t, lang, messages } = await ownerI18nFor((await searchParams).lang);
   if (!(await hasAnyUser())) redirect("/setup");
   if (await getStaff()) redirect("/today");
   return (
@@ -31,7 +31,7 @@ export default async function LoginPage() {
         <Link href="/login/forgot" className="font-semibold text-brand">{t("Forgot your password?")}</Link>
       </p>
       <p className="mt-2 text-center text-sm text-muted">
-        {t("New here?")}{" "} <Link href="/signup" className="font-semibold text-brand">{t("Create your business account")}</Link>
+        {t("New here?")}{" "} <Link href={lang === "en" ? "/signup" : `/signup?lang=${lang}`} className="font-semibold text-brand">{t("Create your business account")}</Link>
       </p>
     </main>
   );
