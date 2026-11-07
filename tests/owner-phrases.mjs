@@ -6,7 +6,7 @@ import { join } from "node:path";
 const walk = (d) => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
 const CLIENT_ONLY = /src\/components\/(client-shell|receipt-view|i18n)\.tsx$/;
 export const ownerFiles = () => [
-  ...walk("src/app/(owner)"), ...walk("src/app/login"), ...walk("src/app/signup"), ...walk("src/app/setup"),
+  ...walk("src/app/(owner)"), ...walk("src/app/login"), ...walk("src/app/signup"), ...walk("src/app/setup"), ...walk("src/app/billing"),
   ...walk("src/components").filter((f) => !CLIENT_ONLY.test(f)),
   ...walk("src/lib").filter((f) => !f.includes("/i18n/")),
 ].filter((f) => /\.(tsx?|mjs)$/.test(f));

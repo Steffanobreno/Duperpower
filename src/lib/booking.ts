@@ -4,6 +4,7 @@ import { addDaysYmd, dayRangeUtc, dayLabel, timeLabel, todayYmd, weekdayOf, zone
 import { areaCovers, milesIn, postalPoints } from "./geo/postal";
 import { postalOk, regionOf, type Region } from "./region";
 import { closedDays } from "./data/closed";
+import { billingOn } from "./billing";
 
 // Online booking: which times a client may request. Rules, in order:
 // 1. the postal code is known (in the US: a real ZIP), within the service radius of the van's start ZIP and, when
@@ -49,7 +50,10 @@ export async function getPublicBusiness(slug?: string | null) {
   const [b] = await sql<PublicBusiness[]>`
     select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit, b.website_url, b.email, b.buffer_minutes,
            b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
-           b.start_zip, b.service_radius_miles::float8 as service_radius_miles, b.online_booking_enabled,
+           b.start_zip, b.service_radius_miles::float8 as service_radius_miles,
+           -- A business whose trial ended unpaid (with billing on) has its booking page paused.
+           b.online_booking_enabled and (${!billingOn()} or b.plan_status in ('active', 'free', 'past_due')
+             or (b.plan_status = 'trial' and coalesce(b.trial_ends_at, now() + interval '1 day') > now())) as online_booking_enabled,
            (select s.id from staff s where s.business_id = b.id and s.active order by (s.role = 'owner') desc, s.created_at limit 1) as staff_id
     from businesses b where ${key}::text is null or b.booking_slug = ${key}
     order by b.created_at limit 1`;

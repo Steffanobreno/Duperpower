@@ -15,6 +15,7 @@ const GROUPS: SettingsGroup[] = [
     title: msg("Basic settings"),
     links: [
       { href: "/settings/account", title: msg("Account"), text: msg("Your name, login email, password, app lock (PIN) and devices") },
+      { href: "/billing", title: msg("Your plan"), text: msg("Free trial, monthly or yearly plan, card and invoices") },
       { href: "/settings/business", title: msg("Business"), text: msg("Name, logo, phone, address, links and time zone") },
       { href: "/settings/hours", title: msg("Working hours"), text: msg("Days and hours you take appointments") },
       { href: "/settings/closed", title: msg("Closed dates and holidays"), text: msg("Vacations and holidays with no bookings") },
