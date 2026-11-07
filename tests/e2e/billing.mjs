@@ -24,8 +24,13 @@ const page = await (await browser.newContext({ viewport: { width: 390, height: 8
 page.on("pageerror", (e) => errors.push(e.message));
 const shot = (name) => SHOTS && page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
 
-/** Sends Stripe's webhook the way Stripe signs it. */
-async function webhook(type, object) {
+const STRIPE_API = process.env.STRIPE_API_BASE ?? "http://127.0.0.1:4546";
+/** Sets the subscription as the fake Stripe now has it (the app reads it back from there). */
+const stripeHas = (sub) => fetch(`${STRIPE_API}/__subscriptions`, { method: "POST", body: JSON.stringify(sub) });
+
+/** Sends Stripe's webhook the way Stripe signs it (the subscription is also what Stripe has now). */
+async function webhook(type, object, { stale = false } = {}) {
+  if (!stale && object.object === "subscription") await stripeHas(object);
   const payload = JSON.stringify({ id: `evt_${Date.now()}`, object: "event", type, data: { object }, api_version: "2026-09-30.endive" });
   const header = await stripe.webhooks.generateTestHeaderStringAsync({ payload, secret: "whsec_test" });
   const res = await fetch(`${BASE}/api/stripe/webhook`, { method: "POST", body: payload, headers: { "stripe-signature": header, "content-type": "application/json" } });
@@ -98,6 +103,12 @@ await visitor.goto(`${BASE}/book/${slug}`);
 await visitor.getByText("Online booking is paused").waitFor();
 await shot("B02-plan-cancelled");
 step("cancelled: the app opens only the plan page, and the booking page pauses");
+
+// Stripe delivered an old "active" event late: the app reads the subscription and stays cancelled.
+await webhook("customer.subscription.updated", subscription("active"), { stale: true });
+const [{ plan_status: late }] = await db`select plan_status from businesses where id = ${biz.id}`;
+if (late !== "cancelled") fail(`a late, out-of-order event should not reopen a cancelled plan (got ${late})`);
+step("a late out-of-order event doesn't undo the cancellation");
 
 // A trial that ended unpaid is locked the same way.
 await db`update businesses set plan_status = 'trial', trial_ends_at = now() - interval '1 day' where id = ${biz.id}`;

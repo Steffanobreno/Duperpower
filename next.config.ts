@@ -13,8 +13,16 @@ const nextConfig: NextConfig = {
   async headers() {
     // lovable.dev too: its editor shows the site preview inside itself, and every frame up the chain must be allowed.
     const site = "https://woofersdogspa.com https://*.woofersdogspa.com https://*.lovable.app https://*.lovableproject.com https://lovable.dev https://*.lovable.dev";
+    // Basic hardening for every page: no MIME sniffing, private links (/a/<token>, /r/<token>)
+    // never leak in the Referer, HTTPS only once seen (browsers ignore this over plain http).
+    const security = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Strict-Transport-Security", value: "max-age=31536000" },
+      { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self), payment=(self)" },
+    ];
     return [
-      { source: "/:path*", headers: [{ key: "Content-Security-Policy", value: "frame-ancestors 'self'" }] },
+      { source: "/:path*", headers: [...security, { key: "Content-Security-Policy", value: "frame-ancestors 'self'" }] },
       { source: "/book", headers: [{ key: "Content-Security-Policy", value: `frame-ancestors 'self' ${site}` }] },
     ];
   },

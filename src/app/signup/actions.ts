@@ -5,6 +5,7 @@ import { normalizePhone } from "@/lib/format";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { regionOf } from "@/lib/region";
 import { currencyOf, isCountry, isZone, mainZoneOf } from "@/lib/countries";
+import { tooManyFromHere } from "@/lib/rate-limit";
 
 export type SignupState = { error?: string } | undefined;
 
@@ -22,6 +23,8 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
   const tz = String(form.get("timezone") ?? "");
   const timezone = isZone(tz) ? tz : mainZoneOf(country);
   if (businessName.length < 2) return { error: "Type your business name." };
+  // A few accounts an hour from one place is plenty for real people (a shared office, a retry).
+  if (await tooManyFromHere("signup", 5, 3600_000)) return { error: "New accounts are paused right now. Please try again later." };
   if (!ownerName) return { error: "Type your name." };
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email." };
   if (password.length < 10) return { error: "Use at least 10 characters for the password." };

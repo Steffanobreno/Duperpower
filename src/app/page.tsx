@@ -4,7 +4,7 @@ import { getStaff } from "@/lib/auth";
 import { getLang } from "@/lib/i18n/server";
 import { APP_NAME } from "@/lib/product";
 import { Landing } from "./landing";
-import { LANDING_LANGS, landingCopy } from "./landing-copy";
+import { LANDING_LANGS, landingCopy, PLAN_PRICES } from "./landing-copy";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -24,7 +24,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     description: c.meta.description,
     alternates: {
       canonical: url,
-      languages: Object.fromEntries(LANDING_LANGS.map((l) => [l, `${appUrl()}/${l === "en" ? "" : `?lang=${l}`}`])),
+      languages: {
+        ...Object.fromEntries(LANDING_LANGS.map((l) => [l, `${appUrl()}/${l === "en" ? "" : `?lang=${l}`}`])),
+        "x-default": `${appUrl()}/`,
+      },
     },
     openGraph: { title: `${APP_NAME} · ${c.meta.title}`, description: c.meta.description, url, type: "website", images: ["/landing/today.png"] },
   };
@@ -42,9 +45,17 @@ export default async function Home({ searchParams }: Props) {
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web, iOS, Android",
       description: c.meta.description,
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: c.hero.note },
+      // The real plan prices (the free trial is in the description), so search and AI answers quote them right.
+      offers: [
+        PLAN_PRICES.monthly && { "@type": "Offer", name: "Monthly", price: String(PLAN_PRICES.monthly), priceCurrency: "USD",
+          priceSpecification: { "@type": "UnitPriceSpecification", price: PLAN_PRICES.monthly, priceCurrency: "USD", unitCode: "MON" }, description: c.hero.note },
+        PLAN_PRICES.yearly && { "@type": "Offer", name: "Yearly", price: String(PLAN_PRICES.yearly), priceCurrency: "USD",
+          priceSpecification: { "@type": "UnitPriceSpecification", price: PLAN_PRICES.yearly, priceCurrency: "USD", unitCode: "ANN" } },
+      ].filter(Boolean),
+      url: `${appUrl()}/`,
       inLanguage: lang,
     },
+    { "@context": "https://schema.org", "@type": "Organization", name: APP_NAME, url: `${appUrl()}/`, logo: `${appUrl()}/icon.png` },
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",

@@ -25,7 +25,9 @@ export async function POST(req: Request) {
     case "customer.subscription.created":
     case "customer.subscription.updated":
     case "customer.subscription.deleted":
-      await applySubscription(event.data.object);
+      // Stripe may deliver events late or out of order (an old "updated" after "deleted"),
+      // so the plan follows the subscription as it is now, not the event's copy of it.
+      await applySubscription(await stripe().subscriptions.retrieve(event.data.object.id));
       break;
   }
   return Response.json({ received: true });
