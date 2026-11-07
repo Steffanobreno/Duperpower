@@ -8,7 +8,7 @@ const n = (v: number) => v.toLocaleString("pt-BR");
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 
 function Stat({ label, value, hint, href, tone }: { label: string; value: string; hint?: string; href?: string; tone?: "good" | "bad" | "warn" }) {
-  const color = tone === "good" ? "text-success" : tone === "bad" ? "text-danger" : tone === "warn" ? "text-[#a8811f]" : "text-ink";
+  const color = tone === "good" ? "text-success" : tone === "bad" ? "text-danger" : tone === "warn" ? "text-[#7d5f10]" : "text-ink";
   const body = (
     <>
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>

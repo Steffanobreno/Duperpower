@@ -42,13 +42,13 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
   const [referrer] = /^[A-Z]+-\d{4}$/.test(ref) ? await sql<{ name: string }[]>`select name from businesses where referral_code = ${ref}` : [];
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10">
-      <p className="text-center text-sm font-bold uppercase tracking-widest text-[#a8811f]">{APP_NAME}</p>
+      <p className="text-center text-sm font-bold uppercase tracking-widest text-[#7d5f10]">{APP_NAME}</p>
       <h1 className="mt-1 text-center text-2xl font-extrabold">{t("Create your grooming business account")}</h1>
       <p className="mt-1 text-center text-muted">{t("Your own booking page, calendar, route and checkout. Services and messages come ready; change them anytime.")}</p>
       {/* What people want to know before typing anything: it's free to try and easy to leave. */}
       <ul className="mb-6 mt-3 flex flex-wrap justify-center gap-2 text-sm font-semibold">
         {[t("14 days free"), t("No card needed"), t("Cancel anytime")].map((x) => (
-          <li key={x} className="rounded-full bg-success-soft px-3 py-1 text-success">✓ {x}</li>
+          <li key={x} className="rounded-full bg-success-soft px-3 py-1 text-[#13703a]">✓ {x}</li>
         ))}
       </ul>
       {referrer && <div className="mb-4"><Notice kind="success">{t("Invited by {name}: your first month is free when you choose a plan.", { name: referrer.name })}</Notice></div>}
