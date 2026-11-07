@@ -115,7 +115,7 @@ export function SiteFooter({ c, lang, path }: { c: SiteChrome; lang: string; pat
   const f = c.footer;
   const product = [
     ["/features", f.features], ["/pricing", f.pricing], ["/mobile-grooming-software", f.mobile],
-    ["/mobile-grooming-route-planner", f.route], ["/switch", f.switch],
+    ["/mobile-grooming-route-planner", f.route], ["/switch", f.switch], ["/guides", f.guides],
   ];
   return (
     <footer className="px-4 pb-10 pt-14 text-[13px] text-white/60" style={{ background: INK }}>

@@ -1,6 +1,7 @@
 import { APP_NAME } from "@/lib/product";
 import { landingCopy, PLAN_PRICES } from "../landing-copy";
 import { featuresCopy, pricingCopy } from "../site-copy";
+import { publicGuides } from "../(site)/guides/public-guides";
 
 // A plain summary of the product for AI assistants and answer engines (llms.txt): what it is,
 // every feature, the price and the billing rules, and links to the pages with the details.
@@ -34,9 +35,13 @@ export function GET() {
     `- [Mobile grooming software](${base}/mobile-grooming-software)`,
     `- [Route planner for mobile groomers](${base}/mobile-grooming-route-planner)`,
     `- [Switch from another grooming app](${base}/switch)`,
+    `- [Guides](${base}/guides)`,
     `- [Start a free trial](${base}/signup)`,
     `- [Terms](${base}/terms)`,
     `- [Privacy](${base}/privacy)`,
+    "",
+    "## Guides (step by step)",
+    ...publicGuides("en").map((a) => `- [${a.title}](${base}/guides/${a.slug}): ${a.summary}`),
     "",
     "Pages are also in Portuguese (?lang=pt) and Spanish (?lang=es).",
   ].join("\n");

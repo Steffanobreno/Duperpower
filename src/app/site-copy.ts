@@ -21,7 +21,7 @@ const chromeEn = {
   nav: { features: "Features", pricing: "Pricing", login: "Log in", start: "Start free", menu: "Menu" },
   footer: {
     product: "Product", company: "Company",
-    features: "Features", pricing: "Pricing", mobile: "Mobile grooming software", route: "Route planner", switch: "Switch to Fino",
+    features: "Features", pricing: "Pricing", mobile: "Mobile grooming software", route: "Route planner", switch: "Switch to Fino", guides: "Guides",
     terms: "Terms", privacy: "Privacy", login: "Log in", rights: "All rights reserved.",
   },
   closer: { title: "Try it on your next working day.", sub: "14 days free, no card. Your prices, your hours and your booking link in five minutes.", cta: "Start your free trial" },
@@ -31,7 +31,7 @@ const chromePt: typeof chromeEn = {
   nav: { features: "Recursos", pricing: "Preços", login: "Entrar", start: "Começar grátis", menu: "Menu" },
   footer: {
     product: "Produto", company: "Empresa",
-    features: "Recursos", pricing: "Preços", mobile: "App para banho e tosa móvel", route: "Planejador de rotas", switch: "Mudar para o Fino",
+    features: "Recursos", pricing: "Preços", mobile: "App para banho e tosa móvel", route: "Planejador de rotas", switch: "Mudar para o Fino", guides: "Guias",
     terms: "Termos", privacy: "Privacidade", login: "Entrar", rights: "Todos os direitos reservados.",
   },
   closer: { title: "Teste no seu próximo dia de trabalho.", sub: "14 dias grátis, sem cartão. Seus preços, seus horários e seu link de agendamento em cinco minutos.", cta: "Começar teste grátis" },
@@ -41,7 +41,7 @@ const chromeEs: typeof chromeEn = {
   nav: { features: "Funciones", pricing: "Precios", login: "Entrar", start: "Empezar gratis", menu: "Menú" },
   footer: {
     product: "Producto", company: "Empresa",
-    features: "Funciones", pricing: "Precios", mobile: "App para grooming móvil", route: "Planificador de rutas", switch: "Cambiar a Fino",
+    features: "Funciones", pricing: "Precios", mobile: "App para grooming móvil", route: "Planificador de rutas", switch: "Cambiar a Fino", guides: "Guías",
     terms: "Términos", privacy: "Privacidad", login: "Entrar", rights: "Todos los derechos reservados.",
   },
   closer: { title: "Pruébala en tu próximo día de trabajo.", sub: "14 días gratis, sin tarjeta. Tus precios, tu horario y tu enlace de reservas en cinco minutos.", cta: "Empezar prueba gratis" },
@@ -639,3 +639,23 @@ const switchEs: TopicCopy = {
   ],
 };
 export const switchCopy = (l: SiteLang) => ({ en: switchEn, pt: switchPt, es: switchEs })[l];
+
+// ——— /guides (the help center's how-to articles, public) ———
+
+const guidesEn = {
+  meta: { title: "Guides: how to run your mobile grooming day with Fino", description: "Step-by-step guides for Fino: setting up, booking, service areas, the day's route, checkout, reminders, marketing, team and settings." },
+  kicker: "Guides", title: "How to do it in Fino.", sub: "Short step-by-step guides, the same ones inside the app.",
+  steps: "Steps", tips: "Tips", more: "More in this topic", all: "All guides",
+};
+export type GuidesCopy = typeof guidesEn;
+const guidesPt: GuidesCopy = {
+  meta: { title: "Guias: como tocar seu dia de banho e tosa móvel com o Fino", description: "Guias passo a passo do Fino: configuração, agendamentos, áreas de atendimento, rota do dia, recebimento, lembretes, marketing, equipe e ajustes." },
+  kicker: "Guias", title: "Como fazer no Fino.", sub: "Guias curtos, passo a passo, os mesmos que estão dentro do app.",
+  steps: "Passos", tips: "Dicas", more: "Mais neste tema", all: "Todos os guias",
+};
+const guidesEs: GuidesCopy = {
+  meta: { title: "Guías: cómo llevar tu día de grooming móvil con Fino", description: "Guías paso a paso de Fino: configuración, reservas, zonas de servicio, la ruta del día, cobro, recordatorios, marketing, equipo y ajustes." },
+  kicker: "Guías", title: "Cómo hacerlo en Fino.", sub: "Guías cortas, paso a paso, las mismas que están dentro de la app.",
+  steps: "Pasos", tips: "Consejos", more: "Más sobre este tema", all: "Todas las guías",
+};
+export const guidesCopy = (l: SiteLang) => ({ en: guidesEn, pt: guidesPt, es: guidesEs })[l];

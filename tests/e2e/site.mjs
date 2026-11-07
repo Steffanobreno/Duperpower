@@ -5,7 +5,7 @@
 import { chromium } from "playwright";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
-const PAGES = ["/", "/features", "/pricing", "/mobile-grooming-software", "/mobile-grooming-route-planner", "/switch"];
+const PAGES = ["/", "/features", "/pricing", "/mobile-grooming-software", "/mobile-grooming-route-planner", "/switch", "/guides", "/guides/service-areas"];
 const LANGS = ["en", "pt", "es"];
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -75,7 +75,7 @@ step("no sideways scroll at 320, 390, 768 and 1440 px");
 const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
 await phone.goto(`${BASE}/switch?lang=es`);
 const hrefs = await phone.locator("footer a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-for (const path of PAGES.filter((p) => p !== "/")) {
+for (const path of PAGES.filter((p) => p !== "/" && !p.startsWith("/guides/"))) {
   if (!hrefs.includes(`${path}?lang=es`)) fail(`the footer should link ${path} in Spanish: ${hrefs}`);
 }
 for (const href of new Set(hrefs)) {
@@ -87,6 +87,13 @@ await phone.getByRole("navigation", { name: "Main" }).getByRole("link", { name: 
 await phone.waitForURL(/\/pricing\?lang=es/);
 await phone.getByText("US$29").first().waitFor();
 step("the footer links every page in the page's language and they open; the phone menu works");
+
+// Guides: the in-app-only one stays out; an unknown guide is a 404; a guide has its steps as HowTo.
+if ((await fetch(`${BASE}/guides/troubleshooting`)).status !== 404) fail("the troubleshooting guide is for inside the app");
+if ((await fetch(`${BASE}/guides/nope`)).status !== 404) fail("an unknown guide should be a 404");
+const guideHtml = await (await fetch(`${BASE}/guides/service-areas?lang=pt`)).text();
+if (!/"@type":"HowTo"/.test(guideHtml) || !/"@type":"HowToStep"/.test(guideHtml)) fail("a guide should have HowTo structured data");
+step("guides: public ones only, unknown ones 404, steps as HowTo");
 
 // Sitemap and llms.txt list every page.
 const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();

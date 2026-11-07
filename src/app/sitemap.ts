@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { publicGuides } from "./(site)/guides/public-guides";
 
 const base = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
@@ -11,6 +12,8 @@ const PAGES: { path: string; priority: number; freq: "weekly" | "monthly" }[] = 
   { path: "/mobile-grooming-software", priority: 0.8, freq: "monthly" },
   { path: "/mobile-grooming-route-planner", priority: 0.8, freq: "monthly" },
   { path: "/switch", priority: 0.7, freq: "monthly" },
+  { path: "/guides", priority: 0.7, freq: "monthly" },
+  ...publicGuides("en").map((a) => ({ path: `/guides/${a.slug}`, priority: 0.5, freq: "monthly" as const })),
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
