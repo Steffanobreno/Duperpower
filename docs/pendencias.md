@@ -36,3 +36,15 @@ Atualizado em 2026-11-07, depois de publicar `ddeda90` na master. Marque com [x]
 3. Cobrança de cartão do cliente final (Stripe Connect: sinal e taxa de falta).
 
 Detalhes em `docs/fino-technical-roadmap.md` e `docs/fino-audit.md`.
+
+## Lista de mudanças da revisão (juntando para fazer de uma vez, a pedido do dono)
+Atualizado em 2026-11-07, durante a revisão do site de prévia. Não começar antes de ele dizer que terminou a lista.
+
+1. **Configuração inicial (etapa de serviços):** hoje só mede o cão por altura, em polegadas. Perguntar primeiro "por altura ou por peso", com a unidade do país (cm/kg no Brasil, in/lb nos EUA) e a opção de trocar.
+2. **Site "cru":** falta informação. Esperar a lista do dono sobre o que falta (textos, seções, fotos).
+3. **Logomarca nova:** o dono vai mandar as versões (fundo transparente, com fundo, cores). Aplicar no ícone do app, no site, na imagem de compartilhamento e nos e-mails.
+4. **Google Agenda com um clique (OAuth):** botão "Conectar Google Agenda", login e permissão do Google, e as visitas sincronizam sozinhas. Tirar o script colado. Precisa de um projeto no Google Cloud e da verificação do app pelo Google.
+5. **SMS:** tirar o Atalho do iPhone do caminho principal. Proposta: no plano, e-mail, notificações e botões "Enviar por WhatsApp/SMS" com a mensagem pronta (grátis); depois, SMS automático pelo Twilio como adicional pago (EUA primeiro). Decidir com o dono.
+6. **Apps na App Store e no Google Play:** embrulhar o app atual (Capacitor), com notificações nativas. O dono vai abrir as contas de desenvolvedor (Apple e Google), de preferência como empresa.
+7. **Página de agendamento embutida em qualquer site:** esperando a decisão do dono ("pode liberar" ou "mantém").
+8. **Prévias do Netlify:** ligar "Deploy Previews" no site, para o PR #1 gerar o link de revisão.
