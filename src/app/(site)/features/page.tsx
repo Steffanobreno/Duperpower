@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { featuresCopy, pricingCopy, siteChrome } from "../../site-copy";
-import { Hero, INDIGO, INK, JsonLd, pageLang, Phone, SitePage, heading, siteMetadata } from "../../site-chrome";
+import { Hero, INDIGO, INK, JsonLd, localShot, pageLang, Phone, SitePage, heading, siteMetadata } from "../../site-chrome";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 const PATH = "/features";
@@ -29,7 +29,7 @@ export default async function FeaturesPage({ searchParams }: Props) {
                 <div className="relative">
                   <div aria-hidden className="absolute inset-x-8 inset-y-12 rounded-full blur-3xl"
                     style={{ background: "linear-gradient(180deg, rgb(18,0,54) 0%, rgb(37,1,96) 51%, rgb(18,0,54) 100%)" }} />
-                  <div className="relative"><Phone src={g.shot} alt={g.alt ?? ""} /></div>
+                  <div className="relative"><Phone src={localShot(g.shot, lang)} alt={g.alt ?? ""} /></div>
                 </div>
               )}
               <div>

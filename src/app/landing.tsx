@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PLAN_PRICES, type LandingCopy } from "./landing-copy";
-import { SiteFooter, SiteNav, hrefFor } from "./site-chrome";
+import { SiteFooter, SiteNav, hrefFor, localShot } from "./site-chrome";
 import { siteChrome, siteLang } from "./site-copy";
 
 // The sales page. Visual language: a white "departure board" upper page that drops into a deep
@@ -86,7 +86,7 @@ export function Landing({ c, lang }: { c: LandingCopy; lang: string }) {
 
         {/* The phone with the day, and the cards that orbit it */}
         <div className="relative mx-auto mt-14 max-w-[1100px]">
-          <div className="relative z-10"><Phone src="/landing/today.png" alt={c.hero.shotAlt} priority /></div>
+          <div className="relative z-10"><Phone src={localShot("/landing/today.png", lang)} alt={c.hero.shotAlt} priority /></div>
           <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden>
             <FloatCard icon={ICONS[0]} edge={EDGES[0]} {...c.cards[0]} rotate={-3} className="absolute left-[calc(50%-470px)] top-[6%]" />
             <FloatCard icon={ICONS[1]} {...c.cards[1]} rotate={2} className="absolute left-[calc(50%-420px)] top-[40%]" />
@@ -115,7 +115,7 @@ export function Landing({ c, lang }: { c: LandingCopy; lang: string }) {
                 <div className="relative">
                   <div aria-hidden className="absolute inset-x-8 inset-y-12 rounded-full blur-3xl"
                     style={{ background: "linear-gradient(180deg, rgb(18,0,54) 0%, rgb(37,1,96) 51%, rgb(18,0,54) 100%)" }} />
-                  <div className="relative"><Phone src={row.shot} alt={row.alt} /></div>
+                  <div className="relative"><Phone src={localShot(row.shot, lang)} alt={row.alt} /></div>
                 </div>
                 <div className="max-w-[460px]">
                   <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#89898e]">{row.kicker}</p>

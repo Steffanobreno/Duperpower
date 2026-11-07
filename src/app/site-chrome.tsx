@@ -25,6 +25,9 @@ export const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").rep
 /** A site link in a language: English is the plain path, the others add ?lang=. */
 export const hrefFor = (path: string, lang: string) => (lang === "en" ? path : `${path}?lang=${lang}`);
 
+/** The app's screen in the page's language (public/landing/pt, /es); English is the default set. */
+export const localShot = (src: string, lang: string) => (lang === "pt" || lang === "es" ? src.replace("/landing/", `/landing/${lang}/`) : src);
+
 /** The page's language: ?lang=, else the visitor's saved or phone language (en, pt or es). */
 export async function pageLang(searchParams: Promise<Record<string, string | string[] | undefined>>) {
   return siteLang(await getLang((await searchParams).lang));

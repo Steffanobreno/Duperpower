@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { pricingCopy, siteChrome, type SiteLang } from "../site-copy";
-import { BLUE, Hero, INDIGO, INK, JsonLd, Phone, Questions, SitePage, heading, hrefFor } from "../site-chrome";
+import { BLUE, Hero, INDIGO, INK, JsonLd, Phone, Questions, SitePage, heading, hrefFor, localShot } from "../site-chrome";
 
 type Topic = {
   kicker: string; title: string; sub: string; shot: string; alt: string;
@@ -17,7 +17,7 @@ export function TopicView({ t, lang, path, related }: { t: Topic; lang: SiteLang
     <SitePage lang={lang} path={path} closerNote={trial}>
       <JsonLd path={path} lang={lang} name={t.kicker} home={c.home} faq={t.faq} />
       <Hero kicker={t.kicker} title={t.title} sub={t.sub} lang={lang} c={c} note={trial}
-        aside={<div><Phone src={t.shot} alt={t.alt} priority /></div>} />
+        aside={<div><Phone src={localShot(t.shot, lang)} alt={t.alt} priority /></div>} />
 
       <section className="px-4 py-20 text-white sm:py-24" style={{ background: INDIGO }}>
         <ul className="mx-auto grid max-w-[1100px] gap-3 sm:grid-cols-2 lg:grid-cols-3">

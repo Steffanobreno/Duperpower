@@ -114,11 +114,11 @@ const pt: LandingCopy = {
     shotAlt: "A lista do dia no app: quatro paradas com clientes, pets, serviços, endereços e tempo de estrada",
   },
   cards: [
-    { title: "Emma confirmou", meta: "Luna · Sáb 8:00 · Tosa completa" },
-    { title: "Novo agendamento online", meta: "Max · Banho, Grande · no sábado" },
-    { title: "“A caminho” enviado", meta: "Daniel sabe que você chega por volta de 10:42" },
+    { title: "Mariana confirmou", meta: "Pipoca · Sáb 8:00 · Tosa completa" },
+    { title: "Novo agendamento online", meta: "Thor · Banho, Grande · no sábado" },
+    { title: "“A caminho” enviado", meta: "Rafael sabe que você chega por volta de 10:42" },
     { title: "Melhor ordem encontrada", meta: "Paradas reorganizadas com menos estrada" },
-    { title: "Antirrábica vence em 14 dias", meta: "Lembrete enviado para Olivia" },
+    { title: "Antirrábica vence em 14 dias", meta: "Lembrete enviado para Pedro" },
   ],
   dark: {
     title: "Tudo entre a van e a porta do cliente.",
@@ -206,11 +206,11 @@ const es: LandingCopy = {
     shotAlt: "La lista del día en la app: cuatro paradas con clientes, mascotas, servicios, direcciones y tiempos de manejo",
   },
   cards: [
-    { title: "Emma confirmó", meta: "Luna · Sáb 8:00 · Corte completo" },
-    { title: "Nueva reserva en línea", meta: "Max · Baño, Grande · el sábado" },
-    { title: "“Voy en camino” enviado", meta: "Daniel sabe que llegas hacia las 10:42" },
+    { title: "Valeria confirmó", meta: "Canela · Sáb 8:00 · Corte completo" },
+    { title: "Nueva reserva en línea", meta: "Rocky · Baño, Grande · el sábado" },
+    { title: "“Voy en camino” enviado", meta: "Diego sabe que llegas hacia las 10:42" },
     { title: "Mejor orden encontrado", meta: "Paradas reordenadas con menos manejo" },
-    { title: "La antirrábica vence en 14 días", meta: "Recordatorio enviado a Olivia" },
+    { title: "La antirrábica vence en 14 días", meta: "Recordatorio enviado a Andrés" },
   ],
   dark: {
     title: "Todo entre la van y la puerta del cliente.",
