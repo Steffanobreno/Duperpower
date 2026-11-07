@@ -113,6 +113,15 @@ const guideHtml = await (await fetch(`${BASE}/guides/service-areas?lang=pt`)).te
 if (!/"@type":"HowTo"/.test(guideHtml) || !/"@type":"HowToStep"/.test(guideHtml)) fail("a guide should have HowTo structured data");
 step("guides: public ones only, unknown ones 404, steps as HowTo");
 
+// A missing page: a real 404, in the visitor's language, with links on; legal pages have the site's nav and footer.
+const missing = await fetch(`${BASE}/no-such-page`, { headers: { "Accept-Language": "es-MX" } });
+if (missing.status !== 404 || !/Esta página no existe/.test(await missing.text())) fail("a missing page should be a 404 in the visitor's language");
+for (const legal of ["/terms", "/privacy"]) {
+  const html = await (await fetch(`${BASE}${legal}`)).text();
+  if (!/aria-label="Main"/.test(html) || !/href="\/pricing"/.test(html)) fail(`${legal} should have the site's nav and footer`);
+}
+step("a missing page is a 404 in the visitor's language; terms and privacy have the nav and footer");
+
 // Sitemap and llms.txt list every page.
 const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
 const llms = await (await fetch(`${BASE}/llms.txt`)).text();

@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Terms of Service", description: `The
 // A plain-language starting point. Have it reviewed by a lawyer for the countries you sell in.
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" updated="November 7, 2026">
+    <LegalPage path="/terms" title="Terms of Service" updated="November 7, 2026">
       <p>These terms are an agreement between you (the business that signs up, and the people you invite) and {APP_NAME} (“we”). By creating an account you agree to them.</p>
       <h2>1. The service</h2>
       <p>{APP_NAME} is software for pet grooming businesses: scheduling, an online booking page for your clients, routes, messages, checkout, receipts and reports. Features can change as we improve the product; we will tell you before removing anything you rely on.</p>

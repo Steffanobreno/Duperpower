@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Privacy Policy", description: `How $
 // (for example GDPR in Europe, LGPD in Brazil, CCPA in California).
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="November 7, 2026">
+    <LegalPage path="/privacy" title="Privacy Policy" updated="November 7, 2026">
       <p>This policy explains what {APP_NAME} collects, why, and the choices you have. It covers the business owners and team members who use the app, and the pet owners who book through a business’s page.</p>
       <h2>What we collect</h2>
       <ul>
