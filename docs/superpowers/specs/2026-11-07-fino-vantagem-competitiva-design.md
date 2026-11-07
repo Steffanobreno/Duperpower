@@ -106,19 +106,19 @@ Fora das ondas (já na lista de pendências, cuidados à parte): o logo, o Googl
 - as etiquetas viram chips para marcar ao lado de lâmina, estilo, nota e foto;
 - depois do checkout, ou a qualquer momento depois do início da visita, um cartão "Boletim" mostra a prévia, o botão "Enviar por e-mail" e os botões do 5.1 com o texto "{first_name}, o boletim do {pet} está aqui: {link}".
 
-**Página pública** `/r/[token]`:
+**Página pública** `/g/[token]` (`/r/` já é o recibo):
 - sem login, `noindex`, no idioma do cliente;
 - logo e nome do negócio; por pet: foto, etiquetas, a nota, o estilo;
 - botão grande "Agendar o próximo": abre `/book/<slug>` já como cliente que retorna, com a data sugerida = dia da visita + `rebook_every_days` do pet (sem frequência: sem sugestão);
 - botão "Avaliar no Google" se `review_url` estiver preenchido;
 - rodapé do 5.4.
 
-Token inválido: 404. A foto é servida por uma rota que valida o token (`/r/[token]/photo/[groomId]`), nunca pela rota interna do groomer.
+Token inválido: 404. A foto é servida por uma rota que valida o token (`/g/[token]/photo/[groomId]`), nunca pela rota interna do groomer.
 
 **E-mail:**
-- novo gatilho `report_card` em `messaging.ts`, com modelo padrão nos 20 idiomas;
+- novo gatilho `report_card` em `messaging.ts`, com o modelo padrão em inglês e editável, como os demais modelos (`new-business.ts`); a migração cria o modelo também para as empresas que já existem;
 - sai pelo e-mail que já existe; nunca vai por SMS automático (o SMS fica com o botão do celular).
-- Ajuste em Ajustes → Mensagens: "Enviar o boletim por e-mail automaticamente no checkout" (desligado por padrão). Ligado, o e-mail sai no checkout se houver pelo menos uma foto ou nota.
+- Em Ajustes → Mensagens, o modelo "Boletim" começa desligado (`enabled = false`). Ligado, o e-mail sai pela tarefa de mensagens (`queueDueMessages`) depois do checkout, se houver pelo menos uma foto, nota ou etiqueta. O botão "Enviar por e-mail" da visita funciona mesmo com o modelo desligado.
 - `dedupe_key = report:<appointment_id>`.
 
 ### 5.3 Preencher o buraco
@@ -132,7 +132,7 @@ Token inválido: 404. A foto é servida por uma rota que valida o token (`/r/[to
 
 Ficam de fora: inativos, falecidos, com visita marcada nos próximos 14 dias.
 
-**Ordem:** distância em linha reta (haversine, em SQL) da casa do cliente até a parada mais próxima daquele dia. Sem paradas no dia, até o ponto de partida da van. Cliente sem coordenadas vai para o fim, marcado "sem endereço no mapa". Mostra milhas ou km conforme o país da empresa.
+**Ordem:** distância em linha reta (`milesBetween` com as coordenadas; sem coordenadas, o centro do CEP por `postalPoints`, como o `nearbyDays` já faz) da casa do cliente até a parada mais próxima daquele dia. Sem paradas no dia, até o CEP de partida da van (`businesses.start_zip`). Cliente sem coordenadas vai para o fim, marcado "sem endereço no mapa". Mostra milhas ou km conforme o país da empresa.
 
 **Horários vagos:** `freeGaps(day)` usa o horário de trabalho menos as visitas e os bloqueios. Mostra só buracos maiores que a menor duração de serviço ativa.
 
@@ -140,13 +140,13 @@ Ficam de fora: inativos, falecidos, com visita marcada nos próximos 14 dias.
 - na tela **Hoje**, um cartão "{n} horários vagos · {m} clientes perto" quando o dia mostrado tem buraco (hoje ou futuro);
 - na tela de uma visita **cancelada**, o atalho "Preencher este horário".
 
-Os dois abrem `/fill/[date]`: os buracos no topo e a lista (até 30). Cada linha tem nome, pet, "atrasado há X dias" ou "na lista de espera", distância e os botões do 5.1. O texto usa um modelo editável novo, `gap_offer`: "Oi {first_name}! Vou estar perto de você {day}. Tenho horário às {time} para o {pet}. Quer agendar? {booking_link}".
+Os dois abrem `/fill/[date]`: os buracos no topo e a lista (até 30). Cada linha tem nome, pet, "atrasado há X dias" ou "na lista de espera", distância e os botões do 5.1. O texto usa um modelo editável novo, `gap_offer` (só manual, como o `on_my_way`): "Oi {first_name}! Vou estar perto de você {day}. Tenho horário às {time} para o {pet}. Quer agendar? {booking_link}".
 
 **Registro:** tocar num botão grava `fill_offers (business_id, client_id, day, sent_at)`. Assim a linha mostra "convidado hoje" e o painel do 5.5 conta convites e quantos viraram visita.
 
 ### 5.4 "Agendado com Fino" (crescimento)
 
-**O que é:** uma linha discreta no rodapé da página de agendamento, do boletim, do recibo público e dos e-mails para clientes: "Agendamento online por **Fino** · teste grátis para groomers". O link é `/?ref=<referral_code do groomer>&utm_source=powered_by`.
+**O que é:** uma linha discreta no rodapé do `ClientShell` (o mesmo rodapé de agendamento, boletim, recibo, link da visita e ficha de cliente novo) e dos e-mails para clientes: "Agendamento online por **Fino** · teste grátis para groomers". O link é `/?ref=<referral_code do groomer>&utm_source=powered_by`.
 
 - O Fino ganha um canal gratuito de aquisição. Quem assina por esse link conta como indicação do groomer, e o groomer ganha os US$29 de crédito que o programa de indicação já paga. Isso motiva o groomer a não esconder a linha.
 - Não há opção de esconder na Onda 1 (pode virar recurso de um plano maior depois).
@@ -185,7 +185,7 @@ Os dois abrem `/fill/[date]`: os buracos no topo e a lista (até 30). Cada linha
 - `report-card.mjs`:
   - marca etiquetas e foto;
   - envia;
-  - abre `/r/<token>` deslogado;
+  - abre `/g/<token>` deslogado;
   - confere foto, etiquetas e o link de reagendar com a data sugerida;
   - token errado dá 404;
   - o e-mail automático sai uma vez só.
@@ -199,12 +199,12 @@ Os dois abrem `/fill/[date]`: os buracos no topo e a lista (até 30). Cada linha
 - `powered-by.mjs`:
   - o rodapé aparece no booking e no boletim com o `ref` do groomer;
   - o cadastro por esse link grava `signup_source` e a indicação.
-- O `a11y.mjs` passa a incluir `/r/[token]` e `/fill/[date]`.
+- O `a11y.mjs` passa a incluir `/g/[token]` e `/fill/[date]`.
 
 ### 5.8 Critério de pronto da Onda 1
 
 - `npm run typecheck`, `npm run lint` e a suíte e2e verdes.
-- Lighthouse de `/book/<slug>` e `/r/<token>` ≥ 97 em velocidade.
+- Lighthouse de `/book/<slug>` e `/g/<token>` ≥ 97 em velocidade.
 - `docs/fino-competitor-analysis.md` atualizado com esta pesquisa e os links.
 - `docs/pendencias.md` atualizado.
 - Nada publicado na `master` sem o "pode publicar" do dono.
