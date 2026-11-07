@@ -48,7 +48,7 @@ export async function ReceiptActions({ r, emailAction, result }: {
           )}
           {r.client.phone && (
             <a href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer"
-              className="rounded-full border-2 border-[#1f8a4c] py-2.5 text-center text-[#1f8a4c]">
+              className="rounded-full border-2 border-[#13703a] py-2.5 text-center text-[#13703a]">
               {t("WhatsApp")}
             </a>
           )}

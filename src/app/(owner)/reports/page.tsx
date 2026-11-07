@@ -114,7 +114,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           {r.buckets.length === 0 ? (
             <p className="card px-4 py-6 text-center text-sm text-muted">{t("No visits or payments in this period.")}</p>
           ) : (
-            <div className="card overflow-x-auto">
+            // Reachable by keyboard when it scrolls sideways.
+            <div className="card overflow-x-auto" tabIndex={0} role="region" aria-label={t("By {group}", { group: group })}>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-muted">
@@ -228,10 +229,11 @@ function Tile({ label, value, sub, strong = false }: { label: string; value: str
 function Row({ label, value, hint, warn = false }: { label: string; value: string; hint?: string; warn?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3">
-      <div>
-        <dt className="font-medium">{label}</dt>
-        {hint && <p className="text-xs text-muted">{hint}</p>}
-      </div>
+      {/* The hint sits inside the term: a <dl> row may only hold <dt> and <dd>. */}
+      <dt className="font-medium">
+        {label}
+        {hint && <span className="block text-xs font-normal text-muted">{hint}</span>}
+      </dt>
       <dd className={`font-semibold tabular-nums ${warn ? "text-warn" : ""}`}>{value}</dd>
     </div>
   );
