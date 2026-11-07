@@ -1670,4 +1670,5 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Deine Kunden und Termine sind sicher. Wähle einen Tarif, um die App und deine Buchungsseite wieder zu öffnen:",
 "Deine kostenlose {app}-Testphase endet morgen",
 "Deine kostenlose {app}-Testphase endet in 3 Tagen",
-"Wähle einen Tarif, damit dein Kalender, die Erinnerungen und deine Buchungsseite weiterlaufen. Deine Daten bleiben, wie sie sind:"];
+"Wähle einen Tarif, damit dein Kalender, die Erinnerungen und deine Buchungsseite weiterlaufen. Deine Daten bleiben, wie sie sind:",
+"Karte"];

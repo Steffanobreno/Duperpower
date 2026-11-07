@@ -2,6 +2,8 @@
 import { msg } from "@/lib/i18n";
 export const PAYMENT_METHODS = [
   { value: "cash", label: msg("Cash") },
+  // Recorded only: the groomer's own card reader (Square, SumUp...) takes the card.
+  { value: "card", label: msg("Card") },
   { value: "zelle", label: "Zelle" },
   { value: "venmo", label: "Venmo" },
   { value: "check", label: msg("Check") },

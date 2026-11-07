@@ -8,7 +8,6 @@ import { LANDING_LANGS, landingCopy, PLAN_PRICES } from "./landing-copy";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-const LABELS: Record<string, string> = { en: "English", pt: "Português", es: "Español" };
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 async function pick(searchParams: Props["searchParams"]) {
@@ -65,8 +64,7 @@ export default async function Home({ searchParams }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <Landing c={c} lang={lang}
-        langLinks={LANDING_LANGS.map((l) => ({ code: l, label: LABELS[l], href: l === "en" ? "/?lang=en" : `/?lang=${l}` }))} />
+      <Landing c={c} lang={lang} />
     </>
   );
 }

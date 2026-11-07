@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { APP_NAME } from "@/lib/product";
 import { PLAN_PRICES, type LandingCopy } from "./landing-copy";
+import { SiteFooter, SiteNav, hrefFor } from "./site-chrome";
+import { siteChrome, siteLang } from "./site-copy";
 
 // The sales page. Visual language: a white "departure board" upper page that drops into a deep
 // midnight-indigo "control room"; one blue for the main action, amber only for the final
@@ -11,7 +12,7 @@ import { PLAN_PRICES, type LandingCopy } from "./landing-copy";
 
 const INDIGO = "#0d0021";
 const INK = "#05010d";
-const BLUE = "#007bff";
+const BLUE = "#0066d6"; // 5.4:1 with white text (WCAG AA)
 const AMBER = "#f7be00";
 const RED = "#d92d20";
 const SHADOW =
@@ -51,34 +52,24 @@ function FloatCard({ icon, title, meta, edge, className = "", rotate = 0 }: {
 const ICONS = ["✓", "🗓", "🚐", "🧭", "💉"];
 const EDGES = [BLUE, undefined, undefined, undefined, RED];
 
-export function Landing({ c, lang, langLinks }: { c: LandingCopy; lang: string; langLinks: { code: string; label: string; href: string }[] }) {
+export function Landing({ c, lang }: { c: LandingCopy; lang: string }) {
   const signup = `/signup${lang === "en" ? "" : `?lang=${lang}`}`;
+  const chrome = siteChrome(siteLang(lang));
   const priced = PLAN_PRICES.monthly != null && PLAN_PRICES.yearly != null;
   return (
     <div lang={lang} className="min-h-full bg-white text-black antialiased" style={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
       {/* Announcement bar */}
-      <div className="px-4 py-2 text-center text-[13px] font-medium text-white" style={{ background: INDIGO }}>
-        🌍 {c.bar.text} · <a href="#features" className="underline underline-offset-2">{c.bar.link} →</a>
-      </div>
+      <aside aria-label={c.bar.text} className="px-4 py-2 text-center text-[13px] font-medium text-white" style={{ background: INDIGO }}>
+        🌍 {c.bar.text} · <Link href={hrefFor("/features", lang)} className="underline underline-offset-2">{c.bar.link} →</Link>
+      </aside>
 
-      {/* Floating pill nav */}
-      <header className="sticky top-3 z-30 px-4 pt-3">
-        <nav aria-label="Main" className="mx-auto flex max-w-[860px] items-center gap-2 rounded-full border border-[#cfcfcf]/60 bg-white/90 py-2 pl-4 pr-2 backdrop-blur"
-          style={{ boxShadow: "0 1px 1px .5px rgba(0,0,0,.03), 0 3px 3px 1.5px rgba(0,0,0,.03), 0 6px 6px -3px rgba(0,0,0,.03), 0 12px 12px -6px rgba(0,0,0,.03)" }}>
-          <Link href="/" className="flex items-center gap-2 text-[15px] font-bold">
-            <Image src="/icon.png" alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />
-            {APP_NAME}
-          </Link>
-          <span className="ml-auto hidden items-center gap-1 text-[15px] font-medium sm:flex">
-            <a href="#features" className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.features}</a>
-            <a href="#pricing" className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.pricing}</a>
-            <a href="#faq" className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.faq}</a>
-            <Link href="/login" className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.login}</Link>
-          </span>
-          <Link href={signup} className="ml-auto rounded-full border border-black/50 px-4 py-2 text-[15px] font-semibold sm:ml-1">{c.nav.start}</Link>
-        </nav>
-      </header>
+      <SiteNav c={chrome} lang={lang} anchors={[
+        { href: hrefFor("/features", lang), label: c.nav.features },
+        { href: "#pricing", label: c.nav.pricing },
+        { href: "#faq", label: c.nav.faq },
+      ]} />
 
+      <main>
       {/* Hero: the departure board */}
       <section className="px-4 pb-16 pt-14 text-center sm:pt-20">
         <h1 className={`mx-auto max-w-[820px] ${display}`}>{c.hero.title}</h1>
@@ -144,6 +135,9 @@ export function Landing({ c, lang, langLinks }: { c: LandingCopy; lang: string; 
               </li>
             ))}
           </ul>
+          <p className="mt-10 text-center">
+            <Link href={hrefFor("/features", lang)} className={`${pill} border border-white/25 text-white`} style={{ background: INK }}>{c.bar.link} →</Link>
+          </p>
         </div>
       </section>
 
@@ -195,21 +189,8 @@ export function Landing({ c, lang, langLinks }: { c: LandingCopy; lang: string; 
         </div>
       </section>
 
-      <footer className="px-4 py-10 text-[13px] text-white/60" style={{ background: INK }}>
-        <div className="mx-auto flex max-w-[1100px] flex-wrap items-center gap-x-5 gap-y-3">
-          <span className="font-semibold text-white">{APP_NAME}</span>
-          <Link href="/terms" className="hover:text-white">{c.footer.terms}</Link>
-          <Link href="/privacy" className="hover:text-white">{c.footer.privacy}</Link>
-          <Link href="/login" className="hover:text-white">{c.footer.login}</Link>
-          <span className="ml-auto flex gap-2" aria-label="Language">
-            {langLinks.map((l) => (
-              <a key={l.code} href={l.href} aria-current={l.code === lang ? "true" : undefined}
-                className={`rounded-full px-2.5 py-1 ${l.code === lang ? "bg-white/10 text-white" : "hover:text-white"}`}>{l.label}</a>
-            ))}
-          </span>
-          <span className="w-full">© {new Date().getFullYear()} {APP_NAME}. {c.footer.rights}</span>
-        </div>
-      </footer>
+      </main>
+      <SiteFooter c={chrome} lang={lang} path="/" />
     </div>
   );
 }

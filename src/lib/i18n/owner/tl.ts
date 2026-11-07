@@ -1670,4 +1670,5 @@ export const tl: string[] = ["Naiwang booking",
 "Ligtas ang mga client at visit mo. Pumili ng plan para mabuksan ulit ang app at ang booking page mo:",
 "Bukas na matatapos ang libreng trial mo sa {app}",
 "Matatapos ang libreng trial mo sa {app} sa loob ng 3 araw",
-"Pumili ng plan para tuloy-tuloy ang calendar, mga paalala at booking page mo. Hindi magbabago ang data mo:"];
+"Pumili ng plan para tuloy-tuloy ang calendar, mga paalala at booking page mo. Hindi magbabago ang data mo:",
+""];
