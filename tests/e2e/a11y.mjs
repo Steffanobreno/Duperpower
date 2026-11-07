@@ -1,5 +1,6 @@
 // Accessibility (WCAG 2.2 AA, axe-core) on every kind of screen: the public site, the client's
-// pages (booking, new-client form, their visit, their receipt) and the groomer's app.
+// pages (booking, new-client form, their visit, their receipt) and the groomer's app; and no
+// sideways scroll on the smallest phones (320 px).
 // Run after slice.mjs (owner@example.com, Maria Lopez's visit and receipt). Needs DATABASE_URL.
 // Usage: node tests/e2e/a11y.mjs [baseUrl]
 import { readFileSync } from "node:fs";
@@ -52,6 +53,26 @@ for (const width of [390, 1280]) {
   console.log(`✓ ${width}px: every screen checked`);
   await page.context().close();
 }
+// The smallest phones (320 px): no screen may scroll sideways.
+{
+  const page = await (await browser.newContext({ viewport: { width: 320, height: 640 } })).newPage();
+  const wide = async (path) => {
+    await page.goto(`${BASE}${path}`, { waitUntil: "load" });
+    await page.waitForTimeout(300);
+    const w = await page.evaluate(() => document.documentElement.scrollWidth);
+    if (w > 320) problems.push(`${path}: ${w}px wide on a 320px phone`);
+  };
+  for (const path of ["/?lang=pt", "/features", "/pricing", "/signup", "/book/woofers", "/intake", visit && `/a/${visit.public_token}`].filter(Boolean)) await wide(path);
+  await page.goto(`${BASE}/login`);
+  await page.fill('input[name="email"]', "owner@example.com");
+  await page.fill('input[name="password"]', "correct horse battery");
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/today/);
+  for (const path of ["/today", "/calendar", "/clients", `/clients/${client.id}`, `/appointments/${visit.id}`, `/appointments/${visit.id}/checkout`,
+    "/appointments/new", "/reports", "/settings", "/settings/hours", "/settings/business", "/settings/booking", "/billing"]) await wide(path);
+  console.log("✓ 320px: no screen scrolls sideways");
+}
+
 await browser.close();
 if (problems.length) throw new Error(`accessibility problems:\n${problems.join("\n")}`);
 console.log("a11y: all good (WCAG 2.2 AA, axe-core)");
