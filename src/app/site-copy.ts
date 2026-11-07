@@ -26,7 +26,7 @@ const chromeEn = {
   },
   closer: { title: "Try it on your next working day.", sub: "14 days free, no card. Your prices, your hours and your booking link in five minutes.", cta: "Start your free trial" },
   home: "Home", related: "More about Fino",
-  notFound: { title: "This page isn't here.", text: "The link may be old or typed wrong. These are a good place to start:" },
+  notFound: { title: "Page not found.", text: "The link may be old or typed wrong. These are a good place to start:" },
 };
 const chromePt: typeof chromeEn = {
   nav: { features: "Recursos", pricing: "Preços", login: "Entrar", start: "Começar grátis", menu: "Menu" },
@@ -37,7 +37,7 @@ const chromePt: typeof chromeEn = {
   },
   closer: { title: "Teste no seu próximo dia de trabalho.", sub: "14 dias grátis, sem cartão. Seus preços, seus horários e seu link de agendamento em cinco minutos.", cta: "Começar teste grátis" },
   home: "Início", related: "Mais sobre o Fino",
-  notFound: { title: "Esta página não existe.", text: "O link pode estar antigo ou com erro de digitação. Bons lugares para começar:" },
+  notFound: { title: "Página não encontrada.", text: "O link pode estar antigo ou com erro de digitação. Bons lugares para começar:" },
 };
 const chromeEs: typeof chromeEn = {
   nav: { features: "Funciones", pricing: "Precios", login: "Entrar", start: "Empezar gratis", menu: "Menú" },
@@ -48,7 +48,7 @@ const chromeEs: typeof chromeEn = {
   },
   closer: { title: "Pruébala en tu próximo día de trabajo.", sub: "14 días gratis, sin tarjeta. Tus precios, tu horario y tu enlace de reservas en cinco minutos.", cta: "Empezar prueba gratis" },
   home: "Inicio", related: "Más sobre Fino",
-  notFound: { title: "Esta página no existe.", text: "El enlace puede ser antiguo o tener un error. Buenos lugares para empezar:" },
+  notFound: { title: "Página no encontrada.", text: "El enlace puede ser antiguo o tener un error. Buenos lugares para empezar:" },
 };
 export type SiteChrome = typeof chromeEn;
 export const siteChrome = (l: SiteLang) => ({ en: chromeEn, pt: chromePt, es: chromeEs })[l];
