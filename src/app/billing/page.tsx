@@ -61,6 +61,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         {canChoose && (
           // One form: the code (optional) goes with whichever plan is picked.
           <form action={choosePlanAction} className="grid gap-3">
+            {sp.code_error === "bad" && <Notice kind="error">{t("That code doesn't exist or has expired.")}</Notice>}
+            {sp.code_error === "own" && <Notice kind="error">{t("That's your own referral code: share it with other groomers.")}</Notice>}
+            <Field label={t("Discount or referral code (optional)")}>
+              <Input name="code" defaultValue={typedCode} autoComplete="off" autoCapitalize="characters" />
+            </Field>
             {(["month", "year"] as const).map((interval) => (
               <div key={interval} className="card flex items-center justify-between gap-3 p-4">
                 <span>
@@ -73,11 +78,6 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                 <Button type="submit" name="interval" value={interval}>{interval === "month" ? t("Choose monthly") : t("Choose yearly")}</Button>
               </div>
             ))}
-            {sp.code_error === "bad" && <Notice kind="error">{t("That code doesn't exist or has expired.")}</Notice>}
-            {sp.code_error === "own" && <Notice kind="error">{t("That's your own referral code: share it with other groomers.")}</Notice>}
-            <Field label={t("Discount or referral code (optional)")}>
-              <Input name="code" defaultValue={typedCode} autoComplete="off" autoCapitalize="characters" />
-            </Field>
             <p className="text-center text-xs text-muted">{t("Secure payment by Stripe. Cancel anytime.")}</p>
           </form>
         )}
