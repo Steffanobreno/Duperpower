@@ -92,6 +92,8 @@ await page.waitForURL(/\/calendar\?date=/);
 await page.goto(`${BASE}/calendar?view=day&date=${last}`);
 if ((await page.getByRole("link", { name: /Van service/ }).count()) !== 0) fail("later repeats not removed");
 await page.goto(`${BASE}/calendar?view=day&date=${day}`);
+// Wait for the day to show before counting (count() doesn't wait).
+await page.getByRole("link", { name: /Van service/ }).first().waitFor({ timeout: 10_000 }).catch(() => {});
 if ((await page.getByRole("link", { name: /Van service/ }).count()) !== 1) fail("earlier block should stay");
 step("remove this and the next repeats keeps the earlier one");
 
