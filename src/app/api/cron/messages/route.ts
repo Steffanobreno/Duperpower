@@ -1,4 +1,5 @@
 import { runMessagingJobs } from "@/lib/messaging";
+import { runLifecycleEmails } from "@/lib/lifecycle";
 
 // Hourly job (Hostinger cron or GitHub Actions) so emails go out even when the phone is off.
 // Call with header "Authorization: Bearer <CRON_SECRET>".
@@ -8,5 +9,10 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   await runMessagingJobs();
-  return Response.json({ ok: true });
+  // The owners' own emails: trial ending, first visit (each once).
+  const lifecycle = await runLifecycleEmails().catch((e) => {
+    console.error("lifecycle emails failed", e);
+    return 0;
+  });
+  return Response.json({ ok: true, lifecycle });
 }

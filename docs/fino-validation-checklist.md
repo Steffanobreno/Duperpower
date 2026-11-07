@@ -32,3 +32,10 @@ Rode antes de cada publicação (merge na master).
 - [ ] Cadastro → teste de 14 dias → escolher o plano mensal → o webhook ativa → o painel mostra US$29
 - [ ] Cancelar no portal → o app abre só a página de planos e o booking pausa
 - [ ] Reenviar um evento antigo pelo painel do Stripe não muda o plano
+- [ ] Código de desconto criado em /admin → Códigos aparece no Stripe → Products → Coupons
+- [ ] Indicação: abrir `/signup?ref=<código>` mostra "Invited by …"; o Checkout mostra o mês grátis
+- [ ] O webhook tem o evento `invoice.paid` marcado (é ele que dá o crédito de quem indicou)
+
+## Tarefa de hora em hora e alertas
+- [ ] GitHub Actions → "messages" roda verde (com os segredos `APP_URL` e `CRON_SECRET`)
+- [ ] /admin → Erros abre; o e-mail de alerta chega em ADMIN_EMAILS

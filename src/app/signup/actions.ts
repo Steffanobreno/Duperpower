@@ -6,6 +6,8 @@ import { getOwnerI18n } from "@/lib/i18n/server";
 import { regionOf } from "@/lib/region";
 import { currencyOf, isCountry, isZone, mainZoneOf } from "@/lib/countries";
 import { tooManyFromHere } from "@/lib/rate-limit";
+import { recordReferral } from "@/lib/discounts";
+import { sql } from "@/lib/db";
 
 export type SignupState = { error?: string } | undefined;
 
@@ -33,5 +35,13 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
     lang: (await getOwnerI18n()).lang, metric: regionOf(country).metric,
     source: String(form.get("source") ?? "").trim().slice(0, 120) || null });
   if (error) return { error };
+  // Came with a referral link (/signup?ref=<code>): the new business is noted as referred.
+  const source = String(form.get("source") ?? "").trim();
+  if (source && !source.includes(" ")) {
+    const [biz] = await sql<{ id: string }[]>`
+      select s.business_id as id from staff s join users u on u.id = s.user_id
+      where u.email = ${email.toLowerCase()} and s.role = 'owner' order by s.created_at desc limit 1`;
+    if (biz) await recordReferral(biz.id, source).catch((e) => console.error("referral not recorded", e));
+  }
   redirect("/welcome");
 }

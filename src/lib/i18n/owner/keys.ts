@@ -1655,5 +1655,22 @@ export const OWNER_KEYS: string[] = [
  "This link has expired or was already used.",
  "Choose a new password",
  "Send a new link",
- "Save and log in"
+ "Save and log in",
+ "Invited by {name}: your first month is free when you choose a plan.",
+ "That code doesn't exist or has expired.",
+ "That's your own referral code: share it with other groomers.",
+ "Discount or referral code (optional)",
+ "Refer a groomer: you both get a month",
+ "They get their first month free. You get {amount} off your plan when they pay their first bill.",
+ "Your referral link",
+ "Your referral code",
+ "{n} joined with your code · {amount} in credit so far",
+ "Need help? Open Help in the app.",
+ "Book your first visit in {app}",
+ "Add a client and book their next visit, or share your booking link so clients book themselves:",
+ "Your {app} free trial has ended",
+ "Your clients and visits are safe. Choose a plan to open the app and your booking page again:",
+ "Your {app} free trial ends tomorrow",
+ "Your {app} free trial ends in 3 days",
+ "Choose a plan to keep your calendar, reminders and booking page working. Your data stays as it is:"
 ];

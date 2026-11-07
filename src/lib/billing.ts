@@ -66,7 +66,11 @@ async function customerFor(b: BillingBusiness) {
  * A Stripe Checkout page for a plan. Picking a plan during the free trial keeps the trial: the
  * first charge is when it ends.
  */
-export async function checkoutUrl(businessId: string, interval: Interval, appUrl: string) {
+export async function checkoutUrl(
+  businessId: string, interval: Interval, appUrl: string,
+  // A referral or discount code (see discounts.ts); by default Stripe shows its own code box.
+  discount: { discounts: Stripe.Checkout.SessionCreateParams.Discount[] } | { allow_promotion_codes: true } = { allow_promotion_codes: true },
+) {
   const b = await businessFor(businessId);
   const [customer, price] = await Promise.all([customerFor(b), priceId(interval)]);
   const trialLeft = b.trial_ends_at && b.trial_ends_at.getTime() > Date.now() + 48 * 3600_000;
@@ -75,7 +79,7 @@ export async function checkoutUrl(businessId: string, interval: Interval, appUrl
     customer,
     client_reference_id: b.id,
     line_items: [{ price, quantity: 1 }],
-    allow_promotion_codes: true,
+    ...discount,
     subscription_data: {
       metadata: { business_id: b.id },
       ...(trialLeft ? { trial_end: Math.floor(b.trial_ends_at!.getTime() / 1000) } : {}),

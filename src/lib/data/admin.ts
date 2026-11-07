@@ -23,6 +23,8 @@ export type AdminOverview = {
   activeWeek: number;
   atRisk: number;
   activated: number;
+  /** The last 30 days' signups, step by step (each step counts those who also did the one before). */
+  funnel: { signups: number; setUp: number; firstVisit: number; chosePlan: number; paying: number };
   /** Monthly recurring revenue by currency (yearly plans count 1/12). */
   mrr: { currency: string; cents: number }[];
   weekly: { week: string; signups: number }[];
@@ -31,8 +33,8 @@ export type AdminOverview = {
 };
 
 export async function adminOverview(): Promise<AdminOverview> {
-  const [[c], mrr, weekly, countries, sources] = await Promise.all([
-    sql<Omit<AdminOverview, "mrr" | "weekly" | "countries" | "sources">[]>`
+  const [[c], mrr, weekly, countries, sources, [funnel]] = await Promise.all([
+    sql<Omit<AdminOverview, "mrr" | "weekly" | "countries" | "sources" | "funnel">[]>`
       select count(*)::int as total,
         count(*) filter (where created_at >= date_trunc('day', now()))::int as today,
         count(*) filter (where created_at >= now() - interval '7 days')::int as week,
@@ -68,8 +70,22 @@ export async function adminOverview(): Promise<AdminOverview> {
     sql<{ source: string; n: number }[]>`
       select coalesce(nullif(signup_source, ''), 'direto') as source, count(*)::int as n from businesses
       where created_at >= now() - interval '90 days' group by 1 order by 2 desc limit 10`,
+    // Measured from what's already stored (no tracking scripts, no cookies).
+    sql<AdminOverview["funnel"][]>`
+      with b as (
+        select b.onboarded_at is not null as set_up,
+               exists (select 1 from appointments a where a.business_id = b.id) as visit,
+               b.stripe_subscription_id is not null as plan,
+               b.plan_status = 'active' as paying
+        from businesses b where b.created_at >= now() - interval '30 days')
+      select count(*)::int as signups,
+             count(*) filter (where set_up)::int as "setUp",
+             count(*) filter (where set_up and visit)::int as "firstVisit",
+             count(*) filter (where set_up and visit and plan)::int as "chosePlan",
+             count(*) filter (where set_up and visit and plan and paying)::int as paying
+      from b`,
   ]);
-  return { ...c, mrr, weekly, countries, sources };
+  return { ...c, mrr, weekly, countries, sources, funnel };
 }
 
 export type AdminBusiness = {

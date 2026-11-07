@@ -54,7 +54,7 @@ export async function submitIntakeAction(_: IntakeState, form: FormData): Promis
     } else {
       const [c] = await tx`
         insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip, sms_consent_at, source)
-        values (${b.id}, ${first}, ${last}, ${phone}, ${email}, ${address}, ${city}, ${b.country === "US" ? "CA" : null}, ${zip}, ${consent ? new Date() : null}, 'online')
+        values (${b.id}, ${first}, ${last}, ${phone}, ${email}, ${address}, ${city}, (select case when country = 'US' then state end from businesses where id = ${b.id}), ${zip}, ${consent ? new Date() : null}, 'online')
         returning id`;
       id = c.id;
     }

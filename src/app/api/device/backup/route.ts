@@ -2,6 +2,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { buildBackup } from "@/lib/backup";
 import { clientsCsv } from "@/lib/clients-csv";
 import { sql } from "@/lib/db";
+import { deviceKeyOf } from "@/lib/device";
 
 
 // Read once a week by the Google Apps Script in Settings → Backups, which saves the files
@@ -10,7 +11,7 @@ import { sql } from "@/lib/db";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   // Its own key (not the iPhone / calendar one): this file has every client's details.
-  const key = url.searchParams.get("key") ?? "";
+  const key = deviceKeyOf(request) ?? "";
   const [business] = key.length >= 32
     ? await sql<{ id: string; timezone: string }[]>`select id, timezone from businesses where backup_key = ${key}`
     : [];

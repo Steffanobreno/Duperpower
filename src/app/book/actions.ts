@@ -239,7 +239,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
         const [c] = await tx`
           insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip,
                                sms_consent_at, source)
-          values (${b.id}, ${firstName}, ${lastName}, ${phone}, ${email || null}, ${address}, ${city}, ${b.country === "US" ? "CA" : null}, ${zip},
+          values (${b.id}, ${firstName}, ${lastName}, ${phone}, ${email || null}, ${address}, ${city}, (select case when country = 'US' then state end from businesses where id = ${b.id}), ${zip},
                   ${input.smsConsent ? new Date() : null}, 'online')
           returning id`;
         clientId = c.id;

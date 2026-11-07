@@ -1,4 +1,4 @@
-import { businessForDeviceKey } from "@/lib/device";
+import { businessForDeviceKey, deviceKeyOf } from "@/lib/device";
 import { monthlyMarketingReminder, queueDueMessages, sendQueuedEmails, takeSmsOutbox } from "@/lib/messaging";
 import { processCampaigns } from "@/lib/data/marketing";
 
@@ -6,8 +6,7 @@ import { processCampaigns } from "@/lib/data/marketing";
 // Returns the texts to send from the phone: { count, messages: [{ phone, body }] }.
 // Each text is returned once; the Shortcut sends them with "Send Message".
 export async function GET(request: Request) {
-  const key = new URL(request.url).searchParams.get("key");
-  const business = await businessForDeviceKey(key);
+  const business = await businessForDeviceKey(deviceKeyOf(request));
   if (!business) return Response.json({ error: "Unknown key" }, { status: 401 });
 
   await queueDueMessages(business.id);

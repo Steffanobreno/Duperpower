@@ -7,7 +7,9 @@ import { getOwnerI18n } from "@/lib/i18n/server";
 import { APP_NAME } from "@/lib/product";
 import { logoutAction } from "@/app/login/actions";
 import { I18nProvider } from "@/components/i18n";
-import { Button, Card, Notice } from "@/components/ui";
+import { Button, Card, Field, Input, Notice } from "@/components/ui";
+import { CopyField } from "@/components/copy-field";
+import { referralStats, REFERRAL_CENTS } from "@/lib/discounts";
 import { choosePlanAction, manageBillingAction } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,6 +45,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             : access.locked ? t("Your free trial has ended. Choose a plan to keep using the app; your data is still here.")
               : t("Free trial: {n} days left. Choose a plan anytime: you won't be charged until the trial ends.", { n: access.trialDaysLeft ?? 0 });
   const canChoose = owner && billingOn() && ["trial", "cancelled"].includes(b.plan_status);
+  // Referral: owners of businesses that use the app (not courtesy accounts) can invite others.
+  const referral = owner && billingOn() ? await referralStats(staff.businessId) : null;
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const typedCode = typeof sp.code === "string" ? sp.code.slice(0, 40) : "";
   return (
     <I18nProvider lang={lang} messages={messages}>
       <main className="mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-8">
@@ -53,9 +59,10 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <Card><p className={access.locked || b.plan_status === "past_due" ? "font-semibold text-danger" : "font-semibold"}>{status}</p></Card>
 
         {canChoose && (
-          <div className="grid gap-3">
+          // One form: the code (optional) goes with whichever plan is picked.
+          <form action={choosePlanAction} className="grid gap-3">
             {(["month", "year"] as const).map((interval) => (
-              <form key={interval} action={choosePlanAction.bind(null, interval)} className="card flex items-center justify-between gap-3 p-4">
+              <div key={interval} className="card flex items-center justify-between gap-3 p-4">
                 <span>
                   <span className="block font-bold">{interval === "month" ? t("Monthly") : t("Yearly")}</span>
                   <span className="block text-2xl font-extrabold">
@@ -63,16 +70,38 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                   </span>
                   {interval === "year" && <span className="block text-sm font-semibold text-success">{t("2 months free")}</span>}
                 </span>
-                <Button type="submit">{interval === "month" ? t("Choose monthly") : t("Choose yearly")}</Button>
-              </form>
+                <Button type="submit" name="interval" value={interval}>{interval === "month" ? t("Choose monthly") : t("Choose yearly")}</Button>
+              </div>
             ))}
+            {sp.code_error === "bad" && <Notice kind="error">{t("That code doesn't exist or has expired.")}</Notice>}
+            {sp.code_error === "own" && <Notice kind="error">{t("That's your own referral code: share it with other groomers.")}</Notice>}
+            <Field label={t("Discount or referral code (optional)")}>
+              <Input name="code" defaultValue={typedCode} autoComplete="off" autoCapitalize="characters" />
+            </Field>
             <p className="text-center text-xs text-muted">{t("Secure payment by Stripe. Cancel anytime.")}</p>
-          </div>
+          </form>
         )}
         {owner && billingOn() && b.stripe_customer_id && (
           <form action={manageBillingAction}>
             <Button type="submit" kind="secondary" className="w-full">{t("Manage billing (card, invoices, cancel)")}</Button>
           </form>
+        )}
+        {referral && (
+          <Card>
+            <h2 className="text-lg font-bold">{t("Refer a groomer: you both get a month")}</h2>
+            <p className="mt-1 text-sm text-muted">
+              {t("They get their first month free. You get {amount} off your plan when they pay their first bill.", { amount: usd(REFERRAL_CENTS, locale) })}
+            </p>
+            <div className="mt-3 space-y-3">
+              <CopyField label={t("Your referral link")} value={`${appUrl}/signup?ref=${referral.code}`} />
+              <CopyField label={t("Your referral code")} value={referral.code} />
+            </div>
+            {referral.joined > 0 && (
+              <p className="mt-3 text-sm font-semibold">
+                {t("{n} joined with your code · {amount} in credit so far", { n: referral.joined, amount: usd(referral.creditCents, locale) })}
+              </p>
+            )}
+          </Card>
         )}
         {!owner && access.locked && <Notice kind="info">{t("Ask the business owner to choose a plan.")}</Notice>}
         {!billingOn() && owner && b.plan_status !== "free" && <Notice kind="info">{t("Payments aren't set up yet. You can keep using the app.")}</Notice>}

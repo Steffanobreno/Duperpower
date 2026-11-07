@@ -47,6 +47,25 @@ export default async function AdminHome() {
           tone={growth != null && growth < 0 ? "bad" : undefined} />
       </section>
 
+      <section aria-labelledby="funnel" className="card space-y-3 p-4">
+        <h2 id="funnel" className="font-bold">Funil dos cadastros (últimos 30 dias)</h2>
+        <ol className="grid gap-2 sm:grid-cols-5">
+          {([
+            ["Cadastraram", o.funnel.signups, o.funnel.signups],
+            ["Passaram da configuração", o.funnel.setUp, o.funnel.signups],
+            ["Marcaram a 1ª visita", o.funnel.firstVisit, o.funnel.setUp],
+            ["Escolheram um plano", o.funnel.chosePlan, o.funnel.firstVisit],
+            ["Pagando agora", o.funnel.paying, o.funnel.chosePlan],
+          ] as const).map(([label, v, prev], i) => (
+            <li key={label} className="rounded-xl bg-bg p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
+              <p className="text-2xl font-extrabold tabular-nums">{n(v)}</p>
+              {i > 0 && <p className="text-xs text-muted">{pct(v, prev)} da etapa anterior</p>}
+            </li>
+          ))}
+        </ol>
+      </section>
+
       <section aria-label="Teste grátis e uso" className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Em teste grátis" value={n(o.trial)} hint={`${n(o.trialEndingSoon)} terminam em 3 dias`} href="/admin/businesses?f=trial" tone="warn" />
         <Stat label="Teste vencido sem pagar" value={n(o.trialExpired)} href="/admin/businesses?f=trial" tone={o.trialExpired ? "bad" : undefined} />

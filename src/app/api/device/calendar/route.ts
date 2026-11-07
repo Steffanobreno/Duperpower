@@ -1,6 +1,6 @@
 import { APP_NAME } from "@/lib/product";
 import { sql } from "@/lib/db";
-import { businessForDeviceKey } from "@/lib/device";
+import { businessForDeviceKey, deviceKeyOf } from "@/lib/device";
 import { icsCalendar, icsEventLines } from "@/lib/ics";
 
 // Calendar feed of the visits. Two formats:
@@ -11,7 +11,7 @@ import { icsCalendar, icsEventLines } from "@/lib/ics";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const business = await businessForDeviceKey(url.searchParams.get("key"));
+  const business = await businessForDeviceKey(deviceKeyOf(request));
   if (!business) return new Response("Unknown key", { status: 401 });
 
   const rows = await sql<

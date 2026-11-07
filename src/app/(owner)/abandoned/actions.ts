@@ -34,7 +34,8 @@ export async function addClientFromDraftAction(id: string) {
     const [c] = await tx`
       insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip, source)
       values (${staff.businessId}, ${d.first_name ?? "New client"}, ${d.last_name ?? ""}, ${d.phone}, ${d.email},
-              ${d.address_line}, ${d.city}, 'CA', ${d.zip}, 'online')
+              ${d.address_line}, ${d.city},
+              (select case when country = 'US' then state end from businesses where id = ${staff.businessId}), ${d.zip}, 'online')
       returning id`;
     for (const p of d.pet_details ?? []) {
       if (!p.name) continue;
