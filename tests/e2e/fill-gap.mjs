@@ -1,7 +1,7 @@
 // Fill the gap, end to end. Run after slice.mjs, with DATABASE_URL.
 // A working day 10 days ahead has a block 07:00–09:00 and one visit 09:00–11:00 at 94401. Clients A (94402) and B (94010)
 // are due; C is due but already booked 12 days ahead; A2 is due but already rebooked (25 days after
-// the day); D is on the waitlist for the day.
+// the day); E is due but blocked from online booking; D is on the waitlist for the day.
 // /fill/<day> shows the free time and D, A, B in that order (not C), with the gap offer ready to send;
 // tapping WhatsApp records the invite (once). A groomer without "See client phone numbers"
 // sees the list but no send links.
@@ -68,7 +68,10 @@ const B = await client("Blake", "94010");
 const C = await client("Casey", "94402");
 const A2 = await client("Ari", "94402");
 const D = await client("Dana", "94401");
-for (const id of [A, B, C, A2]) await visit(id, -50, "10:00", "12:00", "completed", null);
+// E is due but blocked from booking online: never invited.
+const E = await client("Eli", "94402");
+await db`update clients set online_booking_blocked = true where id = ${E}`;
+for (const id of [A, B, C, A2, E]) await visit(id, -50, "10:00", "12:00", "completed", null);
 await visit(C, n + 12, "10:00", "12:00", "confirmed", "94402");
 await visit(A2, n + 25, "10:00", "12:00", "confirmed", "94402");
 await db`update pets set rebook_every_days = null where client_id = ${D}`;
@@ -102,7 +105,8 @@ await row(A).getByText(/\d+ days overdue/).waitFor();
 if (rows.includes(C)) fail("C has a visit 12 days later and should not be invited");
 if (rows.includes(A2)) fail("A2 already rebooked (25 days later) and should not be invited");
 if (rows.includes(stop)) fail("the client booked that day should not be invited");
-step("D (waitlist) first, then A before B (closer to the stop); C (booked soon) and A2 (rebooked) left out");
+if (rows.includes(E)) fail("E is blocked from online booking and should not be invited");
+step("D (waitlist) first, then A before B (closer to the stop); C (booked soon), A2 (rebooked) and E (blocked) left out");
 
 const wa = row(A).getByRole("link", { name: "WhatsApp" });
 const href = await wa.getAttribute("href");
@@ -162,6 +166,14 @@ step("tapping WhatsApp opens it and records the invite once; A shows Invited tod
 await page.goto(`${BASE}/fill/${SUNDAY}`);
 await page.getByText("No free time this day.").waitFor();
 step("a Sunday (day off) has no free time");
+
+// A working day that has passed: nothing to fill, nobody to invite.
+let p = -3;
+while (weekday(la(p)) === 0 || (await db`select 1 from closed_dates where business_id = ${biz} and ${la(p)}::date between start_date and end_date`).length) p--;
+await page.goto(`${BASE}/fill/${la(p)}`);
+await page.getByText("No free time this day.").waitFor();
+if (await page.locator("li[data-client]").count()) fail("a past day should invite nobody");
+step("a past working day shows no free time and no invites");
 
 // With the owner loading screen the status is already sent (200), so check the page says "not found" (as fixes.mjs does).
 for (const bad of ["not-a-date", "2026-02-31"]) {

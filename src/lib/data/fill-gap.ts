@@ -130,6 +130,7 @@ export async function fillCandidates(staff: StaffContext, date: string, limit = 
       left join wait on wait.client_id = c.id
       left join due on due.client_id = c.id
       where c.business_id = ${staff.businessId} and (wait.client_id is not null or due.client_id is not null)
+        and not c.online_booking_blocked
         and ${invitable(staff, date)}`,
     dayStops(staff, date),
     sql<{ start_zip: string | null }[]>`select start_zip from businesses where id = ${staff.businessId}`,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { dayGaps, fillCandidates, gapOfferText } from "@/lib/data/fill-gap";
-import { isRealYmd, longDayLabel, timeLabel, zonedToUtc } from "@/lib/format";
+import { isRealYmd, longDayLabel, timeLabel, todayYmd, zonedToUtc } from "@/lib/format";
 import { Empty, Notice, Page, PageHeader } from "@/components/ui";
 import { SendFromPhone } from "@/components/send-from-phone";
 import { RecordOffer } from "../record-offer";
@@ -21,7 +21,9 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
   const { t } = await getOwnerI18n();
   const tz = staff.timezone;
   const at = (time: string) => timeLabel(zonedToUtc(date, time, tz), tz);
-  const [gaps, candidates] = await Promise.all([dayGaps(staff, date), fillCandidates(staff, date)]);
+  // A day that has passed has nothing to fill, and nobody to invite.
+  const past = date < todayYmd(tz);
+  const [gaps, candidates] = past ? [[], []] : await Promise.all([dayGaps(staff, date), fillCandidates(staff, date)]);
   // Phone numbers (in the WhatsApp and text links) only for those allowed to see them.
   const canSend = staff.can.client_contact;
   const offer = canSend && gaps.length ? await gapOfferText(staff, date, gaps[0].start) : null;
