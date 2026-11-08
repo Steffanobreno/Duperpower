@@ -9,7 +9,8 @@ Atualizado em 2026-11-08 (Onda 1 e correções jurídicas prontas na branch `cla
 - [ ] **Stripe → Developers → Webhooks:** endpoint `<APP_URL>/api/stripe/webhook` com os eventos `checkout.session.completed`, `customer.subscription.created`, `.updated`, `.deleted` e **`invoice.paid`** (este dá o crédito da indicação).
 - [ ] **GitHub → Duperpower → Settings → Secrets → Actions:** criar `APP_URL` e `CRON_SECRET`. Criar a mesma `CRON_SECRET` no Netlify. Isso liga os lembretes e os e-mails do fim do teste.
 - [ ] **`ADMIN_EMAILS`** no Netlify: o seu e-mail (para o /admin e os alertas de erro).
-- [ ] Opcionais: `ANTHROPIC_API_KEY` (assistente da Ajuda) e `SUPPORT_EMAIL`.
+- [ ] **`SUPPORT_EMAIL`** no Netlify, **antes de publicar**: é para onde vão os pedidos de reembolso e de encerramento de conta (os Termos e a Privacidade mostram esse e-mail). Depois de pôr a variável, faça um **novo deploy** (as páginas `/terms` e `/privacy` são geradas no build).
+- [ ] Opcional: `ANTHROPIC_API_KEY` (assistente da Ajuda).
 - [ ] **Logo do Fino:** mandar o arquivo. Hoje o ícone ainda é o cachorro da Woofers.
 - [ ] **Neon:** fazer o ensaio de restauração (`docs/fino-backup-restore.md`) e ver quantos dias de histórico o plano guarda.
 
@@ -74,7 +75,7 @@ Esta lista é um roteiro para levar a um advogado e a um contador, não é acons
 **Contrato e consumidor**
 9. As leis de renovação automática (ARL da Califórnia com a AB 2863, ROSCA e outras estaduais) valem para venda a pequenos negócios e autônomos? O que preciso mostrar no checkout e mandar por e-mail, incluindo para o plano anual?
 10. Lei aplicável, foro, arbitragem e renúncia a ação coletiva: o que funciona melhor para uma empresa brasileira ou americana vendendo para groomers americanos?
-11. A política "sem reembolso" é aceitável? Devo oferecer reembolso proporcional ou em X dias no anual?
+11. A política escolhida (mensal sem reembolso; anual proporcional em até 14 dias) é aceitável?
 12. Regras do programa de indicação: preciso de cuidado com 1099 ou impostos por dar crédito? (Provavelmente não, por ser desconto e não dinheiro, mas confirmar.)
 
 **Privacidade e mensagens**
