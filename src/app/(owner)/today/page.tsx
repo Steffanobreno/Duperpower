@@ -25,6 +25,7 @@ import { petCodesFor } from "@/lib/data/options";
 import { PetCodeChips } from "@/components/chips";
 import { GoldBanner } from "@/components/gold-banner";
 import { waitlistOpenings } from "@/lib/data/waitlist";
+import { dayGaps, fillCandidates } from "@/lib/data/fill-gap";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -59,7 +60,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
   // Everything that only needs the date, in one go (each trip to the database costs time).
-  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start]] = await Promise.all([
+  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start], fill] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
@@ -89,6 +90,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
              exists (select 1 from clients c where c.business_id = b.id) as clients,
              (select count(*)::int from appointments a where a.business_id = b.id) as visits
       from businesses b where b.id = ${staff.businessId}`,
+    // Free time on a day that hasn't passed, and how many clients could fill it (candidates only if there are gaps).
+    date >= today
+      ? dayGaps(staff, date).then(async (gaps) => gaps.length
+        ? { slots: gaps.length, nearby: (await fillCandidates(staff, date, 30)).length } : null)
+      : null,
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.
   // Without "see every groomer's visits", only their own route.
@@ -256,6 +262,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </section>
         )}
         {sp.reordered === "1" && <Toast>{t("The visits are in the new order, with their new times.")}</Toast>}
+        {fill && (
+          <Link href={`/fill/${date}`} className="card block px-4 py-3 text-sm font-semibold text-brand">
+            {t("{n} free slots · {m} clients nearby", { n: fill.slots, m: fill.nearby })} ›
+          </Link>
+        )}
         {canOptimize && sp.optimize !== "1" && (
           <Link href={q({ optimize: "1" })}
             className="flex items-center justify-center gap-2 rounded-full border border-[#d4af37] bg-surface py-2 text-sm font-bold text-brand">

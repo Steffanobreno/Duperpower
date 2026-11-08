@@ -402,6 +402,9 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
             </ul>
           </section>
         )}
+        {appt.status === "cancelled" && appt.start_at > new Date() && (
+          <Link href={`/fill/${day}`} className="card block px-4 py-3 text-center text-sm font-semibold text-brand">{t("Fill this time")} ›</Link>
+        )}
         <p className="text-center text-xs text-muted">
           <Link href={`/calendar?date=${ymd(appt.start_at, tz)}`} className="underline">{t("See this day in the calendar")}</Link>
         </p>

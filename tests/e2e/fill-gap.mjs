@@ -171,6 +171,22 @@ for (const bad of ["not-a-date", "2026-02-31"]) {
 }
 step("a bad date shows the not-found page");
 
+// Today's card for the day, and a cancelled future visit points back to the same day.
+await page.goto(`${BASE}/today?date=${DAY}`);
+const card = page.getByRole("link", { name: /\d+ free slots · \d+ clients nearby/ });
+await card.waitFor();
+if (!(await card.getAttribute("href")).endsWith(`/fill/${DAY}`)) fail("the Today card should link to /fill/<day>");
+step("Today shows the free slots card linking to /fill/<day>");
+const [{ id: stopVisit }] = await db`select id from appointments where client_id = ${stop} and status = 'confirmed'`;
+await page.goto(`${BASE}/appointments/${stopVisit}`);
+if (await page.getByRole("link", { name: /Fill this time/ }).count()) fail("a confirmed visit should not offer Fill this time");
+await db`update appointments set status = 'cancelled' where id = ${stopVisit}`;
+await page.goto(`${BASE}/appointments/${stopVisit}`);
+const fillLink = page.getByRole("link", { name: /Fill this time/ });
+await fillLink.waitFor();
+if (!(await fillLink.getAttribute("href")).endsWith(`/fill/${DAY}`)) fail("Fill this time should link to /fill/<day>");
+step("a cancelled future visit shows Fill this time linking to /fill/<day>");
+
 await cleanUp();
 await db.end();
 await browser.close();
