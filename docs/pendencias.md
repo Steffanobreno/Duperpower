@@ -13,6 +13,14 @@ Atualizado em 2026-11-08 (Onda 1 pronta na branch `claude/clever-clarke-3ukcxg`;
 - [ ] **Logo do Fino:** mandar o arquivo. Hoje o ícone ainda é o cachorro da Woofers.
 - [ ] **Neon:** fazer o ensaio de restauração (`docs/fino-backup-restore.md`) e ver quantos dias de histórico o plano guarda.
 
+## Modo de teste dos pagamentos (até o Stripe existir)
+Enquanto a empresa não está aberta e não há chaves do Stripe, o app tem um **modo de teste**: o groomer escolhe o plano mensal (US$29) ou anual (US$290) e "paga" numa página de teste do próprio Fino, **sem cobrança de verdade**. Tudo funciona como vai funcionar com o Stripe: os 14 dias grátis (escolher o plano no teste grátis mantém o teste; a 1ª cobrança é no fim dele, a não ser que faltem menos de 48 horas), os códigos de desconto do /admin → Códigos, a indicação (1º mês grátis para quem foi indicado e US$29 de crédito para quem indicou, uma vez, quando o indicado paga a 1ª cobrança de verdade), e "Gerenciar assinatura" (cancelar no fim do período ou retomar). As renovações e os fins de plano acontecem no job de hora em hora (o mesmo dos lembretes, com `CRON_SECRET`).
+- Aparece a faixa **"Modo de teste — nenhuma cobrança real"** na página do plano, nas páginas de teste e no /admin. Se a faixa aparece, ninguém está pagando.
+- **Liga sozinho** quando não há `STRIPE_SECRET_KEY`: sempre no computador de desenvolvimento; no site no ar, só com `FAKE_PAYMENTS=1` no Netlify. Sem essa variável e sem Stripe, o site no ar fica como antes: ninguém paga e nada é bloqueado. Ninguém consegue ativar um plano de graça.
+- **Desliga sozinho** quando `STRIPE_SECRET_KEY` for colocada no Netlify: a partir daí vale o Stripe, sem mudar código. Os planos de teste que ainda existirem terminam no fim do período (não renovam de graça) e a pessoa escolhe o plano de novo, agora pelo Stripe. Os códigos de desconto criados no modo de teste (marcados "teste" no /admin) não existem no Stripe: crie de novo depois de ligar o Stripe.
+- [ ] **Importante:** **NÃO** deixe `FAKE_PAYMENTS=1` no site no ar quando houver clientes de verdade. Com ela, qualquer groomer "paga" o plano na página de teste sem pagar nada. Apague a variável no Netlify antes de abrir para clientes (ou assim que colocar as chaves do Stripe).
+- No modo de teste, o crédito da indicação fica só registrado no Fino (aparece na página do plano de quem indicou); ele não é descontado das cobranças de teste.
+
 ## Conferir no site no ar
 - [ ] /admin → Códigos abre. Criar um código de lançamento (ex.: LANCAMENTO50).
 - [ ] /admin → Erros abre.
