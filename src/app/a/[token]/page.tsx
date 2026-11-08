@@ -138,7 +138,7 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
                   tabIndex={0}
                   aria-label={t("Service agreement")}
                 >
-                  <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} />
+                  <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, agreement.language)} />
                 </div>
                 <label className="flex items-start gap-3 text-sm">
                   <input type="checkbox" name="agree" required className="mt-1 h-4 w-4" />

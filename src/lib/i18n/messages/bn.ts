@@ -312,8 +312,6 @@ export const bn: Messages = {
     "আপনি আর {business}-এর খবর ও অফার পাবেন না। ভিজিটের রিমাইন্ডার আসতে থাকবে।",
   "Unsubscribe":
     "সাবস্ক্রিপশন বাতিল করুন",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "একটি ফি",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "চুক্তিটি বদলেছে। অনুগ্রহ করে আবার পড়ুন।",
 };

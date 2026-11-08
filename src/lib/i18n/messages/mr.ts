@@ -312,8 +312,6 @@ export const mr: Messages = {
     "तुम्हाला {business} च्या बातम्या आणि ऑफर्स मिळणे बंद होईल. भेटींची स्मरणपत्रे येत राहतील.",
   "Unsubscribe":
     "सदस्यता रद्द करा",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "शुल्क",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "करार बदलला आहे. कृपया तो पुन्हा वाचा.",
 };

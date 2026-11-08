@@ -312,8 +312,6 @@ export const te: Messages = {
     "మీకు {business} వార్తలు, ఆఫర్లు రావడం ఆగిపోతుంది. సందర్శన రిమైండర్లు వస్తూనే ఉంటాయి.",
   "Unsubscribe":
     "సభ్యత్వం రద్దు చేయండి",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "రుసుము",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "ఒప్పందం మారింది. దయచేసి మళ్ళీ చదవండి.",
 };

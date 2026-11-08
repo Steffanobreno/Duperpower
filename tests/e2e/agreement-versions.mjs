@@ -3,7 +3,8 @@
 // DATABASE_URL. Maria signs → the owner edits the text: a new kept version, her signature still
 // counts and still shows the text she signed → an edit with "sign again" makes her sign again (and
 // refuses a signature of the version she was reading) →
-// removing her warns that her signatures go too → the no-show fee fills the text → a business that
+// removing her warns that her signatures go too → the no-show fee fills the text (an empty one reads
+// in the agreement's language, not the reader's) → a business that
 // signs up in Portuguese starts with a Portuguese agreement. Signs once a year during the test;
 // puts the text and that option back at the end.
 // Usage: node tests/e2e/agreement-versions.mjs [baseUrl]
@@ -169,6 +170,16 @@ if (!pt?.title.startsWith("Contrato de serviço")) fail(`the title should be in 
 if (!pt.body.includes("Este contrato vale por 12 meses a partir da assinatura.")) fail("the 12-month validity should be in Portuguese");
 if (!pt.body.includes("{no_show_fee}")) fail("the starter agreement should carry the no-show fee");
 step("a business that signs up in Portuguese gets a Portuguese agreement with the fee and the 12 months");
+
+// With no fee set, {no_show_fee} reads in the agreement's language, whatever the reader's.
+const [lia] = await db`insert into clients (business_id, first_name, last_name, phone)
+  select st.business_id, 'Rui', 'Leitor', '+5511999990000' from staff st join users u on u.id = st.user_id where u.email = ${email}
+  returning sign_token`;
+const reader = await newPage("en-US");
+await reader.goto(`${BASE}/s/${lia.sign_token}?lang=en`);
+await reader.getByText("Uma falta ou um cancelamento em cima da hora pode ser cobrado com uma taxa.").waitFor();
+if (await reader.getByText(/cobrado com a fee/).count()) fail("the fee fallback should be in the agreement's language");
+step("an English reader of a Portuguese agreement sees “uma taxa”, not “a fee”");
 
 // A signature from before Fino kept each version points to a version made from the text at that
 // time (migration 0050, "backfilled"): the profile says the text may have changed since.

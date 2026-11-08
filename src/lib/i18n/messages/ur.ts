@@ -312,8 +312,6 @@ export const ur: Messages = {
     "آپ کو {business} کی خبریں اور آفرز ملنا بند ہو جائیں گی۔ وزٹ کی یاد دہانیاں آتی رہیں گی۔",
   "Unsubscribe":
     "سبسکرپشن ختم کریں",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "فیس",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "معاہدہ بدل گیا ہے۔ براہ کرم اسے دوبارہ پڑھیں۔",
 };

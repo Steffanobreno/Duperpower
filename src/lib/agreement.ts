@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import type { TransactionSql } from "postgres";
 import { sql } from "./db";
 import { money } from "./format";
+import { isLang, makeT, msg } from "./i18n";
+import { OWNER_MESSAGES } from "./i18n/owner";
 
 // The service agreement: `agreements` holds the current text and options; every text it ever had
 // is kept in `agreement_versions` (never changed), and each signature points to the version signed.
@@ -13,12 +15,16 @@ export type Agreement = {
   resign_from_version: number;
   /** Fills {no_show_fee} in the text (null: "a fee"). */
   no_show_fee_cents: number | null;
+  /** The language the text is in: the one it was created in, else the owner's (null: English). */
+  language: string | null;
 };
 
 export async function activeAgreement(businessId: string) {
   const [a] = await sql<Agreement[]>`
-    select id, title, body, version, required_online, sign_every_booking, resign_from_version, no_show_fee_cents from agreements
-    where business_id = ${businessId} and active order by created_at desc limit 1`;
+    select a.id, a.title, a.body, a.version, a.required_online, a.sign_every_booking, a.resign_from_version, a.no_show_fee_cents,
+           coalesce(a.language, (select s.language from staff s where s.business_id = a.business_id and s.role = 'owner'
+                                 order by s.created_at limit 1)) as language
+    from agreements a where a.business_id = ${businessId} and a.active order by a.created_at desc limit 1`;
   return a ?? null;
 }
 
@@ -56,10 +62,11 @@ export async function agreementVersion(agreementId: string, version: number) {
 }
 
 /**
- * What {no_show_fee} reads as in the text: the amount in the page's currency, or `noAmount`
- * ("a fee", in the reader's language) when the owner left it empty.
+ * What {no_show_fee} reads as in the text: the amount in the page's currency, or "a fee" when the
+ * owner left it empty, in the agreement's `language` (not the reader's), like the rest of the text.
  */
-export const noShowFeeText = (cents: number | null, noAmount: string) => (cents == null ? noAmount : money(cents));
+export const noShowFeeText = (cents: number | null, language: string | null) =>
+  cents == null ? makeT(OWNER_MESSAGES[isLang(language) ? language : "en"])(msg("a fee")) : money(cents);
 
 /** A drawn signature from the booking page: a small PNG as a data URL, or null if it isn't one. */
 export function signatureImage(dataUrl: unknown) {

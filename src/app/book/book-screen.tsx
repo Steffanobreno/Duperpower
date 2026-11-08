@@ -35,7 +35,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
             businessPhone={phone}
             today={todayYmd(b.timezone)}
             agreementTitle={agreement?.title ?? null}
-            agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} /> : null}
+            agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, agreement.language)} /> : null}
             agreementVersion={agreement?.version ?? null}
             slug={slug}
             preferredDate={isYmd(preferredDate) ? preferredDate : null}

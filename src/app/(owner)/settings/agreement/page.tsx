@@ -55,7 +55,7 @@ export default async function AgreementPage() {
         {agreement && (
           <Card>
             <p className="mb-2 text-xs font-semibold uppercase text-muted">{t("Preview")}</p>
-            <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} />
+            <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, agreement.language)} />
           </Card>
         )}
       </Page>

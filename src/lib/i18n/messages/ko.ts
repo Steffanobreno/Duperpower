@@ -305,8 +305,6 @@ export const ko: Messages = {
     "{business}의 소식과 혜택을 더 이상 받지 않습니다. 방문 알림은 계속 옵니다.",
   "Unsubscribe":
     "구독 취소",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "수수료",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "계약서가 변경되었습니다. 다시 읽어 주세요.",
 };

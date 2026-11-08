@@ -305,8 +305,6 @@ export const zh: Messages = {
     "您将不再收到 {business} 的资讯和优惠。预约提醒仍会发送。",
   "Unsubscribe":
     "取消订阅",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "一笔费用",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "协议已更新。请重新阅读。",
 };

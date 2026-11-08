@@ -312,8 +312,6 @@ export const ja: Messages = {
     "{business}からのお知らせとお得な情報は届かなくなります。来店リマインダーは引き続き届きます。",
   "Unsubscribe":
     "配信を停止",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "料金",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "契約書が変更されました。もう一度お読みください。",
 };

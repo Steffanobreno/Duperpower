@@ -190,7 +190,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                       <p className="mt-2 text-muted">{t("Signed before {app} kept each version; the text may have changed since.", { app: APP_NAME })}</p>
                     )}
                     <div data-testid="signed-agreement" className="mt-2 max-h-96 overflow-y-auto rounded-xl border border-line bg-bg p-3">
-                      <AgreementText title={signedText.title} body={signedText.body} noShowFee={noShowFeeText(signedText.no_show_fee_cents, t("a fee"))} />
+                      <AgreementText title={signedText.title} body={signedText.body} noShowFee={noShowFeeText(signedText.no_show_fee_cents, agreement.language)} />
                     </div>
                   </details>
                 )}

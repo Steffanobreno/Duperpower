@@ -312,8 +312,6 @@ export const ru: Messages = {
     "Вы перестанете получать новости и предложения от {business}. Напоминания о визитах продолжат приходить.",
   "Unsubscribe":
     "Отписаться",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "плата",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Договор изменился. Пожалуйста, прочитайте его снова.",
 };

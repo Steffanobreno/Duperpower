@@ -312,8 +312,6 @@ export const fr: Messages = {
     "Vous ne recevrez plus les actualités et offres de {business}. Les rappels de rendez-vous continuent d'arriver.",
   "Unsubscribe":
     "Se désabonner",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "des frais",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Le contrat a changé. Merci de le relire.",
 };

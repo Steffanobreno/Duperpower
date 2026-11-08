@@ -305,8 +305,6 @@ export const tl: Messages = {
     "Hindi ka na makakatanggap ng balita at alok mula sa {business}. Darating pa rin ang mga paalala sa appointment.",
   "Unsubscribe":
     "Mag-unsubscribe",
-  // The no-show fee in the service agreement, when the groomer left the amount empty.
-  "a fee": "isang bayad",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Nagbago ang kasunduan. Pakibasa itong muli.",
 };

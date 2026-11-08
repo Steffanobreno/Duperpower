@@ -254,8 +254,8 @@ export async function saveAgreementAction(_: FormState, form: FormData): Promise
       select id, title, body, no_show_fee_cents, version, resign_from_version from agreements where business_id = ${staff.businessId} and active
       order by created_at desc limit 1 for update`;
     if (!current) {
-      await tx`with a as (insert into agreements (business_id, title, body, no_show_fee_cents, required_online, sign_every_booking)
-                          values (${staff.businessId}, ${title}, ${body}, ${fee}, ${required}, ${every}) returning id, version, title, body, no_show_fee_cents)
+      await tx`with a as (insert into agreements (business_id, title, body, no_show_fee_cents, required_online, sign_every_booking, language)
+                          values (${staff.businessId}, ${title}, ${body}, ${fee}, ${required}, ${every}, ${staff.lang}) returning id, version, title, body, no_show_fee_cents)
                insert into agreement_versions (agreement_id, version, title, body, no_show_fee_cents)
                select id, version, title, body, no_show_fee_cents from a`;
       return;
