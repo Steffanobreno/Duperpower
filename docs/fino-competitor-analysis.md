@@ -77,4 +77,17 @@ Feita para a spec `docs/superpowers/specs/2026-11-07-fino-vantagem-competitiva-d
 
 **Fontes:**
 - Sites oficiais citados (abertos só pelo endereço, sem data de conferência): [heygoldie.com](https://heygoldie.com), [groomsoft.com](https://groomsoft.com), [daysmart.com](https://daysmart.com).
-- Sem link aqui: Capterra (páginas do MoeGo e do Groomsoft), Toolradar, GoMarketBox, Tekpon, Fox10 Phoenix (reportagem sobre o custo de combustível), Groomer to Groomer e o blog do MoeGo sobre faltas. Os links completos ficaram na conversa de 2026-11-07 e não foram copiados para a spec; ao reabrir cada fonte, colar o link aqui com a data.
+- Fontes da segunda rodada (todas acessadas em 2026-11-07; **não verificadas no site oficial**, vale a regra de cima):
+  - Capterra, preços do MoeGo: <https://www.capterra.com/p/165732/MoeGo/pricing/>
+  - Toolradar, preços do MoeGo: <https://toolradar.com/tools/moego/pricing>
+  - Toolradar, melhores softwares de banho e tosa: <https://toolradar.com/guides/best-pet-grooming-software>
+  - GoMarketBox, preços e avaliações do MoeGo: <https://www.gomarketbox.com/blog/moego-pricing-reviews>
+  - Goldie: <https://heygoldie.com/?p=639>
+  - Tekpon, avaliações do Goldie: <https://tekpon.com/software/goldie/reviews>
+  - Groomsoft, banho e tosa móvel: <https://www.groomsoft.com/features/mobile-grooming-software/>
+  - GetApp, Groomsoft: <https://www.getapp.com/retail-consumer-services-software/a/groomsoft/>
+  - DaySmart, banho e tosa móvel: <https://www.daysmart.com/pet/?p=2135>
+  - Comparação de IA em softwares de banho e tosa: <https://sagnikbhattacharya.com/blog/pet-grooming-software-ai-compared>
+  - Fox10 Phoenix, groomers móveis do Arizona diminuem a área por causa do combustível: <https://fox10phoenix.com/news/arizona-mobile-animal-grooming-businesses-decreases-travel-radius-to-avoid-price-hikes>
+  - Blog do MoeGo, como reduzir faltas: <https://www.moego.pet/blog/reduce-no-shows-pet-grooming>
+  - Groomer to Groomer, os 4 maiores desafios do banho e tosa móvel: <https://www.groomertogroomer.com/4-biggest-challenges-of-mobile-grooming/>

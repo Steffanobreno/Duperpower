@@ -1,6 +1,6 @@
 # Pendências do Fino
 
-Atualizado em 2026-11-07, depois de publicar `ddeda90` na master. Marque com [x] o que for feito.
+Atualizado em 2026-11-08 (Onda 1 pronta na branch `claude/clever-clarke-3ukcxg`; a master continua em `ddeda90`). Marque com [x] o que for feito.
 
 ## Configurações suas (sem código)
 - [ ] **Netlify:** confirmar que o deploy do `ddeda90` terminou verde.
@@ -43,9 +43,16 @@ O que o groomer ganhou (detalhes na spec `docs/superpowers/specs/2026-11-07-fino
 O que precisa de você:
 - [ ] **E-mail automático do boletim (opcional):** se quiser que o boletim vá sozinho por e-mail depois do fechamento, ligar em **Ajustes → Mensagens e e-mail → Relatório de banho e tosa**. Desligado (o padrão), o groomer manda pelo botão.
 - [ ] **Traduções (opcional):** as frases novas foram traduzidas para os 19 idiomas. Se quiser, peça a alguém nativo para revisar (sobretudo espanhol e português).
+- [ ] **Aceitar o Lighthouse abaixo da meta:** a meta era desempenho ≥97, e as medições deram 91–98 no `/book` e 95–97 no `/g` (tabela abaixo). A causa principal são as imagens grandes da empresa de teste, não a Onda 1. Responder "aceito" ou pedir a otimização das imagens agora.
+- [ ] **Privacidade × rodapé "Agendado com Fino":** o texto da Política de Privacidade ainda não fala do link do rodapé nas páginas do cliente e nos e-mails. Continua em aberto para a etapa jurídica (ajustar o texto da privacidade, sem tirar o rodapé).
+- [ ] **Boletim e observação da tosa:** a observação da tosa aparece no boletim do cliente. O formulário agora avisa embaixo do campo ("O cliente vê esta nota no relatório de banho e tosa."). Uma observação separada, só para o groomer, ficou para depois.
 
-Problemas antigos encontrados nos testes (já existiam antes da Onda 1, não foram mexidos):
-- [ ] **Hoje no modo mapa, teste do pino da rota:** o teste `today-map.mjs` falha no passo em que o cartão da 2ª visita deveria destacar o pino 2 (`.route-pin-active`). Já falhava no começo da branch.
+Problemas antigos encontrados nos testes (já existiam antes da Onda 1, não foram mexidos). Estes cinco testes já falhavam no começo da branch (`614a5b8`), do mesmo jeito:
+- [ ] **Hoje no modo mapa, teste do pino da rota:** o teste `today-map.mjs` falha no passo em que o cartão da 2ª visita deveria destacar o pino 2 (`.route-pin-active`).
+- [ ] **Agendamento abandonado:** `abandoned.mjs` não encontra "Abandoned step: Address" no cartão da cliente (ela aparece como "Contacted").
+- [ ] **Clientes por perto:** `nearby.mjs` espera a ⭐ logo depois da visita das 9–11 e recebe "⭐ 7:00 AM, ⭐ 11:00 AM".
+- [ ] **Sem internet:** `offline.mjs` não chega ao /today no login pelo endereço alternativo (127.0.0.1:3099). Parece coisa do ambiente de teste.
+- [ ] **Equipe e backup:** `team-backup.mjs` falha em "Today defaults to your own route (1 stop)".
 - [ ] **Hoje no modo mapa, "Cancelado ou faltou":** essa seção fica por cima dos cartões das visitas. Precisa de ajuste de layout.
 
 Lighthouse (celular, build de produção `npm run build && npm start`, 3 medições cada, em 2026-11-08):
