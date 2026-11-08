@@ -6,11 +6,11 @@ import { sql } from "../db";
 
 export type Groom = {
   id: string; appointment_pet_id: string; appointment_id: string; pet_id: string; day: Date;
-  blade: string | null; style: string | null; note: string | null; has_photo: boolean; v: string;
+  blade: string | null; style: string | null; note: string | null; has_photo: boolean; v: string; tags: string[];
 };
 
 const select = (staff: StaffContext) => sql`
-  select g.id, g.appointment_pet_id, ap.appointment_id, g.pet_id, a.start_at as day, g.blade, g.style, g.note,
+  select g.id, g.appointment_pet_id, ap.appointment_id, g.pet_id, a.start_at as day, g.blade, g.style, g.note, g.tags,
          g.photo is not null as has_photo, extract(epoch from g.updated_at)::bigint::text as v
   from pet_grooms g join appointment_pets ap on ap.id = g.appointment_pet_id
   join appointments a on a.id = ap.appointment_id

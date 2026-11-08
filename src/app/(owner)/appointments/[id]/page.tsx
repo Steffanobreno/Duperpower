@@ -313,7 +313,7 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
                 const last = cuts.last.get(p.pet_id);
                 return (
                   <GroomForm key={p.appointment_pet_id} appointmentPetId={p.appointment_pet_id} pet={p.name}
-                    now={now ? { blade: now.blade, style: now.style, note: now.note } : null}
+                    now={now ? { blade: now.blade, style: now.style, note: now.note } : null} tags={now?.tags ?? []}
                     photoUrl={now?.has_photo ? `/api/grooms/${now.id}/photo?v=${now.v}` : null}
                     last={last ? {
                       blade: last.blade, style: last.style, note: last.note,

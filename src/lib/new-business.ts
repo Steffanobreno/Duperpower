@@ -116,6 +116,14 @@ export const templates = [
     email_subject: "How did we do?",
     body: "Hi! 😊🐾 It was a pleasure taking care of your pet today! We hope you loved your experience with {business}. If you have a moment, your review truly means a lot to us 💙 👉 Leave your review here: {review_url} Thank you so much for your trust, and we hope to see you again soon! 🚐✨",
   },
+  {
+    trigger: "report_card",
+    email_subject: "{pet}'s grooming report from {business}",
+    body: "Hi {client}! Here is how {pet}'s visit went today, with photos: {report_url} Book the next one from there anytime. 🐾 {business}",
+    enabled: false,
+    send_sms: false,
+    send_email: true,
+  },
 ];
 
 
@@ -196,9 +204,10 @@ export async function createBusiness(tx: postgres.TransactionSql, b: NewBusiness
   }
   for (const t of templates) {
     await tx`insert into message_templates (business_id, trigger, body, email_subject, offset_days, offset_minutes,
-                                           send_at_time, only_if_unconfirmed, enabled)
+                                           send_at_time, only_if_unconfirmed, enabled, send_sms, send_email)
              values (${biz.id}, ${t.trigger}, ${t.body}, ${t.email_subject ?? null}, ${t.offset_days ?? null},
-                     ${t.offset_minutes ?? null}, ${t.send_at_time ?? null}, ${t.only_if_unconfirmed ?? false}, ${t.enabled ?? true})`;
+                     ${t.offset_minutes ?? null}, ${t.send_at_time ?? null}, ${t.only_if_unconfirmed ?? false}, ${t.enabled ?? true},
+                     ${t.send_sms ?? true}, ${t.send_email ?? true})`;
   }
   return { businessId: biz.id as string, staffId: staff.id as string };
 }

@@ -37,8 +37,21 @@ await cut.getByLabel("Length / style").fill("Teddy face");
 await cut.getByLabel("Note").fill("Short around the eyes");
 await cut.getByLabel("Photo of Biscuit's cut").setInputFiles({ name: "cut.png", mimeType: "image/png", buffer: png });
 await cut.getByRole("img", { name: "Biscuit after the cut" }).waitFor();
+// The checkboxes are visually hidden (chips); click the chip text, then check the checkbox state.
+for (const n of ["Calm", "Nails done"]) {
+  await cut.getByText(n, { exact: true }).scrollIntoViewIfNeeded();
+  await cut.getByText(n, { exact: true }).click();
+  if (!(await cut.getByRole("checkbox", { name: n }).isChecked())) fail(`${n} should be checked`);
+}
 await cut.getByRole("button", { name: "Save cut" }).click();
 await cut.getByText("Saved ✓").waitFor();
+const [{ tags }] = await db`select tags from pet_grooms where pet_id = ${pet}`;
+if ([...tags].sort().join(",") !== "calm,nails_done") fail(`the tags should be saved: ${JSON.stringify(tags)}`);
+await page.reload();
+const reloaded = page.getByRole("form", { name: "Biscuit's cut" });
+for (const n of ["Calm", "Nails done"]) if (!(await reloaded.getByRole("checkbox", { name: n }).isChecked())) fail(`${n} should still be checked after reload`);
+if (await reloaded.getByRole("checkbox", { name: "Nervous" }).isChecked()) fail("Nervous should not be checked");
+step("grooming tags are saved and still checked after a reload");
 const [g] = await db`select blade, style, note, photo is not null as photo from pet_grooms where pet_id = ${pet}`;
 if (g?.blade !== "#7F" || g.style !== "Teddy face" || !g.photo) fail(`the cut should be saved with its photo: ${JSON.stringify(g)}`);
 step("the cut on a visit: blade, style, note and photo are saved");

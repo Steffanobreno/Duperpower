@@ -3,6 +3,7 @@ import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { useRef, useState, useTransition } from "react";
 import { resizeImage } from "@/lib/resize-image";
+import { GROOM_TAGS, GROOM_TAG_LABEL, type GroomTag } from "@/lib/groom-tags";
 import { saveGroomAction } from "../groom-actions";
 
 // "This cut" for one pet on a visit: blade or comb, length/style, a note and a photo.
@@ -12,11 +13,12 @@ type Cut = { blade: string | null; style: string | null; note: string | null };
 
 const BLADES = ["#10", "#7F", "#5F", "#4F", "#3F", "#30 + 1/2\" comb", "#30 + 3/4\" comb", "#30 + 1\" comb", msg("Scissor cut"), msg("Hand strip")];
 
-export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
-  appointmentPetId: string; pet: string; now: Cut | null; last: (Cut & { when: string; photoUrl: string | null }) | null; photoUrl: string | null;
+export function GroomForm({ appointmentPetId, pet, now, tags: savedTags, last, photoUrl }: {
+  appointmentPetId: string; pet: string; now: Cut | null; tags: string[]; last: (Cut & { when: string; photoUrl: string | null }) | null; photoUrl: string | null;
 }) {
   const { t } = useT();
   const [cut, setCut] = useState<Cut>(now ?? { blade: "", style: "", note: "" });
+  const [tags, setTags] = useState<string[]>(savedTags);
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(photoUrl);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -32,6 +34,7 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
         form.set("blade", cut.blade ?? "");
         form.set("style", cut.style ?? "");
         form.set("note", cut.note ?? "");
+        for (const k of tags) form.append("tag", k);
         if (photo) form.set("photo", photo, "cut.jpg");
         start(async () => {
           const res = await saveGroomAction(appointmentPetId, form);
@@ -76,6 +79,18 @@ export function GroomForm({ appointmentPetId, pet, now, last, photoUrl }: {
         <textarea id={id("note")} value={cut.note ?? ""} onChange={(e) => setCut({ ...cut, note: e.target.value })}
           className={field} rows={2} maxLength={500} placeholder={t("Short around the eyes, leave the tail fluffy")} />
       </label>
+      <fieldset className="flex flex-wrap gap-2">
+        <legend className="sr-only">{t("Tags")}</legend>
+        {GROOM_TAGS.map((k: GroomTag) => (
+          <label key={k} className="cursor-pointer">
+            <input type="checkbox" name="tag" value={k} className="peer sr-only" checked={tags.includes(k)}
+              onChange={(e) => setTags(e.target.checked ? [...tags, k] : tags.filter((x) => x !== k))} />
+            <span className="block rounded-full border border-line px-3 py-1.5 text-sm peer-checked:border-brand peer-checked:bg-brand-soft peer-checked:font-semibold peer-checked:text-brand-strong peer-focus-visible:ring-2 peer-focus-visible:ring-brand">
+              {t(GROOM_TAG_LABEL[k])}
+            </span>
+          </label>
+        ))}
+      </fieldset>
       <div className="flex items-center gap-3">
         {preview && (
           // eslint-disable-next-line @next/next/no-img-element -- a local preview or a small private photo
