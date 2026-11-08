@@ -88,11 +88,14 @@ function dueClients(staff: StaffContext, date: string) {
       and h.last_day + h.every <= ${date}::date + 7`;
 }
 
-/** How many clients are due (or overdue) for a groom on that day, by the same rule as the list. */
-export async function overdueCount(staff: StaffContext, date: string): Promise<number> {
+/**
+ * How many clients are due for a groom on that day, by the same rule as the list. With
+ * `pastDueOnly` (the "Overdue clients" tile), only those already past due, not due within the week.
+ */
+export async function overdueCount(staff: StaffContext, date: string, { pastDueOnly = false } = {}): Promise<number> {
   const [{ n }] = await sql<{ n: number }[]>`
     select count(*)::int as n from (${dueClients(staff, date)}) d join clients c on c.id = d.client_id
-    where ${invitable(staff, date)}`;
+    where ${invitable(staff, date)} ${pastDueOnly ? sql`and d.days_overdue > 0` : sql``}`;
   return n;
 }
 

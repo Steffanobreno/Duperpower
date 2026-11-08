@@ -122,6 +122,20 @@ const ret2 = await text("Return rate");
 if (!ret2.includes("50%")) fail(`Return rate should be 50% (Lee has no next visit), got "${ret2}"`);
 step("Reports: a client seen with no next visit brings Return rate to 50%");
 
+// Overdue clients counts only clients past due (here Olive, 50 days since a 42-day groom), not
+// Sam, who is due in 2 days (Fill the gap still lists him).
+for (const [first, ago, phone] of [["Olive", 50, "+16505550197"], ["Sam", 40, "+16505550196"]]) {
+  const [{ id }] = await db`insert into clients (business_id, first_name, last_name, phone)
+    values (${biz}, ${first}, 'Kpi', ${phone}) returning id`;
+  await db`insert into pets (client_id, name, size_class, rebook_every_days) values (${id}, ${first + "dog"}, 'medium', 42)`;
+  const [{ day }] = await db`select to_char(${today}::date - ${ago}::int, 'YYYY-MM-DD') as day`;
+  await visit(day, "09:00", "10:00", "completed", id);
+}
+await owner.reload();
+const overdueText = (await text("Overdue clients")).replace("Overdue clients", "");
+if (!/\b1\b/.test(overdueText) || /\b2\b/.test(overdueText)) fail(`Overdue clients should be 1 (only Olive is past due), got "${overdueText}"`);
+step("Reports: Overdue clients counts only clients past due (1), not those due soon");
+
 // 4. Today (map mode with stops): the 3 tiles, and the visit cards stay above the tab bar.
 await owner.goto(`${BASE}/today`);
 await owner.getByRole("img", { name: "Map of the day's visits" }).waitFor();

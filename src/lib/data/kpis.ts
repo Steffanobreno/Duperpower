@@ -134,7 +134,7 @@ export async function monthKpis(staff: StaffContext, today: string): Promise<Kpi
     returnRate(staff),
     pair(occupancy, staff, cur, prev),
     pair(noShows, staff, cur, prev),
-    overdueCount(staff, today),
+    overdueCount(staff, today, { pastDueOnly: true }),
     pair(reportsSent, staff, cur, prev),
     pair(offersBooked, staff, cur, prev),
   ]);
@@ -166,7 +166,7 @@ export async function todayKpis(staff: StaffContext, today: string): Promise<Kpi
       occupancy(staff, windowOf(staff, monday, addDaysYmd(monday, 6))),
       occupancy(staff, windowOf(staff, lastMonday, addDaysYmd(lastMonday, 6))),
     ]),
-    overdueCount(staff, today),
+    overdueCount(staff, today, { pastDueOnly: true }),
   ]);
   return [
     { key: "revenue", value: rev[0], previous: rev[1], unit: "money" },
