@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { applySubscription, billingOn, stripe } from "@/lib/billing";
+import { applySubscription, stripe, stripeOn } from "@/lib/billing";
 import { rewardReferral } from "@/lib/discounts";
 
 // Stripe tells the app about subscriptions here (Stripe Dashboard → Developers → Webhooks,
@@ -7,7 +7,7 @@ import { rewardReferral } from "@/lib/discounts";
 // invoice.paid). Each event is checked against STRIPE_WEBHOOK_SECRET.
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!billingOn() || !secret) return new Response("Billing is not set up", { status: 503 });
+  if (!stripeOn() || !secret) return new Response("Billing is not set up", { status: 503 });
   const body = await req.text();
   let event: Stripe.Event;
   try {

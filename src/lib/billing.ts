@@ -2,6 +2,9 @@ import "server-only";
 import Stripe from "stripe";
 import { sql } from "./db";
 import { APP_NAME } from "./product";
+import { keepsTrial, paymentsMode } from "./payments-mode";
+
+export { keepsTrial, paymentsMode, type PaymentsMode } from "./payments-mode";
 
 // Subscriptions with Stripe. The free trial needs no card; when the business picks a plan it
 // goes to Stripe Checkout (monthly or yearly), and Stripe's webhooks keep the business's plan
@@ -15,7 +18,13 @@ export const PRICES = {
 } as const;
 export type Interval = keyof typeof PRICES;
 
-export const billingOn = () => !!process.env.STRIPE_SECRET_KEY;
+/**
+ * Plans are on: a real (Stripe) or fake (test mode) provider is active, so a trial that ended
+ * unpaid locks the app, trial emails go out, and the plan page offers plans and referrals.
+ */
+export const billingOn = () => paymentsMode() !== "off";
+/** Stripe itself is set up (its API, webhook, coupons and portal can be used). */
+export const stripeOn = () => paymentsMode() === "stripe";
 
 let client: Stripe | null = null;
 export function stripe() {
@@ -55,8 +64,11 @@ async function businessFor(businessId: string): Promise<BillingBusiness> {
   return b;
 }
 
+/** Ids the test mode gave (see fake-payments.ts): Stripe doesn't know them. */
+export const isFakeId = (id: string | null) => !!id?.startsWith("fake_");
+
 async function customerFor(b: BillingBusiness) {
-  if (b.stripe_customer_id) return b.stripe_customer_id;
+  if (b.stripe_customer_id && !isFakeId(b.stripe_customer_id)) return b.stripe_customer_id;
   const customer = await stripe().customers.create({ name: b.name, email: b.email ?? undefined, metadata: { business_id: b.id } });
   await sql`update businesses set stripe_customer_id = ${customer.id} where id = ${b.id}`;
   return customer.id;
@@ -73,7 +85,7 @@ export async function checkoutUrl(
 ) {
   const b = await businessFor(businessId);
   const [customer, price] = await Promise.all([customerFor(b), priceId(interval)]);
-  const trialLeft = b.trial_ends_at && b.trial_ends_at.getTime() > Date.now() + 48 * 3600_000;
+  const trialLeft = keepsTrial(b.trial_ends_at);
   const session = await stripe().checkout.sessions.create({
     mode: "subscription",
     customer,
@@ -93,9 +105,41 @@ export async function checkoutUrl(
 /** Stripe's portal: card, invoices, switch plans, cancel. */
 export async function portalUrl(businessId: string, appUrl: string) {
   const b = await businessFor(businessId);
-  if (!b.stripe_customer_id) return null;
+  if (!b.stripe_customer_id || isFakeId(b.stripe_customer_id)) return null;
   const session = await stripe().billingPortal.sessions.create({ customer: b.stripe_customer_id, return_url: `${appUrl}/billing` });
   return session.url;
+}
+
+/** A business's plan, as the payment provider has it now. */
+export type Plan = {
+  status: "active" | "past_due" | "cancelled";
+  customer: string;
+  subscriptionId: string;
+  interval: string | null;
+  amountCents: number | null;
+  currency: string | null;
+  periodEnd: Date | null;
+  cancelAtPeriodEnd: boolean;
+};
+
+/**
+ * The plan → the business (found by its provider customer, or by its id). The one place a plan
+ * is applied: Stripe's webhook (applySubscription) and the test mode (fake-payments.ts) both
+ * come here.
+ */
+export async function applyPlan(businessId: string | null, p: Plan) {
+  await sql`
+    update businesses set
+      plan_status = ${p.status},
+      stripe_customer_id = coalesce(stripe_customer_id, ${p.customer}),
+      stripe_subscription_id = ${p.subscriptionId},
+      plan_interval = ${p.interval},
+      plan_amount_cents = ${p.amountCents},
+      plan_currency = ${p.currency},
+      plan_period_end = ${p.periodEnd},
+      plan_cancel_at_period_end = ${p.cancelAtPeriodEnd},
+      cancelled_at = case when ${p.status} = 'cancelled' then coalesce(cancelled_at, now()) else null end
+    where stripe_customer_id = ${p.customer} or (${businessId}::uuid is not null and id = ${businessId}::uuid)`;
 }
 
 /** A Stripe subscription → the business's plan. Called from the webhook. */
@@ -109,19 +153,16 @@ export async function applySubscription(sub: Stripe.Subscription) {
         : sub.status === "canceled" || sub.status === "incomplete_expired" ? "cancelled"
           : null; // incomplete / paused: leave the plan as it is until Stripe settles it
   if (!status) return;
-  const businessId = sub.metadata?.business_id ?? null;
-  await sql`
-    update businesses set
-      plan_status = ${status},
-      stripe_customer_id = coalesce(stripe_customer_id, ${customer}),
-      stripe_subscription_id = ${sub.id},
-      plan_interval = ${price?.recurring?.interval ?? null},
-      plan_amount_cents = ${price?.unit_amount ?? null},
-      plan_currency = ${price?.currency ? price.currency.toUpperCase() : null},
-      plan_period_end = ${item?.current_period_end ? new Date(item.current_period_end * 1000) : null},
-      plan_cancel_at_period_end = ${!!sub.cancel_at_period_end},
-      cancelled_at = case when ${status} = 'cancelled' then coalesce(cancelled_at, now()) else null end
-    where stripe_customer_id = ${customer} or (${businessId}::uuid is not null and id = ${businessId}::uuid)`;
+  await applyPlan(sub.metadata?.business_id ?? null, {
+    status,
+    customer,
+    subscriptionId: sub.id,
+    interval: price?.recurring?.interval ?? null,
+    amountCents: price?.unit_amount ?? null,
+    currency: price?.currency ? price.currency.toUpperCase() : null,
+    periodEnd: item?.current_period_end ? new Date(item.current_period_end * 1000) : null,
+    cancelAtPeriodEnd: !!sub.cancel_at_period_end,
+  });
 }
 
 export type Access = {
