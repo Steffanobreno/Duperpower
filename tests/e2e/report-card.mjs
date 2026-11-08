@@ -52,6 +52,8 @@ await page.fill('input[name="password"]', "correct horse battery");
 await page.click('button[type="submit"]');
 await page.waitForURL(/\/today/);
 
+// The email needs the client's address (slice.mjs leaves Maria without one; receipts.mjs adds it).
+await db`update clients set email = 'maria@example.com' where id = (select client_id from appointments where id = ${first}) and email is null`;
 await db`delete from messages where appointment_id = ${first} and template_trigger = 'report_card'`;
 await db`update appointments set report_sent_at = null where id = ${first}`;
 await page.goto(`${BASE}/appointments/${first}`);

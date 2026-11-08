@@ -1,5 +1,5 @@
 // Accessibility (WCAG 2.2 AA, axe-core) on every kind of screen: the public site, the client's
-// pages (booking, new-client form, their visit, their receipt) and the groomer's app; and no
+// pages (booking, new-client form, their visit, their receipt, the report card) and the groomer's app; and no
 // sideways scroll on the smallest phones (320 px).
 // Run after slice.mjs (owner@example.com, Maria Lopez's visit and receipt). Needs DATABASE_URL.
 // Usage: node tests/e2e/a11y.mjs [baseUrl]
@@ -14,6 +14,12 @@ const db = postgres(process.env.DATABASE_URL ?? "postgres://postgres@127.0.0.1:5
 const [visit] = await db`select id, public_token from appointments order by created_at limit 1`;
 const [bill] = await db`select public_token from invoices where public_token is not null limit 1`;
 const [client] = await db`select id from clients order by created_at limit 1`;
+// The first visit's report card (the token is made once and kept, as when the groomer sends it).
+const [card] = visit ? await db`update appointments set report_token = coalesce(report_token, md5(random()::text))
+  where id = ${visit.id} returning report_token` : [];
+// Fill the gap on a day a week ahead, in the business's time zone.
+const [{ fillDay }] = await db`select to_char((now() at time zone timezone)::date + 7, 'YYYY-MM-DD') as "fillDay"
+  from businesses where booking_slug = 'woofers'`;
 await db.end();
 
 const browser = await chromium.launch({
@@ -36,7 +42,7 @@ for (const width of [390, 1280]) {
   // The public site and the client's pages.
   for (const path of ["/?lang=en", "/features", "/pricing?lang=pt", "/mobile-grooming-software?lang=es", "/mobile-grooming-route-planner",
     "/switch", "/guides", "/guides/checkout", "/terms", "/signup", "/login", "/login/forgot", "/no-such-page",
-    "/book/woofers", "/intake", visit && `/a/${visit.public_token}`, bill && `/r/${bill.public_token}`].filter(Boolean)) {
+    "/book/woofers", "/intake", visit && `/a/${visit.public_token}`, bill && `/r/${bill.public_token}`, card && `/g/${card.report_token}`].filter(Boolean)) {
     await check(page, path);
   }
   // The groomer's app.
@@ -47,7 +53,7 @@ for (const width of [390, 1280]) {
   await page.waitForURL(/\/today/);
   for (const path of ["/today", "/today?view=list", "/calendar", "/clients", `/clients/${client.id}`, `/appointments/${visit.id}`,
     `/appointments/${visit.id}/checkout`, "/appointments/new", "/reports", "/settings", "/settings/business", "/settings/services",
-    "/settings/booking", "/settings/messages", "/settings/team", "/help", "/billing", "/marketing", "/waitlist", "/requests"]) {
+    "/settings/booking", "/settings/messages", "/settings/team", "/help", "/billing", "/marketing", "/waitlist", "/requests", `/fill/${fillDay}`]) {
     await check(page, path);
   }
   console.log(`✓ ${width}px: every screen checked`);
@@ -62,14 +68,14 @@ for (const width of [390, 1280]) {
     const w = await page.evaluate(() => document.documentElement.scrollWidth);
     if (w > 320) problems.push(`${path}: ${w}px wide on a 320px phone`);
   };
-  for (const path of ["/?lang=pt", "/features", "/pricing", "/signup", "/book/woofers", "/intake", visit && `/a/${visit.public_token}`].filter(Boolean)) await wide(path);
+  for (const path of ["/?lang=pt", "/features", "/pricing", "/signup", "/book/woofers", "/intake", visit && `/a/${visit.public_token}`, card && `/g/${card.report_token}`].filter(Boolean)) await wide(path);
   await page.goto(`${BASE}/login`);
   await page.fill('input[name="email"]', "owner@example.com");
   await page.fill('input[name="password"]', "correct horse battery");
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/today/);
   for (const path of ["/today", "/calendar", "/clients", `/clients/${client.id}`, `/appointments/${visit.id}`, `/appointments/${visit.id}/checkout`,
-    "/appointments/new", "/reports", "/settings", "/settings/hours", "/settings/business", "/settings/booking", "/billing"]) await wide(path);
+    "/appointments/new", "/reports", "/settings", "/settings/hours", "/settings/business", "/settings/booking", "/billing", `/fill/${fillDay}`]) await wide(path);
   console.log("✓ 320px: no screen scrolls sideways");
 }
 

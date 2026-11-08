@@ -30,6 +30,34 @@ Atualizado em 2026-11-07, depois de publicar `ddeda90` na master. Marque com [x]
 - [ ] Contar sua história para a página "Sobre" (opcional, só se quiser).
 - [ ] Publicar ("pode publicar") quando aprovar.
 
+## Onda 1 pronta (2026-11-08, branch `claude/clever-clarke-3ukcxg`)
+O que o groomer ganhou (detalhes na spec `docs/superpowers/specs/2026-11-07-fino-vantagem-competitiva-design.md`):
+- **Boletim pós-banho:** depois da visita, o dono do pet recebe um link (`/g/...`) com a foto, as etiquetas da tosa (calmo, nervoso, nós, unhas feitas...), a observação e o botão "Agendar o próximo" já com a data certa. O groomer manda pelo WhatsApp, SMS ou e-mail no cartão "Relatório de banho e tosa" da visita (é o nome do boletim no app em português).
+- **Etiquetas da tosa:** marcar em um toque como o cão se comportou e o que foi feito.
+- **"Agendado com Fino":** um rodapé discreto nas páginas do cliente e nos e-mails. Quem clica e assina vira indicação do groomer.
+- **Preencher o buraco:** a página `/fill/<dia>` mostra o tempo livre do dia e quem convidar (lista de espera primeiro, depois os clientes atrasados mais perto), com a mensagem pronta para mandar. Aparece no Hoje e depois de um cancelamento ("Preencher este horário").
+- **Painel de indicadores:** em Relatórios e no Hoje: faturamento, ticket médio, taxa de retorno, ocupação, faltas e cancelamentos, clientes atrasados, boletins enviados e convites que viraram agendamento, comparando com o mês (ou a semana) anterior. Groomer sem permissão de relatórios não vê valores.
+- **Botões "Enviar pelo meu celular":** WhatsApp e SMS saem do celular do groomer, sem custo para o Fino.
+- Tudo traduzido nos 20 idiomas do app.
+
+O que precisa de você:
+- [ ] **E-mail automático do boletim (opcional):** se quiser que o boletim vá sozinho por e-mail depois do fechamento, ligar em **Ajustes → Mensagens e e-mail → Relatório de banho e tosa**. Desligado (o padrão), o groomer manda pelo botão.
+- [ ] **Traduções (opcional):** as frases novas foram traduzidas para os 19 idiomas. Se quiser, peça a alguém nativo para revisar (sobretudo espanhol e português).
+
+Problemas antigos encontrados nos testes (já existiam antes da Onda 1, não foram mexidos):
+- [ ] **Hoje no modo mapa, teste do pino da rota:** o teste `today-map.mjs` falha no passo em que o cartão da 2ª visita deveria destacar o pino 2 (`.route-pin-active`). Já falhava no começo da branch.
+- [ ] **Hoje no modo mapa, "Cancelado ou faltou":** essa seção fica por cima dos cartões das visitas. Precisa de ajuste de layout.
+
+Lighthouse (celular, build de produção `npm run build && npm start`, 3 medições cada, em 2026-11-08):
+
+| Página | Desempenho | Acessibilidade | Boas práticas | SEO | LCP | CLS |
+|---|---|---|---|---|---|---|
+| `/book/woofers` | 91 / 96 / 98 | 100 | 100 | 100 | 2,4–3,3 s | 0 |
+| `/g/<token>` (boletim) | 95 / 96 / 97 | 100 | 100 | 66 (de propósito: a página tem `noindex`) | 2,5–2,7 s | 0 |
+| `/book/woofers` no começo da branch (`614a5b8`), para comparar | 96 / 97 / 97 | 100 | 100 | 100 | 2,1–2,8 s | 0 |
+
+- [ ] **Desempenho abaixo de 97 em algumas medições:** a página de agendamento pesa o mesmo de antes da Onda 1 (diferença de 0,4 KB), então a variação é do teste. O que segura o LCP é a imagem grande da empresa de teste (`van.jpg` no booking, o logo `logo-light.png` de 84 KB no boletim): o Lighthouse sugere WebP/AVIF e tamanhos por tela. Vale fazer quando o logo do Fino e as imagens de verdade chegarem.
+
 ## Próximas etapas de código (pedir quando quiser)
 1. `/moego-alternative`, só com fatos conferidos no site oficial, com data.
 2. Importar planilhas do MoeGo e do DaySmart.

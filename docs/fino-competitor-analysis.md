@@ -53,3 +53,28 @@ Pesquisa de 2026-11-07. **Atenção:** os sites oficiais (daysmart.com, vagaro.c
 - "Rota do dia e ETA para o cliente." Verdade, com a chave do Google configurada.
 - "Em 20 idiomas, em qualquer país." Verdade para o app; a página de vendas está em 3.
 - **Não usar** "mais barato que o MoeGo" nem "melhor que X" sem conferir o preço oficial no dia e citar a fonte.
+
+## Pesquisa de 2026-11-07, segunda rodada
+
+Feita para a spec `docs/superpowers/specs/2026-11-07-fino-vantagem-competitiva-design.md` (seção 2). Os sites oficiais continuavam bloqueados nesta sessão: os dados vêm de Capterra, GetApp, Toolradar e blogs. **Vale a mesma regra de cima:** nada daqui vai para uma página pública sem conferir no site oficial e anotar a data.
+
+| Concorrente | Preço (não conferido) | O que tem de bom | Fraqueza que exploramos |
+|---|---|---|---|
+| MoeGo | US$49–159 por van; groomer sozinho com SMS gasta ~US$139–200/mês | Agenda pensada na rota, mensagens de mão dupla, pagamentos | Caro; cobra por SMS; app lento; **não funciona sem internet**; a "agenda inteligente" é difícil de usar e fica nos planos caros |
+| Goldie | Grátis até 20 visitas/mês; Pro por US$19,99 | Plano grátis; lembretes saem do celular do groomer (custo zero para eles); sinal | Genérico, sem nada de rota |
+| Groomsoft | US$39,90 o plano móvel | Rota otimizada, quilometragem automática, Street View, **"pets atrasados perto da sua rota"** | Interface antiga; poucas avaliações |
+| DaySmart Pet | ~US$29 | Pagamentos, cartão salvo, mensagens de mão dupla | Feito para pet shop com creche e hotel |
+| Vagaro | US$24–30 + extras | IA de marketing | Comissão de 20% no marketplace, que gera reclamações |
+
+**Dores do groomer móvel:**
+- **Faltas:** cada uma custa US$50–150, mais o combustível e o horário que poderia ter sido de outro cliente.
+- **Combustível:** um groomer de Fresno gasta US$4.000/mês; outro no Arizona diminuiu a área atendida.
+- **Rotas mal feitas:** somam 30–50 milhas por dia.
+- **Cliente que não volta.**
+- **Buracos na agenda.**
+
+**O que a Onda 1 fez com isso:** boletim pós-banho (o cliente volta e o groomer parece profissional), "Preencher o buraco" (a ideia dos "pets atrasados perto da rota" do Groomsoft, mais a lista de espera), painel de indicadores, o rodapé "Agendado com Fino" e os botões que enviam pelo WhatsApp ou SMS do próprio celular (custo zero, como o Goldie).
+
+**Fontes:**
+- Sites oficiais citados (abertos só pelo endereço, sem data de conferência): [heygoldie.com](https://heygoldie.com), [groomsoft.com](https://groomsoft.com), [daysmart.com](https://daysmart.com).
+- Sem link aqui: Capterra (páginas do MoeGo e do Groomsoft), Toolradar, GoMarketBox, Tekpon, Fox10 Phoenix (reportagem sobre o custo de combustível), Groomer to Groomer e o blog do MoeGo sobre faltas. Os links completos ficaram na conversa de 2026-11-07 e não foram copiados para a spec; ao reabrir cada fonte, colar o link aqui com a data.
