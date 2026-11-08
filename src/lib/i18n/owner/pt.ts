@@ -1758,4 +1758,8 @@ export const pt: string[] = ["Agendamento abandonado",
 "Li e aceito os Termos e a renovação automática",
 "Ler os Termos",
 "Renova automaticamente todo mês por {price} até você cancelar. Cancele quando quiser em Plano; o acesso continua até o fim do período pago.",
-"Renova automaticamente todo ano por {price} até você cancelar. Cancele quando quiser em Plano; o acesso continua até o fim do período pago. Planos anuais podem ser reembolsados proporcionalmente se você pedir em até 14 dias após a cobrança."];
+"Renova automaticamente todo ano por {price} até você cancelar. Cancele quando quiser em Plano; o acesso continua até o fim do período pago. Planos anuais podem ser reembolsados proporcionalmente se você pedir em até 14 dias após a cobrança.",
+"Sua primeira cobrança do {app} é em {date}",
+"Seu plano anual do {app} renova em {date}",
+"Seu teste grátis termina em {date}. Nesse dia cobraremos {amount} pelo plano que você escolheu. Para evitar a cobrança, cancele antes na página Plano:",
+"Seu plano anual renova automaticamente em {date} por {amount}. Para parar a renovação, cancele antes na página Plano; você mantém o acesso até o fim do período pago:"];

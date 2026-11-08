@@ -10,10 +10,17 @@ import { APP_NAME } from "./product";
 // - first_visit: 2 to 7 days after signing up, nothing booked yet → how to book the first visit.
 // - trial_3d / trial_1d / trial_ended: the free trial is ending (only with billing on, and only
 //   for a business that hasn't chosen a plan yet).
+// - first_charge_3d: a plan was chosen during the trial (kept, so the first charge is when it ends),
+//   the trial ends in 1 to 3 days → the date and amount of the first charge.
+// - yearly_renewal_15d:<period end date>: a yearly plan that renews in 14 to 15 days and isn't
+//   cancelled → the renewal date and amount. The period end is in the kind, so it's once per period.
 // Run by the hourly job (/api/cron/messages).
 
-type Owner = { id: string; name: string; booking_slug: string; email: string; language: string | null };
-type Kind = "first_visit" | "trial_3d" | "trial_1d" | "trial_ended";
+type Owner = {
+  id: string; name: string; booking_slug: string; email: string; language: string | null;
+  trial_ends_at?: Date | null; plan_period_end?: Date | null; plan_amount_cents?: number | null;
+};
+type Kind = "first_visit" | "trial_3d" | "trial_1d" | "trial_ended" | "first_charge_3d" | `yearly_renewal_15d:${string}`;
 
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
@@ -21,13 +28,22 @@ export async function runLifecycleEmails() {
   if (!emailConfigured()) return 0;
   const due = await sql<(Owner & { kind: Kind })[]>`
     with o as (
-      select b.id, b.name, b.booking_slug, b.created_at, b.plan_status, b.trial_ends_at, b.stripe_subscription_id, u.email, s.language
+      select b.id, b.name, b.booking_slug, b.created_at, b.plan_status, b.trial_ends_at, b.stripe_subscription_id,
+             b.plan_interval, b.plan_period_end, b.plan_amount_cents, b.plan_cancel_at_period_end, u.email, s.language
       from businesses b
       join lateral (select user_id, language from staff where business_id = b.id and role = 'owner' order by created_at limit 1) s on true
       join users u on u.id = s.user_id
       where b.plan_status in ('trial', 'active', 'free'))
-    select id, name, booking_slug, email, language, kind from (
+    select id, name, booking_slug, email, language, trial_ends_at, plan_period_end, plan_amount_cents, kind from (
       select o.*, case
+        -- A plan chosen with more than 48 hours of trial left: active, its period starts at the trial's
+        -- end (a plan chosen later is charged at once, and its period ends a month or a year on).
+        when plan_status = 'active' and stripe_subscription_id is not null and not plan_cancel_at_period_end
+             and plan_period_end <= trial_ends_at + interval '1 hour'
+             and trial_ends_at between now() + interval '1 day' and now() + interval '3 days' then 'first_charge_3d'
+        when plan_status = 'active' and plan_interval = 'year' and not plan_cancel_at_period_end
+             and plan_period_end between now() + interval '14 days' and now() + interval '15 days'
+             then 'yearly_renewal_15d:' || to_char(plan_period_end at time zone 'UTC', 'YYYY-MM-DD')
         when ${billingOn()} and plan_status = 'trial' and stripe_subscription_id is null
              and trial_ends_at between now() - interval '3 days' and now() then 'trial_ended'
         when ${billingOn()} and plan_status = 'trial' and stripe_subscription_id is null
@@ -61,11 +77,25 @@ export function lifecycleEmail(o: Owner & { kind: Kind }) {
   const t = makeT(OWNER_MESSAGES[isLang(o.language) ? o.language : "en"]);
   const app = APP_NAME;
   const help = t("Need help? Open Help in the app.");
+  const money = (cents: number) => `US$${cents % 100 ? (cents / 100).toFixed(2) : cents / 100}`;
+  const day = (d: Date) => d.toLocaleDateString(isLang(o.language) ? o.language : "en", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   if (o.kind === "first_visit") {
     return {
       subject: t("Book your first visit in {app}", { app }),
       text: [t("Add a client and book their next visit, or share your booking link so clients book themselves:"),
         `${appUrl()}/book/${o.booking_slug}`, `${appUrl()}/today`, help].join("\n\n"),
+    };
+  }
+  if ((o.kind === "first_charge_3d" || o.kind.startsWith("yearly_renewal_15d")) && o.plan_amount_cents) {
+    const first = o.kind === "first_charge_3d";
+    const date = day((first ? o.trial_ends_at : o.plan_period_end) as Date);
+    const params = { date, amount: money(o.plan_amount_cents) };
+    return {
+      subject: first ? t("Your {app} first charge is on {date}", { app, date }) : t("Your {app} yearly plan renews on {date}", { app, date }),
+      text: [first
+        ? t("Your free trial ends on {date}. On that day we will charge {amount} for the plan you chose. To avoid the charge, cancel before then on the Plan page:", params)
+        : t("Your yearly plan renews automatically on {date} for {amount}. To stop the renewal, cancel before then on the Plan page; you keep access until the end of the period you paid for:", params),
+      `${appUrl()}/billing`, help].join("\n\n"),
     };
   }
   if (o.kind === "trial_ended") {

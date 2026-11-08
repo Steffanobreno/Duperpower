@@ -1758,4 +1758,8 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Ich habe die Nutzungsbedingungen und die automatische Verlängerung gelesen und akzeptiere sie",
 "Nutzungsbedingungen lesen",
 "Verlängert sich jeden Monat automatisch für {price}, bis du kündigst. Kündige jederzeit unter Tarif; du behältst den Zugang bis zum Ende des bezahlten Zeitraums.",
-"Verlängert sich jedes Jahr automatisch für {price}, bis du kündigst. Kündige jederzeit unter Tarif; du behältst den Zugang bis zum Ende des bezahlten Zeitraums. Jahrestarife können anteilig erstattet werden, wenn du innerhalb von 14 Tagen nach der Abbuchung darum bittest."];
+"Verlängert sich jedes Jahr automatisch für {price}, bis du kündigst. Kündige jederzeit unter Tarif; du behältst den Zugang bis zum Ende des bezahlten Zeitraums. Jahrestarife können anteilig erstattet werden, wenn du innerhalb von 14 Tagen nach der Abbuchung darum bittest.",
+"Deine erste Abbuchung bei {app} ist am {date}",
+"Dein Jahrestarif bei {app} verlängert sich am {date}",
+"Deine kostenlose Testphase endet am {date}. An diesem Tag buchen wir {amount} für den gewählten Tarif ab. Um die Abbuchung zu vermeiden, kündige vorher auf der Tarif-Seite:",
+"Dein Jahrestarif verlängert sich am {date} automatisch für {amount}. Um die Verlängerung zu stoppen, kündige vorher auf der Tarif-Seite; du behältst den Zugang bis zum Ende des bezahlten Zeitraums:"];

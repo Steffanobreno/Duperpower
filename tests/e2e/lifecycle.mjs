@@ -1,5 +1,5 @@
 // The owners' own emails and the server-error alert, end to end. Run after slice.mjs, with the
-// dev server started with CRON_SECRET=test-cron, ADMIN_EMAILS=owner@example.com, billing on
+// dev server started with CRON_SECRET (default test-cron), ADMIN_EMAILS=owner@example.com, billing on
 // (STRIPE_SECRET_KEY) and email to a local mail catcher whose folder is MAIL_DIR.
 // First visit reminder (2+ days, nothing booked) → trial ends in 3 days → tomorrow → ended, each
 // once and in the owner's language → a server error is listed in /admin/errors and emailed once.
@@ -28,7 +28,7 @@ const subjectsTo = (from, email) => mails().slice(from)
   .filter((m) => new RegExp(`^To: .*${email.replace(/[.+]/g, "\\$&")}`, "mi").test(m))
   .map((m) => decodeWords((m.match(/^Subject: (.*(?:\r?\n[ \t].*)*)/m)?.[1] ?? "").replace(/\r?\n[ \t]/g, " ")));
 const cron = async () => {
-  const res = await fetch(`${BASE}/api/cron/messages`, { headers: { authorization: "Bearer test-cron" } });
+  const res = await fetch(`${BASE}/api/cron/messages`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET ?? "test-cron"}` } });
   if (!res.ok) fail(`cron → ${res.status}`);
   await new Promise((r) => setTimeout(r, 800));
 };
@@ -92,6 +92,59 @@ await db`update businesses set trial_ends_at = now() + interval '12 hours', stri
 await cron();
 if (subjectsTo(from, email2).length) fail("no trial email once a plan was chosen");
 step("in the owner's language (Portuguese); none once a plan was chosen");
+
+// A plan chosen during the trial: "the first charge is on <date>, US$29", once. The state is what
+// applyPlan leaves: active, a subscription, the period starting where the trial ends.
+const bodyOf = (from, email, re) => {
+  const m = mails().slice(from).find((x) => new RegExp(`^To: .*${email.replace(/[.+]/g, "\\$&")}`, "mi").test(x) && re.test(decodeWords(x.match(/^Subject: (.*(?:\r?\n[ \t].*)*)/m)?.[1] ?? "").replace(/\r?\n[ \t]/g, " ")));
+  const body = (m ?? "").split(/\r?\n\r?\n/).slice(1).join("\n\n");
+  return /quoted-printable/i.test(m ?? "") ? Buffer.from(body.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))), "latin1").toString("utf8") : body;
+};
+const longDate = (d) => d.toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+const trialEnd = new Date(Date.now() + 2 * 86_400_000);
+from = mails().length;
+await db`update businesses set plan_status = 'active', stripe_subscription_id = 'sub_chosen', plan_interval = 'month', plan_amount_cents = 2900,
+         trial_ends_at = ${trialEnd}, plan_period_end = ${trialEnd}, plan_cancel_at_period_end = false where id = ${biz.id}`;
+await cron();
+await cron();
+got = subjectsTo(from, email);
+if (got.length !== 1 || !/first charge/.test(got[0])) fail(`one first-charge email expected: ${JSON.stringify(got)}`);
+let body = bodyOf(from, email, /first charge/);
+if (!body.includes(longDate(trialEnd)) || !body.includes("US$29")) fail(`the first-charge email needs the date and amount: ${body}`);
+step("a plan chosen during the trial: one email 2 days before the first charge, with its date and amount");
+
+// A plan cancelled before the first charge is not charged either.
+from = mails().length;
+await db`delete from lifecycle_emails where business_id = ${biz.id} and kind = 'first_charge_3d'`;
+await db`update businesses set plan_cancel_at_period_end = true where id = ${biz.id}`;
+await cron();
+if (subjectsTo(from, email).length) fail("no first-charge email for a plan cancelled before the first charge");
+await db`update businesses set plan_cancel_at_period_end = false, plan_period_end = now() + interval '30 days' where id = ${biz.id}`;
+await cron();
+if (subjectsTo(from, email).length) fail("no first-charge email for a plan already charged");
+step("none when the plan was cancelled or was charged at once (period ends a month on)");
+
+// A yearly plan renewing in 14.5 days: one email with the date and amount; none when cancelled.
+const renews = new Date(Date.now() + 14.5 * 86_400_000);
+from = mails().length;
+await db`update businesses set trial_ends_at = now() - interval '30 days', plan_interval = 'year', plan_amount_cents = 29000, plan_period_end = ${renews} where id = ${biz.id}`;
+await cron();
+await cron();
+got = subjectsTo(from, email);
+if (got.length !== 1 || !/yearly plan renews/.test(got[0])) fail(`one renewal email expected: ${JSON.stringify(got)}`);
+body = bodyOf(from, email, /yearly plan renews/);
+if (!body.includes(longDate(renews)) || !body.includes("US$290")) fail(`the renewal email needs the date and amount: ${body}`);
+step("a yearly plan renewing in 14.5 days: one email with the date and amount");
+
+from = mails().length;
+await db`update businesses set plan_period_end = ${new Date(Date.now() + 14.5 * 86_400_000 + 1000)} where id = ${biz.id}`;
+await cron();
+if (subjectsTo(from, email).length) fail("a renewal email is sent once per period, not again for the same one");
+await db`update businesses set plan_period_end = ${renews}, plan_cancel_at_period_end = true where id = ${biz.id}`;
+await db`delete from lifecycle_emails where business_id = ${biz.id} and kind like 'yearly_renewal_15d%'`;
+await cron();
+if (subjectsTo(from, email).length) fail("no renewal email for a plan cancelled at period end");
+step("a yearly plan cancelled at period end: no email");
 
 // A server error → /admin/errors, and one email to the admin. The trigger: a groom photo link whose
 // id has the right length and letters but isn't a real id (the database refuses it).

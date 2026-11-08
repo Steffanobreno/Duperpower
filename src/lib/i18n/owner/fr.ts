@@ -1758,4 +1758,8 @@ export const fr: string[] = ["Réservation abandonnée",
 "J'ai lu et j'accepte les Conditions et le renouvellement automatique",
 "Lire les Conditions",
 "Se renouvelle automatiquement chaque mois pour {price} jusqu'à votre résiliation. Résiliez quand vous voulez dans Forfait ; vous gardez l'accès jusqu'à la fin de la période payée.",
-"Se renouvelle automatiquement chaque année pour {price} jusqu'à votre résiliation. Résiliez quand vous voulez dans Forfait ; vous gardez l'accès jusqu'à la fin de la période payée. Les forfaits annuels peuvent être remboursés au prorata si vous en faites la demande dans les 14 jours suivant le prélèvement."];
+"Se renouvelle automatiquement chaque année pour {price} jusqu'à votre résiliation. Résiliez quand vous voulez dans Forfait ; vous gardez l'accès jusqu'à la fin de la période payée. Les forfaits annuels peuvent être remboursés au prorata si vous en faites la demande dans les 14 jours suivant le prélèvement.",
+"Votre premier prélèvement {app} aura lieu le {date}",
+"Votre abonnement annuel {app} se renouvelle le {date}",
+"Votre essai gratuit se termine le {date}. Ce jour-là, nous prélèverons {amount} pour l'abonnement que vous avez choisi. Pour éviter le prélèvement, résiliez avant cette date sur la page Abonnement :",
+"Votre abonnement annuel se renouvelle automatiquement le {date} pour {amount}. Pour arrêter le renouvellement, résiliez avant cette date sur la page Abonnement ; vous gardez l'accès jusqu'à la fin de la période payée :"];

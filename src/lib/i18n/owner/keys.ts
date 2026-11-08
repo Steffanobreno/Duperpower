@@ -1760,5 +1760,9 @@ export const OWNER_KEYS: string[] = [
  "I have read and accept the Terms and the automatic renewal",
  "Read the Terms",
  "Renews automatically every month for {price} until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period.",
- "Renews automatically every year for {price} until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period. Yearly plans can be refunded pro rata if you ask within 14 days of the charge."
+ "Renews automatically every year for {price} until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period. Yearly plans can be refunded pro rata if you ask within 14 days of the charge.",
+ "Your {app} first charge is on {date}",
+ "Your {app} yearly plan renews on {date}",
+ "Your free trial ends on {date}. On that day we will charge {amount} for the plan you chose. To avoid the charge, cancel before then on the Plan page:",
+ "Your yearly plan renews automatically on {date} for {amount}. To stop the renewal, cancel before then on the Plan page; you keep access until the end of the period you paid for:"
 ];

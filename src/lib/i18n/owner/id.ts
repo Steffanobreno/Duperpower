@@ -1758,4 +1758,8 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Saya telah membaca dan menyetujui Ketentuan dan perpanjangan otomatis",
 "Baca Ketentuan",
 "Diperpanjang otomatis setiap bulan sebesar {price} sampai Anda membatalkan. Batalkan kapan saja di Paket; Anda tetap punya akses sampai akhir periode yang dibayar.",
-"Diperpanjang otomatis setiap tahun sebesar {price} sampai Anda membatalkan. Batalkan kapan saja di Paket; Anda tetap punya akses sampai akhir periode yang dibayar. Paket tahunan dapat dikembalikan dananya secara proporsional jika Anda memintanya dalam 14 hari setelah penagihan."];
+"Diperpanjang otomatis setiap tahun sebesar {price} sampai Anda membatalkan. Batalkan kapan saja di Paket; Anda tetap punya akses sampai akhir periode yang dibayar. Paket tahunan dapat dikembalikan dananya secara proporsional jika Anda memintanya dalam 14 hari setelah penagihan.",
+"Tagihan pertama {app} Anda pada {date}",
+"Paket tahunan {app} Anda diperpanjang pada {date}",
+"Uji coba gratis Anda berakhir pada {date}. Pada hari itu kami akan menagih {amount} untuk paket yang Anda pilih. Untuk menghindari tagihan, batalkan sebelumnya di halaman Paket:",
+"Paket tahunan Anda diperpanjang otomatis pada {date} sebesar {amount}. Untuk menghentikan perpanjangan, batalkan sebelumnya di halaman Paket; akses Anda tetap ada hingga akhir periode yang sudah dibayar:"];

@@ -1758,4 +1758,8 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Koşulları ve otomatik yenilemeyi okudum ve kabul ediyorum",
 "Koşulları oku",
 "Siz iptal edene kadar her ay otomatik olarak {price} karşılığında yenilenir. İstediğiniz zaman Plan bölümünden iptal edin; ödenen dönemin sonuna kadar erişiminiz sürer.",
-"Siz iptal edene kadar her yıl otomatik olarak {price} karşılığında yenilenir. İstediğiniz zaman Plan bölümünden iptal edin; ödenen dönemin sonuna kadar erişiminiz sürer. Yıllık planlar, tahsilattan sonraki 14 gün içinde isterseniz orantılı olarak iade edilebilir."];
+"Siz iptal edene kadar her yıl otomatik olarak {price} karşılığında yenilenir. İstediğiniz zaman Plan bölümünden iptal edin; ödenen dönemin sonuna kadar erişiminiz sürer. Yıllık planlar, tahsilattan sonraki 14 gün içinde isterseniz orantılı olarak iade edilebilir.",
+"{app} ilk ödemeniz {date} tarihinde",
+"{app} yıllık planınız {date} tarihinde yenileniyor",
+"Ücretsiz deneme süreniz {date} tarihinde bitiyor. O gün seçtiğiniz plan için {amount} tahsil edeceğiz. Ücretten kaçınmak için bundan önce Plan sayfasından iptal edin:",
+"Yıllık planınız {date} tarihinde {amount} karşılığında otomatik olarak yenilenecek. Yenilemeyi durdurmak için bundan önce Plan sayfasından iptal edin; ödediğiniz dönemin sonuna kadar erişiminiz devam eder:"];

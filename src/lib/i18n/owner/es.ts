@@ -1758,4 +1758,8 @@ export const es: string[] = ["Reserva abandonada",
 "He leído y acepto los Términos y la renovación automática",
 "Leer los Términos",
 "Se renueva automáticamente cada mes por {price} hasta que canceles. Cancela cuando quieras en Plan; mantienes el acceso hasta el final del período pagado.",
-"Se renueva automáticamente cada año por {price} hasta que canceles. Cancela cuando quieras en Plan; mantienes el acceso hasta el final del período pagado. Los planes anuales pueden reembolsarse de forma proporcional si lo pides dentro de los 14 días posteriores al cargo."];
+"Se renueva automáticamente cada año por {price} hasta que canceles. Cancela cuando quieras en Plan; mantienes el acceso hasta el final del período pagado. Los planes anuales pueden reembolsarse de forma proporcional si lo pides dentro de los 14 días posteriores al cargo.",
+"Tu primer cargo de {app} es el {date}",
+"Tu plan anual de {app} se renueva el {date}",
+"Tu prueba gratuita termina el {date}. Ese día cobraremos {amount} por el plan que elegiste. Para evitar el cargo, cancela antes en la página del Plan:",
+"Tu plan anual se renueva automáticamente el {date} por {amount}. Para detener la renovación, cancela antes en la página del Plan; mantienes el acceso hasta el final del período que pagaste:"];

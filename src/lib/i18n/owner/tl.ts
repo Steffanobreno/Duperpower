@@ -1758,4 +1758,8 @@ export const tl: string[] = ["Naiwang booking",
 "Nabasa ko at tinatanggap ko ang Mga Tuntunin at ang awtomatikong pag-renew",
 "Basahin ang Mga Tuntunin",
 "Awtomatikong nagre-renew kada buwan sa halagang {price} hanggang sa mag-cancel ka. Mag-cancel anumang oras sa Plano; mananatili ang access mo hanggang sa katapusan ng bayad na panahon.",
-"Awtomatikong nagre-renew kada taon sa halagang {price} hanggang sa mag-cancel ka. Mag-cancel anumang oras sa Plano; mananatili ang access mo hanggang sa katapusan ng bayad na panahon. Ang mga taunang plano ay maaaring i-refund nang proporsyonal kung hihilingin mo sa loob ng 14 na araw mula sa singil."];
+"Awtomatikong nagre-renew kada taon sa halagang {price} hanggang sa mag-cancel ka. Mag-cancel anumang oras sa Plano; mananatili ang access mo hanggang sa katapusan ng bayad na panahon. Ang mga taunang plano ay maaaring i-refund nang proporsyonal kung hihilingin mo sa loob ng 14 na araw mula sa singil.",
+"Ang una mong singil sa {app} ay sa {date}",
+"Magre-renew ang yearly plan mo sa {app} sa {date}",
+"Matatapos ang libreng trial mo sa {date}. Sa araw na iyon, sisingilin ka namin ng {amount} para sa planong pinili mo. Para maiwasan ang singil, mag-cancel bago iyon sa pahina ng Plan:",
+"Awtomatikong magre-renew ang yearly plan mo sa {date} sa halagang {amount}. Para ihinto ang renewal, mag-cancel bago iyon sa pahina ng Plan; mananatili ang access mo hanggang sa katapusan ng bayad na panahon:"];

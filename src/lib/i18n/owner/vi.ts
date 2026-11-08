@@ -1758,4 +1758,8 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Tôi đã đọc và chấp nhận Điều khoản và việc tự động gia hạn",
 "Đọc Điều khoản",
 "Tự động gia hạn mỗi tháng với giá {price} cho đến khi bạn hủy. Hủy bất cứ lúc nào trong Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán.",
-"Tự động gia hạn mỗi năm với giá {price} cho đến khi bạn hủy. Hủy bất cứ lúc nào trong Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán. Gói năm có thể được hoàn tiền theo tỷ lệ nếu bạn yêu cầu trong vòng 14 ngày kể từ ngày bị trừ tiền."];
+"Tự động gia hạn mỗi năm với giá {price} cho đến khi bạn hủy. Hủy bất cứ lúc nào trong Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán. Gói năm có thể được hoàn tiền theo tỷ lệ nếu bạn yêu cầu trong vòng 14 ngày kể từ ngày bị trừ tiền.",
+"Lần thanh toán đầu tiên của {app} là ngày {date}",
+"Gói năm {app} của bạn sẽ gia hạn vào ngày {date}",
+"Bản dùng thử miễn phí của bạn kết thúc vào ngày {date}. Hôm đó chúng tôi sẽ tính {amount} cho gói bạn đã chọn. Để tránh bị tính phí, hãy hủy trước đó tại trang Gói:",
+"Gói năm của bạn tự động gia hạn vào ngày {date} với giá {amount}. Để dừng gia hạn, hãy hủy trước đó tại trang Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán:"];
