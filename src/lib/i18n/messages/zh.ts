@@ -305,4 +305,6 @@ export const zh: Messages = {
     "您将不再收到 {business} 的资讯和优惠。预约提醒仍会发送。",
   "Unsubscribe":
     "取消订阅",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "一笔费用",
 };

@@ -305,4 +305,6 @@ export const vi: Messages = {
     "Bạn sẽ không nhận tin tức và ưu đãi từ {business} nữa. Lời nhắc lịch hẹn vẫn được gửi.",
   "Unsubscribe":
     "Hủy đăng ký",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "một khoản phí",
 };

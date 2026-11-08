@@ -312,4 +312,6 @@ export const ar: Messages = {
     "لن تتلقى أخبار {business} وعروضها بعد الآن. ستستمر تذكيرات الزيارات بالوصول.",
   "Unsubscribe":
     "إلغاء الاشتراك",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "رسومًا",
 };

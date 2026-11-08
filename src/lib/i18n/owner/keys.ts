@@ -1768,5 +1768,21 @@ export const OWNER_KEYS: string[] = [
  "Your plan starts on {date}. The plan price is {price}{interval}, less any discount you applied. To avoid the charge, cancel before then on the Plan page:",
  "Your yearly plan renews on {date}. The plan price is {price}{interval}, less any discount you applied. To stop the renewal, cancel before then on the Plan page:",
  "See the text {first_name} signed (version {version})",
- "Their signed agreements will be deleted too."
+ "Their signed agreements will be deleted too.",
+ "a fee",
+ "Please check the no-show fee.",
+ "No-show fee",
+ "Fills {no_show_fee} in the text. Left empty, the text says “a fee”.",
+ "Service Agreement - {business}",
+ "Our service",
+ "{business} grooms your pet with care, safety and patience. We may stop a groom if your pet is too stressed, or if it isn't safe to continue.",
+ "Health and safety",
+ "Please tell us about any health problem, injury, allergy or behavior we should know before the visit.",
+ "Vaccines must be up to date.",
+ "Matted coats may need a shave-down for your pet's comfort, with an extra fee.",
+ "Please give us at least **24 hours** notice to cancel or change a visit.",
+ "A no-show or a late cancellation may be charged {no_show_fee}.",
+ "Agreement",
+ "This agreement is valid for 12 months from signing.",
+ "By booking you agree to these terms."
 ];

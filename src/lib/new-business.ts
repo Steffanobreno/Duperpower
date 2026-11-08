@@ -134,24 +134,33 @@ export const templates = [
 ];
 
 
-/** A plain service agreement for a new business (the owner edits it in Settings → Service agreement). */
-export const starterAgreement = (business: string) => ({
-  title: `Service Agreement - ${business}`,
-  body: `## Our service
-${business} grooms your pet with care, safety and patience. We may stop a groom if your pet is too stressed, or if it isn't safe to continue.
-
-## Health and safety
-- Please tell us about any health problem, injury, allergy or behavior we should know before the visit.
-- Vaccines must be up to date.
-- Matted coats may need a shave-down for your pet's comfort, with an extra fee.
-
-## Appointments
-- Please give us at least **24 hours** notice to cancel or change a visit.
-- A no-show or a late cancellation may be charged.
-
-## Agreement
-By booking you agree to these terms.`,
-});
+/**
+ * A plain service agreement for a new business, in the owner's language (the owner edits it in
+ * Settings → Service agreement, where the no-show fee fills {no_show_fee}).
+ */
+export const starterAgreement = (business: string, lang?: Lang) => {
+  const t = makeT(lang && lang !== "en" ? OWNER_MESSAGES[lang] : {});
+  return {
+    title: t(msg("Service Agreement - {business}"), { business }),
+    body: [
+      `## ${t(msg("Our service"))}`,
+      t(msg("{business} grooms your pet with care, safety and patience. We may stop a groom if your pet is too stressed, or if it isn't safe to continue."), { business }),
+      "",
+      `## ${t(msg("Health and safety"))}`,
+      `- ${t(msg("Please tell us about any health problem, injury, allergy or behavior we should know before the visit."))}`,
+      `- ${t(msg("Vaccines must be up to date."))}`,
+      `- ${t(msg("Matted coats may need a shave-down for your pet's comfort, with an extra fee."))}`,
+      "",
+      `## ${t(msg("Appointments"))}`,
+      `- ${t(msg("Please give us at least **24 hours** notice to cancel or change a visit."))}`,
+      `- ${t(msg("A no-show or a late cancellation may be charged {no_show_fee}."))}`,
+      "",
+      `## ${t(msg("Agreement"))}`,
+      t(msg("This agreement is valid for 12 months from signing.")),
+      t(msg("By booking you agree to these terms.")),
+    ].join("\n"),
+  };
+};
 
 export type NewBusiness = {
   name: string;
@@ -181,7 +190,7 @@ export async function createBusiness(tx: postgres.TransactionSql, b: NewBusiness
     values (${b.name}, ${b.phone}, ${b.slug}, ${b.timezone}, ${b.zip}, ${b.extra?.reviewUrl ?? null}, ${b.extra?.websiteUrl ?? null},
             ${b.extra?.cancellationHours ?? 24}, ${b.extra?.mailingAddress ?? null}, ${b.country ?? "US"}, ${b.currency ?? "USD"}, ${b.source ?? null}, ${b.needsSetup ? null : new Date()})
     returning id`;
-  const agreement = b.agreement ?? starterAgreement(b.name);
+  const agreement = b.agreement ?? starterAgreement(b.name, b.lang);
   // The first version of the text is kept like every later one (see src/lib/agreement.ts).
   await tx`with a as (insert into agreements (business_id, title, body) values (${biz.id}, ${agreement.title}, ${agreement.body})
                       returning id, version, title, body)

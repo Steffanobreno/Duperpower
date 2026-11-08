@@ -312,4 +312,6 @@ export const ta: Messages = {
     "{business} இடமிருந்து செய்திகளும் சலுகைகளும் இனி வராது. வருகை நினைவூட்டல்கள் தொடர்ந்து வரும்.",
   "Unsubscribe":
     "சந்தாவை நிறுத்து",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "கட்டணம்",
 };

@@ -1,8 +1,10 @@
 // The service agreement keeps every version, end to end. Run after slice.mjs (Maria Lopez, Woofers
-// Dog Spa), with DATABASE_URL. Maria signs → the owner edits the text: a new kept version, her
-// signature still counts and still shows the text she signed → an edit with "sign again" makes her
-// sign again → removing her warns that her signatures go too.
-// Signs once a year during the test; puts the text and that option back at the end.
+// Dog Spa) and after signup.mjs (it counts the businesses; this test signs up one more), with
+// DATABASE_URL. Maria signs → the owner edits the text: a new kept version, her signature still
+// counts and still shows the text she signed → an edit with "sign again" makes her sign again →
+// removing her warns that her signatures go too → the no-show fee fills the text → a business that
+// signs up in Portuguese starts with a Portuguese agreement. Signs once a year during the test;
+// puts the text and that option back at the end.
 // Usage: node tests/e2e/agreement-versions.mjs [baseUrl]
 import { chromium } from "playwright";
 import postgres from "postgres";
@@ -109,8 +111,40 @@ await owner.getByText("Remove client").click();
 await owner.getByText("Their signed agreements will be deleted too.").waitFor();
 step("the remove-client confirmation warns about the signed agreements");
 
+// The no-show fee fills {no_show_fee} in the text the client reads.
+const FEE_LINE = "A no-show is charged {no_show_fee}.";
+// ("sign again" so the link shows the text instead of "Thank you").
+await saveAgreement({ body: `${original.body}\n\n${FEE_LINE}`, fee: "", resign: true });
+await client.goto(`${BASE}/s/${maria.sign_token}`);
+await client.getByText("A no-show is charged a fee.").waitFor();
+await saveAgreement({ body: `${original.body}\n\n${FEE_LINE}`, fee: "25.00", resign: true });
+a = await agreementRow();
+const [feeVersion] = await db`select no_show_fee_cents from agreement_versions where agreement_id = ${a.id} and version = ${a.version}`;
+if (feeVersion?.no_show_fee_cents !== 2500) fail("a new fee should be kept with a new version");
+await client.goto(`${BASE}/s/${maria.sign_token}`);
+await client.getByText("A no-show is charged $25.00.").waitFor();
+step("the no-show fee shows as “a fee” when empty and as $25.00 once set");
+
+// A business that signs up in Portuguese starts with its agreement in Portuguese, valid for 12 months.
+const bia = await newPage("pt-BR");
+const email = `contrato${Date.now()}@example.com`;
+await bia.goto(`${BASE}/signup`);
+await bia.getByLabel("Nome do negócio").fill("Tosa da Lia");
+await bia.getByLabel("Seu nome").fill("Lia");
+await bia.getByLabel("E-mail").fill(email);
+await bia.getByLabel("Senha").fill("banho banho 123");
+await bia.getByRole("checkbox").check();
+await bia.getByRole("button", { name: "Criar minha conta" }).click();
+await bia.waitForURL(/\/welcome/);
+const [pt] = await db`select a.title, a.body from agreements a join staff st on st.business_id = a.business_id
+  join users u on u.id = st.user_id where u.email = ${email}`;
+if (!pt?.title.startsWith("Contrato de serviço")) fail(`the title should be in Portuguese, got “${pt?.title}”`);
+if (!pt.body.includes("Este contrato vale por 12 meses a partir da assinatura.")) fail("the 12-month validity should be in Portuguese");
+if (!pt.body.includes("{no_show_fee}")) fail("the starter agreement should carry the no-show fee");
+step("a business that signs up in Portuguese gets a Portuguese agreement with the fee and the 12 months");
+
 // Put the text back as it was (a new version, nobody asked to sign again).
-await saveAgreement({ body: original.body, every: original.sign_every_booking });
+await saveAgreement({ body: original.body, fee: "", every: original.sign_every_booking });
 
 await db.end();
 await browser.close();

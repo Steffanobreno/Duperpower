@@ -13,7 +13,7 @@ import { getStaff } from "@/lib/auth";
 import { regionForPage } from "@/lib/region-server";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { Calendar, Dog } from "@/components/icons";
-import { activeAgreement, currentSignature } from "@/lib/agreement";
+import { activeAgreement, currentSignature, noShowFeeText } from "@/lib/agreement";
 import { clientEvent } from "@/lib/client-calendar";
 import { cancelByTokenAction, confirmByTokenAction, requestRescheduleByTokenAction } from "./actions";
 
@@ -138,7 +138,7 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
                   tabIndex={0}
                   aria-label={t("Service agreement")}
                 >
-                  <AgreementText title={agreement.title} body={agreement.body} />
+                  <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} />
                 </div>
                 <label className="flex items-start gap-3 text-sm">
                   <input type="checkbox" name="agree" required className="mt-1 h-4 w-4" />

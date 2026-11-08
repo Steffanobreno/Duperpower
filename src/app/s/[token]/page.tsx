@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
-import { activeAgreement, currentSignature } from "@/lib/agreement";
+import { activeAgreement, currentSignature, noShowFeeText } from "@/lib/agreement";
 import { logoUrl } from "@/lib/business-logo";
 import { safeReferralCode } from "@/lib/discounts";
 import { getStaff } from "@/lib/auth";
@@ -41,7 +41,7 @@ export default async function SignPage({ params, searchParams }: PageProps<"/s/[
             {sp.needSign && <Notice kind="error">{t("Please tick the box and type your full name to sign.")}</Notice>}
             <p className="text-sm font-medium">{t("Please read and sign our service agreement.")}</p>
             <div className="max-h-96 overflow-y-auto rounded-xl border border-line bg-bg p-3" tabIndex={0} aria-label={t("Service agreement")}>
-              <AgreementText title={agreement.title} body={agreement.body} />
+              <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} />
             </div>
             <label className="flex items-start gap-3 text-sm">
               <input type="checkbox" name="agree" required className="mt-1 h-4 w-4" />

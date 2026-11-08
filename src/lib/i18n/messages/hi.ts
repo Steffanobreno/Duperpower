@@ -312,4 +312,6 @@ export const hi: Messages = {
     "आपको {business} की ख़बरें और ऑफ़र मिलना बंद हो जाएगा। विज़िट के रिमाइंडर आते रहेंगे।",
   "Unsubscribe":
     "सदस्यता रद्द करें",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "शुल्क",
 };

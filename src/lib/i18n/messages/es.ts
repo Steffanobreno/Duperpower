@@ -323,4 +323,6 @@ export const es: Messages = {
     "Dejarás de recibir novedades y ofertas de {business}. Los recordatorios de tus visitas seguirán llegando.",
   "Unsubscribe":
     "Darme de baja",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "un cargo",
 };

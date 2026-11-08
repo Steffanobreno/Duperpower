@@ -1,7 +1,8 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
-import { activeAgreement, countSigned } from "@/lib/agreement";
+import { activeAgreement, countSigned, noShowFeeText } from "@/lib/agreement";
+import { currencySymbol } from "@/lib/format";
 import { Card, Field, Input, Page, PageHeader, Textarea } from "@/components/ui";
 import { AgreementText } from "@/components/agreement-text";
 import { saveAgreementAction } from "../actions";
@@ -33,6 +34,10 @@ export default async function AgreementPage() {
             <Field label={t("Text")} hint={t("Start a line with \"## \" for a heading and \"- \" for a bullet. Wrap words in ** for bold.")}>
               <Textarea name="body" rows={18} defaultValue={agreement?.body ?? ""} required />
             </Field>
+            <Field label={`${t("No-show fee")} (${currencySymbol()})`} hint={t("Fills {no_show_fee} in the text. Left empty, the text says “a fee”.")}>
+              <Input name="no_show_fee" inputMode="decimal"
+                defaultValue={agreement?.no_show_fee_cents != null ? (agreement.no_show_fee_cents / 100).toFixed(2) : ""} />
+            </Field>
             <label className="flex items-center gap-3 text-sm">
               <input type="checkbox" name="required_online" defaultChecked={agreement?.required_online ?? true} className="h-4 w-4" />
               {t("Clients must sign it to book online")}
@@ -50,7 +55,7 @@ export default async function AgreementPage() {
         {agreement && (
           <Card>
             <p className="mb-2 text-xs font-semibold uppercase text-muted">{t("Preview")}</p>
-            <AgreementText title={agreement.title} body={agreement.body} />
+            <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} />
           </Card>
         )}
       </Page>

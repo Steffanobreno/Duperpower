@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPublicBusiness, onlineServices } from "@/lib/booking";
-import { activeAgreement } from "@/lib/agreement";
+import { activeAgreement, noShowFeeText } from "@/lib/agreement";
 import { AgreementText } from "@/components/agreement-text";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { isYmd, phoneLabel, todayYmd } from "@/lib/format";
@@ -35,7 +35,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
             businessPhone={phone}
             today={todayYmd(b.timezone)}
             agreementTitle={agreement?.title ?? null}
-            agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null}
+            agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, t("a fee"))} /> : null}
             agreementVersion={agreement?.version ?? null}
             slug={slug}
             preferredDate={isYmd(preferredDate) ? preferredDate : null}

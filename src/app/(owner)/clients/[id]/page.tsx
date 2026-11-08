@@ -19,7 +19,7 @@ import { sql } from "@/lib/db";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { addNoteAction, deleteClientAction, deleteNoteAction, setClientControlAction } from "../actions";
 import { PetPhoto } from "@/components/pet-photo";
-import { activeAgreement, agreementVersion, currentSignature } from "@/lib/agreement";
+import { activeAgreement, agreementVersion, currentSignature, noShowFeeText } from "@/lib/agreement";
 import { AgreementText } from "@/components/agreement-text";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -184,7 +184,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                       {t("See the text {first_name} signed (version {version})", { first_name: client.first_name, version: signature.agreement_version })}
                     </summary>
                     <div data-testid="signed-agreement" className="mt-2 max-h-96 overflow-y-auto rounded-xl border border-line bg-bg p-3">
-                      <AgreementText title={signedText.title} body={signedText.body} />
+                      <AgreementText title={signedText.title} body={signedText.body} noShowFee={noShowFeeText(signedText.no_show_fee_cents, t("a fee"))} />
                     </div>
                   </details>
                 )}

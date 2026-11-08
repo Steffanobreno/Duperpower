@@ -2,6 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import type { TransactionSql } from "postgres";
 import { sql } from "./db";
+import { money } from "./format";
 
 // The service agreement: `agreements` holds the current text and options; every text it ever had
 // is kept in `agreement_versions` (never changed), and each signature points to the version signed.
@@ -10,11 +11,13 @@ export type Agreement = {
   id: string; title: string; body: string; version: number; required_online: boolean; sign_every_booking: boolean;
   /** Signatures of older versions no longer count (the owner asked everyone to sign again). */
   resign_from_version: number;
+  /** Fills {no_show_fee} in the text (null: "a fee"). */
+  no_show_fee_cents: number | null;
 };
 
 export async function activeAgreement(businessId: string) {
   const [a] = await sql<Agreement[]>`
-    select id, title, body, version, required_online, sign_every_booking, resign_from_version from agreements
+    select id, title, body, version, required_online, sign_every_booking, resign_from_version, no_show_fee_cents from agreements
     where business_id = ${businessId} and active order by created_at desc limit 1`;
   return a ?? null;
 }
@@ -43,10 +46,16 @@ export async function countSigned(agreement: Agreement) {
 
 /** The text of one kept version of an agreement (what a signature of it signed). */
 export async function agreementVersion(agreementId: string, version: number) {
-  const [v] = await sql<{ title: string; body: string }[]>`
-    select title, body from agreement_versions where agreement_id = ${agreementId} and version = ${version}`;
+  const [v] = await sql<{ title: string; body: string; no_show_fee_cents: number | null }[]>`
+    select title, body, no_show_fee_cents from agreement_versions where agreement_id = ${agreementId} and version = ${version}`;
   return v ?? null;
 }
+
+/**
+ * What {no_show_fee} reads as in the text: the amount in the page's currency, or `noAmount`
+ * ("a fee", in the reader's language) when the owner left it empty.
+ */
+export const noShowFeeText = (cents: number | null, noAmount: string) => (cents == null ? noAmount : money(cents));
 
 /** A drawn signature from the booking page: a small PNG as a data URL, or null if it isn't one. */
 export function signatureImage(dataUrl: unknown) {

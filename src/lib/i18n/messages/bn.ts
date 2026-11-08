@@ -312,4 +312,6 @@ export const bn: Messages = {
     "আপনি আর {business}-এর খবর ও অফার পাবেন না। ভিজিটের রিমাইন্ডার আসতে থাকবে।",
   "Unsubscribe":
     "সাবস্ক্রিপশন বাতিল করুন",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "একটি ফি",
 };

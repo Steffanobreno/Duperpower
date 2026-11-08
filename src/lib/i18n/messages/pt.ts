@@ -312,4 +312,6 @@ export const pt: Messages = {
     "Você deixará de receber novidades e ofertas de {business}. Os lembretes das visitas continuam chegando.",
   "Unsubscribe":
     "Cancelar inscrição",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "uma taxa",
 };

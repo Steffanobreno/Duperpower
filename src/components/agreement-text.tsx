@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
-// Renders the agreement's simple format: "## " headings, "- " bullets, **bold**.
-// Plain React elements only (no HTML injection).
+// Renders the agreement's simple format: "## " headings, "- " bullets, **bold**, and the
+// {no_show_fee} placeholder filled in. Plain React elements only (no HTML injection).
 
 function inline(text: string): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
@@ -9,7 +9,7 @@ function inline(text: string): ReactNode[] {
   );
 }
 
-export function AgreementText({ title, body }: { title: string; body: string }) {
+export function AgreementText({ title, body, noShowFee }: { title: string; body: string; noShowFee: string }) {
   const blocks: ReactNode[] = [];
   let bullets: string[] = [];
   const flush = () => {
@@ -24,7 +24,7 @@ export function AgreementText({ title, body }: { title: string; body: string }) 
       bullets = [];
     }
   };
-  for (const raw of body.split(/\r?\n/)) {
+  for (const raw of body.replaceAll("{no_show_fee}", noShowFee).split(/\r?\n/)) {
     const line = raw.trim();
     if (line.startsWith("- ")) bullets.push(line.slice(2));
     else {

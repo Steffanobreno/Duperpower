@@ -312,4 +312,6 @@ export const id: Messages = {
     "Anda tidak akan menerima kabar dan penawaran dari {business}. Pengingat kunjungan tetap dikirim.",
   "Unsubscribe":
     "Berhenti berlangganan",
+  // The no-show fee in the service agreement, when the groomer left the amount empty.
+  "a fee": "biaya",
 };
