@@ -46,7 +46,10 @@ export async function runLifecycleEmails() {
         when plan_status = 'active' and stripe_subscription_id is not null and not plan_cancel_at_period_end
              and plan_period_end <= trial_ends_at + interval '1 hour'
              and trial_ends_at between now() + interval '1 day' and now() + interval '3 days' then 'first_charge_3d'
+        -- A yearly plan chosen early in the trial: its period ends with the trial, so that date is the
+        -- first charge (first_charge_3d above), not a renewal.
         when plan_status = 'active' and plan_interval = 'year' and not plan_cancel_at_period_end
+             and not (trial_ends_at is not null and plan_period_end <= trial_ends_at + interval '1 hour')
              and plan_period_end between now() + interval '13 days' and now() + interval '15 days'
              then 'yearly_renewal_15d:' || to_char(plan_period_end at time zone 'UTC', 'YYYY-MM-DD')
         when ${billingOn()} and plan_status = 'trial' and stripe_subscription_id is null

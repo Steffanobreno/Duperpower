@@ -146,6 +146,16 @@ await cron();
 if (subjectsTo(from, email).length) fail("no renewal email for a plan cancelled at period end");
 step("a yearly plan cancelled at period end: no email");
 
+// A yearly plan chosen early in the trial: its period ends with the trial (the first charge, not a
+// renewal), so no "renews" email even when that is 14 days away (the first-charge email comes later).
+from = mails().length;
+await db`delete from lifecycle_emails where business_id = ${biz.id} and kind like 'yearly_renewal_15d%'`;
+await db`update businesses set plan_cancel_at_period_end = false, trial_ends_at = ${renews}, plan_period_end = ${renews} where id = ${biz.id}`;
+await cron();
+got = subjectsTo(from, email);
+if (got.length) fail(`no renewal email for a yearly plan whose first charge is at the trial's end: ${JSON.stringify(got)}`);
+step("a yearly plan chosen early in the trial: no renewal email before the first charge");
+
 // The amount is the real next charge, never the list price when a discount applies. Each case
 // starts from a clean slate (nothing sent yet) and checks what the email says.
 const chargeEmail = async (label, state, subject, check) => {
