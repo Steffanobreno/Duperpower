@@ -68,6 +68,8 @@ const B = await client("Blake", "94010");
 const C = await client("Casey", "94402");
 const A2 = await client("Ari", "94402");
 const D = await client("Dana", "94401");
+// B never agreed to texts.
+await db`update clients set sms_consent_at = null where id = ${B}`;
 // E is due but blocked from booking online: never invited.
 const E = await client("Eli", "94402");
 await db`update clients set online_booking_blocked = true where id = ${E}`;
@@ -113,6 +115,12 @@ const href = await wa.getAttribute("href");
 if (!href.includes("wa.me/") || !href.includes(encodeURIComponent("11:00"))) fail(`WhatsApp link should offer 11:00: ${href}`);
 if (!decodeURIComponent(href).includes("Hi Avery!")) fail(`the offer should greet Avery: ${decodeURIComponent(href)}`);
 step("A's WhatsApp link has the gap offer for 11:00");
+
+// A gap offer is promotional: a text only to clients who agreed to texts (B didn't); WhatsApp stays.
+if (!(await row(A).locator('a[href^="sms:"]').count())) fail("A agreed to texts and should have a Text link");
+if (await row(B).locator('a[href^="sms:"]').count()) fail("B never agreed to texts and should have no Text link");
+await row(B).getByRole("link", { name: "WhatsApp" }).waitFor();
+step("Text only for clients who agreed to texts (A); B, who didn't, keeps WhatsApp");
 
 // The link opens WhatsApp in a new tab; the tap also records the invite.
 await context.route("https://wa.me/**", (r) => r.fulfill({ body: "WhatsApp" }));

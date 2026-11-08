@@ -124,7 +124,8 @@ export async function fillCandidates(staff: StaffContext, date: string, limit = 
         select distinct w.client_id from waitlist w
         where w.business_id = ${staff.businessId} and w.status = 'waiting' and ${date}::date between w.from_date and w.to_date)
       select c.id, c.first_name, trim(c.first_name || ' ' || c.last_name) as name, nullif(c.phone, '') as phone,
-             c.sms_opted_out_at is null as sms_ok, c.zip, c.lat, c.lng,
+             -- A gap offer is promotional: a text only with the client's consent and no STOP (WhatsApp is the groomer's own choice).
+             c.sms_consent_at is not null and c.sms_opted_out_at is null as sms_ok, c.zip, c.lat, c.lng,
              (select string_agg(p.name, ' & ' order by p.name) from pets p where p.client_id = c.id and p.deceased_at is null) as pets,
              wait.client_id is not null as waitlist, due.days_overdue,
              exists (select 1 from fill_offers f where f.business_id = ${staff.businessId} and f.client_id = c.id
