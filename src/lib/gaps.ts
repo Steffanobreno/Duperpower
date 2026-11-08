@@ -9,10 +9,11 @@ const toMin = (t: string) => {
 };
 const toHm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
-/** The free stretches inside `hours`, at least `minMinutes` long. No hours (a day off): none. */
-export function freeGaps(hours: { start: string; end: string } | null, busy: { start: string; end: string }[], minMinutes: number): Gap[] {
+/** The free stretches inside `hours`, at least `minMinutes` long, from `notBefore` on if given. No hours (a day off): none. */
+export function freeGaps(hours: { start: string; end: string } | null, busy: { start: string; end: string }[], minMinutes: number, notBefore?: string): Gap[] {
   if (!hours) return [];
-  const open = toMin(hours.start);
+  // Today: nothing before now (rounded up to the next 15 minutes) can be offered.
+  const open = Math.max(toMin(hours.start), notBefore ? Math.ceil(toMin(notBefore) / 15) * 15 : 0);
   const close = toMin(hours.end);
   const blocks = busy
     .map((b) => [Math.max(toMin(b.start), open), Math.min(toMin(b.end), close)] as const)

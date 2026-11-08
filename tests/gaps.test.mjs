@@ -35,4 +35,13 @@ assert.deepEqual(freeGaps(hours, [{ start: "05:00", end: "08:00" }, { start: "18
 ]);
 console.log("✓ busy blocks are clipped to the working hours");
 
+assert.deepEqual(freeGaps(hours, busy, 60, "13:10"), [
+  { start: "13:15", end: "15:00", minutes: 105 },
+  { start: "16:00", end: "19:00", minutes: 180 },
+]);
+assert.deepEqual(freeGaps(hours, busy, 60, "14:30"), [{ start: "16:00", end: "19:00", minutes: 180 }]);
+assert.deepEqual(freeGaps(hours, busy, 60, "05:00"), freeGaps(hours, busy, 60));
+assert.deepEqual(freeGaps(hours, busy, 60, "18:30"), []);
+console.log("✓ notBefore clips to the next quarter hour and drops gaps that get too short");
+
 console.log("All good.");

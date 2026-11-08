@@ -1,7 +1,7 @@
 "use client";
 import { useT } from "@/components/i18n";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import "leaflet/dist/leaflet.css";
 import { drawDayMap, type MapEngine } from "./map-engines";
 import { setStatusAction } from "@/app/(owner)/appointments/actions";
@@ -30,10 +30,12 @@ export type DayStop = {
   alerts: string[]; // "💉 Biscuit: Rabies expired Oct 29"
 };
 
-export function DayMap({ stops, path, route, compact = false }: {
+export function DayMap({ stops, path, route, compact = false, overlay }: {
   stops: DayStop[]; path?: [number, number][]; route?: string | null;
   /** Smaller, when the whole month is open above it. */
   compact?: boolean;
+  /** A chip over the map's top-left corner (it takes no room above the map). */
+  overlay?: ReactNode;
 }) {
   const { t } = useT();
   const outer = useRef<HTMLDivElement>(null);
@@ -113,6 +115,7 @@ export function DayMap({ stops, path, route, compact = false }: {
     <div ref={outer} className="relative isolate z-0 overflow-hidden"
       style={compact ? { height: 330 } : { height: height ?? "calc(100dvh - 18rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
       <div ref={box} className="absolute inset-0" role="img" aria-label={t("Map of the day's visits")} />
+      {overlay}
       {route && (
         <a href={route} target="_blank" rel="noopener"
           className="absolute right-3 top-3 z-[500] rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">

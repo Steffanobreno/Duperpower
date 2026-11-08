@@ -177,6 +177,13 @@ const card = page.getByRole("link", { name: /\d+ free slots · \d+ clients nearb
 await card.waitFor();
 if (!(await card.getAttribute("href")).endsWith(`/fill/${DAY}`)) fail("the Today card should link to /fill/<day>");
 step("Today shows the free slots card linking to /fill/<day>");
+// Map mode with a stop: the chip sits over the map, and the visit cards stay above the tab bar.
+await page.getByRole("img", { name: "Map of the day's visits" }).waitFor();
+if (!(await page.locator('[aria-label="Visits"]').count())) fail("the day's visit cards should show in map mode");
+const mapGap = await page.evaluate(() =>
+  document.querySelector('nav[aria-label="Main"]').getBoundingClientRect().top - document.querySelector('[aria-label="Visits"]').getBoundingClientRect().bottom);
+if (mapGap < 0) fail(`the cards are ${-mapGap}px under the tab bar`);
+step("map mode with free time: the chip is shown and the visit cards stay above the tab bar");
 const [{ id: stopVisit }] = await db`select id from appointments where client_id = ${stop} and status = 'confirmed'`;
 await page.goto(`${BASE}/appointments/${stopVisit}`);
 if (await page.getByRole("link", { name: /Fill this time/ }).count()) fail("a confirmed visit should not offer Fill this time");

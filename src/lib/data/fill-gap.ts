@@ -45,7 +45,16 @@ export async function dayGaps(staff: StaffContext, date: string): Promise<Gap[]>
   // Clipped to the day, so a block from the day before starts at 00:00 and one into the next ends at 24:00.
   const local = (d: Date, edge: string) => (d <= start ? "00:00" : d >= end ? edge : hm(d, staff.timezone));
   const busy = [...stops, ...blocks].map((b) => ({ start: local(b.start_at, "00:00"), end: local(b.end_at, "24:00") }));
-  return freeGaps({ start: hours.start_time.slice(0, 5), end: hours.end_time.slice(0, 5) }, busy, svc?.min ?? 60);
+  return freeGaps({ start: hours.start_time.slice(0, 5), end: hours.end_time.slice(0, 5) }, busy, svc?.min ?? 60,
+    date === todayYmd(staff.timezone) ? hm(new Date(), staff.timezone) : undefined);
+}
+
+/** The Today card: free slots on a day that hasn't passed, and the clients who could fill them. Null when there is nothing to offer. */
+export async function fillSummary(staff: StaffContext, date: string): Promise<{ slots: number; nearby: number } | null> {
+  if (date < todayYmd(staff.timezone)) return null;
+  const gaps = await dayGaps(staff, date);
+  if (!gaps.length) return null;
+  return { slots: gaps.length, nearby: (await fillCandidates(staff, date, 30)).length };
 }
 
 /** Clients who can be invited that day at all: active, and with no visit in the 14 days around it. */
