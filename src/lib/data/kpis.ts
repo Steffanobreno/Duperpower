@@ -12,9 +12,11 @@ import { LIVE } from "./reports";
 export type Kpi = {
   key: "revenue" | "visits" | "avg_ticket" | "return_rate" | "occupancy" | "no_shows" | "overdue" | "reports_sent" | "offers_booked";
   value: number;
-  /** The same window last month; null when the number has no comparison. */
+  /** The same days of the period before (see `vs`); null when the number has no comparison. */
   previous: number | null;
   unit: "money" | "count" | "percent";
+  /** What `previous` covers: the same days of last month (the default) or of last week. */
+  vs?: "last_month" | "last_week";
 };
 
 /** Days from..to (inclusive, YYYY-MM-DD) and the instants they cover in the business time zone. */
@@ -150,19 +152,26 @@ export async function monthKpis(staff: StaffContext, today: string): Promise<Kpi
   ];
 }
 
-/** Today's 3 numbers: the month's revenue, this week's occupancy (Monday to Sunday) and overdue clients. */
+/**
+ * Today's 3 numbers: the month's revenue, this week's occupancy (Monday to Sunday) against last
+ * week's Monday up to the same weekday as today, and overdue clients.
+ */
 export async function todayKpis(staff: StaffContext, today: string): Promise<Kpi[]> {
   const { current, previous } = monthWindows(today);
-  const monday = addDaysYmd(today, -((weekdayOf(today) + 6) % 7));
+  const elapsed = (weekdayOf(today) + 6) % 7;
+  const monday = addDaysYmd(today, -elapsed);
+  const lastMonday = addDaysYmd(monday, -7);
   const [rev, occ, overdue] = await Promise.all([
     pair(revenue, staff, windowOf(staff, current.from, current.to), windowOf(staff, previous.from, previous.to)),
-    occupancy(staff, windowOf(staff, monday, addDaysYmd(monday, 6))),
+    Promise.all([
+      occupancy(staff, windowOf(staff, monday, addDaysYmd(monday, 6))),
+      occupancy(staff, windowOf(staff, lastMonday, addDaysYmd(lastMonday, elapsed))),
+    ]),
     overdueCount(staff, today),
   ]);
   return [
     { key: "revenue", value: rev[0], previous: rev[1], unit: "money" },
-    // A week has no "same days last month": no comparison.
-    { key: "occupancy", value: occ, previous: null, unit: "percent" },
+    { key: "occupancy", value: occ[0], previous: occ[1], unit: "percent", vs: "last_week" },
     { key: "overdue", value: overdue, previous: null, unit: "count" },
   ];
 }

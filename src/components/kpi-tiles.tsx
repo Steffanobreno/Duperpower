@@ -18,6 +18,11 @@ const LABELS: Record<Kpi["key"], string> = {
   offers_booked: msg("Invites that booked"),
 };
 
+/** A short note under a tile's name, where the number could be read two ways. */
+const NOTES: Partial<Record<Kpi["key"], string>> = {
+  revenue: msg("without tips"),
+};
+
 function value(k: Kpi) {
   if (k.unit === "money") return money(k.value);
   if (k.unit === "percent") return `${k.value}%`;
@@ -28,6 +33,7 @@ function change(k: Kpi, t: T) {
   if (k.previous == null) return null;
   if (k.previous > 0) {
     const pct = Math.round(((k.value - k.previous) / k.previous) * 100);
+    if (k.vs === "last_week") return pct >= 0 ? t("▲ {n}% vs last week", { n: pct }) : t("▼ {n}% vs last week", { n: -pct });
     return pct >= 0 ? t("▲ {n}% vs last month", { n: pct }) : t("▼ {n}% vs last month", { n: -pct });
   }
   return k.value > 0 ? t("new") : null;
@@ -49,7 +55,9 @@ export function KpiTiles({ kpis, t, today, labels = {} }: {
         const body = (
           <>
             <div className="text-xs font-semibold leading-tight text-muted">{label}</div>
-            <div className="mt-0.5 text-lg font-extrabold tabular-nums">{value(k)}</div>
+            {NOTES[k.key] && <div className="text-[11px] leading-tight text-muted">{t(NOTES[k.key]!)}</div>}
+            {/* $12,345.67 still fits a third of a phone screen: a smaller size, and it may wrap. */}
+            <div className={`mt-0.5 font-extrabold tabular-nums leading-tight [overflow-wrap:anywhere] ${k.unit === "money" ? "text-[15px] tracking-tight" : "text-lg"}`}>{value(k)}</div>
             {delta && <div className="text-xs text-muted">{delta}</div>}
           </>
         );

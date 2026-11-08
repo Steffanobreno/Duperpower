@@ -50,7 +50,13 @@ await owner.waitForURL(/\/welcome/);
 const [{ biz, staff }] = await db`
   select b.id as biz, s.id as staff from businesses b join staff s on s.business_id = b.id join users u on u.id = s.user_id
   where u.email = ${OWNER_EMAIL}`;
-await db`update businesses set timezone = ${TZ}, onboarded_at = now() where id = ${biz}`;
+// No holidays or closed dates, and the owner works 09:00–17:00 (480 minutes) every day of the week.
+await db`update businesses set timezone = ${TZ}, onboarded_at = now(), closed_holidays = '{}' where id = ${biz}`;
+await db`delete from closed_dates where business_id = ${biz}`;
+await db`delete from working_hours where staff_id = ${staff}`;
+for (let weekday = 0; weekday <= 6; weekday++) {
+  await db`insert into working_hours (staff_id, weekday, start_time, end_time) values (${staff}, ${weekday}, '09:00', '17:00')`;
+}
 step("signed up a new business in Los Angeles time");
 
 // 2. The visits and payments.
@@ -60,9 +66,9 @@ const [{ today, lastPrev }] = await db`
 const at = (day, time) => db`select (${day}::date + ${time}::time) at time zone ${TZ} as t`.then(([r]) => r.t);
 const [{ id: client }] = await db`insert into clients (business_id, first_name, last_name, phone)
   values (${biz}, 'Kim', 'Kpi', '+16505550199') returning id`;
-const visit = async (day, from, to, status) => {
+const visit = async (day, from, to, status, who = client, by = staff) => {
   const [{ id }] = await db`insert into appointments (business_id, client_id, staff_id, start_at, end_at, status)
-    values (${biz}, ${client}, ${staff}, ${await at(day, from)}, ${await at(day, to)}, ${status}) returning id`;
+    values (${biz}, ${who}, ${by}, ${await at(day, from)}, ${await at(day, to)}, ${status}) returning id`;
   return id;
 };
 const paid = async (appointment, cents, receivedAt) => {
@@ -75,7 +81,15 @@ await paid(await visit(today, "08:00", "09:00", "completed"), 10000, now);
 await paid(await visit(today, "09:30", "10:30", "completed"), 5000, now);
 await paid(await visit(lastPrev, "22:30", "23:30", "completed"), 7000, await at(lastPrev, "23:30"));
 await visit(today, "11:00", "12:00", "no_show");
-step("seeded 2 paid visits today, 1 paid on the last day of last month at 23:30, 1 no-show today");
+// Kim's next visit, after the month-to-date window (which ends today): she counts as coming back.
+const [{ later }] = await db`select to_char(${today}::date + 3, 'YYYY-MM-DD') as later`;
+await visit(later, "09:00", "10:00", "confirmed");
+step("seeded 2 paid visits today, 1 paid on the last day of last month at 23:30, 1 no-show today, 1 visit in 3 days");
+
+// Occupancy from the 1st to today: the owner's live visits in that window are the two finished
+// ones today (60 minutes each), over 480 minutes on every day so far (none closed).
+const days = Number(today.slice(8, 10));
+const occupancy = `${Math.round((120 / (480 * days)) * 100)}%`;
 
 // 3. Reports: the month-to-date tiles, read by their names.
 // Signed in by the signup.
@@ -93,7 +107,20 @@ const noShows = await text("No-shows and cancellations");
 if (!/\b1\b/.test(noShows.replace("No-shows and cancellations", ""))) fail(`No-shows and cancellations should be 1, got "${noShows}"`);
 const overdue = tile("Overdue clients").getByRole("link");
 if (!(await overdue.getAttribute("href")).endsWith(`/fill/${today}`)) fail("the Overdue clients tile should link to /fill/<today>");
-step("Reports: Revenue $150.00 (new), Average ticket $75.00, No-shows and cancellations 1, Overdue links to Fill");
+const occ = await text("Occupancy");
+if (!occ.includes(occupancy)) fail(`Occupancy should be ${occupancy} (120 min over ${days} days of 480), got "${occ}"`);
+const ret = await text("Return rate");
+if (!ret.includes("100%")) fail(`Return rate should be 100% (Kim is booked again), got "${ret}"`);
+step(`Reports: Revenue $150.00 (new), Average ticket $75.00, No-shows and cancellations 1, Occupancy ${occupancy}, Return rate 100%, Overdue links to Fill`);
+
+// A second client seen last month with nothing booked: half the clients come back.
+const [{ id: client2 }] = await db`insert into clients (business_id, first_name, last_name, phone)
+  values (${biz}, 'Lee', 'Kpi', '+16505550198') returning id`;
+await visit(lastPrev, "08:00", "09:00", "completed", client2);
+await owner.reload();
+const ret2 = await text("Return rate");
+if (!ret2.includes("50%")) fail(`Return rate should be 50% (Lee has no next visit), got "${ret2}"`);
+step("Reports: a client seen with no next visit brings Return rate to 50%");
 
 // 4. Today (map mode with stops): the 3 tiles, and the visit cards stay above the tab bar.
 await owner.goto(`${BASE}/today`);
@@ -119,15 +146,24 @@ const salt = randomBytes(16);
 // The same format as hashPassword in src/lib/auth.ts (which can't be imported outside Next).
 const hash = `scrypt$${salt.toString("base64")}$${scryptSync(GROOMER_PASSWORD, salt, 64).toString("base64")}`;
 const [{ id: user }] = await db`insert into users (email, password_hash) values (${GROOMER_EMAIL}, ${hash}) returning id`;
-await db`insert into staff (business_id, name, role, user_id) values (${biz}, 'Kpi Groomer', 'groomer', ${user})`;
+const [{ id: groomerId }] = await db`insert into staff (business_id, name, role, user_id) values (${biz}, 'Kpi Groomer', 'groomer', ${user}) returning id`;
+// A visit of their own today, so Today has a route (map and list) for them.
+await visit(today, "13:00", "14:00", "confirmed", client2, groomerId);
 const groomer = await newPage();
 await login(groomer, GROOMER_EMAIL, GROOMER_PASSWORD);
 await groomer.goto(`${BASE}/today`);
 await groomer.getByRole("heading", { name: "Today" }).waitFor();
 if (await groomer.locator('[role="group"][aria-label="Revenue"]').count()) fail("a groomer without Reports should see no Revenue tile");
+// No money at all on Today, in map mode or in list mode.
+await groomer.getByRole("img", { name: "Map of the day's visits" }).waitFor();
+const dollars = async () => (await groomer.locator("main").innerText()).match(/\$\s?\d[\d,.]*/g);
+if (await dollars()) fail(`a groomer without Reports should see no money on Today (map), got ${await dollars()}`);
+await groomer.goto(`${BASE}/today?view=list`);
+await groomer.getByRole("link", { name: "Lee Kpi" }).first().waitFor();
+if (await dollars()) fail(`a groomer without Reports should see no money on Today (list), got ${await dollars()}`);
 await groomer.goto(`${BASE}/reports`);
 await groomer.waitForURL(/\/today\?denied=1/);
-step("a groomer sees no tiles on Today and /reports sends them to /today?denied=1");
+step("a groomer sees no tiles and no money on Today (map and list), and /reports sends them to /today?denied=1");
 
 await db.end();
 await browser.close();

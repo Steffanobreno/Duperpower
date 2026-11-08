@@ -172,7 +172,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     };
   });
   const tiles = kpis && (
-    <section aria-label={t("This month so far")}>
+    <section aria-label={t("Your numbers")}>
       <KpiTiles kpis={kpis} t={t} today={today} labels={{ occupancy: msg("Occupancy this week") }} />
     </section>
   );
@@ -230,7 +230,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         {stops.length > 0 && (
           <div className="flex items-center gap-2 text-sm">
             <p className="min-w-0 flex-1 truncate text-muted">
-              <strong className="text-ink">{stops.length}</strong> {" "}{t("stop")}{stops.length > 1 ? "s" : ""} {t("· {done}/{n} done · {money}", { done: done, n: stops.length, money: money(expected) })}
+              <strong className="text-ink">{stops.length}</strong> {" "}{t("stop")}{stops.length > 1 ? "s" : ""} {staff.can.reports ? t("· {done}/{n} done · {money}", { done: done, n: stops.length, money: money(expected) }) : t("· {done}/{n} done", { done: done, n: stops.length })}
               {driving != null && <> · 🚐 {t(minutesLabel(driving))}</>}
             </p>
             <nav aria-label={t("View")} className="flex shrink-0 rounded-full bg-surface p-0.5 shadow-[var(--shadow-card)]">
@@ -342,10 +342,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </>
         ) : (
           <>
-            <div className={`grid ${driving != null ? "grid-cols-4" : "grid-cols-3"} gap-2 text-center`}>
+            {/* Money only for those who see Reports. */}
+            <div className={`grid ${["grid-cols-2", "grid-cols-3", "grid-cols-4"][Number(driving != null) + Number(staff.can.reports)]} gap-2 text-center`}>
               <Stat label={t("Stops")} value={String(stops.length)} />
               <Stat label={t("Done")} value={`${done}/${stops.length}`} />
-              <Stat label={t("Expected")} value={money(expected)} />
+              {staff.can.reports && <Stat label={t("Expected")} value={money(expected)} />}
               {driving != null && <Stat label={t("Driving")} value={t(minutesLabel(driving))} />}
             </div>
 
