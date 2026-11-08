@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from "node:fs";
 
 const files = [
   "src/app/book/booking-wizard.tsx", "src/app/book/month-calendar.tsx", "src/app/book/signature-pad.tsx",
-  "src/app/book/page.tsx", "src/app/book/book-screen.tsx", "src/app/a/[token]/page.tsx", "src/app/r/[token]/page.tsx",
+  "src/app/book/page.tsx", "src/app/book/book-screen.tsx", "src/app/a/[token]/page.tsx", "src/app/r/[token]/page.tsx", "src/app/g/[token]/page.tsx",
   "src/components/client-shell.tsx", "src/components/receipt-view.tsx", "src/lib/i18n/index.ts",
   "src/app/intake/intake-form.tsx", "src/app/intake/page.tsx", "src/app/intake/intake-screen.tsx", "src/app/s/[token]/page.tsx",
 ];
@@ -13,6 +13,8 @@ const used = new Set();
 for (const f of files) {
   for (const m of readFileSync(f, "utf8").matchAll(/\bt\(\s*"((?:[^"\\]|\\.)*)"/g)) used.add(unescape(m[1]));
 }
+// The groom tag labels the report card translates by key.
+for (const m of readFileSync("src/lib/groom-tags.ts", "utf8").matchAll(/msg\("([^"]*)"\)/g)) used.add(m[1]);
 // The shapes server messages are matched to (src/lib/i18n/index.ts) and the size names.
 for (const m of readFileSync("src/lib/i18n/index.ts", "utf8").matchAll(/\/, "((?:[^"\\]|\\.)*)"\]/g)) used.add(unescape(m[1]));
 for (const size of ["Small", "Medium", "Large", "X-Large"]) used.add(size);

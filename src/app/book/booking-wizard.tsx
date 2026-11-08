@@ -87,10 +87,13 @@ export function BookingWizard({
   initialPhone = "",
   timezone,
   slug = null,
+  preferredDate = null,
 }: {
   /** The business's booking link (/book/<slug>); null on the plain /book. */
   slug?: string | null;
   initialPhone?: string; // from the "finish booking" link
+  /** A day (yyyy-MM-dd) to start on when it is offered, from the report card's link. */
+  preferredDate?: string | null;
   timezone: string; // the business's, for showing open times
   services: Service[];
   businessName: string;
@@ -211,7 +214,7 @@ export function BookingWizard({
       if (res.error) return setError(serverMessage(res.error));
       setDays(res.days ?? []);
       // Start on a day we're already nearby, when there is one.
-      setDay((res.days?.find((d) => d.near) ?? res.days?.[0])?.date ?? null);
+      setDay((res.days?.find((d) => d.date === preferredDate) ?? res.days?.find((d) => d.near) ?? res.days?.[0])?.date ?? null);
       setStart(null);
       go({ name: "time" });
     });

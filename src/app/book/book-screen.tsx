@@ -3,7 +3,7 @@ import { getPublicBusiness, onlineServices } from "@/lib/booking";
 import { activeAgreement } from "@/lib/agreement";
 import { AgreementText } from "@/components/agreement-text";
 import { ClientShell, StepCard } from "@/components/client-shell";
-import { phoneLabel, todayYmd } from "@/lib/format";
+import { isYmd, phoneLabel, todayYmd } from "@/lib/format";
 import { BookingWizard } from "./booking-wizard";
 import { getI18n } from "@/lib/i18n/server";
 import { I18nProvider } from "@/components/i18n";
@@ -15,7 +15,7 @@ import { regionForPage } from "@/lib/region-server";
 export async function BookScreen({ slug, query }: { slug: string | null; query: Record<string, string | string[] | undefined> }) {
   const b = await getPublicBusiness(slug);
   if (!b) return slug ? notFound() : null;
-  const { embed, phone: resumePhone, lang: langParam } = query;
+  const { embed, phone: resumePhone, lang: langParam, date: preferredDate } = query;
   const [services, agreement, { lang, messages, t }, logo] = await Promise.all([
     onlineServices(b.id), activeAgreement(b.id), getI18n(langParam), logoUrl(b.id),
   ]);
@@ -36,6 +36,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
             agreementTitle={agreement?.title ?? null}
             agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null}
             slug={slug}
+            preferredDate={isYmd(preferredDate) ? preferredDate : null}
             initialPhone={typeof resumePhone !== "string" ? "" : b.country === "US" ? resumePhone.replace(/\D/g, "").slice(-10) : resumePhone.replace(/[^\d+]/g, "").slice(0, 16)}
           />
         </I18nProvider>

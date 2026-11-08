@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const base = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 // The sales and legal pages are public; the app and clients' private links are not for search.
-const PRIVATE = ["/today", "/calendar", "/clients", "/appointments", "/settings", "/admin", "/billing", "/a/", "/r/", "/s/", "/u/",
+const PRIVATE = ["/today", "/calendar", "/clients", "/appointments", "/settings", "/admin", "/billing", "/a/", "/g/", "/r/", "/s/", "/u/",
   "/api/", "/welcome", "/help", "/login/reset/"];
 
 // AI crawlers, named so the choice is visible and easy to change (decided 2026-11-07: all allowed,
