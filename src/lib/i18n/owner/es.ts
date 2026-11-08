@@ -1753,4 +1753,9 @@ export const es: string[] = ["Reserva abandonada",
 "Recibe {amount} de descuento en su primera factura. Tú recibes {amount} de crédito cuando haga su primer pago.",
 "Sin textos automáticos. Si responden STOP, la respuesta llega a tu teléfono, así que activa esto para ese cliente.",
 "Tengo el consentimiento por escrito de estos clientes para enviarles mensajes de texto.",
-"Si lo dejas sin marcar, ningún cliente importado recibirá textos automáticos hasta que registres su consentimiento en su perfil."];
+"Si lo dejas sin marcar, ningún cliente importado recibirá textos automáticos hasta que registres su consentimiento en su perfil.",
+"Acepta los Términos y la renovación automática para elegir un plan.",
+"He leído y acepto los Términos y la renovación automática",
+"Leer los Términos",
+"Se renueva automáticamente cada mes por {price} hasta que canceles. Cancela cuando quieras en Plan; mantienes el acceso hasta el final del período pagado.",
+"Se renueva automáticamente cada año por {price} hasta que canceles. Cancela cuando quieras en Plan; mantienes el acceso hasta el final del período pagado. Los planes anuales pueden reembolsarse de forma proporcional si lo pides dentro de los 14 días posteriores al cargo."];

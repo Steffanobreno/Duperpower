@@ -1753,4 +1753,9 @@ export const tr: string[] = ["Yarım kalan randevu",
 "İlk faturalarında {amount} indirim alırlar. İlk ödemelerini yaptıklarında size {amount} kredi verilir.",
 "Otomatik mesaj yok. STOP yanıtı verirse yanıt telefonunuza gelir; bu yüzden onun için bunu açın.",
 "Bu müşterilerden onlara kısa mesaj göndermek için yazılı iznim var.",
-"İşaretlemezseniz, siz profillerine onaylarını kaydedene kadar içe aktarılan hiçbir müşteriye otomatik mesaj gitmez."];
+"İşaretlemezseniz, siz profillerine onaylarını kaydedene kadar içe aktarılan hiçbir müşteriye otomatik mesaj gitmez.",
+"Plan seçmek için Koşulları ve otomatik yenilemeyi kabul edin.",
+"Koşulları ve otomatik yenilemeyi okudum ve kabul ediyorum",
+"Koşulları oku",
+"Siz iptal edene kadar her ay otomatik olarak {price} karşılığında yenilenir. İstediğiniz zaman Plan bölümünden iptal edin; ödenen dönemin sonuna kadar erişiminiz sürer.",
+"Siz iptal edene kadar her yıl otomatik olarak {price} karşılığında yenilenir. İstediğiniz zaman Plan bölümünden iptal edin; ödenen dönemin sonuna kadar erişiminiz sürer. Yıllık planlar, tahsilattan sonraki 14 gün içinde isterseniz orantılı olarak iade edilebilir."];

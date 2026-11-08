@@ -1753,4 +1753,9 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Mereka mendapat potongan {amount} untuk tagihan pertama. Anda mendapat kredit {amount} saat mereka melakukan pembayaran pertama.",
 "Tanpa pesan otomatis. Jika klien membalas STOP, balasannya masuk ke ponsel Anda, jadi aktifkan ini untuk mereka.",
 "Saya memiliki persetujuan tertulis dari klien-klien ini untuk mengirim pesan teks.",
-"Jika tidak dicentang, tidak ada klien impor yang menerima pesan otomatis sampai Anda mencatat persetujuannya di profil mereka."];
+"Jika tidak dicentang, tidak ada klien impor yang menerima pesan otomatis sampai Anda mencatat persetujuannya di profil mereka.",
+"Setujui Ketentuan dan perpanjangan otomatis untuk memilih paket.",
+"Saya telah membaca dan menyetujui Ketentuan dan perpanjangan otomatis",
+"Baca Ketentuan",
+"Diperpanjang otomatis setiap bulan sebesar {price} sampai Anda membatalkan. Batalkan kapan saja di Paket; Anda tetap punya akses sampai akhir periode yang dibayar.",
+"Diperpanjang otomatis setiap tahun sebesar {price} sampai Anda membatalkan. Batalkan kapan saja di Paket; Anda tetap punya akses sampai akhir periode yang dibayar. Paket tahunan dapat dikembalikan dananya secara proporsional jika Anda memintanya dalam 14 hari setelah penagihan."];

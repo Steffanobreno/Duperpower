@@ -1753,4 +1753,9 @@ export const tl: string[] = ["Naiwang booking",
 "Makakakuha sila ng {amount} na bawas sa unang bill nila. Makakakuha ka ng {amount} na credit kapag ginawa nila ang unang bayad nila.",
 "Walang awtomatikong text. Kung mag-reply sila ng STOP, sa telepono mo mapupunta ang reply, kaya i-on ito para sa kanila.",
 "Mayroon akong nakasulat na pahintulot ng mga kliyenteng ito na padalhan sila ng text.",
-"Kung hindi mo ito lalagyan ng tsek, walang na-import na kliyenteng makakatanggap ng awtomatikong text hanggang maitala mo ang pahintulot nila sa profile nila."];
+"Kung hindi mo ito lalagyan ng tsek, walang na-import na kliyenteng makakatanggap ng awtomatikong text hanggang maitala mo ang pahintulot nila sa profile nila.",
+"Tanggapin ang Mga Tuntunin at ang awtomatikong pag-renew para pumili ng plano.",
+"Nabasa ko at tinatanggap ko ang Mga Tuntunin at ang awtomatikong pag-renew",
+"Basahin ang Mga Tuntunin",
+"Awtomatikong nagre-renew kada buwan sa halagang {price} hanggang sa mag-cancel ka. Mag-cancel anumang oras sa Plano; mananatili ang access mo hanggang sa katapusan ng bayad na panahon.",
+"Awtomatikong nagre-renew kada taon sa halagang {price} hanggang sa mag-cancel ka. Mag-cancel anumang oras sa Plano; mananatili ang access mo hanggang sa katapusan ng bayad na panahon. Ang mga taunang plano ay maaaring i-refund nang proporsyonal kung hihilingin mo sa loob ng 14 na araw mula sa singil."];

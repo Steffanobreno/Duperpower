@@ -1753,4 +1753,9 @@ export const fr: string[] = ["Réservation abandonnée",
 "Il obtient {amount} de réduction sur sa première facture. Vous recevez {amount} de crédit lorsqu'il effectue son premier paiement.",
 "Pas de SMS automatiques. S'il répond STOP, la réponse arrive sur votre téléphone : activez donc cette option pour lui.",
 "J'ai le consentement écrit de ces clients pour leur envoyer des SMS.",
-"Si vous laissez cette case décochée, aucun client importé ne recevra de SMS automatiques tant que vous n'aurez pas enregistré son consentement sur sa fiche."];
+"Si vous laissez cette case décochée, aucun client importé ne recevra de SMS automatiques tant que vous n'aurez pas enregistré son consentement sur sa fiche.",
+"Acceptez les Conditions et le renouvellement automatique pour choisir un forfait.",
+"J'ai lu et j'accepte les Conditions et le renouvellement automatique",
+"Lire les Conditions",
+"Se renouvelle automatiquement chaque mois pour {price} jusqu'à votre résiliation. Résiliez quand vous voulez dans Forfait ; vous gardez l'accès jusqu'à la fin de la période payée.",
+"Se renouvelle automatiquement chaque année pour {price} jusqu'à votre résiliation. Résiliez quand vous voulez dans Forfait ; vous gardez l'accès jusqu'à la fin de la période payée. Les forfaits annuels peuvent être remboursés au prorata si vous en faites la demande dans les 14 jours suivant le prélèvement."];

@@ -11,6 +11,7 @@ import { APP_NAME } from "@/lib/product";
 import { I18nProvider } from "@/components/i18n";
 import { Button, Card } from "@/components/ui";
 import { TestModeBanner } from "@/components/test-mode-banner";
+import { renewalNotice } from "@/lib/renewal-notice";
 import { payFakeCheckoutAction } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -67,6 +68,7 @@ export default async function FakeCheckoutPage({ searchParams }: { searchParams:
             <p className="mt-3 text-sm">{t("Your free trial is kept: the first payment is on {date}.", { date: date(q.firstChargeAt) })}</p>
           )}
         </Card>
+        <p className="text-sm text-muted">{renewalNotice(t, interval, usd(q.priceCents, locale))}</p>
         <form action={payFakeCheckoutAction}>
           <input type="hidden" name="interval" value={interval} />
           <input type="hidden" name="code" value={code} />

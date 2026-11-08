@@ -45,6 +45,7 @@ async function signUp(page, business, email, path = "/signup") {
 async function choose(page, plan, code = "") {
   await page.goto(`${BASE}/billing`);
   await page.getByLabel("Discount or referral code (optional)").fill(code);
+  await page.getByLabel(/I have read and accept the Terms/).check();
   await page.getByRole("button", { name: plan }).click();
   await page.waitForURL(/fake-checkout|code_error|error=1/);
   return page.url();
@@ -93,7 +94,26 @@ const aId = await signUp(a, "Sudsy Test Spa", `fake-a${stamp}@example.com`);
 await a.goto(`${BASE}/billing`);
 await a.getByText(BANNER).waitFor();
 await a.getByText(/Free trial: 14 days left/).waitFor();
+// The notices, and the box that must be ticked: nothing changes without it.
+await a.goto(`${BASE}/billing`);
+await a.getByText("Renews automatically every month for $29 until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period.", { exact: true }).waitFor();
+await a.getByText("Renews automatically every year for $290 until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period. Yearly plans can be refunded pro rata if you ask within 14 days of the charge.", { exact: true }).waitFor();
+await a.getByRole("link", { name: "Read the Terms" }).waitFor();
+const box = a.getByLabel(/I have read and accept the Terms/);
+if (!(await box.evaluate((el) => el.required))) fail("the Terms box should be required");
+await box.evaluate((el) => { el.required = false; }); // get past the browser's own check: the server must refuse too
+await a.getByRole("button", { name: "Choose monthly" }).click();
+await a.waitForURL(/terms_error=1/);
+await a.getByText("Please accept the Terms and the automatic renewal to choose a plan.").waitFor();
+if (a.url().includes("fake-checkout")) fail("choosing without the box must not open the checkout");
+const noBox = await db`select (select count(*)::int from terms_acceptances where business_id = ${aId} and context = 'checkout') as n, plan_status from businesses where id = ${aId}`;
+if (noBox[0].n !== 0 || noBox[0].plan_status !== "trial") fail(`refusing should change nothing: ${JSON.stringify(noBox[0])}`);
+step("the plan page shows both renewal notices; choosing without the Terms box is refused, changing nothing");
 if (!(await choose(a, "Choose monthly")).includes("/billing/fake-checkout?interval=month")) fail(`monthly should open the fake checkout: ${a.url()}`);
+await a.getByText("Renews automatically every month for $29 until you cancel.", { exact: false }).waitFor(); // the test checkout shows it too
+const withBox = await db`select terms_version, ip, user_id is not null as has_user from terms_acceptances where business_id = ${aId} and context = 'checkout'`;
+if (withBox.length !== 1 || withBox[0].terms_version !== "2026-11-08" || !withBox[0].ip || !withBox[0].has_user) fail(`one checkout acceptance expected: ${JSON.stringify(withBox)}`);
+step("with the box ticked it goes on and records one checkout acceptance; the test checkout shows the notice");
 await a.getByText(BANNER).waitFor();
 await a.getByText("Monthly", { exact: true }).waitFor();
 await a.getByText("$29/month").waitFor();

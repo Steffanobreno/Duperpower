@@ -10,6 +10,7 @@ import { I18nProvider } from "@/components/i18n";
 import { Button, Card, Field, Input, Notice } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { TestModeBanner } from "@/components/test-mode-banner";
+import { renewalNotice } from "@/lib/renewal-notice";
 import { referralStats, REFERRAL_CENTS } from "@/lib/discounts";
 import { choosePlanAction, manageBillingAction } from "./actions";
 
@@ -68,13 +69,14 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         {canChoose && (
           // One form: the code (optional) goes with whichever plan is picked.
           <form action={choosePlanAction} className="grid gap-3">
+            {sp.terms_error === "1" && <Notice kind="error">{t("Please accept the Terms and the automatic renewal to choose a plan.")}</Notice>}
             {sp.code_error === "bad" && <Notice kind="error">{t("That code doesn't exist or has expired.")}</Notice>}
             {sp.code_error === "own" && <Notice kind="error">{t("That's your own referral code: share it with other groomers.")}</Notice>}
             <Field label={t("Discount or referral code (optional)")}>
               <Input name="code" defaultValue={typedCode} autoComplete="off" autoCapitalize="characters" />
             </Field>
             {(["month", "year"] as const).map((interval) => (
-              <div key={interval} className="card flex items-center justify-between gap-3 p-4">
+              <div key={interval} className="card flex flex-wrap items-center justify-between gap-3 p-4">
                 <span>
                   <span className="block font-bold">{interval === "month" ? t("Monthly") : t("Yearly")}</span>
                   <span className="block text-2xl font-extrabold">
@@ -83,8 +85,16 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                   {interval === "year" && <span className="block text-sm font-semibold text-success">{t("2 months free")}</span>}
                 </span>
                 <Button type="submit" name="interval" value={interval}>{interval === "month" ? t("Choose monthly") : t("Choose yearly")}</Button>
+                <p className="basis-full text-xs text-muted">{renewalNotice(t, interval, usd(PRICES[interval].cents, locale))}</p>
               </div>
             ))}
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" name="accept_terms" required className="mt-1" />
+              <span>
+                {t("I have read and accept the Terms and the automatic renewal")}{" "}
+                (<Link href="/terms" target="_blank" className="font-semibold text-brand underline">{t("Read the Terms")}</Link>)
+              </span>
+            </label>
             {!testMode && <p className="text-center text-xs text-muted">{t("Secure payment by Stripe. Cancel anytime.")}</p>}
           </form>
         )}

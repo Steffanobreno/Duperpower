@@ -1753,4 +1753,9 @@ export const pt: string[] = ["Agendamento abandonado",
 "Ele ganha {amount} de desconto na primeira cobrança. Você ganha {amount} de crédito quando ele fizer o primeiro pagamento.",
 "Sem mensagens automáticas. Se o cliente responder STOP, a resposta chega ao seu celular; então ative isto para ele.",
 "Tenho o consentimento por escrito destes clientes para enviar mensagens de texto.",
-"Se deixar desmarcado, nenhum cliente importado receberá mensagens automáticas até você registrar o consentimento no perfil dele."];
+"Se deixar desmarcado, nenhum cliente importado receberá mensagens automáticas até você registrar o consentimento no perfil dele.",
+"Aceite os Termos e a renovação automática para escolher um plano.",
+"Li e aceito os Termos e a renovação automática",
+"Ler os Termos",
+"Renova automaticamente todo mês por {price} até você cancelar. Cancele quando quiser em Plano; o acesso continua até o fim do período pago.",
+"Renova automaticamente todo ano por {price} até você cancelar. Cancele quando quiser em Plano; o acesso continua até o fim do período pago. Planos anuais podem ser reembolsados proporcionalmente se você pedir em até 14 dias após a cobrança."];

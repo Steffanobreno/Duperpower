@@ -58,6 +58,7 @@ const bad = await fetch(`${BASE}/api/stripe/webhook`, { method: "POST", body: "{
 if (bad.status !== 400) fail(`a webhook with a bad signature should be refused (got ${bad.status})`);
 
 // Choose monthly → Stripe Checkout (the fake sends straight back) → the webhook activates it.
+await page.getByLabel(/I have read and accept the Terms/).check();
 await page.getByRole("button", { name: "Choose monthly" }).click();
 // Stripe sends the groomer back to APP_URL (in tests it may be another host name): open it here.
 await page.waitForURL(/done=1|login/);

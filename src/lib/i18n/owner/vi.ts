@@ -1753,4 +1753,9 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Họ được giảm {amount} cho hóa đơn đầu tiên. Bạn nhận {amount} tín dụng khi họ thanh toán lần đầu.",
 "Không gửi tin nhắn tự động. Nếu họ trả lời STOP, câu trả lời sẽ đến điện thoại của bạn, vì vậy hãy bật mục này cho họ.",
 "Tôi có sự đồng ý bằng văn bản của những khách hàng này để nhắn tin cho họ.",
-"Nếu không chọn, khách hàng được nhập sẽ không nhận tin nhắn tự động cho đến khi bạn ghi nhận sự đồng ý của họ trong hồ sơ."];
+"Nếu không chọn, khách hàng được nhập sẽ không nhận tin nhắn tự động cho đến khi bạn ghi nhận sự đồng ý của họ trong hồ sơ.",
+"Hãy chấp nhận Điều khoản và việc tự động gia hạn để chọn gói.",
+"Tôi đã đọc và chấp nhận Điều khoản và việc tự động gia hạn",
+"Đọc Điều khoản",
+"Tự động gia hạn mỗi tháng với giá {price} cho đến khi bạn hủy. Hủy bất cứ lúc nào trong Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán.",
+"Tự động gia hạn mỗi năm với giá {price} cho đến khi bạn hủy. Hủy bất cứ lúc nào trong Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán. Gói năm có thể được hoàn tiền theo tỷ lệ nếu bạn yêu cầu trong vòng 14 ngày kể từ ngày bị trừ tiền."];

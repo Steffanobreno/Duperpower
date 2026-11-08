@@ -1753,4 +1753,9 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Er erhält {amount} Rabatt auf seine erste Rechnung. Sie erhalten {amount} Guthaben, wenn er seine erste Zahlung leistet.",
 "Keine automatischen SMS. Antwortet der Kunde mit STOP, kommt die Antwort auf Ihr Handy – aktivieren Sie dies dann für ihn.",
 "Ich habe die schriftliche Einwilligung dieser Kunden, ihnen SMS zu senden.",
-"Ohne Haken erhält kein importierter Kunde automatische SMS, bis Sie seine Einwilligung in seinem Profil erfassen."];
+"Ohne Haken erhält kein importierter Kunde automatische SMS, bis Sie seine Einwilligung in seinem Profil erfassen.",
+"Bitte akzeptiere die Nutzungsbedingungen und die automatische Verlängerung, um einen Tarif zu wählen.",
+"Ich habe die Nutzungsbedingungen und die automatische Verlängerung gelesen und akzeptiere sie",
+"Nutzungsbedingungen lesen",
+"Verlängert sich jeden Monat automatisch für {price}, bis du kündigst. Kündige jederzeit unter Tarif; du behältst den Zugang bis zum Ende des bezahlten Zeitraums.",
+"Verlängert sich jedes Jahr automatisch für {price}, bis du kündigst. Kündige jederzeit unter Tarif; du behältst den Zugang bis zum Ende des bezahlten Zeitraums. Jahrestarife können anteilig erstattet werden, wenn du innerhalb von 14 Tagen nach der Abbuchung darum bittest."];

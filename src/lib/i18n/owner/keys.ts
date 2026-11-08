@@ -1755,5 +1755,10 @@ export const OWNER_KEYS: string[] = [
  "They get {amount} off their first bill. You get {amount} of credit when they make their first payment.",
  "No automatic texts. If they reply STOP, the reply reaches your phone, so turn this on for them.",
  "I have written consent from these clients to text them.",
- "Leave this unchecked and no imported client gets automatic texts until you record their consent on their profile."
+ "Leave this unchecked and no imported client gets automatic texts until you record their consent on their profile.",
+ "Please accept the Terms and the automatic renewal to choose a plan.",
+ "I have read and accept the Terms and the automatic renewal",
+ "Read the Terms",
+ "Renews automatically every month for {price} until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period.",
+ "Renews automatically every year for {price} until you cancel. Cancel anytime in Plan; you keep access until the end of the paid period. Yearly plans can be refunded pro rata if you ask within 14 days of the charge."
 ];

@@ -51,6 +51,7 @@ async function signUp(page, business, email, path = "/signup") {
 async function choose(page, plan, code = "") {
   await page.goto(`${BASE}/billing`);
   await page.getByLabel("Discount or referral code (optional)").fill(code);
+  await page.getByLabel(/I have read and accept the Terms/).check();
   await page.getByRole("button", { name: plan }).click();
   await page.waitForURL(/done=1|login|code_error|error=1/);
   return page.url();
