@@ -14,7 +14,6 @@ export async function recordOffer(clientId: string, date: string) {
   await sql`insert into fill_offers (business_id, client_id, day)
             select ${staff.businessId}, c.id, ${date} from clients c
             where c.id = ${clientId} and c.business_id = ${staff.businessId}
-              and not exists (select 1 from fill_offers f
-                              where f.business_id = ${staff.businessId} and f.client_id = c.id and f.day = ${date})`;
+            on conflict (business_id, client_id, day) do nothing`;
   revalidatePath(`/fill/${date}`);
 }
