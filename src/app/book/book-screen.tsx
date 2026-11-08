@@ -8,6 +8,7 @@ import { BookingWizard } from "./booking-wizard";
 import { getI18n } from "@/lib/i18n/server";
 import { I18nProvider } from "@/components/i18n";
 import { logoUrl } from "@/lib/business-logo";
+import { referralCodeOf } from "@/lib/discounts";
 import { getStaff } from "@/lib/auth";
 import { regionForPage } from "@/lib/region-server";
 
@@ -19,12 +20,12 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
   const [services, agreement, { lang, messages, t }, logo] = await Promise.all([
     onlineServices(b.id), activeAgreement(b.id), getI18n(langParam), logoUrl(b.id),
   ]);
-  const viewer = await getStaff();
+  const [viewer, referralCode] = await Promise.all([getStaff(), referralCodeOf(b.id)]);
   const region = regionForPage(b, lang);
   const phone = phoneLabel(b.phone);
   return (
     <ClientShell phone={b.phone} phoneLabel={phone} website={b.website_url} bare={embed === "1"} i18n={{ lang, t }}
-      brand={{ name: b.name, logo }} staffBack={viewer?.businessId === b.id ? "/settings/booking" : null}>
+      brand={{ name: b.name, logo }} referralCode={referralCode} staffBack={viewer?.businessId === b.id ? "/settings/booking" : null}>
       {b.online_booking_enabled ? (
         <I18nProvider lang={lang} messages={messages} region={region}>
           <BookingWizard

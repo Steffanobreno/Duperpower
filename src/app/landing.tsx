@@ -52,8 +52,17 @@ function FloatCard({ icon, title, meta, edge, className = "", rotate = 0 }: {
 const ICONS = ["✓", "🗓", "🚐", "🧭", "💉"];
 const EDGES = [BLUE, undefined, undefined, undefined, RED];
 
-export function Landing({ c, lang }: { c: LandingCopy; lang: string }) {
-  const signup = `/signup${lang === "en" ? "" : `?lang=${lang}`}`;
+/** The sign-up link, keeping where the visitor came from (a groomer's "Online booking by Fino" link: ?ref=&utm_source=). */
+export function signupHref(lang: string, from: { ref?: string; utm_source?: string } = {}) {
+  const q = new URLSearchParams();
+  if (from.ref) q.set("ref", from.ref);
+  if (from.utm_source) q.set("utm_source", from.utm_source);
+  if (lang !== "en") q.set("lang", lang);
+  return `/signup${q.size ? `?${q}` : ""}`;
+}
+
+export function Landing({ c, lang, from }: { c: LandingCopy; lang: string; from?: { ref?: string; utm_source?: string } }) {
+  const signup = signupHref(lang, from);
   const chrome = siteChrome(siteLang(lang));
   const priced = PLAN_PRICES.monthly != null && PLAN_PRICES.yearly != null;
   return (
@@ -63,7 +72,7 @@ export function Landing({ c, lang }: { c: LandingCopy; lang: string }) {
         🌍 {c.bar.text} · <Link href={hrefFor("/features", lang)} className="underline underline-offset-2">{c.bar.link} →</Link>
       </aside>
 
-      <SiteNav c={chrome} lang={lang} anchors={[
+      <SiteNav c={chrome} lang={lang} signupHref={signup} anchors={[
         { href: hrefFor("/features", lang), label: c.nav.features },
         { href: "#pricing", label: c.nav.pricing },
         { href: "#faq", label: c.nav.faq },

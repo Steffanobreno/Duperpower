@@ -6,6 +6,7 @@ export const fr: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Toilettage canin mobile haut de gamme, directement devant chez vous, dans la Bay Area, CA.",
   Language: "Langue",
+  "Online booking by {fino} · free trial for groomers": "Réservation en ligne avec {fino} · essai gratuit pour les toiletteurs",
   "Online booking is paused": "La réservation en ligne est en pause",
   "Please text us at {phone} and we'll find you a time.": "Écrivez-nous au {phone} et nous vous trouverons un créneau.",
 

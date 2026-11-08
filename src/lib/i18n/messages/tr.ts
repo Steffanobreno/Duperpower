@@ -6,6 +6,7 @@ export const tr: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Bay Area, CA'da kapınıza kadar gelen premium mobil köpek bakımı.",
   Language: "Dil",
+  "Online booking by {fino} · free trial for groomers": "{fino} ile online rezervasyon · kuaförler için ücretsiz deneme",
   "Online booking is paused": "Online randevu şu an durduruldu",
   "Please text us at {phone} and we'll find you a time.": "{phone} numarasına yazın, size uygun bir saat bulalım.",
 

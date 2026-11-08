@@ -1,4 +1,6 @@
 import { logoUrl } from "./business-logo";
+import { referralCodeOf } from "./discounts";
+import { poweredByUrl } from "./powered-by";
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
 
@@ -114,7 +116,7 @@ ${d.businessPhone ? `<p style="margin:8px 0 0;color:#5d6b80;font-size:13px">Ques
  * the date, address, pets and services, total and a button to see, confirm or cancel; the
  * business name at the bottom. Inline styles only, since email apps ignore style sheets.
  */
-export function emailHtml(text: string, fromName: string, details?: EmailDetails | null, logoSrc?: string | null) {
+export function emailHtml(text: string, fromName: string, details?: EmailDetails | null, logoSrc?: string | null, poweredBy?: string | null) {
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   const link = details ? null : text.match(/https?:\/\/\S+\/a\/[0-9a-f]+/)?.[0];
   // With the card, the raw link in the text is redundant: the button opens it.
@@ -130,7 +132,7 @@ export function emailHtml(text: string, fromName: string, details?: EmailDetails
 <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:20px;padding:28px 24px;color:#132039;font-size:16px;line-height:1.55">
 ${logo}<div>${body}</div>${details ? detailsHtml(details) : button}
 </div>
-<p style="max-width:520px;margin:16px auto 0;text-align:center;color:#5d6b80;font-size:13px">${escape(fromName)}</p>
+<p style="max-width:520px;margin:16px auto 0;text-align:center;color:#5d6b80;font-size:13px">${escape(fromName)}${poweredBy ? `<br><span style="font-size:12px">Online booking by <a href="${escape(poweredBy)}" style="color:#5d6b80">Fino</a></span>` : ""}</p>
 </div>`;
 }
 
@@ -142,8 +144,11 @@ export async function sendEmail({
   businessId?: string;
   attachments?: { filename: string; content: Buffer; contentType: string }[];
 }) {
+  // Emails with a businessId are the business's own, to its clients: they end with its "Online booking by Fino" referral link.
+  const poweredBy = businessId ? poweredByUrl(await referralCodeOf(businessId)) : null;
   const mail: Mail = {
-    to, subject, text, html: emailHtml(text, fromName, details, businessId ? await logoUrl(businessId) : null),
+    to, subject, text: poweredBy ? `${text}\n\n—\nOnline booking by Fino: ${poweredBy}` : text,
+    html: emailHtml(text, fromName, details, businessId ? await logoUrl(businessId) : null, poweredBy),
     // Gmail and Apple Mail show the attached visit with an "Add to calendar" option.
     attachments: [
       ...(details?.calendar

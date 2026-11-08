@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { referralCodeOf } from "@/lib/discounts";
+import { poweredByUrl } from "@/lib/powered-by";
 import { emailConfigured, sendMany } from "@/lib/email";
 import { phoneLabel, zonedToUtc } from "@/lib/format";
 import { audience, cleanFilters, sendCampaignBatch, startCampaign, type Filters } from "@/lib/data/marketing";
@@ -78,11 +80,12 @@ export async function sendTestAction(id: string, _: CampaignState, form: FormDat
   const vars = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book/${staff.bookingSlug}` };
   const content = { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
   const unsubscribeUrl = `${appUrl()}/marketing`;
+  const poweredBy = poweredByUrl(await referralCodeOf(staff.businessId));
   const [error] = await sendMany(b.name, [{
     to,
     subject: `[Test] ${fillVars(c.subject || c.name, vars)}`,
-    html: marketingEmailHtml({ appUrl: appUrl(), logo: await emailLogo(staff.businessId, b.name), content, vars, phone: phoneLabel(b.phone, staff.region.country) || null, mailingAddress: b.mailing_address, unsubscribeUrl }),
-    text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: b.mailing_address }),
+    html: marketingEmailHtml({ appUrl: appUrl(), logo: await emailLogo(staff.businessId, b.name), content, vars, phone: phoneLabel(b.phone, staff.region.country) || null, mailingAddress: b.mailing_address, unsubscribeUrl, poweredBy }),
+    text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: b.mailing_address, poweredBy }),
   }]);
   return error ? { error: `Gmail said: ${error}` } : { sent: to };
 }

@@ -7,6 +7,7 @@ export const es: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Peluquería canina móvil de primera, directo a tu puerta en el Bay Area, CA.",
   Language: "Idioma",
+  "Online booking by {fino} · free trial for groomers": "Reservas en línea con {fino} · prueba gratis para peluqueros caninos",
   "Online booking is paused": "Las reservas en línea están en pausa",
   "Please text us at {phone} and we'll find you a time.": "Envíanos un texto al {phone} y te buscamos un horario.",
 

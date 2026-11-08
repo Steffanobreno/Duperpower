@@ -2,6 +2,7 @@ import { hasBuiltInArtwork, initialsOf } from "@/lib/product";
 import type { ReactNode } from "react";
 import { Phone } from "./icons";
 import { LanguagePicker } from "./i18n";
+import { PoweredBy } from "./powered-by";
 import { dirOf, type Lang, type T } from "@/lib/i18n";
 
 // The frame around every page clients see (booking, confirm, cancel): the Woofers navy
@@ -16,6 +17,7 @@ export function ClientShell({
   i18n,
   brand,
   staffBack,
+  referralCode,
   children,
 }: {
   phone: string | null;
@@ -28,6 +30,8 @@ export function ClientShell({
   brand?: { name: string; logo: string | null };
   /** Where "Back to the app" goes when someone from the team opens this page (clients never see it). */
   staffBack?: string | null;
+  /** The business's referral code: shows "Online booking by Fino" with a link that counts as its referral. */
+  referralCode?: string | null;
   children: ReactNode;
 }) {
   const t: T = i18n?.t ?? ((s) => s);
@@ -93,6 +97,7 @@ export function ClientShell({
               <Phone size={16} /> {phoneLabel}
             </a>
           )}
+          {referralCode && <PoweredBy code={referralCode} t={t} />}
         </div>
       </footer>
     </>

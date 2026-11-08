@@ -6,6 +6,7 @@ export const ja: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "カリフォルニア州ベイエリアで、ご自宅の前までお伺いするプレミアム出張トリミング。",
   Language: "言語",
+  "Online booking by {fino} · free trial for groomers": "{fino} によるオンライン予約 · トリマー向け無料トライアル",
   "Online booking is paused": "オンライン予約は一時停止中です",
   "Please text us at {phone} and we'll find you a time.": "{phone} までメッセージをいただければ、ご都合の良い時間をお探しします。",
 

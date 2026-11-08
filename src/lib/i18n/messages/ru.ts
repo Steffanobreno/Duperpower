@@ -6,6 +6,7 @@ export const ru: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Премиальный выездной груминг собак прямо у вашего дома в районе Bay Area, Калифорния.",
   Language: "Язык",
+  "Online booking by {fino} · free trial for groomers": "Онлайн-запись через {fino} · бесплатный пробный период для грумеров",
   "Online booking is paused": "Онлайн-запись приостановлена",
   "Please text us at {phone} and we'll find you a time.": "Напишите нам на {phone}, и мы подберём вам время.",
 

@@ -18,7 +18,9 @@ export const fillVars = (text: string, v: MarketingVars) =>
 
 const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-export function marketingEmailHtml({ appUrl, content, vars, phone, mailingAddress, unsubscribeUrl, logo }: {
+export function marketingEmailHtml({ appUrl, content, vars, phone, mailingAddress, unsubscribeUrl, logo, poweredBy }: {
+  /** The business's "Online booking by Fino" link (its referral link); left out in the editor preview. */
+  poweredBy?: string | null;
   appUrl: string;
   /** The business's logo (path or address), or none. */
   logo?: string | null;
@@ -53,11 +55,13 @@ ${button}
 ${escape(vars.business)} · Mobile dog grooming in the Bay Area${phone ? ` · ${escape(phone)}` : ""}<br>
 ${mailingAddress ? `${escape(mailingAddress)}<br>` : ""}
 You get this email because you're a client of ${escape(vars.business)}. <a href="${escape(unsubscribeUrl)}" style="color:#5d6b80">Unsubscribe</a>
+${poweredBy ? `<br>Online booking by <a href="${escape(poweredBy)}" style="color:#5d6b80">Fino</a>` : ""}
 </p>
 </div>`;
 }
 
-export function marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress }: {
+export function marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress, poweredBy }: {
+  poweredBy?: string | null;
   content: CampaignContent; vars: MarketingVars; unsubscribeUrl: string; mailingAddress: string | null;
 }) {
   return [
@@ -67,5 +71,6 @@ export function marketingEmailText({ content, vars, unsubscribeUrl, mailingAddre
     "—",
     [vars.business, mailingAddress].filter(Boolean).join(", "),
     `Unsubscribe: ${unsubscribeUrl}`,
+    poweredBy && `Online booking by Fino: ${poweredBy}`,
   ].filter(Boolean).join("\n\n");
 }

@@ -6,6 +6,7 @@ export const te: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Bay Area, CAలో మీ ఇంటి గుమ్మం వద్దకే ప్రీమియం మొబైల్ డాగ్ గ్రూమింగ్.",
   Language: "భాష",
+  "Online booking by {fino} · free trial for groomers": "{fino} ద్వారా ఆన్‌లైన్ బుకింగ్ · గ్రూమర్‌లకు ఉచిత ట్రయల్",
   "Online booking is paused": "ఆన్‌లైన్ బుకింగ్ ప్రస్తుతం నిలిపివేయబడింది",
   "Please text us at {phone} and we'll find you a time.": "మాకు {phone}కి మెసేజ్ చేయండి, మీకు సమయం చూస్తాం.",
 

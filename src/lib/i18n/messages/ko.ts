@@ -5,6 +5,7 @@ export const ko: Messages = {
   "Text us": "문자 보내기",
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.": "캘리포니아 베이 지역, 집 앞까지 찾아가는 프리미엄 출장 애견 미용.",
   Language: "언어",
+  "Online booking by {fino} · free trial for groomers": "{fino} 온라인 예약 · 그루머를 위한 무료 체험",
   "Online booking is paused": "온라인 예약이 일시 중지되었습니다",
   "Please text us at {phone} and we'll find you a time.": "{phone}로 문자 주시면 시간을 잡아 드릴게요.",
 

@@ -15,6 +15,12 @@ async function pick(searchParams: Props["searchParams"]) {
   return landingCopy(await getLang(sp.lang));
 }
 
+// The tags that say who sent the visitor, kept on the "start free" links (a groomer's referral link).
+const tag = (v: string | string[] | undefined) => {
+  const s = typeof v === "string" ? v.trim() : "";
+  return /^[\w.-]{1,60}$/.test(s) ? s : undefined;
+};
+
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { lang, c } = await pick(searchParams);
   const url = `${appUrl()}/${lang === "en" ? "" : `?lang=${lang}`}`;
@@ -39,6 +45,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 // The sales page for groomers who aren't logged in; the app's Today for those who are.
 export default async function Home({ searchParams }: Props) {
   if (await getStaff()) redirect("/today");
+  const sp = await searchParams;
   const { lang, c } = await pick(searchParams);
   const jsonLd = [
     {
@@ -68,7 +75,7 @@ export default async function Home({ searchParams }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <Landing c={c} lang={lang} />
+      <Landing c={c} lang={lang} from={{ ref: tag(sp.ref), utm_source: tag(sp.utm_source) }} />
     </>
   );
 }

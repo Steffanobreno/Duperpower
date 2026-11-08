@@ -6,6 +6,7 @@ export const mr: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Bay Area, CA मध्ये तुमच्या दारात प्रीमियम मोबाइल डॉग ग्रूमिंग.",
   Language: "भाषा",
+  "Online booking by {fino} · free trial for groomers": "{fino} द्वारे ऑनलाइन बुकिंग · ग्रूमर्ससाठी मोफत ट्रायल",
   "Online booking is paused": "ऑनलाइन बुकिंग सध्या थांबवले आहे",
   "Please text us at {phone} and we'll find you a time.": "आम्हाला {phone} वर मेसेज करा, आम्ही तुमच्यासाठी वेळ शोधू.",
 

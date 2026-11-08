@@ -5,6 +5,7 @@ export const zh: Messages = {
   "Text us": "发短信给我们",
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.": "高端上门狗狗美容服务，覆盖加州湾区，直接到您家门口。",
   Language: "语言",
+  "Online booking by {fino} · free trial for groomers": "由 {fino} 提供在线预约 · 美容师免费试用",
   "Online booking is paused": "网上预约暂停中",
   "Please text us at {phone} and we'll find you a time.": "请发短信至 {phone}，我们会为您安排时间。",
 

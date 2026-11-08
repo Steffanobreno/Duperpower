@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { activeAgreement, currentSignature } from "@/lib/agreement";
 import { logoUrl } from "@/lib/business-logo";
+import { referralCodeOf } from "@/lib/discounts";
 import { getStaff } from "@/lib/auth";
 import { regionForPage } from "@/lib/region-server";
 import { phoneLabel } from "@/lib/format";
@@ -28,7 +29,7 @@ export default async function SignPage({ params, searchParams }: PageProps<"/s/[
   const [signed, viewer] = await Promise.all([currentSignature(agreement, c.id), getStaff()]);
   regionForPage(c, lang);
   return (
-    <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url} i18n={{ lang, t }} brand={{ name: c.business, logo }}
+    <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url} i18n={{ lang, t }} brand={{ name: c.business, logo }} referralCode={await referralCodeOf(c.business_id)}
       staffBack={viewer?.businessId === c.business_id ? `/clients/${c.id}` : null}>
       <StepCard className="space-y-4">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">{t("Hi {name}!", { name: c.first_name })}</h1>

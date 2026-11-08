@@ -5,6 +5,7 @@ export const tl: Messages = {
   "Text us": "I-text kami",
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.": "De-kalidad na mobile dog grooming, hanggang sa pinto ninyo sa Bay Area, CA.",
   Language: "Wika",
+  "Online booking by {fino} · free trial for groomers": "Online booking gamit ang {fino} · libreng trial para sa mga groomer",
   "Online booking is paused": "Naka-pause ang online booking",
   "Please text us at {phone} and we'll find you a time.": "I-text kami sa {phone} at hahanapan namin kayo ng oras.",
 

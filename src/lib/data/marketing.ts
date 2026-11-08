@@ -2,6 +2,8 @@ import { emailLogo } from "../business-logo";
 import "server-only";
 import { sql } from "../db";
 import { sendMany } from "../email";
+import { referralCodeOf } from "../discounts";
+import { poweredByUrl } from "../powered-by";
 import { phoneLabel } from "../format";
 import { fillVars, marketingEmailHtml, marketingEmailText, type CampaignContent } from "../marketing-email";
 
@@ -126,14 +128,15 @@ export async function sendCampaignBatch(campaignId: string, max = 8) {
     // The button goes straight to the booking page: one less click than the website.
     const booking = `${appUrl()}/book/${c.booking_slug}`;
     const logo = await emailLogo(c.business_id, c.name);
+    const poweredBy = poweredByUrl(await referralCodeOf(c.business_id));
     const mails = batch.map((r) => {
       const vars = { first_name: r.first_name, pet_name: r.pet_name ?? "your pup", business: c.name, booking_link: booking };
       const unsubscribeUrl = `${appUrl()}/u/${r.token}`;
       return {
         to: r.email,
         subject: fillVars(c.subject, vars),
-        html: marketingEmailHtml({ appUrl: appUrl(), logo, content, vars, phone: phoneLabel(c.phone) || null, mailingAddress: c.mailing_address, unsubscribeUrl }),
-        text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: c.mailing_address }),
+        html: marketingEmailHtml({ appUrl: appUrl(), logo, content, vars, phone: phoneLabel(c.phone) || null, mailingAddress: c.mailing_address, unsubscribeUrl, poweredBy }),
+        text: marketingEmailText({ content, vars, unsubscribeUrl, mailingAddress: c.mailing_address, poweredBy }),
         // Gmail and Apple Mail show their own "Unsubscribe" button with these.
         headers: { "List-Unsubscribe": `<${appUrl()}/api/unsubscribe/${r.token}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
       };

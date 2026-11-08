@@ -38,11 +38,13 @@ export async function signupAction(_: SignupState, form: FormData): Promise<Sign
   if (error) return { error };
   // Came with a referral link (/signup?ref=<code>): the new business is noted as referred.
   const source = String(form.get("source") ?? "").trim();
-  if (source && !source.includes(" ")) {
+  // "<code>", or "<code> / <utm_source>" from a Fino footer link: the code is the first part.
+  const code = source.split(" / ")[0];
+  if (code && !code.includes(" ")) {
     const [biz] = await sql<{ id: string }[]>`
       select s.business_id as id from staff s join users u on u.id = s.user_id
       where u.email = ${email.toLowerCase()} and s.role = 'owner' order by s.created_at desc limit 1`;
-    if (biz) await recordReferral(biz.id, source).catch((e) => console.error("referral not recorded", e));
+    if (biz) await recordReferral(biz.id, code).catch((e) => console.error("referral not recorded", e));
   }
   redirect("/welcome");
 }

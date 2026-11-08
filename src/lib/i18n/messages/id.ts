@@ -6,6 +6,7 @@ export const id: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Grooming anjing keliling premium langsung ke depan rumah Anda di Bay Area, CA.",
   Language: "Bahasa",
+  "Online booking by {fino} · free trial for groomers": "Pemesanan online dengan {fino} · uji coba gratis untuk groomer",
   "Online booking is paused": "Pemesanan online sedang dijeda",
   "Please text us at {phone} and we'll find you a time.": "Kirim pesan ke {phone} dan kami akan carikan waktu untuk Anda.",
 

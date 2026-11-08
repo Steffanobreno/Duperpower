@@ -10,7 +10,7 @@ import { guessCountry, placeNames } from "@/lib/countries";
 function signupSource(sp: Record<string, string | string[] | undefined>, referer: string | null) {
   const pick = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
   // A referral link's code comes first, so the referral is noted even with utm tags too.
-  const utm = pick("ref") || [pick("utm_source"), pick("utm_medium"), pick("utm_campaign")].filter(Boolean).join(" / ");
+  const utm = pick("ref") && pick("utm_source") ? `${pick("ref")} / ${pick("utm_source")}` : pick("ref") || [pick("utm_source"), pick("utm_medium"), pick("utm_campaign")].filter(Boolean).join(" / ");
   if (utm) return utm.slice(0, 120);
   try {
     const host = referer ? new URL(referer).hostname : "";

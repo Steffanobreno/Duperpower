@@ -80,7 +80,7 @@ export function Phone({ src, alt, priority = false }: { src: string; alt: string
 }
 
 /** The floating pill nav, on every page of the site. `anchors` are the home page's own sections. */
-export function SiteNav({ c, lang, anchors }: { c: SiteChrome; lang: string; anchors?: { href: string; label: string }[] }) {
+export function SiteNav({ c, lang, anchors, signupHref }: { c: SiteChrome; lang: string; anchors?: { href: string; label: string }[]; signupHref?: string }) {
   const links = anchors ?? [
     { href: hrefFor("/features", lang), label: c.nav.features },
     { href: hrefFor("/pricing", lang), label: c.nav.pricing },
@@ -97,7 +97,7 @@ export function SiteNav({ c, lang, anchors }: { c: SiteChrome; lang: string; anc
           {links.map((l) => <a key={l.href} href={l.href} className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{l.label}</a>)}
           <Link href={hrefFor("/login", lang)} className="rounded-full px-3 py-1.5 hover:bg-[#faf8f7]">{c.nav.login}</Link>
         </span>
-        <Link href={hrefFor("/signup", lang)} className="ml-auto rounded-full border border-black/50 px-4 py-2 text-[15px] font-semibold sm:ml-1">{c.nav.start}</Link>
+        <Link href={signupHref ?? hrefFor("/signup", lang)} className="ml-auto rounded-full border border-black/50 px-4 py-2 text-[15px] font-semibold sm:ml-1">{c.nav.start}</Link>
         {/* Phones: the same links behind a menu button (opens without any script). */}
         <details className="group relative sm:hidden">
           <summary aria-label={c.nav.menu} className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full hover:bg-[#faf8f7]">

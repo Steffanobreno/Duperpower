@@ -6,6 +6,7 @@ import { longDayLabel, phoneLabel } from "@/lib/format";
 import { regionForPage } from "@/lib/region-server";
 import { tooManyFromHere } from "@/lib/rate-limit";
 import { ClientShell, StepCard } from "@/components/client-shell";
+import { referralCodeOf } from "@/lib/discounts";
 import { getI18n } from "@/lib/i18n/server";
 
 export const metadata: Metadata = { title: "Grooming report", robots: { index: false } };
@@ -35,7 +36,7 @@ export default async function ReportCardPage({ params, searchParams }: PageProps
   const region = regionForPage({ country: b.country, currency: b.currency }, lang);
   return (
     <ClientShell phone={b.phone} phoneLabel={phoneLabel(b.phone)} website={null} i18n={{ lang, t }}
-      brand={{ name: b.name, logo: b.logo }}>
+      brand={{ name: b.name, logo: b.logo }} referralCode={await referralCodeOf(r.businessId)}>
       <StepCard>
         <h1 className="text-2xl font-extrabold">{t("Grooming report")}</h1>
         <p className="mt-1 text-muted">{longDayLabel(r.day, r.timezone, region)}</p>

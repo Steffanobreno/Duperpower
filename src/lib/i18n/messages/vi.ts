@@ -5,6 +5,7 @@ export const vi: Messages = {
   "Text us": "Nhắn tin cho chúng tôi",
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.": "Dịch vụ cắt tỉa chó lưu động cao cấp, đến tận nhà bạn ở Bay Area, CA.",
   Language: "Ngôn ngữ",
+  "Online booking by {fino} · free trial for groomers": "Đặt lịch trực tuyến với {fino} · dùng thử miễn phí cho thợ grooming",
   "Online booking is paused": "Đặt lịch trực tuyến đang tạm ngưng",
   "Please text us at {phone} and we'll find you a time.": "Vui lòng nhắn tin tới {phone}, chúng tôi sẽ tìm giờ cho bạn.",
 

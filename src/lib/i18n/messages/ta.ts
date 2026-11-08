@@ -6,6 +6,7 @@ export const ta: Messages = {
   "Premium mobile dog grooming delivered right to your doorstep in the Bay Area, CA.":
     "Bay Area, CA-வில் உங்கள் வீட்டு வாசலுக்கே பிரீமியம் மொபைல் நாய் அலங்காரம்.",
   Language: "மொழி",
+  "Online booking by {fino} · free trial for groomers": "{fino} வழங்கும் ஆன்லைன் முன்பதிவு · க்ரூமர்களுக்கு இலவச சோதனை",
   "Online booking is paused": "ஆன்லைன் முன்பதிவு தற்போது நிறுத்தப்பட்டுள்ளது",
   "Please text us at {phone} and we'll find you a time.": "{phone} எண்ணுக்கு மெசேஜ் செய்யுங்கள், உங்களுக்கு ஒரு நேரம் பார்க்கிறோம்.",
 
