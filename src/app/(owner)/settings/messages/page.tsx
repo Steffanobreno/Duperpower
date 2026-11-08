@@ -29,6 +29,7 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
   on_my_way: { title: msg("On my way"), when: msg("You send it with the button on the appointment") },
   rebook: { title: msg("Time to rebook"), when: msg("When the pet's grooming frequency has passed, at a set time") },
   review_request: { title: msg("Review request"), when: msg("Minutes after checkout (needs the review link)") },
+  report_card: { title: msg("Report card"), when: msg("After checkout, when the visit has a photo, note or tag") },
   vaccine_due: { title: msg("Vaccine expiring"), when: msg("Days before a pet's vaccine expires, at a set time") },
   abandoned_booking: { title: msg("Didn't finish booking"), when: msg("A while after someone stops halfway on the booking page (8am–8pm)") },
 };

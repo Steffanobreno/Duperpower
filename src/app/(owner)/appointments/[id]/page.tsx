@@ -24,6 +24,7 @@ import { RescheduleForm } from "../reschedule-form";
 import { ReschedulePlanner } from "./reschedule-planner";
 import { OnMyWayButton } from "@/components/on-my-way";
 import { GroomForm } from "./groom-form";
+import { ReportCardSection } from "./report-card";
 import { visitGrooms } from "@/lib/data/grooms";
 import { PetPhoto } from "@/components/pet-photo";
 import { ConfirmButton } from "@/components/confirm-button";
@@ -53,6 +54,7 @@ const TRIGGER_LABEL: Record<string, string> = {
   cancelled: msg("Cancelled"),
   rebook: msg("Time to rebook"),
   review_request: msg("Review request"),
+  report_card: msg("Report card"),
 };
 const MESSAGE_STATUS: Record<string, string> = {
   queued: msg("Waiting for your iPhone"),
@@ -324,6 +326,10 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               })}
             </div>
           </section>
+        )}
+
+        {["in_progress", "completed"].includes(appt.status) && (
+          <ReportCardSection staff={staff} appointmentId={id} clientId={c.id} petNames={appt.pets.map((p) => p.name)} t={t} />
         )}
 
         <section className="space-y-2">

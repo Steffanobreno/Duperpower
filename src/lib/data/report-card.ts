@@ -28,6 +28,17 @@ export async function ensureReportToken(businessId: string, appointmentId: strin
   return r.report_token;
 }
 
+/** Whether the visit has anything to show: a photo, a note or a tag on any pet's cut. */
+export async function reportHasContent(businessId: string, appointmentId: string): Promise<boolean> {
+  const [r] = await sql`
+    select 1 from pet_grooms g join appointment_pets ap on ap.id = g.appointment_pet_id
+    join appointments a on a.id = ap.appointment_id
+    where a.id = ${appointmentId} and a.business_id = ${businessId}
+      and (g.photo is not null or nullif(btrim(g.note), '') is not null or cardinality(g.tags) > 0)
+    limit 1`;
+  return !!r;
+}
+
 export async function getReportCard(token: string): Promise<ReportCard | null> {
   const [a] = await sql<{
     id: string; business_id: string; start_at: Date; timezone: string; name: string; phone: string | null; slug: string;

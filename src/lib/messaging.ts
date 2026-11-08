@@ -9,6 +9,7 @@ import { lastSentByTemplate, processCampaigns } from "./data/marketing";
 import { nextDate, suggestions } from "./marketing-templates";
 import { addDaysYmd, dayLabel, dayRangeUtc, hm, longDayLabel, money, phoneLabel, timeLabel, todayYmd, ymd } from "./format";
 import { messageRegion, type Region } from "./region";
+import { ensureReportToken, reportHasContent, reportUrl } from "./data/report-card";
 
 // Every client message goes through here. A message is a row in `messages`:
 // - email rows are sent right away from the business Gmail;
@@ -30,6 +31,7 @@ export type Trigger =
   | "on_my_way"
   | "rebook"
   | "review_request"
+  | "report_card"
   | "vaccine_due"
   | "abandoned_booking";
 
@@ -50,6 +52,16 @@ export function render(text: string, vars: Record<string, string | number | null
   return text.replace(/\{(\w+)\}/g, (all, key) => (vars[key] != null ? String(vars[key]) : all));
 }
 
+/** The template whether or not the owner has it switched on (for messages the owner sends by hand). */
+async function templateAnyState(businessId: string, trigger: Trigger) {
+  const [t] = await sql<Template[]>`
+    select body, email_subject, offset_days, offset_minutes, to_char(send_at_time, 'HH24:MI') as send_at_time,
+           only_if_unconfirmed, send_sms, send_email
+    from message_templates where business_id = ${businessId} and trigger = ${trigger}
+    limit 1`;
+  return t ?? null;
+}
+
 async function template(businessId: string, trigger: Trigger) {
   const [t] = await sql<Template[]>`
     select body, email_subject, offset_days, offset_minutes, to_char(send_at_time, 'HH24:MI') as send_at_time,
@@ -65,6 +77,7 @@ type ApptContext = {
   start_at: Date;
   status: string;
   public_token: string;
+  report_token?: string | null;
   business_name: string;
   business_phone: string | null;
   timezone: string;
@@ -103,7 +116,7 @@ async function autoMessagesOn(businessId: string) {
 
 async function appointmentContext(appointmentId: string) {
   const [row] = await sql<ApptContext[]>`
-    select a.id, a.business_id, a.start_at, a.status, a.public_token, a.source,
+    select a.id, a.business_id, a.start_at, a.status, a.public_token, a.source, a.report_token,
            b.name as business_name, b.phone as business_phone, b.timezone, b.country, b.currency, b.website_url, b.booking_slug, b.review_url,
            b.arrival_before_min, b.arrival_after_min,
            c.id as client_id, c.first_name, c.phone, c.email,
@@ -141,6 +154,7 @@ function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
     link: c.public_token ? appointmentLink(c.public_token) : bookingUrl(c),
     booking_url: bookingUrl(c),
     review_url: c.review_url ?? "",
+    report_url: c.report_token ? reportUrl(c.report_token) : "",
     ...extra,
   };
 }
@@ -188,6 +202,24 @@ export async function smsTextFor(appointmentId: string, trigger: Trigger) {
   if (!c) return null;
   const t = await template(c.business_id, trigger);
   return t ? render(t.body, varsFor(c)) : null;
+}
+
+/**
+ * The owner sends the report card by email from the visit, whether or not the automatic one is on.
+ * The key includes the minute, so a deliberate resend goes out but a double tap does not.
+ */
+export async function emailReportCardNow(businessId: string, appointmentId: string): Promise<"sent" | "no-email" | "nothing-to-show" | "not-found"> {
+  if (!(await reportHasContent(businessId, appointmentId))) return "nothing-to-show";
+  await ensureReportToken(businessId, appointmentId);
+  const c = await appointmentContext(appointmentId);
+  if (!c || c.business_id !== businessId) return "not-found";
+  if (!c.email) return "no-email";
+  const t = await templateAnyState(businessId, "report_card");
+  if (!t) return "not-found";
+  await enqueue(c, "report_card", { ...t, send_sms: false, send_email: true }, `report:${appointmentId}:manual:${Math.floor(Date.now() / 60_000)}`);
+  await sql`update appointments set report_sent_at = now() where id = ${appointmentId} and business_id = ${businessId}`;
+  await inBackground(() => sendQueuedEmails(businessId));
+  return "sent";
 }
 
 /** Works out which scheduled messages are due now and queues them. Safe to run often. */
@@ -297,6 +329,28 @@ export async function queueDueMessages(businessId: string) {
     for (const r of rows) {
       const c = await appointmentContext(r.id);
       if (c) await enqueue(c, "review_request", review, `review:${r.id}`);
+    }
+  }
+
+  // 6. Report card, right after checkout, when the visit has a photo, note or tag. Once per visit.
+  //    The owner switches it on in Settings; that is the opt-in, so it doesn't wait for "automatic messages".
+  const reportCard = await template(businessId, "report_card");
+  if (reportCard) {
+    const rows = await sql<{ id: string }[]>`
+      select a.id from appointments a
+      join invoices i on i.appointment_id = a.id and i.status = 'closed'
+      where a.business_id = ${businessId} and a.report_sent_at is null
+        and i.closed_at > now() - interval '2 days'
+        and exists (select 1 from pet_grooms g join appointment_pets ap on ap.id = g.appointment_pet_id
+                    where ap.appointment_id = a.id
+                      and (g.photo is not null or nullif(btrim(g.note), '') is not null or cardinality(g.tags) > 0))`;
+    for (const r of rows) {
+      await ensureReportToken(businessId, r.id);
+      const c = await appointmentContext(r.id);
+      // Nothing to send (no email, and no texts allowed): leave it unsent rather than mark it sent.
+      if (!c || !((c.email && reportCard.send_email) || (c.sms_ok && reportCard.send_sms))) continue;
+      await enqueue(c, "report_card", reportCard, `report:${r.id}`);
+      await sql`update appointments set report_sent_at = now() where id = ${r.id} and business_id = ${businessId}`;
     }
   }
 }
