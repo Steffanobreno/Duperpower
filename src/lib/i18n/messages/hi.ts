@@ -314,4 +314,6 @@ export const hi: Messages = {
     "सदस्यता रद्द करें",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "शुल्क",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "अनुबंध बदल गया है। कृपया इसे फिर से पढ़ें।",
 };

@@ -314,4 +314,6 @@ export const ta: Messages = {
     "சந்தாவை நிறுத்து",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "கட்டணம்",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "ஒப்பந்தம் மாறிவிட்டது. தயவுசெய்து மீண்டும் படியுங்கள்.",
 };

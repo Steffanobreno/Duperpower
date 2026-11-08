@@ -307,4 +307,6 @@ export const vi: Messages = {
     "Hủy đăng ký",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "một khoản phí",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "Thỏa thuận đã thay đổi. Vui lòng đọc lại.",
 };

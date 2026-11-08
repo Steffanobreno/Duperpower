@@ -1,6 +1,7 @@
 "use client";
 import { hasBuiltInArtwork } from "@/lib/product";
 import { useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { StepCard } from "@/components/client-shell";
 import { DOG_BREEDS } from "@/lib/breeds";
 import { minutesLabel, sizesFor } from "@/lib/format";
@@ -125,6 +126,7 @@ export function BookingWizard({
   const [done, setDone] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [pending, startTransition] = useTransition();
+  const router = useRouter();
   const { t, locale, serverMessage } = useT();
   const { country } = useRegion();
   const us = country === "US" || country === "CA";
@@ -241,8 +243,14 @@ export function BookingWizard({
         signatureDrawing: signed?.drawing,
         agreementVersion,
       });
-      if (res.error) setError(serverMessage(res.error));
-      else {
+      if (res.error) {
+        setError(serverMessage(res.error));
+        // The owner changed the text with "sign again": load the current text to read and sign.
+        if (res.agreementChanged) {
+          setSigned(null);
+          router.refresh();
+        }
+      } else {
         setAccepted(!!res.accepted);
         setDone(t("{date} at {time}", { date: dayOf(day ?? "", true), time: timeOf(start) }));
         window.scrollTo({ top: 0 });

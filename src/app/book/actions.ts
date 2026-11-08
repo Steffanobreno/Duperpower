@@ -4,7 +4,7 @@ import { isExclusionViolation, sql } from "@/lib/db";
 import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
 import { normalizePhone, phoneLabel, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
-import { activeAgreement, currentSignature, recordSignature, signatureImage } from "@/lib/agreement";
+import { activeAgreement, currentSignature, recordSignature, signableVersion, signatureImage } from "@/lib/agreement";
 import { bytesFromDataUrl, savePetPhoto } from "@/lib/pet-photos";
 import { forPet, petPrices } from "@/lib/data/pet-prices";
 
@@ -168,7 +168,7 @@ export type BookingRequest = {
   website: string; // honeypot: people never see this field
 };
 
-export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string }> {
+export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string; agreementChanged?: boolean }> {
   const b = await getPublicBusiness(input.slug);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
@@ -208,6 +208,10 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
   if (mustSign && (!input.agreed || signature.length < 3)) {
     return { error: "Please read the service agreement, tick the box and type your full name." };
   }
+  // The version read must still count: if the owner changed the text with "sign again" (or the
+  // version is missing), nothing is recorded and the page shows the current text to sign.
+  const signedVersion = mustSign && agreement ? await signableVersion(agreement, input.agreementVersion) : null;
+  if (mustSign && agreement && signedVersion === null) return { error: "The agreement changed. Please read it again.", agreementChanged: true };
 
   const start = new Date(input.start);
   if (Number.isNaN(start.getTime())) return { error: "Please pick a time." };
@@ -247,7 +251,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
           returning id`;
         clientId = c.id;
       }
-      if (mustSign && agreement) await recordSignature(tx, agreement, clientId, signature, signatureImage(input.signatureDrawing), input.agreementVersion);
+      if (mustSign && agreement && signedVersion !== null) await recordSignature(tx, agreement, clientId, signature, signatureImage(input.signatureDrawing), signedVersion);
 
       // A known client who typed a different address: keep the file as is, tell the owner.
       const visitAddress = useFile

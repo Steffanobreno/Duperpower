@@ -314,4 +314,6 @@ export const tr: Messages = {
     "Abonelikten çık",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "bir ücret",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "Sözleşme değişti. Lütfen yeniden okuyun.",
 };

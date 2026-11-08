@@ -1,7 +1,8 @@
 // The service agreement keeps every version, end to end. Run after slice.mjs (Maria Lopez, Woofers
 // Dog Spa) and after signup.mjs (it counts the businesses; this test signs up one more), with
 // DATABASE_URL. Maria signs → the owner edits the text: a new kept version, her signature still
-// counts and still shows the text she signed → an edit with "sign again" makes her sign again →
+// counts and still shows the text she signed → an edit with "sign again" makes her sign again (and
+// refuses a signature of the version she was reading) →
 // removing her warns that her signatures go too → the no-show fee fills the text → a business that
 // signs up in Portuguese starts with a Portuguese agreement. Signs once a year during the test;
 // puts the text and that option back at the end.
@@ -104,6 +105,32 @@ await client.getByText("Thank you! You signed the service agreement.").waitFor()
 const [late] = await db`select agreement_version from agreement_signatures where client_id = ${maria.id} order by signed_at desc limit 1`;
 if (late?.agreement_version !== read) fail(`the signature should point to version ${read} she read, got ${late?.agreement_version}`);
 step(`the text changed while she read it: her signature points to version ${read}, the one she read`);
+
+// "Sign again" while Maria reads: the version she read no longer counts, so her signature is
+// refused, nothing is recorded and the link shows the current text.
+await saveAgreement({ body: `${original.body}\n\n${MARKER} Stale.`, resign: true });
+await client.goto(`${BASE}/s/${maria.sign_token}`);
+await client.getByText(`${MARKER} Stale.`).waitFor();
+await saveAgreement({ body: `${original.body}\n\n${MARKER} Fresh.`, resign: true });
+const [{ before }] = await db`select count(*)::int as before from agreement_signatures where client_id = ${maria.id}`;
+await client.locator('input[name="agree"]').check();
+await client.locator('input[name="signature"]').fill("Maria Lopez");
+await client.locator('button[type="submit"]').click();
+await client.getByText("The agreement changed. Please read it again.").waitFor();
+await client.getByText(`${MARKER} Fresh.`).waitFor();
+const [{ after }] = await db`select count(*)::int as after from agreement_signatures where client_id = ${maria.id}`;
+if (after !== before) fail("a signature of a version that no longer counts must not be recorded");
+// A version that doesn't exist is refused too.
+await client.goto(`${BASE}/s/${maria.sign_token}`);
+if (await client.getByText("The agreement changed. Please read it again.").count()) fail("a fresh link should not say the agreement changed");
+await client.evaluate(() => { document.querySelector('input[name="version"]').value = "999"; });
+await client.locator('input[name="agree"]').check();
+await client.locator('input[name="signature"]').fill("Maria Lopez");
+await client.locator('button[type="submit"]').click();
+await client.getByText("The agreement changed. Please read it again.").waitFor();
+const [{ again }] = await db`select count(*)::int as again from agreement_signatures where client_id = ${maria.id}`;
+if (again !== before) fail("a signature of a version that doesn't exist must not be recorded");
+step("“sign again” while Maria read: her signature is refused and the link shows the current text");
 
 // Removing Maria warns that her signed agreements go too (not removed here).
 await owner.goto(`${BASE}/clients/${maria.id}`);

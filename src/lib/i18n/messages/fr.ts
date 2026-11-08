@@ -314,4 +314,6 @@ export const fr: Messages = {
     "Se désabonner",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "des frais",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "Le contrat a changé. Merci de le relire.",
 };

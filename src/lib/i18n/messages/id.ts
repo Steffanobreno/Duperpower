@@ -314,4 +314,6 @@ export const id: Messages = {
     "Berhenti berlangganan",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "biaya",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "Perjanjiannya berubah. Silakan baca lagi.",
 };

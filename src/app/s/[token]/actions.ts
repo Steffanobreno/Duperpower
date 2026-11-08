@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { sql } from "@/lib/db";
-import { activeAgreement, recordSignature } from "@/lib/agreement";
+import { activeAgreement, recordSignature, signableVersion } from "@/lib/agreement";
 import { notifyOwner } from "@/lib/messaging";
 
 // The client's sign link (sent from their profile). The token is the only key.
@@ -12,7 +12,10 @@ export async function signByTokenAction(token: string, form: FormData) {
   if (!agreement) redirect(`/s/${token}`);
   const name = String(form.get("signature") ?? "").trim();
   if (form.get("agree") !== "on" || name.length < 3) redirect(`/s/${token}?needSign=1`);
-  await recordSignature(sql, agreement, c.id, name, null, form.get("version"));
+  // The text changed with "sign again" while they read it (or the version is missing): show the current one.
+  const version = await signableVersion(agreement, form.get("version"));
+  if (version === null) redirect(`/s/${token}?needSign=1&changed=1`);
+  await recordSignature(sql, agreement, c.id, name, null, version);
   await notifyOwner(c.business_id, `${c.name} signed the service agreement`, `${c.name} signed “${agreement.title}”.`, `/clients/${c.id}`);
   redirect(`/s/${token}?signed=1`);
 }

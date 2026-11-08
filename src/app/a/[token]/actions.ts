@@ -4,7 +4,7 @@ import { regionOf } from "@/lib/region";
 import { revalidatePath } from "next/cache";
 import { sql } from "@/lib/db";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
-import { activeAgreement, currentSignature, recordSignature } from "@/lib/agreement";
+import { activeAgreement, currentSignature, recordSignature, signableVersion } from "@/lib/agreement";
 import { dayLabel, money, timeLabel } from "@/lib/format";
 
 // The client's own link. The token in the URL is the only key, so these actions only
@@ -19,7 +19,10 @@ export async function confirmByTokenAction(token: string, form: FormData) {
   if (agreement && !(await currentSignature(agreement, appt.client_id))) {
     const name = String(form.get("signature") ?? "").trim();
     if (form.get("agree") !== "on" || name.length < 3) redirect(`/a/${token}?needSign=1`);
-    await recordSignature(sql, agreement, appt.client_id, name, null, form.get("version"));
+    // The text changed with "sign again" while they read it (or the version is missing): show the current one.
+    const version = await signableVersion(agreement, form.get("version"));
+    if (version === null) redirect(`/a/${token}?needSign=1&changed=1`);
+    await recordSignature(sql, agreement, appt.client_id, name, null, version);
   }
   const [done] = await sql`
     update appointments a set status = 'confirmed', confirmed_at = now()

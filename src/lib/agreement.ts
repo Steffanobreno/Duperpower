@@ -67,23 +67,29 @@ export function signatureImage(dataUrl: unknown) {
 }
 
 /**
- * Records a signature of the version the client read: `shown` is the version the page showed
- * (from the form), kept when it is a real version of this agreement; otherwise the current one.
+ * The version a signature is of: `shown`, the version the page showed (from the form), when it
+ * still counts: a kept version of this agreement from `resign_from_version` up to the current one.
+ * null otherwise (missing, made up, or no longer counting after "sign again"): the client has to
+ * read the current text and sign again.
  */
+export async function signableVersion(agreement: Agreement, shown: unknown) {
+  const asked = typeof shown === "string" && /^\d+$/.test(shown) ? Number(shown) : shown;
+  if (typeof asked !== "number" || !Number.isInteger(asked)) return null;
+  if (asked < agreement.resign_from_version || asked > agreement.version) return null;
+  return (await agreementVersion(agreement.id, asked)) ? asked : null;
+}
+
+/** Records a signature of `version`, one signableVersion() accepted. */
 export async function recordSignature(
   tx: TransactionSql | typeof sql,
   agreement: Agreement,
   clientId: string,
   name: string,
-  drawn: string | null = null,
-  shown: unknown = null,
+  drawn: string | null,
+  version: number,
 ) {
   const h = await headers();
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || null;
-  const asked = Number(shown);
-  const version = Number.isInteger(asked) && asked > 0 && asked < agreement.version
-    && (await agreementVersion(agreement.id, asked)) ? asked : agreement.version;
   await tx`insert into agreement_signatures (agreement_id, agreement_version, client_id, signed_name, signature_url, ip)
            values (${agreement.id}, ${version}, ${clientId}, ${name.slice(0, 120)}, ${drawn}, ${ip})`;
 }
-

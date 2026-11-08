@@ -113,7 +113,7 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
         {a.status === "declined" && <Notice kind="warn">{t("Sorry, we couldn't take this request. Please pick another time.")}</Notice>}
         {a.status === "no_show" && <Notice kind="warn">{t("We missed you at this visit. Text us to book a new time.")}</Notice>}
         {sp.needSign && a.status === "unconfirmed" && (
-          <Notice kind="error">{t("Please tick the box and type your full name to sign, then confirm.")}</Notice>
+          <Notice kind="error">{sp.changed ? t("The agreement changed. Please read it again.") : t("Please tick the box and type your full name to sign, then confirm.")}</Notice>
         )}
 
         {calendar && (

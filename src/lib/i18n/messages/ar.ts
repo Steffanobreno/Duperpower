@@ -314,4 +314,6 @@ export const ar: Messages = {
     "إلغاء الاشتراك",
   // The no-show fee in the service agreement, when the groomer left the amount empty.
   "a fee": "رسومًا",
+  // The service agreement changed (with "sign again") while the client was reading it.
+  "The agreement changed. Please read it again.": "تغيّرت الاتفاقية. يُرجى قراءتها مرة أخرى.",
 };
