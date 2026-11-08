@@ -1747,4 +1747,7 @@ export const fr: string[] = ["Réservation abandonnée",
 "Gérer l'abonnement",
 "Prochain renouvellement : {date}",
 "Reprendre",
-"Annuler à la fin de la période"];
+"Annuler à la fin de la période",
+"Essai gratuit : encore {n} jours. Si vous choisissez une formule alors qu'il reste plus de 48 heures d'essai, le premier prélèvement a lieu à la fin de l'essai ; s'il reste 48 heures ou moins, il a lieu le jour de votre choix.",
+"Parrainez un toiletteur : vous économisez tous les deux {amount}",
+"Il obtient {amount} de réduction sur sa première facture. Vous recevez {amount} de crédit lorsqu'il effectue son premier paiement."];

@@ -49,7 +49,7 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>The “Online booking by Fino” line</h2>
-      <p>The pages a business’s clients open (booking, signing, visit reports, unsubscribe) and the emails sent to them include a small line, “Online booking by Fino · free trial for groomers”, linking to {APP_NAME} with the business’s referral code. It is a way for other groomers to discover {APP_NAME}. The line doesn’t add any data about the client, and we don’t use clients’ contact details to market {APP_NAME} to them or to anyone else.</p>
+      <p>The pages a business’s clients open (booking, signing, visit reports, unsubscribe) and the emails sent to them include a small “Online booking by Fino” line, linking to {APP_NAME} with the business’s referral code, so other groomers can discover {APP_NAME}. That line is the only {APP_NAME} promotion clients see. It doesn’t add any data about the client, and we never use clients’ details to contact them on {APP_NAME}’s behalf.</p>
 
       <h2>Subprocessors</h2>
       <p>These providers receive personal information to help run the service, under their own terms and privacy commitments:</p>

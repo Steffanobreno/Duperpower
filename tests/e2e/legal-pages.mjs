@@ -67,7 +67,7 @@ const hasHeading = (h2s, wanted) => h2s.some((h) => h.replace(/^\d+\.\s*/, "") =
 // Terms.
 const terms = await open("/terms");
 for (const h of TERMS_HEADINGS) if (!hasHeading(terms.h2, h)) fail(`/terms: no "${h}" section (has ${terms.h2.join(" | ")})`);
-for (const s of ["[NOME DA EMPRESA]", "[FORO E LEI APLICÁVEL]", "14 days", "prorated", "Last updated: 2026-11-08"]) {
+for (const s of ["[NOME DA EMPRESA]", "[FORO E LEI APLICÁVEL]", "14 days", "prorated", "Last updated: 2026-11-08", "US$29 a month or US$290 a year", "we may add it"]) {
   if (!terms.text.includes(s)) fail(`/terms: missing "${s}"`);
 }
 if (/honou?rs? .?STOP|which the app does for you/i.test(terms.text)) fail("/terms: still says the app honors STOP");
@@ -81,7 +81,10 @@ for (const s of [...SUBPROCESSORS, ...COOKIES, "[NOME DA EMPRESA]", "Last update
   if (!privacy.text.includes(s)) fail(`/privacy: missing "${s}"`);
 }
 if (/stop texts by replying STOP/i.test(privacy.text)) fail("/privacy: says a STOP reply stops texts by itself");
-if (/don.t use your clients. data for our own marketing/i.test(privacy.text)) fail("/privacy: still says client data is never used for Fino's marketing");
+if (/don.t use your clients. data for our own marketing|to them or to anyone else/i.test(privacy.text)) fail("/privacy: contradicts the Online booking by Fino line");
+for (const [path, d] of [["/terms", terms], ["/privacy", privacy]]) {
+  if (d.text.includes("free trial for groomers")) fail(`${path}: quotes the page-only footer text`);
+}
 checkContact("/privacy", privacy);
 step(`/privacy: ${PRIVACY_HEADINGS.length} sections, ${SUBPROCESSORS.length} subprocessors, the cookies and the support email`);
 
@@ -96,6 +99,10 @@ for (const s of ["more than 48 hours", "prorated", "Monthly plans aren't refunde
   if (!pricing.allText.includes(s)) fail(`/pricing: missing "${s}"`);
 }
 if (/first charge only happens when the trial ends/.test(pricing.allText)) fail("/pricing: still promises no charge before the trial ends");
+if (!pricing.allText.includes("makes their first payment")) fail("/pricing: the referral credit wording differs from the Terms");
+// The switch page: no "export everything" and no "there's no contract".
+const sw = await open("/switch");
+if (/export everything|full backup|no contract/i.test(sw.allText)) fail("/switch: still promises a full export or no contract");
 step("/pricing: the 48-hour trial rule and the refund policy");
 
 // The marketing email: "Bay Area" only for the demo business (Woofers).

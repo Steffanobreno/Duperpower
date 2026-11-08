@@ -1749,5 +1749,8 @@ export const OWNER_KEYS: string[] = [
  "Manage subscription",
  "Next renewal: {date}",
  "Resume",
- "Cancel at period end"
+ "Cancel at period end",
+ "Free trial: {n} days left. Choose a plan with more than 48 hours of the trial left and the first charge is when the trial ends; with 48 hours or less, it's the day you choose.",
+ "Refer a groomer: you both save {amount}",
+ "They get {amount} off their first bill. You get {amount} of credit when they make their first payment."
 ];

@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { PRICES } from "@/lib/billing";
 import { LEGAL } from "@/lib/legal";
 import { APP_NAME } from "@/lib/product";
 import { LegalPage } from "../legal-page";
 
 export const metadata: Metadata = { title: "Terms of Service", description: `The terms for using ${APP_NAME}.` };
+
+// The plan prices (billing.ts); the referral discount and credit are one month's price (discounts.ts).
+const MONTH = `US$${PRICES.month.cents / 100}`;
+const YEAR = `US$${PRICES.year.cents / 100}`;
 
 const Mail = () => <a href={`mailto:${LEGAL.supportEmail}`} className="underline">{LEGAL.supportEmail}</a>;
 
@@ -32,7 +37,7 @@ export default function TermsPage() {
       <h2>4. Free trial, plans, renewal and cancellation</h2>
       <ul>
         <li><b>Free trial.</b> New accounts get a 14-day free trial. No card is needed to start it.</li>
-        <li><b>Plans.</b> After the trial, using the app needs a paid plan for the whole business: US$29 a month or US$290 a year, charged in US dollars in advance through our payment provider, Stripe. When you choose a plan, you are asked to accept these terms and the automatic renewal.</li>
+        <li><b>Plans.</b> After the trial, using the app needs a paid plan for the whole business: {MONTH} a month or {YEAR} a year, charged in US dollars in advance through our payment provider, Stripe. When you choose a plan, you are asked to accept these terms and the automatic renewal.</li>
         <li><b>Choosing a plan during the trial.</b> If more than 48 hours of the trial are left when you choose a plan, the first charge is on the day the trial ends. If 48 hours or less are left, the first charge is on the day you choose the plan. If you chose a plan during the trial, we email you a reminder before the first charge, with its date and amount.</li>
         <li><b>Automatic renewal.</b> Plans renew automatically at the end of each month or year, at the price of your plan, until you cancel. Before a yearly plan renews, we email you a reminder with the renewal date and amount.</li>
         <li><b>Cancelling.</b> You can cancel anytime on the Plan page (“Manage billing”), without contacting us. You keep access until the end of the period you already paid for, and the plan does not renew after that.</li>
@@ -50,15 +55,15 @@ export default function TermsPage() {
 
       <h2>6. Referrals and discount codes</h2>
       <ul>
-        <li>Every business has a referral link and code. A business that signs up with your link, or types your code on the Plan page before it has a plan, gets its first month free: US$29 off its first bill, once.</li>
-        <li>When the business you referred makes its first payment, you get US$29 of credit, once per referred business. The credit is taken off your next bills by our payment provider. It has no cash value, can’t be transferred and isn’t paid out.</li>
+        <li>Every business has a referral link and code. A business that signs up with your link, or types your code on the Plan page before it has a plan, gets its first month free: {MONTH} off its first bill, once.</li>
+        <li>When the business you referred makes its first payment, you get {MONTH} of credit, once per referred business. The credit is taken off your next bills by our payment provider. It has no cash value, can’t be transferred and isn’t paid out.</li>
         <li>You can’t refer your own business, and a business can only be referred once.</li>
         <li>Discount codes can have an end date and a limit on how many times they can be used. One code applies per plan; a discount code you type replaces the referral discount, and they don’t add up.</li>
         <li>We may change or end the referral program or a discount code at any time. Credit you already earned stays on your account.</li>
       </ul>
 
       <h2>7. Taxes</h2>
-      <p>Prices don’t include taxes. Where the law requires us to charge sales tax, VAT or a similar tax, we add it to the bill. You are responsible for your own taxes.</p>
+      <p>Prices don’t include taxes. Where the law requires us to charge sales tax, VAT or a similar tax, we may add it to the bill. You are responsible for your own taxes.</p>
 
       <h2>8. Price changes</h2>
       <p>We may change our prices. We will email you at least 30 days before a new price applies to you, and it applies from your next renewal after that notice. If you don’t want to pay the new price, you can cancel before the renewal.</p>
@@ -67,7 +72,7 @@ export default function TermsPage() {
       <ul>
         <li>The information you put in {APP_NAME} about your clients (names, contact details, addresses, pets, visits, payments, notes, photos and messages) is yours. You decide what is collected and why; we process it only to run the service for you, as our Privacy Policy describes. For that data you are the controller and we are your processor.</li>
         <li>You collect this data from your clients, so you are responsible for having the right to use it, including their permission to receive texts and emails.</li>
-        <li>Your booking page, the other pages your clients open and the emails sent to your clients show a small line, “Online booking by Fino · free trial for groomers”, with your referral link. It tells other groomers about {APP_NAME}; it doesn’t share your clients’ details with anyone.</li>
+        <li>Your booking page, the other pages your clients open and the emails sent to your clients show a small “Online booking by Fino” line, with your referral link. It tells other groomers about {APP_NAME}; it doesn’t share your clients’ details with anyone.</li>
         <li>You can download your data while your account is open, in Settings → Backups: your clients as a spreadsheet, and a backup file with your clients, pets, visits, payments, services, settings and the last year of messages. Pet photos and drawn signatures are not in the download yet (the typed name and date of each signature are). If you can’t reach the app, email us and we will send you a copy.</li>
       </ul>
 

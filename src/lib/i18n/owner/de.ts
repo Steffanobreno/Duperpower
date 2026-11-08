@@ -1747,4 +1747,7 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Abo verwalten",
 "Nächste Verlängerung: {date}",
 "Fortsetzen",
-"Zum Ende des Zeitraums kündigen"];
+"Zum Ende des Zeitraums kündigen",
+"Kostenloser Test: noch {n} Tage. Wählen Sie einen Tarif, solange noch mehr als 48 Stunden Test übrig sind, erfolgt die erste Abbuchung am Ende des Tests; bei 48 Stunden oder weniger am Tag der Wahl.",
+"Empfehlen Sie einen Groomer: Sie sparen beide {amount}",
+"Er erhält {amount} Rabatt auf seine erste Rechnung. Sie erhalten {amount} Guthaben, wenn er seine erste Zahlung leistet."];

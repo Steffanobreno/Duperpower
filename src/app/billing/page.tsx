@@ -46,7 +46,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         : b.plan_status === "past_due" ? t("The last payment didn't go through. Update your card to keep using the app.")
           : b.plan_status === "cancelled" ? t("Your plan was cancelled. Choose a plan to use the app again; your data is still here.")
             : access.locked ? t("Your free trial has ended. Choose a plan to keep using the app; your data is still here.")
-              : t("Free trial: {n} days left. Choose a plan anytime: you won't be charged until the trial ends.", { n: access.trialDaysLeft ?? 0 });
+              : t("Free trial: {n} days left. Choose a plan with more than 48 hours of the trial left and the first charge is when the trial ends; with 48 hours or less, it's the day you choose.", { n: access.trialDaysLeft ?? 0 });
   // "Manage billing" opens Stripe's portal for a Stripe customer, the test portal for a test one;
   // a customer of the other kind would only bounce back here.
   const canManage = !!b.stripe_customer_id && (isFakeId(b.stripe_customer_id) ? testMode : stripeOn());
@@ -95,9 +95,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         )}
         {referral && (
           <Card>
-            <h2 className="text-lg font-bold">{t("Refer a groomer: you both get a month")}</h2>
+            <h2 className="text-lg font-bold">{t("Refer a groomer: you both save {amount}", { amount: usd(REFERRAL_CENTS, locale) })}</h2>
             <p className="mt-1 text-sm text-muted">
-              {t("They get their first month free. You get {amount} off your plan when they pay their first bill.", { amount: usd(REFERRAL_CENTS, locale) })}
+              {t("They get {amount} off their first bill. You get {amount} of credit when they make their first payment.", { amount: usd(REFERRAL_CENTS, locale) })}
             </p>
             <div className="mt-3 space-y-3">
               <CopyField label={t("Your referral link")} value={`${appUrl}/signup?ref=${referral.code}`} />

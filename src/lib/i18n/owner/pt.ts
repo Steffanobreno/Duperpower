@@ -1747,4 +1747,7 @@ export const pt: string[] = ["Agendamento abandonado",
 "Gerenciar assinatura",
 "Próxima renovação: {date}",
 "Retomar",
-"Cancelar no fim do período"];
+"Cancelar no fim do período",
+"Teste grátis: faltam {n} dias. Escolhendo um plano com mais de 48 horas de teste restantes, a primeira cobrança é quando o teste acaba; com 48 horas ou menos, é no dia em que você escolhe.",
+"Indique um groomer: vocês dois economizam {amount}",
+"Ele ganha {amount} de desconto na primeira cobrança. Você ganha {amount} de crédito quando ele fizer o primeiro pagamento."];

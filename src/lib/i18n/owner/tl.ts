@@ -1747,4 +1747,7 @@ export const tl: string[] = ["Naiwang booking",
 "Pamahalaan ang subscription",
 "Susunod na renewal: {date}",
 "Ituloy",
-"Kanselahin sa dulo ng period"];
+"Kanselahin sa dulo ng period",
+"Libreng trial: {n} araw na lang. Kung pipili ka ng plan habang higit sa 48 oras pa ang natitira sa trial, ang unang singil ay sa pagtatapos ng trial; kung 48 oras o mas kaunti na lang, sisingilin ka sa araw na pumili ka.",
+"Mag-refer ng groomer: pareho kayong makakatipid ng {amount}",
+"Makakakuha sila ng {amount} na bawas sa unang bill nila. Makakakuha ka ng {amount} na credit kapag ginawa nila ang unang bayad nila."];

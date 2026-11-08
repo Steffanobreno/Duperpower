@@ -118,7 +118,7 @@ const featuresEn: FeaturesCopy = {
       items: [
         { t: "Groomers and roles", d: "Each groomer with a color, a route and their own login; you choose what each one sees and does." },
         { t: "Clock in and payroll", d: "Hours, commission and tips added up and ready to pay." },
-        { t: "Your data is yours", d: "Import clients from a spreadsheet, export everything anytime, weekly backup to Google Drive, and your visits in Google or iPhone Calendar." },
+        { t: "Your data is yours", d: "Import clients from a spreadsheet, export your clients, pets, visits and payments anytime (photos aside), weekly backup to Google Drive, and your visits in Google or iPhone Calendar." },
         { t: "Every country, 20 languages", d: "Your currency, phone format, postal codes, holidays, miles or kilometers; each person sees the app in their own language." },
         { t: "Help when you need it", d: "Step-by-step guides inside the app and an assistant that answers questions." },
       ],
@@ -186,7 +186,7 @@ const featuresPt: FeaturesCopy = {
       items: [
         { t: "Groomers e permissões", d: "Cada groomer com cor, rota e login próprio; você escolhe o que cada um vê e faz." },
         { t: "Ponto e folha", d: "Horas, comissão e gorjetas somadas e prontas para pagar." },
-        { t: "Seus dados são seus", d: "Importe clientes de uma planilha, exporte tudo quando quiser, backup semanal no Google Drive e suas visitas no Google Agenda ou no calendário do iPhone." },
+        { t: "Seus dados são seus", d: "Importe clientes de uma planilha, exporte clientes, pets, visitas e pagamentos quando quiser (fotos à parte), backup semanal no Google Drive e suas visitas no Google Agenda ou no calendário do iPhone." },
         { t: "Qualquer país, 20 idiomas", d: "Sua moeda, formato de telefone, CEP, feriados, milhas ou quilômetros; cada pessoa vê o app no próprio idioma." },
         { t: "Ajuda quando precisar", d: "Guias passo a passo dentro do app e um assistente que responde dúvidas." },
       ],
@@ -254,7 +254,7 @@ const featuresEs: FeaturesCopy = {
       items: [
         { t: "Groomers y permisos", d: "Cada groomer con un color, una ruta y su propio acceso; tú eliges qué ve y hace cada uno." },
         { t: "Fichaje y nómina", d: "Horas, comisión y propinas sumadas y listas para pagar." },
-        { t: "Tus datos son tuyos", d: "Importa clientes desde una hoja de cálculo, exporta todo cuando quieras, copia semanal en Google Drive y tus visitas en Google Calendar o el calendario del iPhone." },
+        { t: "Tus datos son tuyos", d: "Importa clientes desde una hoja de cálculo, exporta clientes, mascotas, visitas y pagos cuando quieras (fotos aparte), copia semanal en Google Drive y tus visitas en Google Calendar o el calendario del iPhone." },
         { t: "Cualquier país, 20 idiomas", d: "Tu moneda, formato de teléfono, códigos postales, feriados, millas o kilómetros; cada persona ve la app en su idioma." },
         { t: "Ayuda cuando la necesites", d: "Guías paso a paso dentro de la app y un asistente que responde preguntas." },
       ],
@@ -287,7 +287,7 @@ const pricingEn: PricingCopy = {
     "Routes with drive times and the best order", "Automatic reminders by text and email", "Checkout, receipts and reports",
     "Email marketing campaigns", "Import and export of your data", "20 languages and every country", "Help center and assistant",
   ],
-  referral: { title: "Invited by another groomer?", text: `Sign up with their link and your first month is free. Every groomer gets their own link: when someone you invite pays their first bill, you get US$${M} off yours.` },
+  referral: { title: "Invited by another groomer?", text: `Sign up with their link and get US$${M} off your first bill: your first month free. Every groomer gets their own link: when someone you invite makes their first payment, you get US$${M} of credit on your bills.` },
   faqTitle: "Questions about the plan",
   faq: [
     { q: "Do I need a card for the free trial?", a: "No. Use everything for 14 days. If you choose a plan with more than 48 hours of the trial left, the first charge is on the day the trial ends; with 48 hours or less left, it's on the day you choose the plan." },
@@ -314,7 +314,7 @@ const pricingPt: PricingCopy = {
     "Rotas com tempo de estrada e a melhor ordem", "Lembretes automáticos por SMS e e-mail", "Recebimento, recibos e relatórios",
     "Campanhas de e-mail marketing", "Importação e exportação dos seus dados", "20 idiomas e qualquer país", "Central de ajuda e assistente",
   ],
-  referral: { title: "Foi convidado por outro groomer?", text: `Cadastre-se pelo link dele e seu primeiro mês é grátis. Cada groomer tem o próprio link: quando alguém que você convidou paga a primeira cobrança, você ganha US$${M} de desconto na sua.` },
+  referral: { title: "Foi convidado por outro groomer?", text: `Cadastre-se pelo link dele e ganhe US$${M} de desconto na primeira cobrança: seu primeiro mês grátis. Cada groomer tem o próprio link: quando alguém que você convidou fizer o primeiro pagamento, você ganha US$${M} de crédito nas suas cobranças.` },
   faqTitle: "Dúvidas sobre o plano",
   faq: [
     { q: "Preciso de cartão para o teste grátis?", a: "Não. Use tudo por 14 dias. Se escolher um plano com mais de 48 horas de teste restantes, a primeira cobrança é no dia em que o teste acaba; com 48 horas ou menos, é no dia em que você escolhe o plano." },
@@ -341,7 +341,7 @@ const pricingEs: PricingCopy = {
     "Rutas con tiempos de manejo y el mejor orden", "Recordatorios automáticos por SMS y correo", "Cobro, recibos y reportes",
     "Campañas de email marketing", "Importar y exportar tus datos", "20 idiomas y cualquier país", "Centro de ayuda y asistente",
   ],
-  referral: { title: "¿Te invitó otro groomer?", text: `Regístrate con su enlace y tu primer mes es gratis. Cada groomer tiene su propio enlace: cuando alguien que invitaste paga su primera factura, recibes US$${M} de descuento en la tuya.` },
+  referral: { title: "¿Te invitó otro groomer?", text: `Regístrate con su enlace y obtén US$${M} de descuento en tu primera factura: tu primer mes gratis. Cada groomer tiene su propio enlace: cuando alguien que invitaste haga su primer pago, recibes US$${M} de crédito en tus facturas.` },
   faqTitle: "Preguntas sobre el plan",
   faq: [
     { q: "¿Necesito tarjeta para la prueba gratis?", a: "No. Usa todo durante 14 días. Si eliges un plan con más de 48 horas de prueba por delante, el primer cobro es el día en que termina la prueba; con 48 horas o menos, es el día en que eliges el plan." },
@@ -565,7 +565,7 @@ const switchEn: TopicCopy = {
     { t: "No duplicates", d: "Clients are matched by phone number, so importing twice doesn't double anyone." },
     { t: "Try both side by side", d: "Use Fino for 14 days, free and without a card, before you turn the old app off." },
     { t: "Clients just get a new link", d: "No app to download: they book on your new page in their phone's browser." },
-    { t: "Your data stays yours", d: "Export everything from Fino anytime, as a spreadsheet or a full backup." },
+    { t: "Your data stays yours", d: "Export your clients, pets, visits and payments from Fino anytime, as a spreadsheet or a backup file (photos aside)." },
     { t: "Help on every screen", d: "Step-by-step guides inside the app, and an assistant for questions." },
   ],
   stepsTitle: "Moving in three steps",
@@ -579,7 +579,7 @@ const switchEn: TopicCopy = {
     { q: "Which columns does the import read?", a: "Names, phone, email, address, notes, tags and pets with their breed. Past visits stay in your old app's export." },
     { q: "Will my clients get messages when I import them?", a: "No. Importing doesn't send anything to anyone." },
     { q: "Can I keep my prices and services?", a: "Yes. Starter services come ready, and you rename them and set your own prices and times." },
-    { q: "What if I change my mind?", a: "Export your clients from Fino as a spreadsheet anytime; there's no contract." },
+    { q: "What if I change my mind?", a: "Export your clients from Fino as a spreadsheet anytime. No lock-in: cancel anytime." },
   ],
 };
 const switchPt: TopicCopy = {
@@ -596,7 +596,7 @@ const switchPt: TopicCopy = {
     { t: "Sem duplicados", d: "Os clientes são reconhecidos pelo telefone, então importar duas vezes não duplica ninguém." },
     { t: "Teste os dois juntos", d: "Use o Fino por 14 dias, grátis e sem cartão, antes de desligar o app antigo." },
     { t: "O cliente só recebe um link novo", d: "Nada para baixar: ele agenda na sua nova página pelo navegador do celular." },
-    { t: "Seus dados continuam seus", d: "Exporte tudo do Fino quando quiser, em planilha ou backup completo." },
+    { t: "Seus dados continuam seus", d: "Exporte clientes, pets, visitas e pagamentos do Fino quando quiser, em planilha ou arquivo de backup (fotos à parte)." },
     { t: "Ajuda em cada tela", d: "Guias passo a passo dentro do app e um assistente para dúvidas." },
   ],
   stepsTitle: "Mudança em três passos",
@@ -610,7 +610,7 @@ const switchPt: TopicCopy = {
     { q: "Quais colunas a importação lê?", a: "Nomes, telefone, e-mail, endereço, observações, etiquetas e pets com a raça. As visitas antigas ficam no arquivo exportado do app anterior." },
     { q: "Meus clientes recebem mensagens quando eu importo?", a: "Não. Importar não envia nada para ninguém." },
     { q: "Posso manter meus preços e serviços?", a: "Sim. Serviços iniciais já vêm prontos, e você muda os nomes, os preços e os tempos." },
-    { q: "E se eu mudar de ideia?", a: "Exporte seus clientes do Fino em planilha quando quiser; não há contrato." },
+    { q: "E se eu mudar de ideia?", a: "Exporte seus clientes do Fino em planilha quando quiser. Sem fidelidade: cancele quando quiser." },
   ],
 };
 const switchEs: TopicCopy = {
@@ -627,7 +627,7 @@ const switchEs: TopicCopy = {
     { t: "Sin duplicados", d: "Los clientes se reconocen por teléfono, así que importar dos veces no duplica a nadie." },
     { t: "Prueba las dos a la vez", d: "Usa Fino 14 días, gratis y sin tarjeta, antes de apagar la app anterior." },
     { t: "El cliente solo recibe un enlace nuevo", d: "Nada que descargar: reserva en tu nueva página desde el navegador del teléfono." },
-    { t: "Tus datos siguen siendo tuyos", d: "Exporta todo desde Fino cuando quieras, como hoja de cálculo o copia completa." },
+    { t: "Tus datos siguen siendo tuyos", d: "Exporta clientes, mascotas, visitas y pagos desde Fino cuando quieras, como hoja de cálculo o archivo de copia (fotos aparte)." },
     { t: "Ayuda en cada pantalla", d: "Guías paso a paso dentro de la app y un asistente para dudas." },
   ],
   stepsTitle: "El cambio en tres pasos",
@@ -641,7 +641,7 @@ const switchEs: TopicCopy = {
     { q: "¿Qué columnas lee la importación?", a: "Nombres, teléfono, correo, dirección, notas, etiquetas y mascotas con su raza. Las visitas anteriores quedan en el archivo exportado de la app anterior." },
     { q: "¿Mis clientes reciben mensajes cuando los importo?", a: "No. Importar no le envía nada a nadie." },
     { q: "¿Puedo mantener mis precios y servicios?", a: "Sí. Los servicios iniciales vienen listos, y cambias nombres, precios y tiempos." },
-    { q: "¿Y si cambio de opinión?", a: "Exporta tus clientes de Fino en una hoja de cálculo cuando quieras; no hay contrato." },
+    { q: "¿Y si cambio de opinión?", a: "Exporta tus clientes de Fino en una hoja de cálculo cuando quieras. Sin permanencia: cancela cuando quieras." },
   ],
 };
 export const switchCopy = (l: SiteLang) => ({ en: switchEn, pt: switchPt, es: switchEs })[l];

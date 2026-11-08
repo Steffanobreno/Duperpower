@@ -82,7 +82,7 @@ step("admin: a discount code is made in Stripe (a referral-like code is refused)
 const a = await newPage();
 const aId = await signUp(a, "Sudsy Mobile Spa", `ref-a${stamp}@example.com`);
 await a.goto(`${BASE}/billing`);
-await a.getByText("Refer a groomer: you both get a month").waitFor();
+await a.getByText(/^Refer a groomer: you both save (US)?\$29$/).waitFor();
 const code = await a.getByLabel("Your referral code").inputValue();
 if (!/^[A-Z]+-\d{4}$/.test(code)) fail(`referral code looks wrong: ${code}`);
 const link = await a.getByLabel("Your referral link").inputValue();

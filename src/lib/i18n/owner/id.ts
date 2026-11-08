@@ -1747,4 +1747,7 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Kelola langganan",
 "Perpanjangan berikutnya: {date}",
 "Lanjutkan",
-"Batalkan di akhir periode"];
+"Batalkan di akhir periode",
+"Uji coba gratis: sisa {n} hari. Jika Anda memilih paket saat uji coba masih lebih dari 48 jam, tagihan pertama terjadi saat uji coba berakhir; jika 48 jam atau kurang, pada hari Anda memilih.",
+"Ajak groomer lain: Anda berdua hemat {amount}",
+"Mereka mendapat potongan {amount} untuk tagihan pertama. Anda mendapat kredit {amount} saat mereka melakukan pembayaran pertama."];

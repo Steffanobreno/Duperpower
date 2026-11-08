@@ -1747,4 +1747,7 @@ export const es: string[] = ["Reserva abandonada",
 "Gestionar suscripción",
 "Próxima renovación: {date}",
 "Reanudar",
-"Cancelar al final del periodo"];
+"Cancelar al final del periodo",
+"Prueba gratis: quedan {n} días. Si eliges un plan con más de 48 horas de prueba por delante, el primer cobro es cuando termina la prueba; con 48 horas o menos, es el día en que lo eliges.",
+"Recomienda a un groomer: ambos ahorran {amount}",
+"Recibe {amount} de descuento en su primera factura. Tú recibes {amount} de crédito cuando haga su primer pago."];

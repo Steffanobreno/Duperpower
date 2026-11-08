@@ -1747,4 +1747,7 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Aboneliği yönet",
 "Sonraki yenileme: {date}",
 "Devam ettir",
-"Dönem sonunda iptal et"];
+"Dönem sonunda iptal et",
+"Ücretsiz deneme: {n} gün kaldı. Denemenin bitmesine 48 saatten fazla varken bir plan seçerseniz ilk ödeme deneme bittiğinde alınır; 48 saat veya daha az kaldıysa seçtiğiniz gün alınır.",
+"Bir groomer önerin: ikiniz de {amount} kazanın",
+"İlk faturalarında {amount} indirim alırlar. İlk ödemelerini yaptıklarında size {amount} kredi verilir."];

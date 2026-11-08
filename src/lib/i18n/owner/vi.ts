@@ -1747,4 +1747,7 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Quản lý gói đăng ký",
 "Gia hạn tiếp theo: {date}",
 "Tiếp tục",
-"Hủy vào cuối kỳ"];
+"Hủy vào cuối kỳ",
+"Dùng thử miễn phí: còn {n} ngày. Nếu bạn chọn gói khi thời gian dùng thử còn hơn 48 giờ, lần thu phí đầu tiên là khi hết dùng thử; nếu còn 48 giờ hoặc ít hơn, sẽ thu ngay ngày bạn chọn.",
+"Giới thiệu một groomer: cả hai cùng tiết kiệm {amount}",
+"Họ được giảm {amount} cho hóa đơn đầu tiên. Bạn nhận {amount} tín dụng khi họ thanh toán lần đầu."];
