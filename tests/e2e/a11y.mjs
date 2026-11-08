@@ -13,7 +13,7 @@ const axe = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.mi
 const db = postgres(process.env.DATABASE_URL ?? "postgres://postgres@127.0.0.1:5433/woofers", { max: 1 });
 const [visit] = await db`select id, public_token from appointments order by created_at limit 1`;
 const [bill] = await db`select public_token from invoices where public_token is not null limit 1`;
-const [client] = await db`select id from clients order by created_at limit 1`;
+const [client] = await db`select id, marketing_token from clients order by created_at limit 1`;
 // The first visit's report card (the token is made once and kept, as when the groomer sends it).
 const [card] = visit ? await db`update appointments set report_token = coalesce(report_token, md5(random()::text))
   where id = ${visit.id} returning report_token` : [];
@@ -42,7 +42,7 @@ for (const width of [390, 1280]) {
   // The public site and the client's pages.
   for (const path of ["/?lang=en", "/features", "/pricing?lang=pt", "/mobile-grooming-software?lang=es", "/mobile-grooming-route-planner",
     "/switch", "/guides", "/guides/checkout", "/terms", "/privacy", "/signup", "/login", "/login/forgot", "/no-such-page",
-    "/book/woofers", "/intake", visit && `/a/${visit.public_token}`, bill && `/r/${bill.public_token}`, card && `/g/${card.report_token}`].filter(Boolean)) {
+    "/book/woofers", "/intake", visit && `/a/${visit.public_token}`, bill && `/r/${bill.public_token}`, card && `/g/${card.report_token}`, client?.marketing_token && `/u/${client.marketing_token}`].filter(Boolean)) {
     await check(page, path);
   }
   // The groomer's app.
