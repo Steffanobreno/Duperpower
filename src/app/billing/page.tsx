@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
-import { accessOf, billingOn, paymentsMode, PRICES } from "@/lib/billing";
+import { accessOf, billingOn, isFakeId, paymentsMode, PRICES, stripeOn } from "@/lib/billing";
 import { sql } from "@/lib/db";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { APP_NAME } from "@/lib/product";
@@ -47,6 +47,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           : b.plan_status === "cancelled" ? t("Your plan was cancelled. Choose a plan to use the app again; your data is still here.")
             : access.locked ? t("Your free trial has ended. Choose a plan to keep using the app; your data is still here.")
               : t("Free trial: {n} days left. Choose a plan anytime: you won't be charged until the trial ends.", { n: access.trialDaysLeft ?? 0 });
+  // "Manage billing" opens Stripe's portal for a Stripe customer, the test portal for a test one;
+  // a customer of the other kind would only bounce back here.
+  const canManage = !!b.stripe_customer_id && (isFakeId(b.stripe_customer_id) ? testMode : stripeOn());
   const canChoose = owner && billingOn() && ["trial", "cancelled"].includes(b.plan_status);
   // Referral: owners of businesses that use the app (not courtesy accounts) can invite others.
   const referral = owner && billingOn() ? await referralStats(staff.businessId) : null;
@@ -85,7 +88,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             {!testMode && <p className="text-center text-xs text-muted">{t("Secure payment by Stripe. Cancel anytime.")}</p>}
           </form>
         )}
-        {owner && billingOn() && b.stripe_customer_id && (
+        {owner && canManage && (
           <form action={manageBillingAction}>
             <Button type="submit" kind="secondary" className="w-full">{t("Manage billing (card, invoices, cancel)")}</Button>
           </form>
