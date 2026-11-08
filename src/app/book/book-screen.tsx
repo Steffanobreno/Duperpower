@@ -8,7 +8,7 @@ import { BookingWizard } from "./booking-wizard";
 import { getI18n } from "@/lib/i18n/server";
 import { I18nProvider } from "@/components/i18n";
 import { logoUrl } from "@/lib/business-logo";
-import { referralCodeOf } from "@/lib/discounts";
+import { safeReferralCode } from "@/lib/discounts";
 import { getStaff } from "@/lib/auth";
 import { regionForPage } from "@/lib/region-server";
 
@@ -20,7 +20,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
   const [services, agreement, { lang, messages, t }, logo] = await Promise.all([
     onlineServices(b.id), activeAgreement(b.id), getI18n(langParam), logoUrl(b.id),
   ]);
-  const [viewer, referralCode] = await Promise.all([getStaff(), referralCodeOf(b.id)]);
+  const [viewer, referralCode] = await Promise.all([getStaff(), safeReferralCode(b.id)]);
   const region = regionForPage(b, lang);
   const phone = phoneLabel(b.phone);
   return (

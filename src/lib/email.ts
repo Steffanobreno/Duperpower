@@ -1,5 +1,5 @@
 import { logoUrl } from "./business-logo";
-import { referralCodeOf } from "./discounts";
+import { safeReferralCode } from "./discounts";
 import { poweredByUrl } from "./powered-by";
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
@@ -145,7 +145,8 @@ export async function sendEmail({
   attachments?: { filename: string; content: Buffer; contentType: string }[];
 }) {
   // Emails with a businessId are the business's own, to its clients: they end with its "Online booking by Fino" referral link.
-  const poweredBy = businessId ? poweredByUrl(await referralCodeOf(businessId)) : null;
+  const code = businessId ? await safeReferralCode(businessId) : null;
+  const poweredBy = code ? poweredByUrl(code) : null;
   const mail: Mail = {
     to, subject, text: poweredBy ? `${text}\n\n—\nOnline booking by Fino: ${poweredBy}` : text,
     html: emailHtml(text, fromName, details, businessId ? await logoUrl(businessId) : null, poweredBy),

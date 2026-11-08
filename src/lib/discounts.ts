@@ -2,6 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { sql } from "./db";
 import { PRICES, stripe } from "./billing";
+import { logServerError } from "./error-log";
 
 // Referrals and discount codes.
 // - Referral: every business has a code (and a /signup?ref=<code> link). A business that signs up
@@ -30,6 +31,19 @@ export async function referralCodeOf(businessId: string): Promise<string> {
     if (again.referral_code) return again.referral_code;
   }
   throw new Error("Could not make a referral code");
+}
+
+/**
+ * The referral code for the "Online booking by Fino" footer, or null when it can't be read or
+ * made. A failure here must never block an email or a client page: it only drops the footer.
+ */
+export async function safeReferralCode(businessId: string): Promise<string | null> {
+  try {
+    return await referralCodeOf(businessId);
+  } catch (e) {
+    await logServerError(e instanceof Error ? e.message : String(e), "referral-code", null).catch(() => {});
+    return null;
+  }
 }
 
 export const cleanCode = (raw: unknown) => String(raw ?? "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 40);

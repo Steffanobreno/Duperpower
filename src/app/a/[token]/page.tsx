@@ -8,7 +8,7 @@ import { LOCALES } from "@/lib/i18n";
 import { Button, ButtonLink, Card, Field, Input, Notice } from "@/components/ui";
 import { AgreementText } from "@/components/agreement-text";
 import { logoUrl } from "@/lib/business-logo";
-import { referralCodeOf } from "@/lib/discounts";
+import { safeReferralCode } from "@/lib/discounts";
 import { getStaff } from "@/lib/auth";
 import { regionForPage } from "@/lib/region-server";
 import { ClientShell, StepCard } from "@/components/client-shell";
@@ -71,7 +71,7 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
 
   return (
     <ClientShell phone={a.phone} phoneLabel={phone} website={a.website_url} i18n={{ lang, t }}
-      brand={{ name: a.business, logo }} referralCode={await referralCodeOf(a.business_id)}
+      brand={{ name: a.business, logo }} referralCode={await safeReferralCode(a.business_id)}
       staffBack={viewer?.businessId === a.business_id ? `/appointments/${a.id}` : null}>
       <StepCard className="space-y-4">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">{t("Hi {name}!", { name: a.first_name })}</h1>

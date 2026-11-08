@@ -6,7 +6,7 @@ import { phoneLabel } from "@/lib/format";
 import { ClientShell, StepCard } from "@/components/client-shell";
 import { ReceiptView } from "@/components/receipt-view";
 import { ShareReceiptButton } from "@/components/share-receipt";
-import { referralCodeOf } from "@/lib/discounts";
+import { safeReferralCode } from "@/lib/discounts";
 import { getI18n } from "@/lib/i18n/server";
 import { LOCALES } from "@/lib/i18n";
 
@@ -22,7 +22,7 @@ export default async function ClientReceiptPage({ params, searchParams }: PagePr
   const viewer = await getStaff();
   return (
     <ClientShell phone={r.business.phone} phoneLabel={phoneLabel(r.business.phone)} website={null} i18n={{ lang, t }}
-      brand={{ name: r.business.name, logo: r.business.logo }} referralCode={await referralCodeOf(r.business.id)}
+      brand={{ name: r.business.name, logo: r.business.logo }} referralCode={await safeReferralCode(r.business.id)}
       staffBack={viewer?.businessId === r.business.id ? `/receipts/${r.invoiceId}` : null}>
       <StepCard>
         <ReceiptView r={r} t={t} locale={LOCALES[lang]} />

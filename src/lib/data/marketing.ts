@@ -2,7 +2,7 @@ import { emailLogo } from "../business-logo";
 import "server-only";
 import { sql } from "../db";
 import { sendMany } from "../email";
-import { referralCodeOf } from "../discounts";
+import { safeReferralCode } from "../discounts";
 import { poweredByUrl } from "../powered-by";
 import { phoneLabel } from "../format";
 import { fillVars, marketingEmailHtml, marketingEmailText, type CampaignContent } from "../marketing-email";
@@ -128,7 +128,8 @@ export async function sendCampaignBatch(campaignId: string, max = 8) {
     // The button goes straight to the booking page: one less click than the website.
     const booking = `${appUrl()}/book/${c.booking_slug}`;
     const logo = await emailLogo(c.business_id, c.name);
-    const poweredBy = poweredByUrl(await referralCodeOf(c.business_id));
+    const code = await safeReferralCode(c.business_id);
+    const poweredBy = code ? poweredByUrl(code) : null;
     const mails = batch.map((r) => {
       const vars = { first_name: r.first_name, pet_name: r.pet_name ?? "your pup", business: c.name, booking_link: booking };
       const unsubscribeUrl = `${appUrl()}/u/${r.token}`;

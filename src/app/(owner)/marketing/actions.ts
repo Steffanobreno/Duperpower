@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { referralCodeOf } from "@/lib/discounts";
+import { safeReferralCode } from "@/lib/discounts";
 import { poweredByUrl } from "@/lib/powered-by";
 import { emailConfigured, sendMany } from "@/lib/email";
 import { phoneLabel, zonedToUtc } from "@/lib/format";
@@ -80,7 +80,8 @@ export async function sendTestAction(id: string, _: CampaignState, form: FormDat
   const vars = { first_name: "Alex", pet_name: "Luna", business: b.name, booking_link: `${appUrl()}/book/${staff.bookingSlug}` };
   const content = { preheader: c.preheader, banner: c.banner, headline: c.headline, body: c.body, buttonLabel: c.button_label, buttonUrl: c.button_url };
   const unsubscribeUrl = `${appUrl()}/marketing`;
-  const poweredBy = poweredByUrl(await referralCodeOf(staff.businessId));
+  const code = await safeReferralCode(staff.businessId);
+  const poweredBy = code ? poweredByUrl(code) : null;
   const [error] = await sendMany(b.name, [{
     to,
     subject: `[Test] ${fillVars(c.subject || c.name, vars)}`,

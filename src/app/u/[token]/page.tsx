@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { Button, Card } from "@/components/ui";
 import { ClientShell } from "@/components/client-shell";
-import { referralCodeOf } from "@/lib/discounts";
+import { safeReferralCode } from "@/lib/discounts";
 import { phoneLabel } from "@/lib/format";
 import { regionForPage } from "@/lib/region-server";
 import { unsubscribeAction } from "./actions";
@@ -22,7 +22,7 @@ export default async function UnsubscribePage({ params, searchParams }: PageProp
   if (!c) notFound();
   regionForPage(c, "en");
   return (
-    <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url} referralCode={await referralCodeOf(c.business_id)}>
+    <ClientShell phone={c.phone} phoneLabel={phoneLabel(c.phone)} website={c.website_url} referralCode={await safeReferralCode(c.business_id)}>
       <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
         <Card className="space-y-4 text-center">
           {c.out ? (

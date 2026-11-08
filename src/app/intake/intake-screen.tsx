@@ -3,7 +3,7 @@ import { getPublicBusiness } from "@/lib/booking";
 import { logoUrl } from "@/lib/business-logo";
 import { getStaff } from "@/lib/auth";
 import { regionForPage } from "@/lib/region-server";
-import { referralCodeOf } from "@/lib/discounts";
+import { safeReferralCode } from "@/lib/discounts";
 import { phoneLabel } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { ClientShell, StepCard } from "@/components/client-shell";
@@ -14,7 +14,7 @@ import { IntakeForm } from "./intake-form";
 export async function IntakeScreen({ slug, query }: { slug: string | null; query: Record<string, string | string[] | undefined> }) {
   const b = await getPublicBusiness(slug);
   if (!b) return slug ? notFound() : null;
-  const [{ lang, messages, t }, logo, viewer, referralCode] = await Promise.all([getI18n(query.lang), logoUrl(b.id), getStaff(), referralCodeOf(b.id)]);
+  const [{ lang, messages, t }, logo, viewer, referralCode] = await Promise.all([getI18n(query.lang), logoUrl(b.id), getStaff(), safeReferralCode(b.id)]);
   const region = regionForPage(b, lang);
   const book = slug ? `/book/${slug}` : "/book";
   return (
