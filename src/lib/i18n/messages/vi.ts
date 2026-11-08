@@ -288,4 +288,21 @@ export const vi: Messages = {
   "Nails done": "Đã cắt móng",
   "Teeth brushed": "Đã đánh răng",
   "Fleas found": "Phát hiện bọ chét",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Bạn đã hủy đăng ký",
+  "You're not getting our news emails":
+    "Bạn không nhận email tin tức của chúng tôi",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Sẽ không còn khuyến mãi từ {business}. Bạn vẫn nhận xác nhận và lời nhắc cho các lượt hẹn.",
+  "Changed my mind: subscribe again":
+    "Tôi đổi ý: đăng ký lại",
+  "Unsubscribe, {name}?":
+    "Hủy đăng ký, {name}?",
+  "You'll get news and offers from {business} again.":
+    "Bạn sẽ lại nhận tin tức và ưu đãi từ {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Bạn sẽ không nhận tin tức và ưu đãi từ {business} nữa. Lời nhắc lịch hẹn vẫn được gửi.",
+  "Unsubscribe":
+    "Hủy đăng ký",
 };

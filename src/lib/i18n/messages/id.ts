@@ -295,4 +295,21 @@ export const id: Messages = {
   "Nails done": "Kuku dipotong",
   "Teeth brushed": "Gigi disikat",
   "Fleas found": "Ditemukan kutu",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Anda sudah berhenti berlangganan",
+  "You're not getting our news emails":
+    "Anda tidak menerima email kabar kami",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Tidak ada lagi promosi dari {business}. Anda tetap akan menerima konfirmasi dan pengingat kunjungan Anda.",
+  "Changed my mind: subscribe again":
+    "Saya berubah pikiran: berlangganan lagi",
+  "Unsubscribe, {name}?":
+    "Berhenti berlangganan, {name}?",
+  "You'll get news and offers from {business} again.":
+    "Anda akan kembali menerima kabar dan penawaran dari {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Anda tidak akan menerima kabar dan penawaran dari {business}. Pengingat kunjungan tetap dikirim.",
+  "Unsubscribe":
+    "Berhenti berlangganan",
 };

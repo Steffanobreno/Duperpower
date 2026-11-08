@@ -288,4 +288,21 @@ export const tl: Messages = {
   "Nails done": "Naputol ang kuko",
   "Teeth brushed": "Nasipilyo ang ngipin",
   "Fleas found": "May nakitang pulgas",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Nag-unsubscribe ka na",
+  "You're not getting our news emails":
+    "Hindi ka tumatanggap ng aming news emails",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Wala nang promosyon mula sa {business}. Matatanggap mo pa rin ang mga kumpirmasyon at paalala para sa mga appointment mo.",
+  "Changed my mind: subscribe again":
+    "Nagbago ang isip ko: mag-subscribe ulit",
+  "Unsubscribe, {name}?":
+    "Mag-unsubscribe, {name}?",
+  "You'll get news and offers from {business} again.":
+    "Makakatanggap ka na ulit ng balita at alok mula sa {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Hindi ka na makakatanggap ng balita at alok mula sa {business}. Darating pa rin ang mga paalala sa appointment.",
+  "Unsubscribe":
+    "Mag-unsubscribe",
 };

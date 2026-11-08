@@ -295,4 +295,21 @@ export const pt: Messages = {
   "Nails done": "Unhas cortadas",
   "Teeth brushed": "Dentes escovados",
   "Fleas found": "Pulgas encontradas",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Você cancelou a inscrição",
+  "You're not getting our news emails":
+    "Você não recebe nossos e-mails de novidades",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Chega de promoções de {business}. Você continuará recebendo as confirmações e os lembretes das suas visitas.",
+  "Changed my mind: subscribe again":
+    "Mudei de ideia: assinar de novo",
+  "Unsubscribe, {name}?":
+    "Cancelar a inscrição, {name}?",
+  "You'll get news and offers from {business} again.":
+    "Você voltará a receber novidades e ofertas de {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Você deixará de receber novidades e ofertas de {business}. Os lembretes das visitas continuam chegando.",
+  "Unsubscribe":
+    "Cancelar inscrição",
 };

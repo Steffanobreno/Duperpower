@@ -1750,4 +1750,7 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Batalkan di akhir periode",
 "Uji coba gratis: sisa {n} hari. Jika Anda memilih paket saat uji coba masih lebih dari 48 jam, tagihan pertama terjadi saat uji coba berakhir; jika 48 jam atau kurang, pada hari Anda memilih.",
 "Ajak groomer lain: Anda berdua hemat {amount}",
-"Mereka mendapat potongan {amount} untuk tagihan pertama. Anda mendapat kredit {amount} saat mereka melakukan pembayaran pertama."];
+"Mereka mendapat potongan {amount} untuk tagihan pertama. Anda mendapat kredit {amount} saat mereka melakukan pembayaran pertama.",
+"Tanpa pesan otomatis. Jika klien membalas STOP, balasannya masuk ke ponsel Anda, jadi aktifkan ini untuk mereka.",
+"Saya memiliki persetujuan tertulis dari klien-klien ini untuk mengirim pesan teks.",
+"Jika tidak dicentang, tidak ada klien impor yang menerima pesan otomatis sampai Anda mencatat persetujuannya di profil mereka."];

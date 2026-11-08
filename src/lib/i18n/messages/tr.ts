@@ -295,4 +295,21 @@ export const tr: Messages = {
   "Nails done": "Tırnaklar kesildi",
   "Teeth brushed": "Dişler fırçalandı",
   "Fleas found": "Pire bulundu",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Abonelikten çıktınız",
+  "You're not getting our news emails":
+    "Haber e-postalarımızı almıyorsunuz",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business} işletmesinden artık promosyon gelmeyecek. Randevularınızın onay ve hatırlatmalarını almaya devam edeceksiniz.",
+  "Changed my mind: subscribe again":
+    "Fikrimi değiştirdim: tekrar abone ol",
+  "Unsubscribe, {name}?":
+    "Abonelikten çıkılsın mı, {name}?",
+  "You'll get news and offers from {business} again.":
+    "{business} işletmesinden yeniden haber ve fırsat alacaksınız.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "{business} işletmesinden haber ve fırsat almayacaksınız. Randevu hatırlatmaları gelmeye devam eder.",
+  "Unsubscribe":
+    "Abonelikten çık",
 };

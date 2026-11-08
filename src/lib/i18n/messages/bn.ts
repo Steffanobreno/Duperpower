@@ -295,4 +295,21 @@ export const bn: Messages = {
   "Nails done": "নখ কাটা হয়েছে",
   "Teeth brushed": "দাঁত ব্রাশ করা হয়েছে",
   "Fleas found": "ফ্লি (পিস্সু) পাওয়া গেছে",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "আপনি সাবস্ক্রিপশন বাতিল করেছেন",
+  "You're not getting our news emails":
+    "আপনি আমাদের সংবাদ ইমেইল পাচ্ছেন না",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business}-এর কোনো প্রচার আর আসবে না। আপনার ভিজিটের নিশ্চিতকরণ ও রিমাইন্ডার আপনি পেতে থাকবেন।",
+  "Changed my mind: subscribe again":
+    "মত বদলেছি: আবার সাবস্ক্রাইব করুন",
+  "Unsubscribe, {name}?":
+    "{name}, সাবস্ক্রিপশন বাতিল করবেন?",
+  "You'll get news and offers from {business} again.":
+    "আপনি আবার {business}-এর খবর ও অফার পাবেন।",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "আপনি আর {business}-এর খবর ও অফার পাবেন না। ভিজিটের রিমাইন্ডার আসতে থাকবে।",
+  "Unsubscribe":
+    "সাবস্ক্রিপশন বাতিল করুন",
 };

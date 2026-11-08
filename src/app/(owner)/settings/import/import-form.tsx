@@ -22,6 +22,13 @@ export function ImportForm() {
           <input type="checkbox" name="appointments" defaultChecked className="mt-1 h-4 w-4" />
           <span>{t("Also bring each client's next upcoming visit (you add the services later).")}</span>
         </label>
+        <label className="flex items-start gap-3 text-sm">
+          <input type="checkbox" name="consent_attested" className="mt-1 h-4 w-4" />
+          <span>
+            {t("I have written consent from these clients to text them.")}
+            <span className="block text-muted">{t("Leave this unchecked and no imported client gets automatic texts until you record their consent on their profile.")}</span>
+          </span>
+        </label>
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? t("Importing… this can take a minute") : t("Import clients")}
         </Button>

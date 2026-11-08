@@ -288,4 +288,21 @@ export const zh: Messages = {
   "Nails done": "已剪指甲",
   "Teeth brushed": "已刷牙",
   "Fleas found": "发现跳蚤",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "您已取消订阅",
+  "You're not getting our news emails":
+    "您不会收到我们的资讯邮件",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "不会再收到 {business} 的促销信息。您仍会收到预约的确认和提醒。",
+  "Changed my mind: subscribe again":
+    "我改变主意了：重新订阅",
+  "Unsubscribe, {name}?":
+    "{name}，要取消订阅吗？",
+  "You'll get news and offers from {business} again.":
+    "您将再次收到 {business} 的资讯和优惠。",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "您将不再收到 {business} 的资讯和优惠。预约提醒仍会发送。",
+  "Unsubscribe":
+    "取消订阅",
 };

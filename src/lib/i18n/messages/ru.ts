@@ -295,4 +295,21 @@ export const ru: Messages = {
   "Nails done": "Когти подстрижены",
   "Teeth brushed": "Зубы почищены",
   "Fleas found": "Найдены блохи",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Вы отписались",
+  "You're not getting our news emails":
+    "Вы не получаете наши новостные письма",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Рекламных рассылок от {business} больше не будет. Подтверждения и напоминания о визитах вы будете получать по-прежнему.",
+  "Changed my mind: subscribe again":
+    "Передумал(а): подписаться снова",
+  "Unsubscribe, {name}?":
+    "Отписаться, {name}?",
+  "You'll get news and offers from {business} again.":
+    "Вы снова будете получать новости и предложения от {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Вы перестанете получать новости и предложения от {business}. Напоминания о визитах продолжат приходить.",
+  "Unsubscribe":
+    "Отписаться",
 };

@@ -67,6 +67,8 @@ async function requestVisit({ pet, size, zip, city, phone, pickDay, photo }) {
   await button("Sign agreement").click();
   await page.getByText("Signed by Ana Silva").waitFor();
   await shot("S35-book-review");
+  // The consent box starts unchecked; Ana agrees to texts so the texts below are sent.
+  await page.getByRole("checkbox", { name: /Text me about my appointments/ }).check();
   await button("Submit booking request").click();
   await page.getByText("Waiting for confirmation").waitFor();
   return chosenDay;

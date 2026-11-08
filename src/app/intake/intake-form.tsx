@@ -53,7 +53,7 @@ export function IntakeForm({ bookUrl, slug = null }: { bookUrl: string; slug?: s
           <Text label={country === "US" ? t("ZIP code") : t("Postal code")} name="zip" inputMode={country === "US" ? "numeric" : "text"} maxLength={country === "US" ? 5 : 10} autoComplete="postal-code" />
         </div>
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="sms_consent" defaultChecked className="mt-1 h-4 w-4" />
+          <input type="checkbox" name="sms_consent" className="mt-1 h-4 w-4" />
           <span>{t("I agree to receive text messages about my appointments.")}</span>
         </label>
       </fieldset>

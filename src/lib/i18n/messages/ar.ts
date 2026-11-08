@@ -295,4 +295,21 @@ export const ar: Messages = {
   "Nails done": "تقليم الأظافر",
   "Teeth brushed": "تنظيف الأسنان",
   "Fleas found": "وجود براغيث",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "تم إلغاء اشتراكك",
+  "You're not getting our news emails":
+    "أنت لا تتلقى رسائلنا البريدية الإخبارية",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "لن تصلك عروض ترويجية من {business} بعد الآن. ستظل تصلك تأكيدات زياراتك وتذكيراتها.",
+  "Changed my mind: subscribe again":
+    "غيّرت رأيي: أريد الاشتراك مجددًا",
+  "Unsubscribe, {name}?":
+    "إلغاء الاشتراك يا {name}؟",
+  "You'll get news and offers from {business} again.":
+    "ستتلقى مجددًا أخبار {business} وعروضها.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "لن تتلقى أخبار {business} وعروضها بعد الآن. ستستمر تذكيرات الزيارات بالوصول.",
+  "Unsubscribe":
+    "إلغاء الاشتراك",
 };

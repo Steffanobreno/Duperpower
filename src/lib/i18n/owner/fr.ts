@@ -1750,4 +1750,7 @@ export const fr: string[] = ["Réservation abandonnée",
 "Annuler à la fin de la période",
 "Essai gratuit : encore {n} jours. Si vous choisissez une formule alors qu'il reste plus de 48 heures d'essai, le premier prélèvement a lieu à la fin de l'essai ; s'il reste 48 heures ou moins, il a lieu le jour de votre choix.",
 "Parrainez un toiletteur : vous économisez tous les deux {amount}",
-"Il obtient {amount} de réduction sur sa première facture. Vous recevez {amount} de crédit lorsqu'il effectue son premier paiement."];
+"Il obtient {amount} de réduction sur sa première facture. Vous recevez {amount} de crédit lorsqu'il effectue son premier paiement.",
+"Pas de SMS automatiques. S'il répond STOP, la réponse arrive sur votre téléphone : activez donc cette option pour lui.",
+"J'ai le consentement écrit de ces clients pour leur envoyer des SMS.",
+"Si vous laissez cette case décochée, aucun client importé ne recevra de SMS automatiques tant que vous n'aurez pas enregistré son consentement sur sa fiche."];

@@ -233,14 +233,16 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
         clientId = existing.id;
         await tx`update clients set archived_at = null where id = ${clientId} and archived_at is not null`;
         if (input.smsConsent) {
-          await tx`update clients set sms_consent_at = coalesce(sms_consent_at, now()) where id = ${clientId} and sms_opted_out_at is null`;
+          await tx`update clients set sms_consent_source = case when sms_consent_at is null then 'booking' else sms_consent_source end,
+                          sms_consent_at = coalesce(sms_consent_at, now())
+                   where id = ${clientId} and sms_opted_out_at is null`;
         }
       } else {
         const [c] = await tx`
           insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip,
-                               sms_consent_at, source)
+                               sms_consent_at, sms_consent_source, source)
           values (${b.id}, ${firstName}, ${lastName}, ${phone}, ${email || null}, ${address}, ${city}, (select case when country = 'US' then state end from businesses where id = ${b.id}), ${zip},
-                  ${input.smsConsent ? new Date() : null}, 'online')
+                  ${input.smsConsent ? new Date() : null}, ${input.smsConsent ? "booking" : null}, 'online')
           returning id`;
         clientId = c.id;
       }

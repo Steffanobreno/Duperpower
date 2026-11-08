@@ -295,4 +295,21 @@ export const de: Messages = {
   "Nails done": "Krallen geschnitten",
   "Teeth brushed": "Zähne geputzt",
   "Fleas found": "Flöhe gefunden",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Sie sind abgemeldet",
+  "You're not getting our news emails":
+    "Sie erhalten unsere Neuigkeiten-E-Mails nicht",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Keine Werbung mehr von {business}. Bestätigungen und Erinnerungen zu Ihren Terminen erhalten Sie weiterhin.",
+  "Changed my mind: subscribe again":
+    "Ich habe es mir anders überlegt: wieder anmelden",
+  "Unsubscribe, {name}?":
+    "{name}, abmelden?",
+  "You'll get news and offers from {business} again.":
+    "Sie erhalten wieder Neuigkeiten und Angebote von {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Sie erhalten keine Neuigkeiten und Angebote von {business} mehr. Terminerinnerungen kommen weiterhin.",
+  "Unsubscribe":
+    "Abmelden",
 };

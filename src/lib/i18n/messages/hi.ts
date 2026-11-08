@@ -295,4 +295,21 @@ export const hi: Messages = {
   "Nails done": "नाखून काटे गए",
   "Teeth brushed": "दांत साफ़ किए गए",
   "Fleas found": "पिस्सू मिले",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "आपने सदस्यता रद्द कर दी है",
+  "You're not getting our news emails":
+    "आपको हमारे समाचार ईमेल नहीं मिल रहे हैं",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business} की ओर से अब कोई प्रचार नहीं आएगा। आपको अपनी विज़िट की पुष्टि और रिमाइंडर मिलते रहेंगे।",
+  "Changed my mind: subscribe again":
+    "मेरा मन बदल गया: फिर से सदस्यता लें",
+  "Unsubscribe, {name}?":
+    "{name}, सदस्यता रद्द करें?",
+  "You'll get news and offers from {business} again.":
+    "आपको {business} की ख़बरें और ऑफ़र फिर से मिलेंगे।",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "आपको {business} की ख़बरें और ऑफ़र मिलना बंद हो जाएगा। विज़िट के रिमाइंडर आते रहेंगे।",
+  "Unsubscribe":
+    "सदस्यता रद्द करें",
 };

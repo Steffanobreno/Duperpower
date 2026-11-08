@@ -288,4 +288,21 @@ export const ko: Messages = {
   "Nails done": "발톱 정리 완료",
   "Teeth brushed": "양치 완료",
   "Fleas found": "벼룩 발견",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "구독이 취소되었습니다",
+  "You're not getting our news emails":
+    "소식 이메일을 받지 않고 있습니다",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business}의 프로모션이 더 이상 오지 않습니다. 예약 확인과 알림은 계속 받으실 수 있습니다.",
+  "Changed my mind: subscribe again":
+    "마음이 바뀌었어요: 다시 구독",
+  "Unsubscribe, {name}?":
+    "{name}님, 구독을 취소할까요?",
+  "You'll get news and offers from {business} again.":
+    "{business}의 소식과 혜택을 다시 받게 됩니다.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "{business}의 소식과 혜택을 더 이상 받지 않습니다. 방문 알림은 계속 옵니다.",
+  "Unsubscribe":
+    "구독 취소",
 };

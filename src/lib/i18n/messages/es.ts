@@ -306,4 +306,21 @@ export const es: Messages = {
   "Nails done": "Uñas cortadas",
   "Teeth brushed": "Dientes cepillados",
   "Fleas found": "Pulgas encontradas",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Te diste de baja",
+  "You're not getting our news emails":
+    "No recibes nuestros correos de novedades",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "No habrá más promociones de {business}. Seguirás recibiendo las confirmaciones y los recordatorios de tus visitas.",
+  "Changed my mind: subscribe again":
+    "Cambié de opinión: volver a suscribirme",
+  "Unsubscribe, {name}?":
+    "¿Darte de baja, {name}?",
+  "You'll get news and offers from {business} again.":
+    "Volverás a recibir novedades y ofertas de {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Dejarás de recibir novedades y ofertas de {business}. Los recordatorios de tus visitas seguirán llegando.",
+  "Unsubscribe":
+    "Darme de baja",
 };

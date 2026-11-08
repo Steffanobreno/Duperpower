@@ -295,4 +295,21 @@ export const te: Messages = {
   "Nails done": "గోర్లు కత్తిరించాం",
   "Teeth brushed": "పళ్ళు తోమాం",
   "Fleas found": "ఈగలు (ఫ్లీస్) కనిపించాయి",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "మీరు సభ్యత్వాన్ని రద్దు చేసుకున్నారు",
+  "You're not getting our news emails":
+    "మీకు మా వార్తల ఈమెయిల్స్ రావడం లేదు",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business} నుండి ఇకపై ప్రమోషన్లు రావు. మీ సందర్శనల నిర్ధారణలు, రిమైండర్లు మీకు వస్తూనే ఉంటాయి.",
+  "Changed my mind: subscribe again":
+    "నా మనసు మార్చుకున్నాను: మళ్లీ సభ్యత్వం తీసుకోండి",
+  "Unsubscribe, {name}?":
+    "{name}, సభ్యత్వం రద్దు చేయాలా?",
+  "You'll get news and offers from {business} again.":
+    "మీకు మళ్లీ {business} వార్తలు, ఆఫర్లు వస్తాయి.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "మీకు {business} వార్తలు, ఆఫర్లు రావడం ఆగిపోతుంది. సందర్శన రిమైండర్లు వస్తూనే ఉంటాయి.",
+  "Unsubscribe":
+    "సభ్యత్వం రద్దు చేయండి",
 };

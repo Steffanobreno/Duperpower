@@ -295,4 +295,21 @@ export const ur: Messages = {
   "Nails done": "ناخن کاٹے گئے",
   "Teeth brushed": "دانت صاف کیے گئے",
   "Fleas found": "پسو ملے",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "آپ نے سبسکرپشن ختم کر دی ہے",
+  "You're not getting our news emails":
+    "آپ کو ہماری خبروں کی ای میلز نہیں مل رہیں",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business} کی طرف سے اب کوئی پروموشن نہیں آئے گا۔ آپ کو اپنی وزٹ کی تصدیقات اور یاد دہانیاں ملتی رہیں گی۔",
+  "Changed my mind: subscribe again":
+    "میں نے ارادہ بدل لیا: دوبارہ سبسکرائب کریں",
+  "Unsubscribe, {name}?":
+    "{name}، سبسکرپشن ختم کریں؟",
+  "You'll get news and offers from {business} again.":
+    "آپ کو دوبارہ {business} کی خبریں اور آفرز ملیں گی۔",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "آپ کو {business} کی خبریں اور آفرز ملنا بند ہو جائیں گی۔ وزٹ کی یاد دہانیاں آتی رہیں گی۔",
+  "Unsubscribe":
+    "سبسکرپشن ختم کریں",
 };

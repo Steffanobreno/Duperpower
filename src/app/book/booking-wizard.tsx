@@ -116,7 +116,7 @@ export function BookingWizard({
   const [day, setDay] = useState<string | null>(null);
   const [start, setStart] = useState<string | null>(null);
   const [sheet, setSheet] = useState<"time" | "agreement" | null>(null);
-  const [consent, setConsent] = useState(true);
+  const [consent, setConsent] = useState(false);
   const [signed, setSigned] = useState<{ name: string; drawing: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);

@@ -1750,4 +1750,7 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Dönem sonunda iptal et",
 "Ücretsiz deneme: {n} gün kaldı. Denemenin bitmesine 48 saatten fazla varken bir plan seçerseniz ilk ödeme deneme bittiğinde alınır; 48 saat veya daha az kaldıysa seçtiğiniz gün alınır.",
 "Bir groomer önerin: ikiniz de {amount} kazanın",
-"İlk faturalarında {amount} indirim alırlar. İlk ödemelerini yaptıklarında size {amount} kredi verilir."];
+"İlk faturalarında {amount} indirim alırlar. İlk ödemelerini yaptıklarında size {amount} kredi verilir.",
+"Otomatik mesaj yok. STOP yanıtı verirse yanıt telefonunuza gelir; bu yüzden onun için bunu açın.",
+"Bu müşterilerden onlara kısa mesaj göndermek için yazılı iznim var.",
+"İşaretlemezseniz, siz profillerine onaylarını kaydedene kadar içe aktarılan hiçbir müşteriye otomatik mesaj gitmez."];

@@ -310,7 +310,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           <h2 className="section-label">{t("Business control")}</h2>
           <div className="card divide-y divide-line">
             <Toggle clientId={id} control="inactive" on={!!client.archived_at} label={t("Inactive customer")} hint={t("Hidden from the client list")} />
-            <Toggle clientId={id} control="block_messages" on={!!client.sms_opted_out_at} label={t("Block messages")} hint={t("No automatic texts")} />
+            <Toggle clientId={id} control="block_messages" on={!!client.sms_opted_out_at} label={t("Block messages")} hint={t("No automatic texts. If they reply STOP, the reply reaches your phone, so turn this on for them.")} />
             <Toggle clientId={id} control="block_online" on={client.online_booking_blocked} label={t("Block online booking")} hint={t("They're asked to text you instead")} />
             <Toggle clientId={id} control="no_marketing" on={!!client.email_unsubscribed_at} label={t("No marketing emails")} hint={t("Left out of email campaigns (they can unsubscribe themselves too)")} />
           </div>

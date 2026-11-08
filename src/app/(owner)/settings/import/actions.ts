@@ -20,7 +20,7 @@ export async function importClientsAction(_: ImportState, form: FormData): Promi
       sql,
       { businessId: staff.businessId, staffId: staff.staffId, timezone: staff.timezone },
       clients,
-      { appointments: form.get("appointments") === "on" },
+      { appointments: form.get("appointments") === "on", consentAttested: form.get("consent_attested") === "on" },
     );
   } catch (e) {
     console.error("client import failed", e);

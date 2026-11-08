@@ -1750,4 +1750,7 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Hủy vào cuối kỳ",
 "Dùng thử miễn phí: còn {n} ngày. Nếu bạn chọn gói khi thời gian dùng thử còn hơn 48 giờ, lần thu phí đầu tiên là khi hết dùng thử; nếu còn 48 giờ hoặc ít hơn, sẽ thu ngay ngày bạn chọn.",
 "Giới thiệu một groomer: cả hai cùng tiết kiệm {amount}",
-"Họ được giảm {amount} cho hóa đơn đầu tiên. Bạn nhận {amount} tín dụng khi họ thanh toán lần đầu."];
+"Họ được giảm {amount} cho hóa đơn đầu tiên. Bạn nhận {amount} tín dụng khi họ thanh toán lần đầu.",
+"Không gửi tin nhắn tự động. Nếu họ trả lời STOP, câu trả lời sẽ đến điện thoại của bạn, vì vậy hãy bật mục này cho họ.",
+"Tôi có sự đồng ý bằng văn bản của những khách hàng này để nhắn tin cho họ.",
+"Nếu không chọn, khách hàng được nhập sẽ không nhận tin nhắn tự động cho đến khi bạn ghi nhận sự đồng ý của họ trong hồ sơ."];

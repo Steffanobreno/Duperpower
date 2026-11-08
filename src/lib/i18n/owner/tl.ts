@@ -1750,4 +1750,7 @@ export const tl: string[] = ["Naiwang booking",
 "Kanselahin sa dulo ng period",
 "Libreng trial: {n} araw na lang. Kung pipili ka ng plan habang higit sa 48 oras pa ang natitira sa trial, ang unang singil ay sa pagtatapos ng trial; kung 48 oras o mas kaunti na lang, sisingilin ka sa araw na pumili ka.",
 "Mag-refer ng groomer: pareho kayong makakatipid ng {amount}",
-"Makakakuha sila ng {amount} na bawas sa unang bill nila. Makakakuha ka ng {amount} na credit kapag ginawa nila ang unang bayad nila."];
+"Makakakuha sila ng {amount} na bawas sa unang bill nila. Makakakuha ka ng {amount} na credit kapag ginawa nila ang unang bayad nila.",
+"Walang awtomatikong text. Kung mag-reply sila ng STOP, sa telepono mo mapupunta ang reply, kaya i-on ito para sa kanila.",
+"Mayroon akong nakasulat na pahintulot ng mga kliyenteng ito na padalhan sila ng text.",
+"Kung hindi mo ito lalagyan ng tsek, walang na-import na kliyenteng makakatanggap ng awtomatikong text hanggang maitala mo ang pahintulot nila sa profile nila."];

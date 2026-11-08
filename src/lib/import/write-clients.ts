@@ -21,7 +21,8 @@ export async function writeClients(
   sql: Sql,
   target: { businessId: string; staffId: string; timezone: string },
   clients: ImportedClient[],
-  options: { appointments: boolean },
+  // consentAttested: the owner confirmed they hold written consent to text these clients.
+  options: { appointments: boolean; consentAttested: boolean },
 ): Promise<ImportReport> {
   const report: ImportReport = { created: 0, existing: 0, pets: 0, appointments: 0, problems: [], moreUpcoming: [] };
   const local = (date: string, time: string) => fromZonedTime(`${date}T${time}:00`, target.timezone);
@@ -36,7 +37,7 @@ export async function writeClients(
     report.existing = clients.length - fresh.length;
     if (fresh.length === 0) return;
 
-    // 1. Clients. They already received texts from the business in the old app, so text consent carries over.
+    // 1. Clients. Text consent is recorded only when the owner attested to it; otherwise none.
     const inserted = await tx`
       insert into clients ${tx(
         fresh.map((c) => ({
@@ -52,7 +53,8 @@ export async function writeClients(
           lat: c.lat,
           lng: c.lng,
           marketing_opt_in: c.marketing,
-          sms_consent_at: new Date(),
+          sms_consent_at: options.consentAttested ? new Date() : null,
+          sms_consent_source: options.consentAttested ? "import_attested" : null,
           source: "import",
           imported_last_service_at: c.lastService ? local(c.lastService.date, c.lastService.start) : null,
           imported_total_sales_cents: c.totalSalesCents,

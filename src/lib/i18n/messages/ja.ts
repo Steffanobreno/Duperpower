@@ -295,4 +295,21 @@ export const ja: Messages = {
   "Nails done": "爪切り済み",
   "Teeth brushed": "歯みがき済み",
   "Fleas found": "ノミを発見",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "配信を停止しました",
+  "You're not getting our news emails":
+    "お知らせメールは届いていません",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business}からのプロモーションは届かなくなります。ご予約の確認とリマインダーは引き続きお届けします。",
+  "Changed my mind: subscribe again":
+    "やっぱり再登録する",
+  "Unsubscribe, {name}?":
+    "{name}さん、配信を停止しますか？",
+  "You'll get news and offers from {business} again.":
+    "{business}からのお知らせとお得な情報が再び届きます。",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "{business}からのお知らせとお得な情報は届かなくなります。来店リマインダーは引き続き届きます。",
+  "Unsubscribe":
+    "配信を停止",
 };

@@ -295,4 +295,21 @@ export const mr: Messages = {
   "Nails done": "नखे कापली",
   "Teeth brushed": "दात घासले",
   "Fleas found": "पिसवा आढळल्या",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "तुम्ही सदस्यता रद्द केली आहे",
+  "You're not getting our news emails":
+    "तुम्हाला आमचे बातम्यांचे ईमेल मिळत नाहीत",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business} कडून यापुढे जाहिराती येणार नाहीत. तुमच्या भेटींची पुष्टी आणि स्मरणपत्रे तुम्हाला मिळत राहतील.",
+  "Changed my mind: subscribe again":
+    "मी मत बदलले: पुन्हा सदस्यता घ्या",
+  "Unsubscribe, {name}?":
+    "{name}, सदस्यता रद्द करायची?",
+  "You'll get news and offers from {business} again.":
+    "तुम्हाला पुन्हा {business} च्या बातम्या आणि ऑफर्स मिळतील.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "तुम्हाला {business} च्या बातम्या आणि ऑफर्स मिळणे बंद होईल. भेटींची स्मरणपत्रे येत राहतील.",
+  "Unsubscribe":
+    "सदस्यता रद्द करा",
 };

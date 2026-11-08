@@ -295,4 +295,21 @@ export const ta: Messages = {
   "Nails done": "நகம் வெட்டப்பட்டது",
   "Teeth brushed": "பல் துலக்கப்பட்டது",
   "Fleas found": "பிளைகள் கண்டறியப்பட்டன",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "நீங்கள் சந்தாவை நிறுத்திவிட்டீர்கள்",
+  "You're not getting our news emails":
+    "எங்கள் செய்தி மின்னஞ்சல்கள் உங்களுக்கு வருவதில்லை",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "{business} இடமிருந்து இனி விளம்பரங்கள் வராது. உங்கள் வருகைகளுக்கான உறுதிப்படுத்தல்கள், நினைவூட்டல்கள் தொடர்ந்து வரும்.",
+  "Changed my mind: subscribe again":
+    "மனம் மாறிவிட்டது: மீண்டும் சந்தா செலுத்து",
+  "Unsubscribe, {name}?":
+    "{name}, சந்தாவை நிறுத்தவா?",
+  "You'll get news and offers from {business} again.":
+    "{business} இடமிருந்து செய்திகளும் சலுகைகளும் மீண்டும் உங்களுக்கு வரும்.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "{business} இடமிருந்து செய்திகளும் சலுகைகளும் இனி வராது. வருகை நினைவூட்டல்கள் தொடர்ந்து வரும்.",
+  "Unsubscribe":
+    "சந்தாவை நிறுத்து",
 };

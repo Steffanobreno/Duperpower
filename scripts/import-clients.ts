@@ -1,5 +1,5 @@
 // Imports a client export into the database from the command line.
-// Usage: npm run db:import -- /path/to/export.csv [--appointments]
+// Usage: npm run db:import -- /path/to/export.csv [--appointments] [--consent-attested]
 import { readFileSync } from "node:fs";
 import postgres from "postgres";
 import { dbConfig } from "../src/lib/db-config";
@@ -21,6 +21,7 @@ async function main() {
   const { clients, problems } = parseClientsCsv(readFileSync(file, "utf8"));
   const report = await writeClients(sql, { businessId: b.id, staffId: b.staff_id, timezone: b.timezone }, clients, {
     appointments: process.argv.includes("--appointments"),
+    consentAttested: process.argv.includes("--consent-attested"),
   });
   console.log(`clients created: ${report.created}, already there: ${report.existing}, pets: ${report.pets}, upcoming visits: ${report.appointments}`);
   console.log(`rows skipped while reading: ${problems.length}, problems while writing: ${report.problems.length}, clients with more than one upcoming visit: ${report.moreUpcoming.length}`);

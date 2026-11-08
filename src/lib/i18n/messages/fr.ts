@@ -295,4 +295,21 @@ export const fr: Messages = {
   "Nails done": "Griffes coupées",
   "Teeth brushed": "Dents brossées",
   "Fleas found": "Puces détectées",
+  // Unsubscribe page
+  "You're unsubscribed":
+    "Vous êtes désabonné",
+  "You're not getting our news emails":
+    "Vous ne recevez pas nos e-mails d'actualités",
+  "No more promotions from {business}. You'll still get the confirmations and reminders for your visits.":
+    "Plus de promotions de {business}. Vous recevrez toujours les confirmations et les rappels de vos rendez-vous.",
+  "Changed my mind: subscribe again":
+    "J'ai changé d'avis : me réabonner",
+  "Unsubscribe, {name}?":
+    "Se désabonner, {name} ?",
+  "You'll get news and offers from {business} again.":
+    "Vous recevrez de nouveau les actualités et offres de {business}.",
+  "You'll stop getting news and offers from {business}. Visit reminders still come.":
+    "Vous ne recevrez plus les actualités et offres de {business}. Les rappels de rendez-vous continuent d'arriver.",
+  "Unsubscribe":
+    "Se désabonner",
 };

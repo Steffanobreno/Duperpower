@@ -1750,4 +1750,7 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Zum Ende des Zeitraums kündigen",
 "Kostenloser Test: noch {n} Tage. Wählen Sie einen Tarif, solange noch mehr als 48 Stunden Test übrig sind, erfolgt die erste Abbuchung am Ende des Tests; bei 48 Stunden oder weniger am Tag der Wahl.",
 "Empfehlen Sie einen Groomer: Sie sparen beide {amount}",
-"Er erhält {amount} Rabatt auf seine erste Rechnung. Sie erhalten {amount} Guthaben, wenn er seine erste Zahlung leistet."];
+"Er erhält {amount} Rabatt auf seine erste Rechnung. Sie erhalten {amount} Guthaben, wenn er seine erste Zahlung leistet.",
+"Keine automatischen SMS. Antwortet der Kunde mit STOP, kommt die Antwort auf Ihr Handy – aktivieren Sie dies dann für ihn.",
+"Ich habe die schriftliche Einwilligung dieser Kunden, ihnen SMS zu senden.",
+"Ohne Haken erhält kein importierter Kunde automatische SMS, bis Sie seine Einwilligung in seinem Profil erfassen."];

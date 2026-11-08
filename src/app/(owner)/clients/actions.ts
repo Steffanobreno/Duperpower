@@ -63,10 +63,10 @@ export async function createClientAction(_: FormState, form: FormData): Promise<
   try {
     const [row] = await sql`
       insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip,
-                           lat, lng, access_notes, sms_consent_at, source, referral_source)
+                           lat, lng, access_notes, sms_consent_at, sms_consent_source, source, referral_source)
       values (${staff.businessId}, ${v.first_name}, ${v.last_name}, ${v.phone}, ${v.email}, ${v.address_line},
               ${v.city ?? geo?.city ?? null}, ${v.state}, ${v.zip ?? geo?.zip ?? null}, ${geo?.lat ?? null},
-              ${geo?.lng ?? null}, ${v.access_notes}, ${v.sms_consent ? new Date() : null}, 'manual', ${v.referral_source})
+              ${geo?.lng ?? null}, ${v.access_notes}, ${v.sms_consent ? new Date() : null}, ${v.sms_consent ? "manual" : null}, 'manual', ${v.referral_source})
       returning id`;
     id = row.id;
     await saveTags(id, v.tags);
@@ -99,6 +99,7 @@ export async function updateClientAction(clientId: string, _: FormState, form: F
         email = ${v.email}, address_line = ${v.address_line}, city = ${v.city ?? geo?.city ?? null},
         state = ${v.state}, zip = ${v.zip ?? geo?.zip ?? null}, lat = ${geo?.lat ?? null}, lng = ${geo?.lng ?? null},
         access_notes = ${v.access_notes}, referral_source = ${v.referral_source},
+        sms_consent_source = case when not ${v.sms_consent} then null when sms_consent_at is null then 'manual' else sms_consent_source end,
         sms_consent_at = case when ${v.sms_consent} then coalesce(sms_consent_at, now()) else null end
       where id = ${clientId} and business_id = ${staff.businessId}
       returning id`;

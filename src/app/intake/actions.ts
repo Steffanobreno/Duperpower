@@ -49,12 +49,13 @@ export async function submitIntakeAction(_: IntakeState, form: FormData): Promis
       // Never overwrite what the owner has; only fill blanks.
       await tx`update clients set email = coalesce(email, ${email}), address_line = coalesce(address_line, ${address}),
                  city = coalesce(city, ${city}), zip = coalesce(zip, ${zip}),
+                 sms_consent_source = case when ${consent} and sms_opted_out_at is null and sms_consent_at is null then 'intake' else sms_consent_source end,
                  sms_consent_at = case when ${consent} and sms_opted_out_at is null then coalesce(sms_consent_at, now()) else sms_consent_at end
                where id = ${id}`;
     } else {
       const [c] = await tx`
-        insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip, sms_consent_at, source)
-        values (${b.id}, ${first}, ${last}, ${phone}, ${email}, ${address}, ${city}, (select case when country = 'US' then state end from businesses where id = ${b.id}), ${zip}, ${consent ? new Date() : null}, 'online')
+        insert into clients (business_id, first_name, last_name, phone, email, address_line, city, state, zip, sms_consent_at, sms_consent_source, source)
+        values (${b.id}, ${first}, ${last}, ${phone}, ${email}, ${address}, ${city}, (select case when country = 'US' then state end from businesses where id = ${b.id}), ${zip}, ${consent ? new Date() : null}, ${consent ? "intake" : null}, 'online')
         returning id`;
       id = c.id;
     }
