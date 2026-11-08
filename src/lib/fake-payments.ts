@@ -48,8 +48,9 @@ export type FakeQuote = {
 };
 
 /** What the test checkout shows, by the same rules as Stripe's Checkout (discountForCheckout, checkoutUrl). */
-export async function fakeQuote(businessId: string, interval: Interval, rawCode: unknown): Promise<FakeQuote | { error: string }> {
-  const d = await resolveDiscount(businessId, rawCode);
+export async function fakeQuote(businessId: string, interval: Interval, rawCode: unknown, { record = true } = {}): Promise<FakeQuote | { error: string }> {
+  // record: false for the checkout page (a GET writes nothing); the actions note the referral.
+  const d = await resolveDiscount(businessId, rawCode, { record });
   if ("error" in d) return d;
   let discount: FakeQuote["discount"] = null;
   if ("code" in d) {
@@ -90,7 +91,7 @@ export async function payFakeCheckout(businessId: string, interval: Interval, ra
     interval, amountCents: q.priceCents, currency: "USD",
     periodEnd: q.firstChargeAt ?? nextPeriod(new Date(), interval), cancelAtPeriodEnd: false,
   });
-  if (paidNow) await rewardReferralInFino(fakeCustomerId(businessId), q.firstChargeCents);
+  if (paidNow) await rewardReferralInFino(businessId, q.firstChargeCents);
   return "paid";
 }
 
@@ -144,7 +145,7 @@ export async function runFakeRenewals() {
       returning id`;
     if (!won) continue;
     renewed++;
-    await rewardReferralInFino(fakeCustomerId(b.id), chargeCents(b.plan_amount_cents, b.fake_plan_discount));
+    await rewardReferralInFino(b.id, chargeCents(b.plan_amount_cents, b.fake_plan_discount));
   }
   return renewed;
 }

@@ -66,6 +66,18 @@ export async function recordReferral(businessId: string, rawCode: unknown) {
   });
 }
 
+/** Whether recordReferral would note this code for `businessId` (it writes nothing). */
+async function canRecordReferral(businessId: string, rawCode: unknown) {
+  const code = cleanCode(rawCode);
+  if (!/^[A-Z]+-\d{4}$/.test(code)) return false;
+  const [ok] = await sql`
+    select 1 from businesses b
+    where b.id = ${businessId} and b.referred_by is null
+      and exists (select 1 from businesses r where r.referral_code = ${code} and r.id <> ${businessId})
+      and not exists (select 1 from referrals x where x.referred_id = ${businessId})`;
+  return !!ok;
+}
+
 /** The Stripe coupon for a referred business's free first month (made the first time). */
 async function referralCoupon() {
   try {
@@ -89,9 +101,12 @@ export type DiscountCode = {
  * doesn't get it again), else none. A wrong code, or its own referral code, is an error.
  * Stripe's Checkout (discountForCheckout) and the test mode's checkout both follow it.
  */
-export async function resolveDiscount(businessId: string, rawCode: unknown):
+export async function resolveDiscount(businessId: string, rawCode: unknown, { record = true }: { record?: boolean } = {}):
   Promise<{ code: DiscountCode } | { referral: true } | { none: true } | { error: string }> {
+  // record: false (a page being viewed) writes nothing: a referral code that would be noted
+  // counts as noted.
   const code = cleanCode(rawCode);
+  let referredNow = false;
   if (code) {
     const [d] = await sql<DiscountCode[]>`
       select id, code, stripe_promotion_code_id, percent_off, amount_off_cents, duration, duration_months, max_redemptions
@@ -100,15 +115,17 @@ export async function resolveDiscount(businessId: string, rawCode: unknown):
     if (d) return { code: d };
     const [own] = await sql`select 1 from businesses where id = ${businessId} and referral_code = ${code}`;
     if (own) return { error: OWN_CODE };
-    if (!(await recordReferral(businessId, code))) {
+    referredNow = record ? await recordReferral(businessId, code) : await canRecordReferral(businessId, code);
+    if (!referredNow) {
       const [already] = await sql`select 1 from businesses where id = ${businessId} and referred_by is not null`;
       if (!already) return { error: BAD_CODE };
     }
   }
   // Referred and not paying yet: the free first month.
   const [r] = await sql`
-    select 1 from referrals r join businesses b on b.id = r.referred_id
-    where r.referred_id = ${businessId} and b.stripe_subscription_id is null`;
+    select 1 from businesses b
+    where b.id = ${businessId} and b.stripe_subscription_id is null
+      and (${!record && referredNow} or exists (select 1 from referrals r where r.referred_id = b.id))`;
   return r ? { referral: true } : { none: true };
 }
 
@@ -143,7 +160,7 @@ export async function discountForCheckout(businessId: string, rawCode: unknown):
  * credit, once. The credit is taken off the referrer's next bills by Stripe.
  */
 export async function rewardReferral(customer: string, amountPaid: number) {
-  const r = await claimReferralReward(customer, amountPaid);
+  const r = await claimReferralReward({ customer }, amountPaid);
   if (!r) return;
   try {
     const referrerCustomer = await customerOf(r.referrer_id);
@@ -158,20 +175,25 @@ export async function rewardReferral(customer: string, amountPaid: number) {
 }
 
 /**
- * The same for a test-mode bill: the credit is noted in Fino's own tables only (there is no
- * Stripe balance), so the referrer's plan page shows it.
+ * The same for a test-mode bill of `businessId`: the credit is noted in Fino's own tables only
+ * (there is no Stripe balance), so the referrer's plan page shows it.
  */
-export async function rewardReferralInFino(customer: string, amountPaid: number) {
-  await claimReferralReward(customer, amountPaid);
+export async function rewardReferralInFino(businessId: string, amountPaid: number) {
+  await claimReferralReward({ businessId }, amountPaid);
 }
 
-/** Notes the referrer's credit for this paying customer, once (null when it isn't due). */
-async function claimReferralReward(customer: string, amountPaid: number) {
+/** Notes the referrer's credit for this paying business, once (null when it isn't due). */
+async function claimReferralReward(payer: { customer: string } | { businessId: string }, amountPaid: number) {
   if (amountPaid <= 0) return null;
-  const [r] = await sql<{ id: string; referrer_id: string }[]>`
-    update referrals set rewarded_at = now(), reward_cents = ${REFERRAL_CENTS}
-    where rewarded_at is null and referred_id = (select id from businesses where stripe_customer_id = ${customer})
-    returning id, referrer_id`;
+  const [r] = "customer" in payer
+    ? await sql<{ id: string; referrer_id: string }[]>`
+        update referrals set rewarded_at = now(), reward_cents = ${REFERRAL_CENTS}
+        where rewarded_at is null and referred_id = (select id from businesses where stripe_customer_id = ${payer.customer})
+        returning id, referrer_id`
+    : await sql<{ id: string; referrer_id: string }[]>`
+        update referrals set rewarded_at = now(), reward_cents = ${REFERRAL_CENTS}
+        where rewarded_at is null and referred_id = ${payer.businessId}
+        returning id, referrer_id`;
   return r ?? null;
 }
 

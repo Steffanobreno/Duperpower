@@ -160,6 +160,15 @@ await a.goto(`${BASE}/billing`);
 await a.getByText(/1 joined with your code · \$29 in credit so far/).waitFor();
 step("a referred signup gets the first month free; the referrer's US$29 credit appears once, after the first paid invoice");
 
+// Opening the test checkout with a referral code shows the free month but writes nothing (GET).
+const d = await newPage();
+const dId = await signUp(d, "Peek Paws", `fake-d${stamp}@example.com`);
+await d.goto(`${BASE}/billing/fake-checkout?interval=month&code=${refCode}`);
+await d.getByText("Referral: first month free").waitFor();
+const [peek] = await db`select b.referred_by, (select count(*)::int from referrals where referred_id = b.id) as n from businesses b where b.id = ${dId}`;
+if (peek.referred_by !== null || peek.n !== 0) fail(`opening the checkout page shouldn't record a referral: ${JSON.stringify(peek)}`);
+step("opening the test checkout with a referral code records nothing");
+
 // 5. The fake portal: Cancel at period end → Resume.
 await a.goto(`${BASE}/billing`);
 await a.getByRole("button", { name: /Manage billing/ }).click();

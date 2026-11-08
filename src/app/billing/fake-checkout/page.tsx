@@ -33,7 +33,7 @@ export default async function FakeCheckoutPage({ searchParams }: { searchParams:
   const code = cleanCode(sp.code);
   const [b] = await sql<{ plan_status: string }[]>`select plan_status from businesses where id = ${staff.businessId}`;
   if (!["trial", "cancelled"].includes(b.plan_status)) redirect("/billing");
-  const q = await fakeQuote(staff.businessId, interval, code);
+  const q = await fakeQuote(staff.businessId, interval, code, { record: false });
   if ("error" in q) redirect(codeErrorUrl(q.error, code));
   const date = (d: Date) => d.toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" });
   const d = q.discount;
