@@ -58,9 +58,10 @@ function invitable(staff: StaffContext, date: string) {
 }
 
 /**
- * The "due" rule, in one place: invitable clients with a live pet whose last finished visit (here
- * or in the old app) plus the pets' shortest grooming frequency falls on or before the day + 7.
- * One row per client, with how many days overdue they are on that day (0 or less: due soon).
+ * The "due" rule, in one place: clients with a live pet and nothing booked from now on, whose last
+ * finished visit (here or in the old app) plus the pets' shortest grooming frequency falls on or
+ * before the day + 7. One row per client, with how many days overdue they are on that day (0 or
+ * less: due soon). Callers add `invitable()` (as `c`) once.
  */
 function dueClients(staff: StaffContext, date: string) {
   return sql`
@@ -72,14 +73,17 @@ function dueClients(staff: StaffContext, date: string) {
              coalesce((select min(p.rebook_every_days) from pets p where p.client_id = c.id and p.deceased_at is null),
                       ${DEFAULT_EVERY_DAYS}) as every
     ) h
-    where c.business_id = ${staff.businessId} and ${invitable(staff, date)}
+    where c.business_id = ${staff.businessId}
       and exists (select 1 from pets p where p.client_id = c.id and p.deceased_at is null)
+      and not exists (select 1 from appointments f where f.client_id = c.id and f.status = any(${LIVE}) and f.start_at >= now())
       and h.last_day + h.every <= ${date}::date + 7`;
 }
 
 /** How many clients are due (or overdue) for a groom on that day, by the same rule as the list. */
 export async function overdueCount(staff: StaffContext, date: string): Promise<number> {
-  const [{ n }] = await sql<{ n: number }[]>`select count(*)::int as n from (${dueClients(staff, date)}) d`;
+  const [{ n }] = await sql<{ n: number }[]>`
+    select count(*)::int as n from (${dueClients(staff, date)}) d join clients c on c.id = d.client_id
+    where ${invitable(staff, date)}`;
   return n;
 }
 

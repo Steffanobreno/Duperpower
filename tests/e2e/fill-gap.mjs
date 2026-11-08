@@ -1,11 +1,14 @@
 // Fill the gap, end to end. Run after slice.mjs, with DATABASE_URL.
 // A working day 10 days ahead has a block 07:00–09:00 and one visit 09:00–11:00 at 94401. Clients A (94402) and B (94010)
-// are due; C is due but already booked 12 days ahead; D is on the waitlist for the day.
+// are due; C is due but already booked 12 days ahead; A2 is due but already rebooked (25 days after
+// the day); D is on the waitlist for the day.
 // /fill/<day> shows the free time and D, A, B in that order (not C), with the gap offer ready to send;
-// tapping WhatsApp records the invite.
+// tapping WhatsApp records the invite (once). A groomer without "See client phone numbers"
+// sees the list but no send links.
 // Usage: node tests/e2e/fill-gap.mjs [baseUrl] [screenshotDir]
 import { chromium } from "playwright";
 import postgres from "postgres";
+import { randomBytes, scryptSync } from "node:crypto";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const SHOTS = process.argv[3];
@@ -30,7 +33,13 @@ const at = (k, time) => db`select (${la(k)}::date + ${time}::time) at time zone 
 
 // This test's clients, visits and block go away at the start (an earlier run that stopped halfway)
 // and at the end, so the next tests (waitlist.mjs: "Nobody is waiting") see the day as before.
+const GROOMER_EMAIL = "gapfill-groomer@example.com";
+const GROOMER_PASSWORD = "gapfill-groomer-pw";
 const cleanUp = async () => {
+  await db`delete from staff where business_id = ${biz} and name = 'Gapfill Groomer'`;
+  await db`delete from users where email = ${GROOMER_EMAIL}`;
+  // The groomer role's default (on), which the permission step turns off for a moment; also after a run that stopped there.
+  await db`insert into role_permissions (business_id, role, perm) values (${biz}, 'groomer', 'client_contact') on conflict do nothing`;
   const ids = (await db`select id from clients where business_id = ${biz} and last_name = 'Gapfill'`).map((r) => r.id);
   await db`delete from appointments where client_id = any(${ids})`;
   await db`delete from clients where id = any(${ids})`;
@@ -57,9 +66,11 @@ await db`insert into time_off (staff_id, start_at, end_at, reason) values (${own
 const A = await client("Avery", "94402");
 const B = await client("Blake", "94010");
 const C = await client("Casey", "94402");
+const A2 = await client("Ari", "94402");
 const D = await client("Dana", "94401");
-for (const id of [A, B, C]) await visit(id, -50, "10:00", "12:00", "completed", null);
+for (const id of [A, B, C, A2]) await visit(id, -50, "10:00", "12:00", "completed", null);
 await visit(C, n + 12, "10:00", "12:00", "confirmed", "94402");
+await visit(A2, n + 25, "10:00", "12:00", "confirmed", "94402");
 await db`update pets set rebook_every_days = null where client_id = ${D}`;
 await db`insert into waitlist (business_id, client_id, from_date, to_date) values (${biz}, ${D}, ${DAY}, ${DAY})`;
 
@@ -89,8 +100,9 @@ await row(D).getByText("On the waitlist").waitFor();
 if (!(rows.indexOf(A) > 0 && rows.indexOf(B) > rows.indexOf(A))) fail(`A (94402) should come before B (94010): ${rows.indexOf(A)}, ${rows.indexOf(B)}`);
 await row(A).getByText(/\d+ days overdue/).waitFor();
 if (rows.includes(C)) fail("C has a visit 12 days later and should not be invited");
+if (rows.includes(A2)) fail("A2 already rebooked (25 days later) and should not be invited");
 if (rows.includes(stop)) fail("the client booked that day should not be invited");
-step("D (waitlist) first, then A before B (closer to the stop); C (booked soon) left out");
+step("D (waitlist) first, then A before B (closer to the stop); C (booked soon) and A2 (rebooked) left out");
 
 const wa = row(A).getByRole("link", { name: "WhatsApp" });
 const href = await wa.getAttribute("href");
@@ -100,19 +112,52 @@ step("A's WhatsApp link has the gap offer for 11:00");
 
 // The link opens WhatsApp in a new tab; the tap also records the invite.
 await context.route("https://wa.me/**", (r) => r.fulfill({ body: "WhatsApp" }));
-const [popup] = await Promise.all([page.waitForEvent("popup"), wa.click()]);
-await popup.close();
+const tap = async () => {
+  const [popup] = await Promise.all([page.waitForEvent("popup"), wa.click()]);
+  await popup.close();
+};
+const offerCount = async () =>
+  (await db`select count(*)::int as n from fill_offers where client_id = ${A} and day = ${DAY}`)[0].n;
+await tap();
 let offers = 0;
 for (let i = 0; i < 50 && !offers; i++) {
-  [{ offers }] = await db`select count(*)::int as offers from fill_offers where client_id = ${A} and day = ${DAY}`;
+  offers = await offerCount();
   if (!offers) await page.waitForTimeout(100);
 }
 if (offers !== 1) fail(`one invite should be recorded, got ${offers}`);
+// A second tap (e.g. Text, then WhatsApp) is the same invite.
+await tap();
+await page.waitForTimeout(1500);
+if ((offers = await offerCount()) !== 1) fail(`a second tap should not count again, got ${offers}`);
 await page.reload();
 await row(A).getByText("Invited today").waitFor();
 if (await row(B).getByText("Invited today").count()) fail("only A was invited");
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/F01-fill-gap.png`, fullPage: true });
-step("tapping WhatsApp opens it and records the invite; A shows Invited today");
+step("tapping WhatsApp opens it and records the invite once; A shows Invited today");
+
+// A groomer without "See client phone numbers and emails": the rows, but no phone links.
+{
+  const salt = randomBytes(16);
+  // The same format as hashPassword in src/lib/auth.ts (which can't be imported outside Next).
+  const hash = `scrypt$${salt.toString("base64")}$${scryptSync(GROOMER_PASSWORD, salt, 64).toString("base64")}`;
+  const [{ id: user }] = await db`insert into users (email, password_hash) values (${GROOMER_EMAIL}, ${hash}) returning id`;
+  const [{ id: groomer }] = await db`insert into staff (business_id, name, role, user_id) values (${biz}, 'Gapfill Groomer', 'groomer', ${user}) returning id`;
+  await db`insert into working_hours (staff_id, weekday, start_time, end_time) values (${groomer}, ${weekday(DAY)}, '07:00', '19:00')`;
+  await db`delete from role_permissions where business_id = ${biz} and role = 'groomer' and perm = 'client_contact'`;
+  const g = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  g.on("pageerror", (e) => errors.push(e.message));
+  await g.goto(`${BASE}/login`);
+  await g.fill('input[name="email"]', GROOMER_EMAIL);
+  await g.fill('input[name="password"]', GROOMER_PASSWORD);
+  await g.click('button[type="submit"]');
+  await g.waitForURL(/\/today/);
+  await g.goto(`${BASE}/fill/${DAY}`);
+  await g.locator(`li[data-client="${A}"]`).waitFor();
+  const links = await g.locator('li[data-client] a[href^="https://wa.me/"], li[data-client] a[href^="sms:"]').count();
+  if (links) fail(`a groomer without client contact should see no WhatsApp/Text links, got ${links}`);
+  await g.context().close();
+  step("a groomer without client contact sees the list but no WhatsApp/Text links");
+}
 
 await page.goto(`${BASE}/fill/${SUNDAY}`);
 await page.getByText("No free time this day.").waitFor();

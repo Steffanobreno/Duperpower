@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { dayGaps, fillCandidates, gapOfferText } from "@/lib/data/fill-gap";
-import { isYmd, longDayLabel, timeLabel, zonedToUtc } from "@/lib/format";
+import { isRealYmd, longDayLabel, timeLabel, zonedToUtc } from "@/lib/format";
 import { Empty, Notice, Page, PageHeader } from "@/components/ui";
 import { SendFromPhone } from "@/components/send-from-phone";
 import { RecordOffer } from "../record-offer";
@@ -14,18 +14,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("Fill the gap") };
 }
 
-/** A real yyyy-MM-dd day (not 2026-02-31). */
-const realDay = (s: string) => isYmd(s) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
-
 export default async function FillGapPage({ params }: PageProps<"/fill/[date]">) {
   const staff = await requireStaff();
   const { date } = await params;
-  if (!realDay(date)) notFound();
+  if (!isRealYmd(date)) notFound();
   const { t } = await getOwnerI18n();
   const tz = staff.timezone;
   const at = (time: string) => timeLabel(zonedToUtc(date, time, tz), tz);
   const [gaps, candidates] = await Promise.all([dayGaps(staff, date), fillCandidates(staff, date)]);
-  const offer = gaps.length ? await gapOfferText(staff, date, gaps[0].start) : null;
+  // Phone numbers (in the WhatsApp and text links) only for those allowed to see them.
+  const canSend = staff.can.client_contact;
+  const offer = canSend && gaps.length ? await gapOfferText(staff, date, gaps[0].start) : null;
   const distance = (n: number) => (staff.region.km ? t("{n} km", { n }) : t("{n} mi", { n }));
 
   return (
@@ -50,7 +49,7 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
         {gaps.length > 0 && (
           <section className="space-y-2" aria-label={t("Who to invite")}>
             <h2 className="section-label px-1">{t("Who to invite")}</h2>
-            {!offer && (
+            {canSend && !offer && (
               <Notice kind="warn">
                 {t("The gap offer message is off.")}{" "}
                 <Link href="/settings/messages" className="font-semibold underline">{t("Turn it on in Texts and email")}</Link>

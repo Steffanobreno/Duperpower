@@ -98,6 +98,9 @@ export const isUuid = (s: unknown): s is string =>
 
 export const isYmd = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
+/** A yyyy-MM-dd string that is a real calendar day (not 2026-02-31). */
+export const isRealYmd = (s: unknown): s is string => isYmd(s) && new Date(`${s}T12:00:00Z`).toISOString().startsWith(s);
+
 /** An E.164 number for display: (650) 555-0123 at home, +55 11 98765-4321 from abroad. */
 export function phoneLabel(e164: string | null | undefined, country: string = currentRegion().country) {
   return phoneText(e164, country);
