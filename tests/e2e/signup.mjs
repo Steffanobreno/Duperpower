@@ -56,6 +56,13 @@ if (slugs[1].booking_slug !== "happy-paws-mobile-grooming" || slugs[2].booking_s
 const [{ n }] = await db`select count(*)::int as n from services s join businesses b on b.id = s.business_id where b.booking_slug = 'happy-paws-mobile-grooming'`;
 if (n < 8) fail("a new business should start with the starter services");
 step("two groomers sign up: each lands on Today with the welcome steps, its own services and a unique booking link");
+const accepted = await db`
+  select u.email, ta.terms_version, ta.context, ta.ip, ta.user_id is not null as has_user, ta.accepted_at > now() - interval '5 minutes' as recent
+  from terms_acceptances ta join users u on u.id = ta.user_id order by u.email`;
+if (accepted.length !== 2 || accepted.some((r) => r.context !== "signup" || r.terms_version !== "2026-11-08" || !r.ip || !r.has_user || !r.recent)) {
+  fail(`each signup should record one acceptance of the current Terms: ${JSON.stringify(accepted)}`);
+}
+step("each signup records one acceptance of the Terms (version, date, IP)");
 
 // The same email can't sign up twice.
 const again = await newPage();

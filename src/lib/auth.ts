@@ -9,6 +9,7 @@ import { cache } from "react";
 import { sql } from "./db";
 import { ALL_PERMISSIONS, DEFAULT_PERMISSIONS, type Permission, type Role } from "./permissions";
 import { createBusiness } from "./new-business";
+import { recordTermsAcceptance } from "./data/terms";
 import { fromAcceptLanguage, isLang, type Lang } from "./i18n";
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -104,7 +105,8 @@ async function freeSlug(name: string) {
  * Returns an error message, or null when done.
  */
 export async function signUpBusiness(input: { businessName: string; ownerName: string; email: string; password: string;
-  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string; source?: string | null; lang?: Lang; metric?: boolean }) {
+  phone: string | null; zip: string | null; timezone: string; country?: string; currency?: string; source?: string | null; lang?: Lang; metric?: boolean;
+  /** Where the Terms were accepted from (the box on the signup form). */ termsIp?: string | null }) {
   const email = input.email.trim().toLowerCase();
   const [exists] = await sql`select 1 from users where email = ${email}`;
   if (exists) return "There's already an account with that email. Log in instead.";
@@ -112,12 +114,13 @@ export async function signUpBusiness(input: { businessName: string; ownerName: s
   const hash = await hashPassword(input.password);
   const userId = await sql.begin(async (tx) => {
     const [user] = await tx`insert into users (email, password_hash) values (${email}, ${hash}) returning id`;
-    await createBusiness(tx, {
+    const { businessId } = await createBusiness(tx, {
       name: input.businessName.trim(), phone: input.phone, slug, timezone: input.timezone, zip: input.zip,
       country: input.country, currency: input.currency, source: input.source ?? null,
       lang: input.lang, metric: input.metric, needsSetup: true,
       ownerName: input.ownerName.trim(), ownerUserId: user.id,
     });
+    await recordTermsAcceptance(tx, { businessId, userId: user.id, context: "signup", ip: input.termsIp ?? null });
     return user.id as string;
   });
   await startSession(userId);
