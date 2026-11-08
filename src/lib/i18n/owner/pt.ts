@@ -1782,4 +1782,6 @@ export const pt: string[] = ["Agendamento abandonado",
 "Uma falta ou um cancelamento em cima da hora pode ser cobrado com {no_show_fee}.",
 "Acordo",
 "Este contrato vale por 12 meses a partir da assinatura.",
-"Ao agendar, você concorda com estes termos."];
+"Ao agendar, você concorda com estes termos.",
+"Ver o texto do contrato (versão {version})",
+"Assinado antes de o {app} guardar cada versão; o texto pode ter mudado desde então."];

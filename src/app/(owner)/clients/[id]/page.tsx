@@ -20,6 +20,7 @@ import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge,
 import { addNoteAction, deleteClientAction, deleteNoteAction, setClientControlAction } from "../actions";
 import { PetPhoto } from "@/components/pet-photo";
 import { activeAgreement, agreementVersion, currentSignature, noShowFeeText } from "@/lib/agreement";
+import { APP_NAME } from "@/lib/product";
 import { AgreementText } from "@/components/agreement-text";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -181,8 +182,13 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 {signedText && (
                   <details className="text-sm">
                     <summary className="cursor-pointer font-semibold text-brand">
-                      {t("See the text {first_name} signed (version {version})", { first_name: client.first_name, version: signature.agreement_version })}
+                      {signedText.backfilled
+                        ? t("See the agreement text (version {version})", { version: signature.agreement_version })
+                        : t("See the text {first_name} signed (version {version})", { first_name: client.first_name, version: signature.agreement_version })}
                     </summary>
+                    {signedText.backfilled && (
+                      <p className="mt-2 text-muted">{t("Signed before {app} kept each version; the text may have changed since.", { app: APP_NAME })}</p>
+                    )}
                     <div data-testid="signed-agreement" className="mt-2 max-h-96 overflow-y-auto rounded-xl border border-line bg-bg p-3">
                       <AgreementText title={signedText.title} body={signedText.body} noShowFee={noShowFeeText(signedText.no_show_fee_cents, t("a fee"))} />
                     </div>

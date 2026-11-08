@@ -1782,4 +1782,6 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Tidak datang atau membatalkan mendadak dapat dikenakan {no_show_fee}.",
 "Persetujuan",
 "Perjanjian ini berlaku selama 12 bulan sejak ditandatangani.",
-"Dengan memesan, Anda menyetujui ketentuan ini."];
+"Dengan memesan, Anda menyetujui ketentuan ini.",
+"Lihat teks perjanjian (versi {version})",
+"Ditandatangani sebelum {app} menyimpan setiap versi; teksnya mungkin sudah berubah sejak itu."];

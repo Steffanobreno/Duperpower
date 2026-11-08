@@ -1782,4 +1782,6 @@ export const es: string[] = ["Reserva abandonada",
 "Por no presentarse o cancelar tarde se puede cobrar {no_show_fee}.",
 "Acuerdo",
 "Este contrato es válido por 12 meses desde la firma.",
-"Al reservar, aceptas estas condiciones."];
+"Al reservar, aceptas estas condiciones.",
+"Ver el texto del contrato (versión {version})",
+"Firmado antes de que {app} guardara cada versión; el texto puede haber cambiado desde entonces."];

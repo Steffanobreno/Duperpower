@@ -1782,4 +1782,6 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Für Nichterscheinen oder eine kurzfristige Absage kann {no_show_fee} berechnet werden.",
 "Zustimmung",
 "Diese Vereinbarung gilt 12 Monate ab der Unterzeichnung.",
-"Mit der Buchung stimmen Sie diesen Bedingungen zu."];
+"Mit der Buchung stimmen Sie diesen Bedingungen zu.",
+"Vertragstext ansehen (Version {version})",
+"Unterschrieben, bevor {app} jede Version aufbewahrt hat; der Text kann sich seitdem geändert haben."];

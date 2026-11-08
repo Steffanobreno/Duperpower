@@ -1782,4 +1782,6 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Gelmeme veya geç iptal durumunda {no_show_fee} alınabilir.",
 "Onay",
 "Bu sözleşme imza tarihinden itibaren 12 ay geçerlidir.",
-"Randevu alarak bu koşulları kabul etmiş olursunuz."];
+"Randevu alarak bu koşulları kabul etmiş olursunuz.",
+"Sözleşme metnini gör (sürüm {version})",
+"{app} her sürümü saklamaya başlamadan önce imzalandı; metin o zamandan beri değişmiş olabilir."];

@@ -1782,4 +1782,6 @@ export const fr: string[] = ["Réservation abandonnée",
 "Une absence ou une annulation tardive peut être facturée {no_show_fee}.",
 "Accord",
 "Ce contrat est valable 12 mois à compter de la signature.",
-"En réservant, vous acceptez ces conditions."];
+"En réservant, vous acceptez ces conditions.",
+"Voir le texte du contrat (version {version})",
+"Signé avant que {app} ne conserve chaque version ; le texte a pu changer depuis."];

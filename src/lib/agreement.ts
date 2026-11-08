@@ -44,10 +44,14 @@ export async function countSigned(agreement: Agreement) {
   return n;
 }
 
-/** The text of one kept version of an agreement (what a signature of it signed). */
+/**
+ * The text of one kept version of an agreement (what a signature of it signed). `backfilled`: made
+ * from the text the agreement had when versions started being kept (migration 0050), so a signature
+ * of it may have been of an earlier text.
+ */
 export async function agreementVersion(agreementId: string, version: number) {
-  const [v] = await sql<{ title: string; body: string; no_show_fee_cents: number | null }[]>`
-    select title, body, no_show_fee_cents from agreement_versions where agreement_id = ${agreementId} and version = ${version}`;
+  const [v] = await sql<{ title: string; body: string; no_show_fee_cents: number | null; backfilled: boolean }[]>`
+    select title, body, no_show_fee_cents, backfilled from agreement_versions where agreement_id = ${agreementId} and version = ${version}`;
   return v ?? null;
 }
 

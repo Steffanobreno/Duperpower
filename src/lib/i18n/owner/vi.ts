@@ -1782,4 +1782,6 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Không đến hoặc hủy muộn có thể bị tính {no_show_fee}.",
 "Thỏa thuận",
 "Thỏa thuận này có hiệu lực trong 12 tháng kể từ khi ký.",
-"Khi đặt lịch, bạn đồng ý với các điều khoản này."];
+"Khi đặt lịch, bạn đồng ý với các điều khoản này.",
+"Xem nội dung thỏa thuận (phiên bản {version})",
+"Đã ký trước khi {app} lưu từng phiên bản; nội dung có thể đã thay đổi kể từ đó."];

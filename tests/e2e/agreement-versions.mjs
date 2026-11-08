@@ -143,6 +143,20 @@ if (!pt.body.includes("Este contrato vale por 12 meses a partir da assinatura.")
 if (!pt.body.includes("{no_show_fee}")) fail("the starter agreement should carry the no-show fee");
 step("a business that signs up in Portuguese gets a Portuguese agreement with the fee and the 12 months");
 
+// A signature from before Fino kept each version points to a version made from the text at that
+// time (migration 0050, "backfilled"): the profile says the text may have changed since.
+a = await agreementRow();
+await db`update agreement_versions set backfilled = true where agreement_id = ${a.id} and version = ${a.version}`;
+await db`insert into agreement_signatures (agreement_id, agreement_version, client_id, signed_name, signed_at)
+         values (${a.id}, ${a.version}, ${maria.id}, 'Maria Lopez', now() - interval '10 days')`;
+await owner.goto(`${BASE}/clients/${maria.id}`);
+await owner.getByText(`See the agreement text (version ${a.version})`).click();
+await owner.getByText("Signed before Fino kept each version; the text may have changed since.").waitFor();
+if (await owner.getByText(/See the text Maria signed/).count()) fail("a backfilled version must not be shown as the text Maria signed");
+await db`update agreement_versions set backfilled = false where agreement_id = ${a.id} and version = ${a.version}`;
+await db`delete from agreement_signatures where client_id = ${maria.id}`;
+step("a signature of a backfilled version: the profile says the text may have changed since");
+
 // Put the text back as it was (a new version, nobody asked to sign again).
 await saveAgreement({ body: original.body, fee: "", every: original.sign_every_booking });
 

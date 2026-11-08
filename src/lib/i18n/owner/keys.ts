@@ -1784,5 +1784,7 @@ export const OWNER_KEYS: string[] = [
  "A no-show or a late cancellation may be charged {no_show_fee}.",
  "Agreement",
  "This agreement is valid for 12 months from signing.",
- "By booking you agree to these terms."
+ "By booking you agree to these terms.",
+ "See the agreement text (version {version})",
+ "Signed before {app} kept each version; the text may have changed since."
 ];
