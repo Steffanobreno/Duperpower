@@ -18,3 +18,12 @@ export async function emailReportCard(appointmentId: string): Promise<{ ok: true
   revalidatePath(`/appointments/${appointmentId}`);
   return { ok: true };
 }
+
+/** The owner sent the report card from the phone (WhatsApp or Text): note it as sent, once. */
+export async function markReportSent(appointmentId: string) {
+  const staff = await requirePermission("client_contact");
+  if (!isUuid(appointmentId)) return;
+  await sql`update appointments set report_sent_at = coalesce(report_sent_at, now())
+            where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  revalidatePath(`/appointments/${appointmentId}`);
+}

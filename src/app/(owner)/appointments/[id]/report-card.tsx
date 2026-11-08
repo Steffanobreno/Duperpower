@@ -5,6 +5,7 @@ import { dayLabel, timeLabel } from "@/lib/format";
 import { ensureReportToken, reportHasContent, reportUrl } from "@/lib/data/report-card";
 import { SendFromPhone } from "@/components/send-from-phone";
 import { EmailReportButton } from "./email-report-button";
+import { RecordReportSent } from "./record-report-sent";
 
 /** The pet's report card on the visit: preview it, email the link, or send it from the groomer's phone. */
 export async function ReportCardSection({ staff, appointmentId, clientId, petNames, t }: {
@@ -45,7 +46,13 @@ export async function ReportCardSection({ staff, appointmentId, clientId, petNam
             <EmailReportButton appointmentId={appointmentId} label={t("Send by email")} disabledReason={noEmail}
               errors={{ "This client has no email.": t("This client has no email."), "Add a photo, note or tag first.": t("Add a photo, note or tag first.") }} />
           )}
-          <SendFromPhone phone={row.phone} text={text} smsAllowed={!row.sms_opted_out_at} t={t} />
+          {canEmail ? (
+            <RecordReportSent appointmentId={appointmentId}>
+              <SendFromPhone phone={row.phone} text={text} smsAllowed={!row.sms_opted_out_at} t={t} />
+            </RecordReportSent>
+          ) : (
+            <SendFromPhone phone={row.phone} text={text} smsAllowed={!row.sms_opted_out_at} t={t} />
+          )}
         </div>
         {row.sent_at && (
           <p className="text-sm text-muted">

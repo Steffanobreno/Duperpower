@@ -65,6 +65,18 @@ const preview = await card.getByRole("link", { name: "Preview" }).getAttribute("
 if (preview !== `/g/${token}`) fail(`the preview link should open the report: ${preview}`);
 step("card with WhatsApp link and preview");
 
+// A tap on WhatsApp (sent from the groomer's phone) counts as sent, like the email.
+await page.context().route("https://wa.me/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>wa</p>" }));
+const [popup] = await Promise.all([page.waitForEvent("popup"), card.getByRole("link", { name: "WhatsApp" }).click()]);
+await popup.close();
+await card.getByText(/^Sent \w/).waitFor();
+const [{ at: waAt }] = await db`select report_sent_at as at from appointments where id = ${first}`;
+if (!waAt) fail("a WhatsApp tap should set report_sent_at");
+step("WhatsApp tap records the report card as sent");
+await db`update appointments set report_sent_at = null where id = ${first}`;
+await page.reload();
+await card.waitFor();
+
 await card.getByRole("button", { name: "Send by email" }).click();
 await card.getByText(/^Sent \w/).waitFor();
 const sent = await db`select 1 from messages where appointment_id = ${first} and template_trigger = 'report_card' and channel = 'email'`;
@@ -88,7 +100,10 @@ const visit = async (hoursAgo, note) => {
 };
 const withNote = await visit(5, "Calm the whole time");
 const empty = await visit(7, null);
-await db`update message_templates set enabled = true where trigger = 'report_card'`;
+// The report card never goes by automatic SMS, even with SMS ticked in the database.
+const [consent] = await db`select sms_consent_at, sms_opted_out_at from clients where id = ${src.client_id}`;
+await db`update clients set sms_consent_at = now(), sms_opted_out_at = null where id = ${src.client_id}`;
+await db`update message_templates set enabled = true, send_sms = true where trigger = 'report_card'`;
 const cron = async () => {
   const r = await page.request.get(`${BASE}/api/cron/messages`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET ?? "test-cron-secret"}` } });
   if (r.status() !== 200) fail(`cron should answer 200, got ${r.status()}`);
@@ -99,13 +114,26 @@ const auto = await db`select dedupe_key from messages where dedupe_key like ${`r
 if (auto.length !== 1 || !auto[0].dedupe_key.startsWith(`report:${withNote}`)) fail(`exactly one auto row expected, got ${JSON.stringify(auto)}`);
 const none = await db`select 1 from messages where appointment_id = ${empty} and template_trigger = 'report_card'`;
 if (none.length) fail("a visit with nothing to show should get no report card");
-step("auto email once for the visit with a note, none for the empty one");
+const sms = await db`select 1 from messages where template_trigger = 'report_card' and channel = 'sms'`;
+if (sms.length) fail(`the report card should never queue an SMS, got ${sms.length}`);
+await db`update clients set sms_consent_at = ${consent.sms_consent_at}, sms_opted_out_at = ${consent.sms_opted_out_at} where id = ${src.client_id}`;
+step("auto email once for the visit with a note, none for the empty one, no SMS");
+
+// A real cut (with a photo) of another visit is not served under this visit's token; a malformed id is 404 too.
+const [{ id: otherGroom }] = await db`
+  update pet_grooms set photo = (select photo from pet_grooms where photo is not null limit 1), photo_type = 'image/jpeg'
+  where appointment_pet_id in (select id from appointment_pets where appointment_id = ${withNote}) returning id`;
+for (const id of [otherGroom, "-".repeat(36)]) {
+  const r = await page.request.get(`${BASE}/g/${token}/photo/${id}`);
+  if (r.status() !== 404) fail(`groom photo ${id} under another visit's token should be 404, got ${r.status()}`);
+}
+step("another visit's photo and a malformed id are 404");
 
 await page.goto(`${BASE}/appointments/${empty}`);
 await page.getByRole("region", { name: "Report card" }).getByText("Add a photo, note or tag first.").waitFor();
 step("empty visit explains what is missing");
 
-await db`update message_templates set enabled = false where trigger = 'report_card'`;
+await db`update message_templates set enabled = false, send_sms = false where trigger = 'report_card'`;
 await db`delete from messages where appointment_id = any(${[withNote, empty]})`;
 await db`delete from appointments where id = any(${[withNote, empty]})`;
 
