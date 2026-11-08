@@ -27,6 +27,7 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
   confirmed: { title: msg("Confirmed"), when: msg("When the client taps Confirm on their link") },
   cancelled: { title: msg("Cancelled"), when: msg("When the visit is cancelled") },
   on_my_way: { title: msg("On my way"), when: msg("You send it with the button on the appointment") },
+  gap_offer: { title: msg("Gap offer"), when: msg("You send it from Fill the gap, to invite a client to a free time") },
   rebook: { title: msg("Time to rebook"), when: msg("When the pet's grooming frequency has passed, at a set time") },
   review_request: { title: msg("Review request"), when: msg("Minutes after checkout (needs the review link)") },
   report_card: { title: msg("Report card"), when: msg("After checkout, when the visit has a photo, note or tag") },
@@ -34,6 +35,8 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
   abandoned_booking: { title: msg("Didn't finish booking"), when: msg("A while after someone stops halfway on the booking page (8am–8pm)") },
 };
 const ORDER = Object.keys(TEMPLATE_INFO);
+// Sent by hand from the groomer's phone: no channels or email subject.
+const MANUAL = new Set(["on_my_way", "gap_offer"]);
 
 export default async function MessagesSettingsPage() {
   const { t: tr, locale } = await getOwnerI18n();
@@ -147,7 +150,7 @@ export default async function MessagesSettingsPage() {
           </div>
           <p className="px-1 text-xs text-muted">
             {tr("You can use")}{" "} {tr("{client}")}, {tr("{pet}")}, {tr("{date}")}, {tr("{time}")}, {tr("{link}")} {" "}{tr("(confirm or cancel page),")}{" "} {tr("{booking_url}")},{" "}
-            {tr("{business}")}, {tr("{business_phone}")}, {tr("{days}")}, {tr("{review_url}")}{tr(", in the vaccine message")}{" "} {tr("{vaccine}")} {" "}{tr("and")}{" "} {tr("{expires}")}{tr(", and in On my way")}{" "} {tr("{eta}")} {" "}{tr("(the arrival time worked out from where your phone is; without it, the time is added at the end).")}
+            {tr("{business}")}, {tr("{business_phone}")}, {tr("{days}")}, {tr("{review_url}")}{tr(", in the vaccine message")}{" "} {tr("{vaccine}")} {" "}{tr("and")}{" "} {tr("{expires}")}{tr(", in the gap offer")}{" "} {tr("{day}")}{tr(", and in On my way")}{" "} {tr("{eta}")} {" "}{tr("(the arrival time worked out from where your phone is; without it, the time is added at the end).")}
           </p>
           {templates.map((t) => {
             const info = TEMPLATE_INFO[t.trigger] ?? { title: t.trigger, when: "" };
@@ -156,7 +159,7 @@ export default async function MessagesSettingsPage() {
                 <summary className="cursor-pointer">
                   <span className="font-semibold">{tr(info.title)}</span>
                   {t.enabled ? (
-                    t.trigger !== "on_my_way" && (
+                    !MANUAL.has(t.trigger) && (
                       <span className="ml-2 inline-flex gap-1 align-middle">
                         {t.send_sms && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">SMS</span>}
                         {t.send_email && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">{tr("Email")}</span>}
@@ -173,7 +176,7 @@ export default async function MessagesSettingsPage() {
                       <input type="checkbox" name="enabled" defaultChecked={t.enabled} className="h-4 w-4" />
                       {tr("Send this message")}
                     </label>
-                    {t.trigger !== "on_my_way" && (
+                    {!MANUAL.has(t.trigger) && (
                       <div className="flex gap-4 text-sm">
                         <label className="flex items-center gap-2">
                           <input type="checkbox" name="send_sms" defaultChecked={t.send_sms} className="h-4 w-4" /> {" "}{tr("Text (SMS)")}
@@ -211,7 +214,7 @@ export default async function MessagesSettingsPage() {
                     <Field label={tr("Text")}>
                       <Textarea name="body" rows={4} defaultValue={t.body} />
                     </Field>
-                    {t.trigger !== "on_my_way" && (
+                    {!MANUAL.has(t.trigger) && (
                       <Field label={tr("Email subject")}>
                         <Input name="email_subject" defaultValue={t.email_subject ?? ""} />
                       </Field>

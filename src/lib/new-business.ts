@@ -124,6 +124,13 @@ export const templates = [
     send_sms: false,
     send_email: true,
   },
+  {
+    // Sent by hand from Fill the gap (WhatsApp or text from the groomer's phone), never automatically.
+    trigger: "gap_offer",
+    body: "Hi {client}! I'll be near you on {day}. I have an opening at {time} for {pet}. Want it? {booking_url}",
+    send_sms: false,
+    send_email: false,
+  },
 ];
 
 

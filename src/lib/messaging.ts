@@ -29,6 +29,7 @@ export type Trigger =
   | "confirmed"
   | "cancelled"
   | "on_my_way"
+  | "gap_offer"
   | "rebook"
   | "review_request"
   | "report_card"
@@ -194,6 +195,11 @@ export async function notifyAppointment(appointmentId: string, trigger: Trigger)
   // Keyed on the start time, so a rescheduled visit gets a fresh "booked" message.
   await enqueue(c, trigger, t, `${trigger}:${c.id}:${c.start_at.getTime()}`);
   await inBackground(() => sendQueuedEmails(c.business_id));
+}
+
+/** A message the owner sends by hand that isn't about one visit (e.g. a gap offer): its text, or null when switched off. */
+export async function manualTemplateBody(businessId: string, trigger: Trigger) {
+  return (await template(businessId, trigger))?.body ?? null;
 }
 
 /** The text the owner sends by hand from the phone (e.g. "on my way"), filled in. */
