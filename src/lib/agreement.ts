@@ -3,23 +3,49 @@ import { headers } from "next/headers";
 import type { TransactionSql } from "postgres";
 import { sql } from "./db";
 
-export type Agreement = { id: string; title: string; body: string; version: number; required_online: boolean; sign_every_booking: boolean };
+// The service agreement: `agreements` holds the current text and options; every text it ever had
+// is kept in `agreement_versions` (never changed), and each signature points to the version signed.
+
+export type Agreement = {
+  id: string; title: string; body: string; version: number; required_online: boolean; sign_every_booking: boolean;
+  /** Signatures of older versions no longer count (the owner asked everyone to sign again). */
+  resign_from_version: number;
+};
 
 export async function activeAgreement(businessId: string) {
   const [a] = await sql<Agreement[]>`
-    select id, title, body, version, required_online, sign_every_booking from agreements
+    select id, title, body, version, required_online, sign_every_booking, resign_from_version from agreements
     where business_id = ${businessId} and active order by created_at desc limit 1`;
   return a ?? null;
 }
 
-/** The client's latest signature of the current version within the last year, if any. */
+/**
+ * The client's latest signature that still counts, if any: of a version from `resign_from_version`
+ * on, within the last 12 months.
+ */
 export async function currentSignature(agreement: Agreement, clientId: string) {
-  const [s] = await sql<{ signed_at: Date; signed_name: string; signature_url: string | null }[]>`
-    select signed_at, signed_name, signature_url from agreement_signatures
-    where agreement_id = ${agreement.id} and agreement_version = ${agreement.version} and client_id = ${clientId}
+  const [s] = await sql<{ signed_at: Date; signed_name: string; signature_url: string | null; agreement_version: number }[]>`
+    select signed_at, signed_name, signature_url, agreement_version from agreement_signatures
+    where agreement_id = ${agreement.id} and agreement_version >= ${agreement.resign_from_version} and client_id = ${clientId}
       and signed_at > now() - interval '365 days'
     order by signed_at desc limit 1`;
   return s ?? null;
+}
+
+/** How many clients have a signature that still counts (same rule as currentSignature). */
+export async function countSigned(agreement: Agreement) {
+  const [{ n }] = await sql<{ n: number }[]>`
+    select count(distinct client_id)::int as n from agreement_signatures
+    where agreement_id = ${agreement.id} and agreement_version >= ${agreement.resign_from_version}
+      and signed_at > now() - interval '365 days'`;
+  return n;
+}
+
+/** The text of one kept version of an agreement (what a signature of it signed). */
+export async function agreementVersion(agreementId: string, version: number) {
+  const [v] = await sql<{ title: string; body: string }[]>`
+    select title, body from agreement_versions where agreement_id = ${agreementId} and version = ${version}`;
+  return v ?? null;
 }
 
 /** A drawn signature from the booking page: a small PNG as a data URL, or null if it isn't one. */
@@ -27,15 +53,24 @@ export function signatureImage(dataUrl: unknown) {
   return typeof dataUrl === "string" && dataUrl.startsWith("data:image/png;base64,") && dataUrl.length < 300_000 ? dataUrl : null;
 }
 
+/**
+ * Records a signature of the version the client read: `shown` is the version the page showed
+ * (from the form), kept when it is a real version of this agreement; otherwise the current one.
+ */
 export async function recordSignature(
   tx: TransactionSql | typeof sql,
   agreement: Agreement,
   clientId: string,
   name: string,
   drawn: string | null = null,
+  shown: unknown = null,
 ) {
   const h = await headers();
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || null;
+  const asked = Number(shown);
+  const version = Number.isInteger(asked) && asked > 0 && asked < agreement.version
+    && (await agreementVersion(agreement.id, asked)) ? asked : agreement.version;
   await tx`insert into agreement_signatures (agreement_id, agreement_version, client_id, signed_name, signature_url, ip)
-           values (${agreement.id}, ${agreement.version}, ${clientId}, ${name.slice(0, 120)}, ${drawn}, ${ip})`;
+           values (${agreement.id}, ${version}, ${clientId}, ${name.slice(0, 120)}, ${drawn}, ${ip})`;
 }
+

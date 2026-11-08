@@ -19,7 +19,8 @@ import { sql } from "@/lib/db";
 import { Button, ButtonLink, Card, Empty, Notice, Page, PageHeader, StatusBadge, Textarea } from "@/components/ui";
 import { addNoteAction, deleteClientAction, deleteNoteAction, setClientControlAction } from "../actions";
 import { PetPhoto } from "@/components/pet-photo";
-import { activeAgreement, currentSignature } from "@/lib/agreement";
+import { activeAgreement, agreementVersion, currentSignature } from "@/lib/agreement";
+import { AgreementText } from "@/components/agreement-text";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -43,14 +44,17 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     sql<{ id: string; name: string }[]>`select id, name from pets where client_id = ${id} and deceased_at is not null order by name`,
   ]);
   if (!client) notFound();
-  const [vaccines, ownPrices, codes, tags] = await Promise.all([
+  const [vaccines, ownPrices, codes, tags, [{ signatures }]] = await Promise.all([
     vaccineAlerts(staff, pets.map((p) => p.id), todayYmd(staff.timezone)),
     petPrices(pets.map((p) => p.id)),
     petCodesFor(pets.map((p) => p.id)),
     clientTagsFor([id]),
+    sql<{ signatures: number }[]>`select count(*)::int as signatures from agreement_signatures where client_id = ${id}`,
   ]);
   const ownPriceCount = (petId: string) => [...ownPrices.values()].filter((r) => r.pet_id === petId).length;
   const signature = agreement ? await currentSignature(agreement, id) : null;
+  // The exact text they signed (a later edit makes a new version; this one stays as it was).
+  const signedText = agreement && signature ? await agreementVersion(agreement.id, signature.agreement_version) : null;
   const signUrl = `${(process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "")}/s/${client.sign_token}`;
   const address = fullAddress(client);
   const tz = staff.timezone;
@@ -173,6 +177,16 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 {signature.signature_url && (
                   // eslint-disable-next-line @next/next/no-img-element -- the signature is a data URL
                   <img src={signature.signature_url} alt={t("Signature of {signed_name}", { signed_name: signature.signed_name })} className="h-16 rounded-lg border border-line bg-white" />
+                )}
+                {signedText && (
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-semibold text-brand">
+                      {t("See the text {first_name} signed (version {version})", { first_name: client.first_name, version: signature.agreement_version })}
+                    </summary>
+                    <div data-testid="signed-agreement" className="mt-2 max-h-96 overflow-y-auto rounded-xl border border-line bg-bg p-3">
+                      <AgreementText title={signedText.title} body={signedText.body} />
+                    </div>
+                  </details>
                 )}
               </div>
             ) : (
@@ -324,6 +338,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               {t("{n} visit", { n: history.length })}{history.length === 1 ? "" : "s"}
               {summary.paid + summary.tips > 0 ? t(" and {amount} in payments (they leave your reports)", { amount: money(summary.paid + summary.tips) }) : ""}{t(". It can't be undone. To just hide them, use")}{" "} <strong>{t("Inactive customer")}</strong> {" "}{t("above.")}
             </p>
+            {signatures > 0 && <p className="font-semibold">{t("Their signed agreements will be deleted too.")}</p>}
             <form action={deleteClientAction.bind(null, id)}>
               <button type="submit" className="w-full rounded-xl bg-danger py-3 font-bold text-white">{t("Yes, remove {first_name} forever", { first_name: client.first_name })}</button>
             </form>

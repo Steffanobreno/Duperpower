@@ -1,0 +1,121 @@
+// The service agreement keeps every version, end to end. Run after slice.mjs (Maria Lopez, Woofers
+// Dog Spa), with DATABASE_URL. Maria signs → the owner edits the text: a new kept version, her
+// signature still counts and still shows the text she signed → an edit with "sign again" makes her
+// sign again → removing her warns that her signatures go too.
+// Signs once a year during the test; puts the text and that option back at the end.
+// Usage: node tests/e2e/agreement-versions.mjs [baseUrl]
+import { chromium } from "playwright";
+import postgres from "postgres";
+
+const BASE = process.argv[2] ?? "http://localhost:3000";
+const db = postgres(process.env.DATABASE_URL);
+const browser = await chromium.launch({
+  executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+});
+const errors = [];
+const newPage = async (locale = "en-US") => {
+  const p = await (await browser.newContext({ viewport: { width: 390, height: 844 }, locale, extraHTTPHeaders: { "accept-language": locale } })).newPage();
+  p.on("pageerror", (e) => errors.push(e.message));
+  return p;
+};
+const step = (msg) => console.log(`✓ ${msg}`);
+const fail = (msg) => {
+  throw new Error(msg);
+};
+
+const owner = await newPage();
+await owner.goto(`${BASE}/login`);
+await owner.fill('input[name="email"]', "owner@example.com");
+await owner.fill('input[name="password"]', "correct horse battery");
+await owner.click('button[type="submit"]');
+await owner.waitForURL(/\/today/);
+
+const [maria] = await db`select c.id, c.sign_token, c.business_id from clients c where c.first_name = 'Maria' and c.last_name = 'Lopez'`;
+const agreementRow = async () => (await db`select id, title, body, version, resign_from_version, sign_every_booking from agreements
+                                           where business_id = ${maria.business_id} and active order by created_at desc limit 1`)[0];
+const original = await agreementRow();
+const [v1] = await db`select title, body from agreement_versions where agreement_id = ${original.id} and version = ${original.version}`;
+if (!v1 || v1.body !== original.body) fail("the current text should be kept as a version");
+await db`delete from agreement_signatures where client_id = ${maria.id}`;
+
+// Maria signs the current version from her link.
+const client = await newPage();
+await client.goto(`${BASE}/s/${maria.sign_token}`);
+await client.locator('input[name="agree"]').check();
+await client.locator('input[name="signature"]').fill("Maria Lopez");
+await client.locator('button[type="submit"]').click();
+await client.getByText("Thank you! You signed the service agreement.").waitFor();
+const [sig] = await db`select agreement_version from agreement_signatures where client_id = ${maria.id}`;
+if (sig?.agreement_version !== original.version) fail(`the signature should point to version ${original.version}, got ${sig?.agreement_version}`);
+step(`Maria signs version ${original.version}`);
+
+const saveAgreement = async ({ body, resign = false, fee = null, every = false }) => {
+  await owner.goto(`${BASE}/settings/agreement`);
+  await owner.waitForLoadState("networkidle"); // typing before the page is live can mix the old text in
+  const text = owner.locator('textarea[name="body"]');
+  await text.fill(body);
+  if ((await text.inputValue()) !== body) fail("the agreement text box should hold exactly the new text");
+  if (fee !== null) await owner.getByLabel("No-show fee").fill(fee);
+  await owner.getByLabel("Sign on every online booking (instead of once a year)").setChecked(every);
+  if (resign) await owner.getByLabel("This is an important change: ask every client to sign again").check();
+  await owner.getByRole("button", { name: "Save", exact: true }).click();
+  await owner.getByText("Saved.").waitFor();
+};
+
+// An edit without "sign again": a new version, Maria's signature still counts, her text is the old one.
+const MARKER = "Version two marker: towels are provided by us.";
+await saveAgreement({ body: `${original.body}\n\n${MARKER}` });
+let a = await agreementRow();
+if (a.version !== original.version + 1) fail(`the edit should make version ${original.version + 1}, got ${a.version}`);
+if (a.resign_from_version !== original.resign_from_version) fail("an edit without “sign again” must keep who has to sign again");
+const [v2] = await db`select body from agreement_versions where agreement_id = ${a.id} and version = ${a.version}`;
+if (!v2?.body.includes(MARKER)) fail("the new text should be kept as the new version");
+const [still] = await db`select body from agreement_versions where agreement_id = ${a.id} and version = ${original.version}`;
+if (still?.body !== original.body) fail("the old version must stay as it was");
+await owner.goto(`${BASE}/clients/${maria.id}`);
+await owner.getByText(/Agreement signed .* by "Maria Lopez"/).waitFor();
+await owner.getByText(`See the text Maria signed (version ${original.version})`).click();
+const signedText = await owner.getByTestId("signed-agreement").innerText();
+if (signedText.includes("Version two marker")) fail("the signed text should be the version Maria signed, not the new one");
+if (!signedText.includes(original.body.split("\n").find((l) => l.startsWith("## ")).slice(3))) fail("the signed text should show version 1's body");
+await client.reload();
+await client.getByText("Thank you! You signed the service agreement.").waitFor();
+step(`an edit makes version ${a.version}; Maria's signature still counts and shows the text she signed`);
+
+// An edit with "sign again": her signature no longer counts.
+await saveAgreement({ body: `${original.body}\n\n${MARKER} Updated.`, resign: true });
+a = await agreementRow();
+if (a.version !== original.version + 2 || a.resign_from_version !== a.version) fail("“sign again” should ask from the new version on");
+await owner.goto(`${BASE}/clients/${maria.id}`);
+await owner.getByText("Agreement not signed yet (they'll be asked on their confirm link).").waitFor();
+await client.goto(`${BASE}/s/${maria.sign_token}`);
+await client.locator('input[name="signature"]').waitFor();
+step("an edit with “sign again”: Maria has to sign again");
+
+// The text changes while Maria reads it: her signature points to the version she read.
+const read = a.version;
+await saveAgreement({ body: `${original.body}\n\n${MARKER} Updated again.` });
+await client.locator('input[name="agree"]').check();
+await client.locator('input[name="signature"]').fill("Maria Lopez");
+await client.locator('button[type="submit"]').click();
+await client.getByText("Thank you! You signed the service agreement.").waitFor();
+const [late] = await db`select agreement_version from agreement_signatures where client_id = ${maria.id} order by signed_at desc limit 1`;
+if (late?.agreement_version !== read) fail(`the signature should point to version ${read} she read, got ${late?.agreement_version}`);
+step(`the text changed while she read it: her signature points to version ${read}, the one she read`);
+
+// Removing Maria warns that her signed agreements go too (not removed here).
+await owner.goto(`${BASE}/clients/${maria.id}`);
+await owner.getByText("Remove client").click();
+await owner.getByText("Their signed agreements will be deleted too.").waitFor();
+step("the remove-client confirmation warns about the signed agreements");
+
+// Put the text back as it was (a new version, nobody asked to sign again).
+await saveAgreement({ body: original.body, every: original.sign_every_booking });
+
+await db.end();
+await browser.close();
+if (errors.length) {
+  console.error("Browser errors:\n" + errors.join("\n"));
+  process.exit(1);
+}
+console.log("All good.");

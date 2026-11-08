@@ -131,6 +131,7 @@ export default async function ClientAppointmentPage({ params, searchParams }: Pa
           <form action={confirmByTokenAction.bind(null, token)} className="space-y-3">
             {mustSign && agreement && (
               <Card className="space-y-3">
+                <input type="hidden" name="version" value={agreement.version} />
                 <p className="text-sm font-medium">{t("Please read and sign our service agreement (once a year).")}</p>
                 <div
                   className="max-h-80 overflow-y-auto rounded-xl border border-line bg-bg p-3"

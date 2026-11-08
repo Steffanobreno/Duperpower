@@ -1764,4 +1764,6 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Uji coba gratis Anda berakhir pada {date}. Pada hari itu kami akan menagih {amount} untuk paket yang Anda pilih. Untuk menghindari tagihan, batalkan sebelumnya di halaman Paket:",
 "Paket tahunan Anda diperpanjang otomatis pada {date} sebesar {amount}. Untuk menghentikan perpanjangan, batalkan sebelumnya di halaman Paket; akses Anda tetap ada hingga akhir periode yang sudah dibayar:",
 "Paket Anda dimulai pada {date}. Harga paket adalah {price}{interval}, dikurangi diskon apa pun yang Anda gunakan. Untuk menghindari tagihan, batalkan sebelumnya di halaman Paket:",
-"Paket tahunan Anda diperpanjang pada {date}. Harga paket adalah {price}{interval}, dikurangi diskon apa pun yang Anda gunakan. Untuk menghentikan perpanjangan, batalkan sebelumnya di halaman Paket:"];
+"Paket tahunan Anda diperpanjang pada {date}. Harga paket adalah {price}{interval}, dikurangi diskon apa pun yang Anda gunakan. Untuk menghentikan perpanjangan, batalkan sebelumnya di halaman Paket:",
+"Lihat teks yang ditandatangani {first_name} (versi {version})",
+"Perjanjian yang sudah mereka tanda tangani juga akan dihapus."];

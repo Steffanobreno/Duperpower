@@ -1764,4 +1764,6 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Ücretsiz deneme süreniz {date} tarihinde bitiyor. O gün seçtiğiniz plan için {amount} tahsil edeceğiz. Ücretten kaçınmak için bundan önce Plan sayfasından iptal edin:",
 "Yıllık planınız {date} tarihinde {amount} karşılığında otomatik olarak yenilenecek. Yenilemeyi durdurmak için bundan önce Plan sayfasından iptal edin; ödediğiniz dönemin sonuna kadar erişiminiz devam eder:",
 "Planınız {date} tarihinde başlıyor. Plan fiyatı {price}{interval}, uyguladığınız indirim varsa düşülür. Ücretten kaçınmak için bundan önce Plan sayfasından iptal edin:",
-"Yıllık planınız {date} tarihinde yenileniyor. Plan fiyatı {price}{interval}, uyguladığınız indirim varsa düşülür. Yenilemeyi durdurmak için bundan önce Plan sayfasından iptal edin:"];
+"Yıllık planınız {date} tarihinde yenileniyor. Plan fiyatı {price}{interval}, uyguladığınız indirim varsa düşülür. Yenilemeyi durdurmak için bundan önce Plan sayfasından iptal edin:",
+"{first_name} adlı müşterinin imzaladığı metni gör (sürüm {version})",
+"İmzaladığı sözleşmeler de silinecek."];

@@ -12,7 +12,7 @@ export async function signByTokenAction(token: string, form: FormData) {
   if (!agreement) redirect(`/s/${token}`);
   const name = String(form.get("signature") ?? "").trim();
   if (form.get("agree") !== "on" || name.length < 3) redirect(`/s/${token}?needSign=1`);
-  await recordSignature(sql, agreement, c.id, name);
+  await recordSignature(sql, agreement, c.id, name, null, form.get("version"));
   await notifyOwner(c.business_id, `${c.name} signed the service agreement`, `${c.name} signed “${agreement.title}”.`, `/clients/${c.id}`);
   redirect(`/s/${token}?signed=1`);
 }

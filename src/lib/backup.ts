@@ -30,6 +30,7 @@ export async function buildBackup(businessId: string) {
     invoice_items: sql`select it.* from invoice_items it join invoices i on i.id = it.invoice_id where i.business_id = ${b}`,
     payments: sql`select p.* from payments p join invoices i on i.id = p.invoice_id where i.business_id = ${b}`,
     agreements: sql`select * from agreements where business_id = ${b}`,
+    agreement_versions: sql`select v.* from agreement_versions v join agreements a on a.id = v.agreement_id where a.business_id = ${b}`,
     agreement_signatures: sql`
       select s.id, s.agreement_id, s.agreement_version, s.client_id, s.signed_name, s.ip, s.signed_at, s.created_at
       from agreement_signatures s join agreements a on a.id = s.agreement_id where a.business_id = ${b}`,

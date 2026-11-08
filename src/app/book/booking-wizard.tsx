@@ -84,6 +84,7 @@ export function BookingWizard({
   today,
   agreementTitle,
   agreement,
+  agreementVersion = null,
   initialPhone = "",
   timezone,
   slug = null,
@@ -101,6 +102,8 @@ export function BookingWizard({
   today: string;
   agreementTitle: string | null;
   agreement: ReactNode | null;
+  /** The version of the agreement text shown, so the signature points to what was read. */
+  agreementVersion?: number | null;
 }) {
   const [history, setHistory] = useState<Step[]>([{ name: "phone" }]);
   const [phone, setPhone] = useState(initialPhone);
@@ -236,6 +239,7 @@ export function BookingWizard({
         agreed: !!signed,
         signature: signed?.name ?? "",
         signatureDrawing: signed?.drawing,
+        agreementVersion,
       });
       if (res.error) setError(serverMessage(res.error));
       else {

@@ -1,8 +1,7 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
-import { activeAgreement } from "@/lib/agreement";
-import { sql } from "@/lib/db";
+import { activeAgreement, countSigned } from "@/lib/agreement";
 import { Card, Field, Input, Page, PageHeader, Textarea } from "@/components/ui";
 import { AgreementText } from "@/components/agreement-text";
 import { saveAgreementAction } from "../actions";
@@ -17,10 +16,7 @@ export default async function AgreementPage() {
   const { t } = await getOwnerI18n();
   const staff = await requirePermission("settings");
   const agreement = await activeAgreement(staff.businessId);
-  const [{ signed }] = agreement
-    ? await sql`select count(distinct client_id)::int as signed from agreement_signatures
-                where agreement_id = ${agreement.id} and agreement_version = ${agreement.version}`
-    : [{ signed: 0 }];
+  const signed = agreement ? await countSigned(agreement) : 0;
   return (
     <>
       <PageHeader title={t("Service agreement")} back="/settings" />

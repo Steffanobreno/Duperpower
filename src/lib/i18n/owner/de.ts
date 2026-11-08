@@ -1764,4 +1764,6 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Deine kostenlose Testphase endet am {date}. An diesem Tag buchen wir {amount} für den gewählten Tarif ab. Um die Abbuchung zu vermeiden, kündige vorher auf der Tarif-Seite:",
 "Dein Jahrestarif verlängert sich am {date} automatisch für {amount}. Um die Verlängerung zu stoppen, kündige vorher auf der Tarif-Seite; du behältst den Zugang bis zum Ende des bezahlten Zeitraums:",
 "Dein Tarif startet am {date}. Der Tarifpreis ist {price}{interval}, abzüglich eines von dir eingelösten Rabatts. Um die Abbuchung zu vermeiden, kündige vorher auf der Tarif-Seite:",
-"Dein Jahrestarif verlängert sich am {date}. Der Tarifpreis ist {price}{interval}, abzüglich eines von dir eingelösten Rabatts. Um die Verlängerung zu stoppen, kündige vorher auf der Tarif-Seite:"];
+"Dein Jahrestarif verlängert sich am {date}. Der Tarifpreis ist {price}{interval}, abzüglich eines von dir eingelösten Rabatts. Um die Verlängerung zu stoppen, kündige vorher auf der Tarif-Seite:",
+"Text ansehen, den {first_name} unterschrieben hat (Version {version})",
+"Die unterschriebenen Vereinbarungen werden ebenfalls gelöscht."];

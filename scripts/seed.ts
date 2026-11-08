@@ -17,10 +17,13 @@ async function main() {
   if (existing) {
     // Added after the first seed: make sure the service agreement exists.
     const added = await sql`
-      insert into agreements (business_id, title, body)
-      select ${existing.id}, ${AGREEMENT_TITLE}, ${AGREEMENT_BODY}
-      where not exists (select 1 from agreements where business_id = ${existing.id})
-      returning id`;
+      with a as (
+        insert into agreements (business_id, title, body)
+        select ${existing.id}, ${AGREEMENT_TITLE}, ${AGREEMENT_BODY}
+        where not exists (select 1 from agreements where business_id = ${existing.id})
+        returning id, version, title, body)
+      insert into agreement_versions (agreement_id, version, title, body) select id, version, title, body from a
+      returning agreement_id`;
     console.log(added.length ? "added the service agreement" : "business already exists, nothing to seed");
     return sql.end();
   }

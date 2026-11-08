@@ -242,20 +242,32 @@ export async function newDeviceKeyAction() {
 export async function saveAgreementAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requirePermission("settings");
   const title = String(form.get("title") ?? "").trim();
-  const body = String(form.get("body") ?? "").trim();
+  const body = String(form.get("body") ?? "").replace(/\r\n?/g, "\n").trim(); // the browser sends line breaks as \r\n
   if (!title || body.length < 20) return { error: "The agreement needs a title and its text." };
   const resign = form.get("resign") === "on";
   const required = form.get("required_online") === "on";
   const every = form.get("sign_every_booking") === "on";
-  const [current] = await sql`select id from agreements where business_id = ${staff.businessId} and active order by created_at desc limit 1`;
-  if (current) {
-    // A new version makes every client sign again on their next booking or confirm link.
-    await sql`update agreements set title = ${title}, body = ${body}, required_online = ${required}, sign_every_booking = ${every},
-                version = version + ${resign ? 1 : 0} where id = ${current.id}`;
-  } else {
-    await sql`insert into agreements (business_id, title, body, required_online, sign_every_booking)
-              values (${staff.businessId}, ${title}, ${body}, ${required}, ${every})`;
-  }
+  await sql.begin(async (tx) => {
+    const [current] = await tx<{ id: string; title: string; body: string; version: number; resign_from_version: number }[]>`
+      select id, title, body, version, resign_from_version from agreements where business_id = ${staff.businessId} and active
+      order by created_at desc limit 1 for update`;
+    if (!current) {
+      await tx`with a as (insert into agreements (business_id, title, body, required_online, sign_every_booking)
+                          values (${staff.businessId}, ${title}, ${body}, ${required}, ${every}) returning id, version, title, body)
+               insert into agreement_versions (agreement_id, version, title, body) select id, version, title, body from a`;
+      return;
+    }
+    // Every change of the text is a new version, kept for good: each signature keeps pointing to
+    // the text signed. "Sign again" makes signatures of older versions stop counting.
+    const changed = current.title !== title || current.body.replace(/\r\n?/g, "\n") !== body;
+    const version = changed || resign ? current.version + 1 : current.version;
+    if (version !== current.version) {
+      await tx`insert into agreement_versions (agreement_id, version, title, body) values (${current.id}, ${version}, ${title}, ${body})`;
+    }
+    await tx`update agreements set title = ${title}, body = ${body}, required_online = ${required}, sign_every_booking = ${every},
+               version = ${version}, resign_from_version = ${resign ? version : current.resign_from_version}
+             where id = ${current.id}`;
+  });
   revalidatePath("/settings/agreement");
   return { saved: true };
 }

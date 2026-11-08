@@ -54,7 +54,7 @@ await owner.goto(`${BASE}/settings/agreement`);
 await owner.getByLabel("Sign on every online booking (instead of once a year)").check();
 await owner.getByRole("button", { name: "Save", exact: true }).click();
 await owner.getByText("Saved.").waitFor();
-const [a] = await db`select sign_every_booking from agreements where active`;
+const [a] = await db`select a.sign_every_booking from agreements a join clients c on c.business_id = a.business_id where a.active and c.id = ${maria.id}`;
 if (!a.sign_every_booking) fail("option not saved");
 const booker = await newPage();
 const button = (name) => booker.getByRole("button", { name, exact: true });

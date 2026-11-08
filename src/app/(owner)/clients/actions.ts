@@ -293,8 +293,9 @@ export async function deletePetPriceAction(clientId: string, petId: string, serv
 }
 
 /**
- * Removes a client for good: their pets, visits, bills and payments, notes and signatures.
- * Messages already sent stay in the log without the name. Can't be undone.
+ * Removes a client for good: their pets, visits, bills and payments, notes and signed agreements
+ * (the profile warns about the signatures; the agreement's versions stay). Messages already sent
+ * stay in the log without the name. Can't be undone.
  */
 export async function deleteClientAction(clientId: string) {
   const staff = await requirePermission("delete");

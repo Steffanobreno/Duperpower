@@ -36,6 +36,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
             today={todayYmd(b.timezone)}
             agreementTitle={agreement?.title ?? null}
             agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} /> : null}
+            agreementVersion={agreement?.version ?? null}
             slug={slug}
             preferredDate={isYmd(preferredDate) ? preferredDate : null}
             initialPhone={typeof resumePhone !== "string" ? "" : b.country === "US" ? resumePhone.replace(/\D/g, "").slice(-10) : resumePhone.replace(/[^\d+]/g, "").slice(0, 16)}

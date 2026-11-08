@@ -19,7 +19,7 @@ export async function confirmByTokenAction(token: string, form: FormData) {
   if (agreement && !(await currentSignature(agreement, appt.client_id))) {
     const name = String(form.get("signature") ?? "").trim();
     if (form.get("agree") !== "on" || name.length < 3) redirect(`/a/${token}?needSign=1`);
-    await recordSignature(sql, agreement, appt.client_id, name);
+    await recordSignature(sql, agreement, appt.client_id, name, null, form.get("version"));
   }
   const [done] = await sql`
     update appointments a set status = 'confirmed', confirmed_at = now()

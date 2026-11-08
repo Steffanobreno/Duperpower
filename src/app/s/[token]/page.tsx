@@ -37,6 +37,7 @@ export default async function SignPage({ params, searchParams }: PageProps<"/s/[
           <Notice kind="success">{t("Thank you! You signed the service agreement.")}</Notice>
         ) : (
           <form action={signByTokenAction.bind(null, token)} className="space-y-3">
+            <input type="hidden" name="version" value={agreement.version} />
             {sp.needSign && <Notice kind="error">{t("Please tick the box and type your full name to sign.")}</Notice>}
             <p className="text-sm font-medium">{t("Please read and sign our service agreement.")}</p>
             <div className="max-h-96 overflow-y-auto rounded-xl border border-line bg-bg p-3" tabIndex={0} aria-label={t("Service agreement")}>

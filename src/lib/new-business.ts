@@ -182,7 +182,10 @@ export async function createBusiness(tx: postgres.TransactionSql, b: NewBusiness
             ${b.extra?.cancellationHours ?? 24}, ${b.extra?.mailingAddress ?? null}, ${b.country ?? "US"}, ${b.currency ?? "USD"}, ${b.source ?? null}, ${b.needsSetup ? null : new Date()})
     returning id`;
   const agreement = b.agreement ?? starterAgreement(b.name);
-  await tx`insert into agreements (business_id, title, body) values (${biz.id}, ${agreement.title}, ${agreement.body})`;
+  // The first version of the text is kept like every later one (see src/lib/agreement.ts).
+  await tx`with a as (insert into agreements (business_id, title, body) values (${biz.id}, ${agreement.title}, ${agreement.body})
+                      returning id, version, title, body)
+           insert into agreement_versions (agreement_id, version, title, body) select id, version, title, body from a`;
   const [staff] = await tx`
     insert into staff (business_id, name, role, color, user_id)
     values (${biz.id}, ${b.ownerName}, 'owner', '#1d6fb8', ${b.ownerUserId ?? null})

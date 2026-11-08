@@ -1764,4 +1764,6 @@ export const fr: string[] = ["Réservation abandonnée",
 "Votre essai gratuit se termine le {date}. Ce jour-là, nous prélèverons {amount} pour l'abonnement que vous avez choisi. Pour éviter le prélèvement, résiliez avant cette date sur la page Abonnement :",
 "Votre abonnement annuel se renouvelle automatiquement le {date} pour {amount}. Pour arrêter le renouvellement, résiliez avant cette date sur la page Abonnement ; vous gardez l'accès jusqu'à la fin de la période payée :",
 "Votre abonnement commence le {date}. Son prix est de {price}{interval}, moins toute remise que vous avez appliquée. Pour éviter le prélèvement, résiliez avant cette date sur la page Abonnement :",
-"Votre abonnement annuel se renouvelle le {date}. Son prix est de {price}{interval}, moins toute remise que vous avez appliquée. Pour arrêter le renouvellement, résiliez avant cette date sur la page Abonnement :"];
+"Votre abonnement annuel se renouvelle le {date}. Son prix est de {price}{interval}, moins toute remise que vous avez appliquée. Pour arrêter le renouvellement, résiliez avant cette date sur la page Abonnement :",
+"Voir le texte signé par {first_name} (version {version})",
+"Ses contrats signés seront aussi supprimés."];

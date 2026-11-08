@@ -1764,4 +1764,6 @@ export const tl: string[] = ["Naiwang booking",
 "Matatapos ang libreng trial mo sa {date}. Sa araw na iyon, sisingilin ka namin ng {amount} para sa planong pinili mo. Para maiwasan ang singil, mag-cancel bago iyon sa pahina ng Plan:",
 "Awtomatikong magre-renew ang yearly plan mo sa {date} sa halagang {amount}. Para ihinto ang renewal, mag-cancel bago iyon sa pahina ng Plan; mananatili ang access mo hanggang sa katapusan ng bayad na panahon:",
 "Magsisimula ang plano mo sa {date}. Ang presyo ng plano ay {price}{interval}, bawas ang anumang diskwentong inilapat mo. Para maiwasan ang singil, mag-cancel bago iyon sa pahina ng Plan:",
-"Magre-renew ang yearly plan mo sa {date}. Ang presyo ng plano ay {price}{interval}, bawas ang anumang diskwentong inilapat mo. Para ihinto ang renewal, mag-cancel bago iyon sa pahina ng Plan:"];
+"Magre-renew ang yearly plan mo sa {date}. Ang presyo ng plano ay {price}{interval}, bawas ang anumang diskwentong inilapat mo. Para ihinto ang renewal, mag-cancel bago iyon sa pahina ng Plan:",
+"Tingnan ang tekstong pinirmahan ni {first_name} (bersyon {version})",
+"Mabubura rin ang kanilang mga pinirmahang kasunduan."];

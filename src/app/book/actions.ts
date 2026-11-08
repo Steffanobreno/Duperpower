@@ -164,6 +164,7 @@ export type BookingRequest = {
   agreed: boolean;
   signature: string; // full name typed to sign the service agreement
   signatureDrawing?: string; // the signature drawn with a finger, as a PNG data URL
+  agreementVersion?: number | null; // the version of the agreement the page showed
   website: string; // honeypot: people never see this field
 };
 
@@ -246,7 +247,7 @@ export async function requestBookingAction(input: BookingRequest): Promise<{ err
           returning id`;
         clientId = c.id;
       }
-      if (mustSign && agreement) await recordSignature(tx, agreement, clientId, signature, signatureImage(input.signatureDrawing));
+      if (mustSign && agreement) await recordSignature(tx, agreement, clientId, signature, signatureImage(input.signatureDrawing), input.agreementVersion);
 
       // A known client who typed a different address: keep the file as is, tell the owner.
       const visitAddress = useFile
