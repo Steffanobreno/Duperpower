@@ -37,6 +37,8 @@ const TEMPLATE_INFO: Record<string, { title: string; when: string }> = {
 const ORDER = Object.keys(TEMPLATE_INFO);
 // Sent by hand from the groomer's phone: no channels or email subject.
 const MANUAL = new Set(["on_my_way", "gap_offer"]);
+// Sent by email only (the groomer sends it from the phone otherwise): no SMS box.
+const NO_SMS = new Set(["report_card"]);
 
 export default async function MessagesSettingsPage() {
   const { t: tr, locale } = await getOwnerI18n();
@@ -161,7 +163,7 @@ export default async function MessagesSettingsPage() {
                   {t.enabled ? (
                     !MANUAL.has(t.trigger) && (
                       <span className="ml-2 inline-flex gap-1 align-middle">
-                        {t.send_sms && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">SMS</span>}
+                        {t.send_sms && !NO_SMS.has(t.trigger) && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">SMS</span>}
                         {t.send_email && <span className="rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold text-success">{tr("Email")}</span>}
                       </span>
                     )
@@ -178,9 +180,11 @@ export default async function MessagesSettingsPage() {
                     </label>
                     {!MANUAL.has(t.trigger) && (
                       <div className="flex gap-4 text-sm">
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" name="send_sms" defaultChecked={t.send_sms} className="h-4 w-4" /> {" "}{tr("Text (SMS)")}
-                        </label>
+                        {!NO_SMS.has(t.trigger) && (
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" name="send_sms" defaultChecked={t.send_sms} className="h-4 w-4" /> {" "}{tr("Text (SMS)")}
+                          </label>
+                        )}
                         <label className="flex items-center gap-2">
                           <input type="checkbox" name="send_email" defaultChecked={t.send_email} className="h-4 w-4" /> {" "}{tr("Email")}
                         </label>

@@ -353,9 +353,10 @@ export async function queueDueMessages(businessId: string) {
     for (const r of rows) {
       await ensureReportToken(businessId, r.id);
       const c = await appointmentContext(r.id);
-      // Nothing to send (no email, and no texts allowed): leave it unsent rather than mark it sent.
-      if (!c || !((c.email && reportCard.send_email) || (c.sms_ok && reportCard.send_sms))) continue;
-      await enqueue(c, "report_card", reportCard, `report:${r.id}`);
+      // Nothing to send (no email): leave it unsent rather than mark it sent.
+      // Email only: the report card never goes by automatic SMS (the groomer can send it from the phone).
+      if (!c || !(c.email && reportCard.send_email)) continue;
+      await enqueue(c, "report_card", { ...reportCard, send_sms: false }, `report:${r.id}`);
       await sql`update appointments set report_sent_at = now() where id = ${r.id} and business_id = ${businessId}`;
     }
   }
