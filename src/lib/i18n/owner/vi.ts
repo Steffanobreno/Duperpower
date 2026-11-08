@@ -1730,4 +1730,5 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Vệ sinh tai",
 "Đã cắt móng",
 "Đã đánh răng",
-"Phát hiện bọ chét"];
+"Phát hiện bọ chét",
+"Khách hàng sẽ thấy ghi chú này trên báo cáo chăm sóc."];

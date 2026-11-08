@@ -1732,5 +1732,6 @@ export const OWNER_KEYS: string[] = [
  "Ear care",
  "Nails done",
  "Teeth brushed",
- "Fleas found"
+ "Fleas found",
+ "The client sees this note on the report card."
 ];

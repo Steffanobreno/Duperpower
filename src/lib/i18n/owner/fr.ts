@@ -1730,4 +1730,5 @@ export const fr: string[] = ["Réservation abandonnée",
 "Soin des oreilles",
 "Griffes coupées",
 "Dents brossées",
-"Puces détectées"];
+"Puces détectées",
+"Le client voit cette note sur le compte rendu de toilettage."];

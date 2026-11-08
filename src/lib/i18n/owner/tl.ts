@@ -1730,4 +1730,5 @@ export const tl: string[] = ["Naiwang booking",
 "Pag-aalaga sa tainga",
 "Naputol ang kuko",
 "Nasipilyo ang ngipin",
-"May nakitang pulgas"];
+"May nakitang pulgas",
+"Makikita ng kliyente ang note na ito sa ulat sa grooming."];

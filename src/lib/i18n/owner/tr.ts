@@ -1730,4 +1730,5 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Kulak bakımı",
 "Tırnaklar kesildi",
 "Dişler fırçalandı",
-"Pire bulundu"];
+"Pire bulundu",
+"Müşteri bu notu bakım raporunda görür."];

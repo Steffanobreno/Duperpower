@@ -1730,4 +1730,5 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Ohrenpflege",
 "Krallen geschnitten",
 "Zähne geputzt",
-"Flöhe gefunden"];
+"Flöhe gefunden",
+"Der Kunde sieht diese Notiz im Pflegebericht."];

@@ -1730,4 +1730,5 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Perawatan telinga",
 "Kuku dipotong",
 "Gigi disikat",
-"Ditemukan kutu"];
+"Ditemukan kutu",
+"Klien melihat catatan ini di laporan grooming."];

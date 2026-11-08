@@ -77,8 +77,10 @@ export function GroomForm({ appointmentPetId, pet, now, tags: savedTags, last, p
       <datalist id="blades">{BLADES.map((b) => <option key={b} value={b} />)}</datalist>
       <label className="block text-sm font-medium" htmlFor={id("note")}>{t("Note")}
         <textarea id={id("note")} value={cut.note ?? ""} onChange={(e) => setCut({ ...cut, note: e.target.value })}
-          className={field} rows={2} maxLength={500} placeholder={t("Short around the eyes, leave the tail fluffy")} />
+          className={field} rows={2} maxLength={500} placeholder={t("Short around the eyes, leave the tail fluffy")}
+          aria-describedby={id("note-hint")} />
       </label>
+      <p id={id("note-hint")} className="-mt-1 text-xs text-muted">{t("The client sees this note on the report card.")}</p>
       <fieldset className="flex flex-wrap gap-2">
         <legend className="sr-only">{t("Tags")}</legend>
         {GROOM_TAGS.map((k: GroomTag) => (
