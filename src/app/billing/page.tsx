@@ -21,7 +21,8 @@ export async function generateMetadata(): Promise<Metadata> {
 const usd = (cents: number, locale: string) => new Intl.NumberFormat(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
 
 // The plan: the free trial, choosing monthly or yearly (Stripe Checkout), and Stripe's portal
-// to manage it; in test mode (no Stripe yet) the fake checkout and portal instead. When the trial is over and nothing is paid, the app opens only this page.
+// to manage it (in test mode, without Stripe, the fake checkout and portal instead). When the
+// trial is over and nothing is paid, the app opens only this page.
 export default async function BillingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t, lang, messages, locale } = await getOwnerI18n();
   const staff = await requireStaff();
@@ -32,7 +33,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     from businesses where id = ${staff.businessId}`;
   const access = accessOf(b);
   const testMode = paymentsMode() === "fake";
-  // Without Stripe set up nothing is ever locked.
+  // Without a payment provider (neither Stripe nor test mode) nothing is ever locked.
   if (!billingOn()) access.locked = false;
   const owner = staff.role === "owner";
   const date = (d: Date | null) => (d ? d.toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" }) : "");
