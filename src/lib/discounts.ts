@@ -1,14 +1,15 @@
 import "server-only";
 import type Stripe from "stripe";
 import { sql } from "./db";
-import { PRICES, stripe } from "./billing";
+import { isFakeId, PRICES, stripe, stripeOn } from "./billing";
 import { logServerError } from "./error-log";
 
 // Referrals and discount codes.
 // - Referral: every business has a code (and a /signup?ref=<code> link). A business that signs up
 //   with it, or types it on the plan page, gets its first month free (US$29 off the first bill);
 //   the business that referred it gets US$29 of credit once the new one pays its first bill.
-// - Discount codes: made by the app owner in /admin; each is a Stripe coupon with a promotion code.
+// - Discount codes: made by the app owner in /admin; each is a Stripe coupon with a promotion code
+//   (in test mode, without Stripe, only the row here: see fake-payments.ts).
 
 export const REFERRAL_CENTS = PRICES.month.cents;
 const REFERRAL_COUPON = "fino-referral-month";
@@ -77,35 +78,63 @@ async function referralCoupon() {
   }
 }
 
+export type DiscountCode = {
+  id: string; code: string; stripe_promotion_code_id: string | null; percent_off: string | null; amount_off_cents: number | null;
+  duration: "once" | "repeating" | "forever"; duration_months: number | null; max_redemptions: number | null;
+};
+
+/**
+ * The discount a plan gets: the code typed on the plan page (a discount code, or a referral
+ * code, which is noted), else the referral the business signed up with (once: a later new plan
+ * doesn't get it again), else none. A wrong code, or its own referral code, is an error.
+ * Stripe's Checkout (discountForCheckout) and the test mode's checkout both follow it.
+ */
+export async function resolveDiscount(businessId: string, rawCode: unknown):
+  Promise<{ code: DiscountCode } | { referral: true } | { none: true } | { error: string }> {
+  const code = cleanCode(rawCode);
+  if (code) {
+    const [d] = await sql<DiscountCode[]>`
+      select id, code, stripe_promotion_code_id, percent_off, amount_off_cents, duration, duration_months, max_redemptions
+      from discount_codes
+      where code = ${code} and active and (expires_at is null or expires_at > now())`;
+    if (d) return { code: d };
+    const [own] = await sql`select 1 from businesses where id = ${businessId} and referral_code = ${code}`;
+    if (own) return { error: OWN_CODE };
+    if (!(await recordReferral(businessId, code))) {
+      const [already] = await sql`select 1 from businesses where id = ${businessId} and referred_by is not null`;
+      if (!already) return { error: BAD_CODE };
+    }
+  }
+  // Referred and not paying yet: the free first month.
+  const [r] = await sql`
+    select 1 from referrals r join businesses b on b.id = r.referred_id
+    where r.referred_id = ${businessId} and b.stripe_subscription_id is null`;
+  return r ? { referral: true } : { none: true };
+}
+
+export const OWN_CODE = "That's your own referral code: share it with other groomers.";
+export const BAD_CODE = "That code doesn't exist or has expired.";
+/** Back to the plan page with the code's error shown (see billing/page.tsx). */
+export const codeErrorUrl = (error: string, code: string) =>
+  `/billing?code_error=${error === OWN_CODE ? "own" : "bad"}&code=${encodeURIComponent(code)}`;
+
 export type CheckoutDiscount =
   | { discounts: Stripe.Checkout.SessionCreateParams.Discount[] }
   | { allow_promotion_codes: true }
   | { error: string };
 
 /**
- * What discount the plan's Checkout gets: the code typed on the plan page (a referral code or
- * a discount code), else the referral the business signed up with (once), else Stripe's own
- * "Add promotion code" box.
+ * What discount the plan's Checkout gets (see resolveDiscount); with none, Stripe's own "Add
+ * promotion code" box.
  */
 export async function discountForCheckout(businessId: string, rawCode: unknown): Promise<CheckoutDiscount> {
-  const code = cleanCode(rawCode);
-  if (code) {
-    const [d] = await sql<{ stripe_promotion_code_id: string }[]>`
-      select stripe_promotion_code_id from discount_codes
-      where code = ${code} and active and (expires_at is null or expires_at > now())`;
-    if (d) return { discounts: [{ promotion_code: d.stripe_promotion_code_id }] };
-    const [own] = await sql`select 1 from businesses where id = ${businessId} and referral_code = ${code}`;
-    if (own) return { error: "That's your own referral code: share it with other groomers." };
-    if (!(await recordReferral(businessId, code))) {
-      const [already] = await sql`select 1 from businesses where id = ${businessId} and referred_by is not null`;
-      if (!already) return { error: "That code doesn't exist or has expired." };
-    }
+  const d = await resolveDiscount(businessId, rawCode);
+  if ("error" in d) return d;
+  if ("code" in d) {
+    // A code made in test mode has no Stripe promotion code: Stripe can't take it.
+    return d.code.stripe_promotion_code_id ? { discounts: [{ promotion_code: d.code.stripe_promotion_code_id }] } : { error: BAD_CODE };
   }
-  // Referred and not paying yet: the free first month (a later new plan doesn't get it again).
-  const [r] = await sql`
-    select 1 from referrals r join businesses b on b.id = r.referred_id
-    where r.referred_id = ${businessId} and b.stripe_subscription_id is null`;
-  if (r) return { discounts: [{ coupon: await referralCoupon() }] };
+  if ("referral" in d) return { discounts: [{ coupon: await referralCoupon() }] };
   return { allow_promotion_codes: true };
 }
 
@@ -114,11 +143,7 @@ export async function discountForCheckout(businessId: string, rawCode: unknown):
  * credit, once. The credit is taken off the referrer's next bills by Stripe.
  */
 export async function rewardReferral(customer: string, amountPaid: number) {
-  if (amountPaid <= 0) return;
-  const [r] = await sql<{ id: string; referrer_id: string }[]>`
-    update referrals set rewarded_at = now(), reward_cents = ${REFERRAL_CENTS}
-    where rewarded_at is null and referred_id = (select id from businesses where stripe_customer_id = ${customer})
-    returning id, referrer_id`;
+  const r = await claimReferralReward(customer, amountPaid);
   if (!r) return;
   try {
     const referrerCustomer = await customerOf(r.referrer_id);
@@ -132,6 +157,24 @@ export async function rewardReferral(customer: string, amountPaid: number) {
   }
 }
 
+/**
+ * The same for a test-mode bill: the credit is noted in Fino's own tables only (there is no
+ * Stripe balance), so the referrer's plan page shows it.
+ */
+export async function rewardReferralInFino(customer: string, amountPaid: number) {
+  await claimReferralReward(customer, amountPaid);
+}
+
+/** Notes the referrer's credit for this paying customer, once (null when it isn't due). */
+async function claimReferralReward(customer: string, amountPaid: number) {
+  if (amountPaid <= 0) return null;
+  const [r] = await sql<{ id: string; referrer_id: string }[]>`
+    update referrals set rewarded_at = now(), reward_cents = ${REFERRAL_CENTS}
+    where rewarded_at is null and referred_id = (select id from businesses where stripe_customer_id = ${customer})
+    returning id, referrer_id`;
+  return r ?? null;
+}
+
 /** The referrer's Stripe customer (made now if it never chose a plan). */
 async function customerOf(businessId: string) {
   const [b] = await sql<{ name: string; stripe_customer_id: string | null; email: string | null }[]>`
@@ -139,9 +182,12 @@ async function customerOf(businessId: string) {
     left join lateral (select s.user_id from staff s where s.business_id = b.id and s.role = 'owner' order by s.created_at limit 1) o on true
     left join users u on u.id = o.user_id
     where b.id = ${businessId}`;
-  if (b.stripe_customer_id) return b.stripe_customer_id;
+  if (b.stripe_customer_id && !isFakeId(b.stripe_customer_id)) return b.stripe_customer_id;
   const c = await stripe().customers.create({ name: b.name, email: b.email ?? undefined, metadata: { business_id: businessId } });
-  await sql`update businesses set stripe_customer_id = coalesce(stripe_customer_id, ${c.id}) where id = ${businessId}`;
+  // Kept if another request made one meanwhile; a test-mode id is replaced.
+  await sql`update businesses set stripe_customer_id = case when stripe_customer_id is null or left(stripe_customer_id, 5) = 'fake_'
+                                                       then ${c.id} else stripe_customer_id end
+            where id = ${businessId}`;
   const [after] = await sql`select stripe_customer_id from businesses where id = ${businessId}`;
   return after.stripe_customer_id as string;
 }
@@ -167,6 +213,13 @@ export type NewDiscountCode = {
 };
 
 export async function createDiscountCode(d: NewDiscountCode) {
+  if (!stripeOn()) {
+    // Test mode: the code lives only here (fake-payments.ts applies it).
+    await sql`
+      insert into discount_codes (code, percent_off, amount_off_cents, duration, duration_months, max_redemptions, expires_at, note)
+      values (${d.code}, ${d.percentOff}, ${d.amountOffCents}, ${d.duration}, ${d.durationMonths}, ${d.maxRedemptions}, ${d.expiresAt}, ${d.note})`;
+    return;
+  }
   const coupon = await stripe().coupons.create({
     name: d.code,
     ...(d.percentOff ? { percent_off: d.percentOff } : { amount_off: d.amountOffCents!, currency: "usd" }),
@@ -187,9 +240,9 @@ export async function createDiscountCode(d: NewDiscountCode) {
 }
 
 export async function deactivateDiscountCode(id: string) {
-  const [d] = await sql<{ stripe_promotion_code_id: string }[]>`select stripe_promotion_code_id from discount_codes where id = ${id} and active`;
+  const [d] = await sql<{ stripe_promotion_code_id: string | null }[]>`select stripe_promotion_code_id from discount_codes where id = ${id} and active`;
   if (!d) return;
-  await stripe().promotionCodes.update(d.stripe_promotion_code_id, { active: false });
+  if (d.stripe_promotion_code_id && stripeOn()) await stripe().promotionCodes.update(d.stripe_promotion_code_id, { active: false });
   await sql`update discount_codes set active = false where id = ${id}`;
 }
 
