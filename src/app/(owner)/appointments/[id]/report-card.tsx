@@ -34,7 +34,7 @@ export async function ReportCardSection({ staff, appointmentId, clientId, petNam
   }
   const token = await ensureReportToken(staff.businessId, appointmentId);
   const text = t("{client}, here is {pet}'s report card: {link}", { client: row.first_name, pet: petNames.join(" & "), link: reportUrl(token) });
-  const canEmail = staff.can.client_contact;
+  const canContact = staff.can.client_contact;
   const noEmail = !row.email ? t("This client has no email.") : null;
   return (
     <section className="space-y-2" aria-label={title}>
@@ -42,11 +42,11 @@ export async function ReportCardSection({ staff, appointmentId, clientId, petNam
       <div className="card space-y-3 p-4">
         <div className="grid grid-cols-2 gap-2 text-sm font-bold">
           <Link href={`/g/${token}`} target="_blank" className="col-span-2 rounded-full bg-brand py-3 text-center text-white">{t("Preview")}</Link>
-          {canEmail && (
+          {canContact && (
             <EmailReportButton appointmentId={appointmentId} label={t("Send by email")} disabledReason={noEmail}
               errors={{ "This client has no email.": t("This client has no email."), "Add a photo, note or tag first.": t("Add a photo, note or tag first.") }} />
           )}
-          {canEmail ? (
+          {canContact ? (
             <RecordReportSent appointmentId={appointmentId}>
               <SendFromPhone phone={row.phone} text={text} smsAllowed={!row.sms_opted_out_at} t={t} />
             </RecordReportSent>
