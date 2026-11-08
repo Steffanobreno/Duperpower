@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
-import { accessOf, billingOn, PRICES } from "@/lib/billing";
+import { accessOf, billingOn, paymentsMode, PRICES } from "@/lib/billing";
 import { sql } from "@/lib/db";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { APP_NAME } from "@/lib/product";
@@ -9,6 +9,7 @@ import { logoutAction } from "@/app/login/actions";
 import { I18nProvider } from "@/components/i18n";
 import { Button, Card, Field, Input, Notice } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
+import { TestModeBanner } from "@/components/test-mode-banner";
 import { referralStats, REFERRAL_CENTS } from "@/lib/discounts";
 import { choosePlanAction, manageBillingAction } from "./actions";
 
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const usd = (cents: number, locale: string) => new Intl.NumberFormat(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
 
 // The plan: the free trial, choosing monthly or yearly (Stripe Checkout), and Stripe's portal
-// to manage it. When the trial is over and nothing is paid, the app opens only this page.
+// to manage it; in test mode (no Stripe yet) the fake checkout and portal instead. When the trial is over and nothing is paid, the app opens only this page.
 export default async function BillingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { t, lang, messages, locale } = await getOwnerI18n();
   const staff = await requireStaff();
@@ -30,6 +31,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     select plan_status, trial_ends_at, plan_interval, plan_period_end, plan_cancel_at_period_end, stripe_customer_id
     from businesses where id = ${staff.businessId}`;
   const access = accessOf(b);
+  const testMode = paymentsMode() === "fake";
   // Without Stripe set up nothing is ever locked.
   if (!billingOn()) access.locked = false;
   const owner = staff.role === "owner";
@@ -54,6 +56,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       <main className="mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-8">
         <p className="text-center text-sm font-bold uppercase tracking-widest text-[#7d5f10]">{APP_NAME}</p>
         <h1 className="text-center text-2xl font-extrabold">{t("Your plan")}</h1>
+        {testMode && <TestModeBanner>{t("Test mode — no real charges")}</TestModeBanner>}
         {sp.done === "1" && <Notice kind="success">{t("Thank you! Your plan is being activated; it takes a few seconds.")}</Notice>}
         {sp.error === "1" && <Notice kind="error">{t("Stripe didn't open. Please try again in a minute.")}</Notice>}
         <Card><p className={access.locked || b.plan_status === "past_due" ? "font-semibold text-danger" : "font-semibold"}>{status}</p></Card>
@@ -78,7 +81,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                 <Button type="submit" name="interval" value={interval}>{interval === "month" ? t("Choose monthly") : t("Choose yearly")}</Button>
               </div>
             ))}
-            <p className="text-center text-xs text-muted">{t("Secure payment by Stripe. Cancel anytime.")}</p>
+            {!testMode && <p className="text-center text-xs text-muted">{t("Secure payment by Stripe. Cancel anytime.")}</p>}
           </form>
         )}
         {owner && billingOn() && b.stripe_customer_id && (

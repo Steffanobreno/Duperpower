@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import { paymentsMode } from "@/lib/billing";
+import { TestModeBanner } from "@/components/test-mode-banner";
 import { APP_NAME } from "@/lib/product";
 
 export const metadata: Metadata = { title: `Painel · ${APP_NAME}`, robots: { index: false, follow: false } };
@@ -26,7 +28,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/today" className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold">Voltar ao app</Link>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6">
+        {paymentsMode() === "fake" && (
+          <TestModeBanner>Modo de teste — nenhuma cobrança real. Os planos são “pagos” numa página de teste, sem Stripe.</TestModeBanner>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

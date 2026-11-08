@@ -1,5 +1,6 @@
 import { runMessagingJobs } from "@/lib/messaging";
 import { runLifecycleEmails } from "@/lib/lifecycle";
+import { runFakeRenewals } from "@/lib/fake-payments";
 
 // Hourly job (Hostinger cron or GitHub Actions) so emails go out even when the phone is off.
 // Call with header "Authorization: Bearer <CRON_SECRET>".
@@ -14,5 +15,10 @@ export async function GET(request: Request) {
     console.error("lifecycle emails failed", e);
     return 0;
   });
-  return Response.json({ ok: true, lifecycle });
+  // Test mode's subscriptions (no Stripe yet): renewed, or ended, when their period is over.
+  const fakeRenewals = await runFakeRenewals().catch((e) => {
+    console.error("test-mode renewals failed", e);
+    return 0;
+  });
+  return Response.json({ ok: true, lifecycle, fakeRenewals });
 }
