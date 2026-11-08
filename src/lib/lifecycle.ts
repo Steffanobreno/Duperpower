@@ -88,7 +88,8 @@ async function nextChargeCents(o: Owner): Promise<number | null> {
       return o.plan_amount_cents ? chargeCents(o.plan_amount_cents, o.fake_plan_discount ?? null) : null;
     }
     if (!stripeOn() || !o.stripe_subscription_id) return null;
-    const preview = await stripe().invoices.createPreview({ subscription: o.stripe_subscription_id });
+    // A slow or failing Stripe must not hold up the hourly job: one try, 5 seconds at most.
+    const preview = await stripe().invoices.createPreview({ subscription: o.stripe_subscription_id }, { timeout: 5000, maxNetworkRetries: 0 });
     return typeof preview.amount_due === "number" ? preview.amount_due : null;
   } catch (e) {
     console.error("upcoming invoice failed", o.id, e);
