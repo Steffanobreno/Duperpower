@@ -87,7 +87,8 @@ const hrefs = await phone.locator("footer a").evaluateAll((as) => as.map((a) => 
 for (const path of PAGES.filter((p) => p !== "/" && !p.startsWith("/guides/"))) {
   if (!hrefs.includes(`${path}?lang=es`)) fail(`the footer should link ${path} in Spanish: ${hrefs}`);
 }
-for (const href of new Set(hrefs)) {
+// The support email (a mailto: link) isn't a page to fetch.
+for (const href of new Set(hrefs.filter((h) => !h.startsWith("mailto:")))) {
   const r = await fetch(new URL(href, BASE));
   if (r.status !== 200) fail(`footer link ${href} → ${r.status}`);
 }

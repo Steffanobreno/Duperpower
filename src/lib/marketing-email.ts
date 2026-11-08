@@ -2,6 +2,8 @@
 // footer US law asks for (business name, mailing address, unsubscribe link). Plain functions,
 // used for the live preview in the editor and for sending.
 
+import { hasBuiltInArtwork } from "./product";
+
 export type CampaignContent = {
   preheader?: string | null; // the grey line next to the subject in the inbox
   banner: string | null; // "/marketing/halloween.jpg"
@@ -52,7 +54,7 @@ ${content.headline ? `<h1 style="margin:0 0 14px;font-size:24px;line-height:1.25
 ${button}
 </div>
 <p style="max-width:560px;margin:16px auto 0;text-align:center;color:#5d6b80;font-size:12px;line-height:1.6">
-${escape(vars.business)} · Mobile dog grooming in the Bay Area${phone ? ` · ${escape(phone)}` : ""}<br>
+${escape(vars.business)}${hasBuiltInArtwork(vars.business) ? " · Mobile dog grooming in the Bay Area" : ""}${phone ? ` · ${escape(phone)}` : ""}<br>
 ${mailingAddress ? `${escape(mailingAddress)}<br>` : ""}
 You get this email because you're a client of ${escape(vars.business)}. <a href="${escape(unsubscribeUrl)}" style="color:#5d6b80">Unsubscribe</a>
 ${poweredBy ? `<br>Online booking by <a href="${escape(poweredBy)}" style="color:#5d6b80">Fino</a>` : ""}

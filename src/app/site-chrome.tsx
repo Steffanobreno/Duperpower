@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getLang } from "@/lib/i18n/server";
+import { LEGAL } from "@/lib/legal";
 import { APP_NAME } from "@/lib/product";
 import { SITE_LANGS, siteChrome, siteLang, type SiteChrome, type SiteLang } from "./site-copy";
 
@@ -141,11 +142,12 @@ export function SiteFooter({ c, lang, path }: { c: SiteChrome; lang: string; pat
             <li><Link href="/terms" className="hover:text-white">{f.terms}</Link></li>
             <li><Link href="/privacy" className="hover:text-white">{f.privacy}</Link></li>
             <li><Link href={hrefFor("/login", lang)} className="hover:text-white">{f.login}</Link></li>
+            <li><a href={`mailto:${LEGAL.supportEmail}`} className="hover:text-white">{LEGAL.supportEmail}</a></li>
           </ul>
         </nav>
       </div>
       <div className="mx-auto mt-10 flex max-w-[1100px] flex-wrap items-center gap-3 border-t border-white/[0.08] pt-6">
-        <span>© {new Date().getFullYear()} {APP_NAME}. {f.rights}</span>
+        <span>© {new Date().getFullYear()} {LEGAL.company}. {f.rights}</span>
         <span className="ml-auto flex gap-2" aria-label="Language">
           {SITE_LANGS.map((l) => (
             <a key={l} href={l === "en" ? `${path}?lang=en` : `${path}?lang=${l}`} hrefLang={l} aria-current={l === lang ? "true" : undefined}

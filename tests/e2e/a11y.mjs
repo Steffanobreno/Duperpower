@@ -41,7 +41,7 @@ for (const width of [390, 1280]) {
   const page = await (await browser.newContext({ viewport: { width, height: 900 } })).newPage();
   // The public site and the client's pages.
   for (const path of ["/?lang=en", "/features", "/pricing?lang=pt", "/mobile-grooming-software?lang=es", "/mobile-grooming-route-planner",
-    "/switch", "/guides", "/guides/checkout", "/terms", "/signup", "/login", "/login/forgot", "/no-such-page",
+    "/switch", "/guides", "/guides/checkout", "/terms", "/privacy", "/signup", "/login", "/login/forgot", "/no-such-page",
     "/book/woofers", "/intake", visit && `/a/${visit.public_token}`, bill && `/r/${bill.public_token}`, card && `/g/${card.report_token}`].filter(Boolean)) {
     await check(page, path);
   }
