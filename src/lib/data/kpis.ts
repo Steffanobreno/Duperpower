@@ -15,7 +15,7 @@ export type Kpi = {
   /** The same days of the period before (see `vs`); null when the number has no comparison. */
   previous: number | null;
   unit: "money" | "count" | "percent";
-  /** What `previous` covers: the same days of last month (the default) or of last week. */
+  /** What `previous` covers: the same days of last month (the default) or the whole of last week. */
   vs?: "last_month" | "last_week";
 };
 
@@ -153,19 +153,18 @@ export async function monthKpis(staff: StaffContext, today: string): Promise<Kpi
 }
 
 /**
- * Today's 3 numbers: the month's revenue, this week's occupancy (Monday to Sunday) against last
- * week's Monday up to the same weekday as today, and overdue clients.
+ * Today's 3 numbers: the month's revenue, this week's occupancy (Monday to Sunday, upcoming visits
+ * included) against the whole of last week, and overdue clients.
  */
 export async function todayKpis(staff: StaffContext, today: string): Promise<Kpi[]> {
   const { current, previous } = monthWindows(today);
-  const elapsed = (weekdayOf(today) + 6) % 7;
-  const monday = addDaysYmd(today, -elapsed);
+  const monday = addDaysYmd(today, -((weekdayOf(today) + 6) % 7));
   const lastMonday = addDaysYmd(monday, -7);
   const [rev, occ, overdue] = await Promise.all([
     pair(revenue, staff, windowOf(staff, current.from, current.to), windowOf(staff, previous.from, previous.to)),
     Promise.all([
       occupancy(staff, windowOf(staff, monday, addDaysYmd(monday, 6))),
-      occupancy(staff, windowOf(staff, lastMonday, addDaysYmd(lastMonday, elapsed))),
+      occupancy(staff, windowOf(staff, lastMonday, addDaysYmd(lastMonday, 6))),
     ]),
     overdueCount(staff, today),
   ]);
