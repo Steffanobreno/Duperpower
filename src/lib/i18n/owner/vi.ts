@@ -1762,4 +1762,6 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Lần thanh toán đầu tiên của {app} là ngày {date}",
 "Gói năm {app} của bạn sẽ gia hạn vào ngày {date}",
 "Bản dùng thử miễn phí của bạn kết thúc vào ngày {date}. Hôm đó chúng tôi sẽ tính {amount} cho gói bạn đã chọn. Để tránh bị tính phí, hãy hủy trước đó tại trang Gói:",
-"Gói năm của bạn tự động gia hạn vào ngày {date} với giá {amount}. Để dừng gia hạn, hãy hủy trước đó tại trang Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán:"];
+"Gói năm của bạn tự động gia hạn vào ngày {date} với giá {amount}. Để dừng gia hạn, hãy hủy trước đó tại trang Gói; bạn vẫn dùng được đến hết kỳ đã thanh toán:",
+"Gói của bạn bắt đầu vào ngày {date}. Giá gói là {price}{interval}, trừ đi mọi ưu đãi bạn đã áp dụng. Để tránh bị tính phí, hãy hủy trước đó tại trang Gói:",
+"Gói năm của bạn gia hạn vào ngày {date}. Giá gói là {price}{interval}, trừ đi mọi ưu đãi bạn đã áp dụng. Để dừng gia hạn, hãy hủy trước đó tại trang Gói:"];

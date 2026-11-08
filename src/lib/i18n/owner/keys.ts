@@ -1764,5 +1764,7 @@ export const OWNER_KEYS: string[] = [
  "Your {app} first charge is on {date}",
  "Your {app} yearly plan renews on {date}",
  "Your free trial ends on {date}. On that day we will charge {amount} for the plan you chose. To avoid the charge, cancel before then on the Plan page:",
- "Your yearly plan renews automatically on {date} for {amount}. To stop the renewal, cancel before then on the Plan page; you keep access until the end of the period you paid for:"
+ "Your yearly plan renews automatically on {date} for {amount}. To stop the renewal, cancel before then on the Plan page; you keep access until the end of the period you paid for:",
+ "Your plan starts on {date}. The plan price is {price}{interval}, less any discount you applied. To avoid the charge, cancel before then on the Plan page:",
+ "Your yearly plan renews on {date}. The plan price is {price}{interval}, less any discount you applied. To stop the renewal, cancel before then on the Plan page:"
 ];

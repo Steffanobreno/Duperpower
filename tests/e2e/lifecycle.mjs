@@ -103,14 +103,14 @@ const bodyOf = (from, email, re) => {
 const longDate = (d) => d.toLocaleDateString("en", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 const trialEnd = new Date(Date.now() + 2 * 86_400_000);
 from = mails().length;
-await db`update businesses set plan_status = 'active', stripe_subscription_id = 'sub_chosen', plan_interval = 'month', plan_amount_cents = 2900,
+await db`update businesses set plan_status = 'active', stripe_subscription_id = ${`fake_sub_${biz.id}`}, fake_plan_discount = null, plan_interval = 'month', plan_amount_cents = 2900,
          trial_ends_at = ${trialEnd}, plan_period_end = ${trialEnd}, plan_cancel_at_period_end = false where id = ${biz.id}`;
 await cron();
 await cron();
 got = subjectsTo(from, email);
 if (got.length !== 1 || !/first charge/.test(got[0])) fail(`one first-charge email expected: ${JSON.stringify(got)}`);
 let body = bodyOf(from, email, /first charge/);
-if (!body.includes(longDate(trialEnd)) || !body.includes("US$29")) fail(`the first-charge email needs the date and amount: ${body}`);
+if (!body.includes(longDate(trialEnd)) || !body.includes("US$29.00")) fail(`the first-charge email needs the date and amount: ${body}`);
 step("a plan chosen during the trial: one email 2 days before the first charge, with its date and amount");
 
 // A plan cancelled before the first charge is not charged either.
@@ -133,7 +133,7 @@ await cron();
 got = subjectsTo(from, email);
 if (got.length !== 1 || !/yearly plan renews/.test(got[0])) fail(`one renewal email expected: ${JSON.stringify(got)}`);
 body = bodyOf(from, email, /yearly plan renews/);
-if (!body.includes(longDate(renews)) || !body.includes("US$290")) fail(`the renewal email needs the date and amount: ${body}`);
+if (!body.includes(longDate(renews)) || !body.includes("US$290.00")) fail(`the renewal email needs the date and amount: ${body}`);
 step("a yearly plan renewing in 14.5 days: one email with the date and amount");
 
 from = mails().length;
@@ -145,6 +145,49 @@ await db`delete from lifecycle_emails where business_id = ${biz.id} and kind lik
 await cron();
 if (subjectsTo(from, email).length) fail("no renewal email for a plan cancelled at period end");
 step("a yearly plan cancelled at period end: no email");
+
+// The amount is the real next charge, never the list price when a discount applies. Each case
+// starts from a clean slate (nothing sent yet) and checks what the email says.
+const chargeEmail = async (label, state, subject, check) => {
+  await db`delete from lifecycle_emails where business_id = ${biz.id}`;
+  await db`update businesses set plan_cancel_at_period_end = false ${state}  where id = ${biz.id}`;
+  const f = mails().length;
+  await cron();
+  const s = subjectsTo(f, email);
+  if (s.length !== 1 || !subject.test(s[0])) fail(`${label}: one "${subject}" email expected: ${JSON.stringify(s)}`);
+  const b = bodyOf(f, email, subject);
+  if (!check(b)) fail(`${label}: wrong text: ${b}`);
+};
+const soon = new Date(Date.now() + 2 * 86_400_000);
+const monthly = (disc, sub = `fake_sub_${biz.id}`) => db`, plan_status = 'active', stripe_subscription_id = ${sub}, plan_interval = 'month', plan_amount_cents = 2900,
+  trial_ends_at = ${soon}, plan_period_end = ${soon}, fake_plan_discount = ${disc ? db.json(disc) : null}`;
+await chargeEmail("referred, first month free", monthly({ code: null, percentOff: null, amountOffCents: 2900, chargesLeft: 1 }), /first charge/,
+  (b) => b.includes("US$0.00") && !b.includes("US$29"));
+const yearlySoon = (disc) => db`, plan_status = 'active', stripe_subscription_id = ${`fake_sub_${biz.id}`}, plan_interval = 'year', plan_amount_cents = 29000,
+  trial_ends_at = ${soon}, plan_period_end = ${soon}, fake_plan_discount = ${disc ? db.json(disc) : null}`;
+await chargeEmail("50% once, yearly", yearlySoon({ code: "HALF", percentOff: 50, amountOffCents: null, chargesLeft: 1 }), /first charge/,
+  (b) => b.includes("US$145.00") && !b.includes("US$290"));
+step("the first-charge email shows the real amount after a discount (US$0.00 for a free first month, US$145.00 for 50% off a year)");
+
+// The renewal after the discount is used up: the full price; with one left: the discount applies.
+const in14 = new Date(Date.now() + 14 * 86_400_000);
+const renewing = (disc, at) => db`, plan_status = 'active', stripe_subscription_id = ${`fake_sub_${biz.id}`}, plan_interval = 'year', plan_amount_cents = 29000,
+  trial_ends_at = now() - interval '60 days', plan_period_end = ${at}, fake_plan_discount = ${disc ? db.json(disc) : null}`;
+await chargeEmail("renewal with a discount left", renewing({ code: "HALF", percentOff: 50, amountOffCents: null, chargesLeft: 2 }, in14), /yearly plan renews/,
+  (b) => b.includes("US$145.00"));
+await chargeEmail("renewal, discount used up", renewing({ code: "HALF", percentOff: 50, amountOffCents: null, chargesLeft: 0 }, in14), /yearly plan renews/,
+  (b) => b.includes("US$290.00"));
+await chargeEmail("renewal in 13.5 days (a late cron still sends it)", renewing(null, new Date(Date.now() + 13.5 * 86_400_000)), /yearly plan renews/,
+  (b) => b.includes("US$290.00"));
+step("yearly renewal: the remaining discount counts; sent from 13 days before");
+
+// An amount that can't be told (Stripe unreachable/not set up, or the plan price missing): the
+// reminder still goes out, with the plan price and "less any discount", and no charge figure.
+await chargeEmail("unknown amount (Stripe)", monthly(null, "sub_chosen"), /first charge/,
+  (b) => /less any discount/.test(b) && !/we will charge/.test(b));
+await chargeEmail("missing price", db`, plan_status = 'active', stripe_subscription_id = ${`fake_sub_${biz.id}`}, plan_interval = 'month', plan_amount_cents = null,
+  trial_ends_at = ${soon}, plan_period_end = ${soon}`, /first charge/, (b) => /less any discount/.test(b));
+step("amount unknown: a reminder with the plan price and 'less any discount', never the generic trial email");
 
 // A server error → /admin/errors, and one email to the admin. The trigger: a groom photo link whose
 // id has the right length and letters but isn't a real id (the database refuses it).

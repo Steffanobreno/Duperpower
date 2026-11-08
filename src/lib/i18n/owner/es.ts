@@ -1762,4 +1762,6 @@ export const es: string[] = ["Reserva abandonada",
 "Tu primer cargo de {app} es el {date}",
 "Tu plan anual de {app} se renueva el {date}",
 "Tu prueba gratuita termina el {date}. Ese día cobraremos {amount} por el plan que elegiste. Para evitar el cargo, cancela antes en la página del Plan:",
-"Tu plan anual se renueva automáticamente el {date} por {amount}. Para detener la renovación, cancela antes en la página del Plan; mantienes el acceso hasta el final del período que pagaste:"];
+"Tu plan anual se renueva automáticamente el {date} por {amount}. Para detener la renovación, cancela antes en la página del Plan; mantienes el acceso hasta el final del período que pagaste:",
+"Tu plan empieza el {date}. El precio del plan es {price}{interval}, menos cualquier descuento que hayas aplicado. Para evitar el cargo, cancela antes en la página del Plan:",
+"Tu plan anual se renueva el {date}. El precio del plan es {price}{interval}, menos cualquier descuento que hayas aplicado. Para detener la renovación, cancela antes en la página del Plan:"];

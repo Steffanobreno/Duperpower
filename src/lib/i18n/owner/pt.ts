@@ -1762,4 +1762,6 @@ export const pt: string[] = ["Agendamento abandonado",
 "Sua primeira cobrança do {app} é em {date}",
 "Seu plano anual do {app} renova em {date}",
 "Seu teste grátis termina em {date}. Nesse dia cobraremos {amount} pelo plano que você escolheu. Para evitar a cobrança, cancele antes na página Plano:",
-"Seu plano anual renova automaticamente em {date} por {amount}. Para parar a renovação, cancele antes na página Plano; você mantém o acesso até o fim do período pago:"];
+"Seu plano anual renova automaticamente em {date} por {amount}. Para parar a renovação, cancele antes na página Plano; você mantém o acesso até o fim do período pago:",
+"Seu plano começa em {date}. O preço do plano é {price}{interval}, menos qualquer desconto que você aplicou. Para evitar a cobrança, cancele antes na página Plano:",
+"Seu plano anual renova em {date}. O preço do plano é {price}{interval}, menos qualquer desconto que você aplicou. Para parar a renovação, cancele antes na página Plano:"];
