@@ -1733,5 +1733,21 @@ export const OWNER_KEYS: string[] = [
  "Nails done",
  "Teeth brushed",
  "Fleas found",
- "The client sees this note on the report card."
+ "The client sees this note on the report card.",
+ "Confirm your plan",
+ "Test mode — no real charges",
+ "Plan",
+ "Referral: first month free",
+ "Code {code}: {off} off",
+ "first payment only",
+ "on every payment",
+ "for {n} months",
+ "First payment",
+ "Your free trial is kept: the first payment is on {date}.",
+ "Pay (test)",
+ "Back to your plan",
+ "Manage subscription",
+ "Next renewal: {date}",
+ "Resume",
+ "Cancel at period end"
 ];
