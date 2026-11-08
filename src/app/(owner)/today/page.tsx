@@ -26,6 +26,8 @@ import { PetCodeChips } from "@/components/chips";
 import { GoldBanner } from "@/components/gold-banner";
 import { waitlistOpenings } from "@/lib/data/waitlist";
 import { fillSummary } from "@/lib/data/fill-gap";
+import { todayKpis } from "@/lib/data/kpis";
+import { KpiTiles } from "@/components/kpi-tiles";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -60,7 +62,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
   // Everything that only needs the date, in one go (each trip to the database costs time).
-  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start], fill] = await Promise.all([
+  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start], fill, kpis] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
@@ -92,6 +94,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       from businesses b where b.id = ${staff.businessId}`,
     // Free time on a day that hasn't passed, and how many clients could fill it.
     fillSummary(staff, date),
+    // The month's revenue, the week's occupancy and overdue clients: on today's date, for those who see Reports.
+    staff.can.reports && date === today ? todayKpis(staff, today) : null,
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.
   // Without "see every groomer's visits", only their own route.
@@ -167,6 +171,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       alerts: s.pets.flatMap((p) => vaccines.filter((v) => v.pet_id === p.id).map((v) => `💉 ${p.name}: ${alertText(v)}`)),
     };
   });
+  const tiles = kpis && (
+    <section aria-label={t("This month so far")}>
+      <KpiTiles kpis={kpis} t={t} today={today} labels={{ occupancy: msg("Occupancy this week") }} />
+    </section>
+  );
   const expected = stops.reduce((sum, s) => sum + s.total_cents, 0);
   const done = stops.filter((s) => s.status === "completed").length;
 
@@ -260,6 +269,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           </section>
         )}
         {sp.reordered === "1" && <Toast>{t("The visits are in the new order, with their new times.")}</Toast>}
+        {/* In map mode the map fills the screen down to the tab bar, so the tiles go under it (see below). */}
+        {(stops.length === 0 || view === "list") && tiles}
         {fillLink && (stops.length === 0 || view === "list") && (
           <Link href={`/fill/${date}`} className="card block px-4 py-3 text-sm font-semibold text-brand">{fillLink} ›</Link>
         )}
@@ -326,6 +337,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               <DayMap stops={cards} path={road?.path} route={route} compact={monthOpen}
                 overlay={fillLink && <Link href={`/fill/${date}`} className="absolute left-3 top-3 z-[500] rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">{fillLink} ›</Link>} />
             </div>
+            {/* Below the map, a scroll away: the map's -mb-24 would put them over the visit cards, hence mt-28. */}
+            {tiles && <div className="mt-28">{tiles}</div>}
           </>
         ) : (
           <>

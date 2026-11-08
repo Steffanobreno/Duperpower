@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { report, type Group } from "@/lib/data/reports";
+import { monthKpis } from "@/lib/data/kpis";
+import { KpiTiles } from "@/components/kpi-tiles";
 import { PERIODS, reportPeriod } from "@/lib/report-period";
 import { money, todayYmd } from "@/lib/format";
 import { methodLabel } from "@/lib/payment-methods";
@@ -28,7 +30,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   const sp = await searchParams;
   const today = todayYmd(staff.timezone);
   const { from, to, period, length, group, rangeQuery } = reportPeriod(sp, today);
-  const r = await report(staff, from, to, group);
+  const [r, kpis] = await Promise.all([report(staff, from, to, group), monthKpis(staff, today)]);
   const maxBucket = Math.max(1, ...r.buckets.map((b) => Math.max(b.expected, b.collected)));
   const maxMethod = Math.max(1, ...r.methods.map((m) => m.amount + m.tips));
   const avg = r.appts ? Math.round(r.expected / r.appts) : 0;
@@ -37,6 +39,11 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     <>
       <PageHeader title={t("Reports")} action={<Link href="/reports/payroll" className="rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">{t("Payroll")}</Link>} />
       <Page>
+        {/* The month so far against the same days of last month, whatever period is picked below. */}
+        <section aria-label={t("This month so far")} className="space-y-2">
+          <h2 className="section-label">{t("This month so far")}</h2>
+          <KpiTiles kpis={kpis} t={t} today={today} />
+        </section>
         <nav aria-label={t("Period")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {PERIODS.map((p) => (
             <Link key={p.key} href={`/reports?period=${p.key}`} aria-current={period === p.key ? "page" : undefined}

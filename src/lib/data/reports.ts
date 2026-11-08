@@ -9,7 +9,8 @@ import { dayRangeUtc } from "../format";
 
 export type Group = "day" | "week" | "month";
 
-const LIVE = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
+/** Visits that are on (booked, under way or done): not cancelled, no-show, declined or waitlisted. */
+export const LIVE = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
 
 export async function report(staff: StaffContext, from: string, to: string, group: Group) {
   const start = dayRangeUtc(from, staff.timezone).start;
