@@ -1,5 +1,5 @@
 "use server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { removeStaffLogin, requirePermission, setStaffLogin } from "@/lib/auth";
@@ -50,7 +50,7 @@ export async function updateGroomerAction(id: string, _: TeamState, form: FormDa
             where id = ${id} and business_id = ${staff.businessId}`;
   revalidatePath("/settings/team");
   revalidatePath("/calendar");
-  redirect("/settings/team");
+  redirect("/settings/team", RedirectType.replace);
 }
 
 export async function saveRoleAction(id: string, _: TeamState, form: FormData): Promise<TeamState> {

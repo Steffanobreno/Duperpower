@@ -1,5 +1,5 @@
 "use server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { requireStaff, requirePermission } from "@/lib/auth";
@@ -82,9 +82,9 @@ export async function createClientAction(_: FormState, form: FormData): Promise<
     const size = String(form.get("pet_size") ?? "");
     const sizeClass = rg.sizeBy === "weight" && lbs ? sizeFromWeight(lbs) : SIZES.some((s) => s.value === size) ? size : null;
     await sql`insert into pets (client_id, name, size_class, weight_lbs) values (${id}, ${petName}, ${sizeClass}, ${lbs})`;
-    redirect(`/clients/${id}`);
+    redirect(`/clients/${id}`, RedirectType.replace);
   }
-  redirect(`/clients/${id}/pets/new?first=1`);
+  redirect(`/clients/${id}/pets/new?first=1`, RedirectType.replace);
 }
 
 export async function updateClientAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {
@@ -110,7 +110,7 @@ export async function updateClientAction(clientId: string, _: FormState, form: F
     throw e;
   }
   revalidatePath(`/clients/${clientId}`);
-  redirect(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}`, RedirectType.replace);
 }
 
 export async function addNoteAction(clientId: string, form: FormData) {
@@ -178,7 +178,7 @@ export async function savePetAction(clientId: string, petId: string | null, _: F
               ${v.sex}, ${v.behavior}, ${v.behavior_tags}, ${v.fixed}, ${v.vet_name}, ${v.vet_phone}, ${v.notes}, ${v.rebook_every_days})`;
   }
   revalidatePath(`/clients/${clientId}`);
-  redirect(form.get("then") === "book" ? `/appointments/new?client=${clientId}` : `/clients/${clientId}`);
+  redirect(form.get("then") === "book" ? `/appointments/new?client=${clientId}` : `/clients/${clientId}`, RedirectType.replace);
 }
 
 

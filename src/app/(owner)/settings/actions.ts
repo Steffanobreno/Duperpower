@@ -1,5 +1,5 @@
 "use server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
@@ -45,7 +45,7 @@ export async function saveServiceAction(serviceId: string | null, _: FormState, 
               (select coalesce(max(sort_order), 0) + 1 from services where business_id = ${staff.businessId}))`;
   }
   revalidatePath("/settings/services");
-  redirect("/settings/services");
+  redirect("/settings/services", RedirectType.replace);
 }
 
 export async function moveServiceAction(serviceId: string, direction: "up" | "down") {

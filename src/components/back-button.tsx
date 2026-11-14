@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useT } from "./i18n";
 
 // The header's back arrow. It goes back in the browser history when the previous screen is
@@ -8,11 +8,10 @@ import { useT } from "./i18n";
 // link), so it never leaves the app.
 //
 // How "the previous screen is in the app" is known: <NavDepth /> (mounted once in the owner
-// layout) counts, in sessionStorage, how many in-app navigations happened since this tab loaded
-// the app. Forward navigations add 1. Going back (this button, or the browser/Android back
+// layout) counts, in sessionStorage, the history entries the app pushed in this tab. Going back (this button, or the browser/Android back
 // gesture, both fire `popstate`) never adds: the button takes 1 off and flags the move, and
-// the popstate handler skips the pathname change that follows it (and takes 1 off for a
-// gesture the button did not start). So the count can return to 0.
+// the popstate handler clears the flag (and takes 1 off for a gesture the button did not start).
+// Pushes are counted by wrapping history.pushState, so replace navigations count 0.
 
 const DEPTH = "fino:navDepth";
 const GOING_BACK = "fino:navBack";
@@ -38,6 +37,8 @@ export function BackButton({ fallback }: { fallback: string }) {
         if (d > 0) {
           write(DEPTH, String(d - 1));
           write(GOING_BACK, "1");
+          // If no popstate follows (nothing to go back to), don't leave the flag armed.
+          setTimeout(() => write(GOING_BACK, null), 2000);
           router.back();
         } else {
           router.push(fallback);
@@ -50,32 +51,35 @@ export function BackButton({ fallback }: { fallback: string }) {
 
 /** Counts in-app navigations for BackButton. Renders nothing. */
 export function NavDepth() {
-  const pathname = usePathname();
-  const last = useRef<string | null>(null);
-  const skip = useRef(false);
-
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    // A fresh document entry (typed URL, link from outside) has no in-app history behind it. A reload or a
+    // back/forward into this document keeps the count.
+    try {
+      const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      if (nav?.type === "navigate") write(DEPTH, "0");
+    } catch { /* no timing API: keep what we have */ }
+
+    // The App Router pushes a history entry with history.pushState and replaces with replaceState
+    // (next/dist/client/components/app-router.js, the commit effect), so counting pushes counts real
+    // forward navigations; replace-style navigations (redirects, router.replace) count 0.
+    const h = window.history as History & { __finoWrapped?: boolean };
+    if (!h.__finoWrapped) {
+      h.__finoWrapped = true;
+      const push = h.pushState.bind(h);
+      h.pushState = (...args: Parameters<History["pushState"]>) => {
+        push(...args);
+        write(DEPTH, String(depth() + 1));
+      };
+    }
+
     const onPop = () => {
+      // The button already took 1 off and flagged it; a browser/Android back gesture did not.
       if (read(GOING_BACK)) write(GOING_BACK, null);
       else write(DEPTH, String(Math.max(0, depth() - 1)));
-      skip.current = true;
-      // A history move that keeps the same pathname never reaches the effect below: don't leave the skip armed.
-      clearTimeout(timer);
-      timer = setTimeout(() => { skip.current = false; }, 2000);
     };
     window.addEventListener("popstate", onPop);
-    return () => { window.removeEventListener("popstate", onPop); clearTimeout(timer); };
+    return () => { window.removeEventListener("popstate", onPop) };
   }, []);
-
-  useEffect(() => {
-    // Compare with the last pathname seen: the first render (and React's dev double-run of effects) has no change.
-    const changed = last.current !== null && last.current !== pathname;
-    last.current = pathname;
-    if (!changed) return;
-    if (skip.current) { skip.current = false; return; }
-    write(DEPTH, String(depth() + 1));
-  }, [pathname]);
 
   return null;
 }

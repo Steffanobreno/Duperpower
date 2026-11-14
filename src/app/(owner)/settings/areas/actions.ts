@@ -1,5 +1,5 @@
 "use server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { msg } from "@/lib/i18n";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
@@ -56,7 +56,7 @@ export async function saveAreaAction(id: string | null, _: FormState, form: Form
               values (${staff.businessId}, ${name}, ${color}, ${weekdays}, ${zips})`;
   }
   revalidatePath("/settings/areas");
-  redirect("/settings/areas");
+  redirect("/settings/areas", RedirectType.replace);
 }
 
 export async function deleteAreaAction(id: string) {

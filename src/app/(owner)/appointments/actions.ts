@@ -1,6 +1,6 @@
 "use server";
 import { inBackground } from "@/lib/background";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext, requirePermission } from "@/lib/auth";
 import { isExclusionViolation, sql } from "@/lib/db";
@@ -148,7 +148,7 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
   revalidatePath("/today");
   revalidatePath("/calendar");
   revalidatePath("/waitlist");
-  redirect(`/appointments/${id}?booked=1`);
+  redirect(`/appointments/${id}?booked=1`, RedirectType.replace);
 }
 
 
@@ -223,7 +223,7 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
   if (booked && form.get("notify") === "on") await notifyAppointment(appointmentId, "booked");
   revalidatePath("/today");
   revalidatePath("/calendar");
-  redirect(`/appointments/${appointmentId}`);
+  redirect(`/appointments/${appointmentId}`, RedirectType.replace);
 }
 
 export async function updateNotesAction(appointmentId: string, form: FormData) {
