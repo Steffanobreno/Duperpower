@@ -5,7 +5,10 @@ import { milesBetween, zipInfo } from "./zip";
 
 // Postal codes as map points, in any country: the free California ZIP table first, then
 // Google (once per code, kept in postal_points). Without Google outside that table, distances
-// are unknown and nothing is refused for distance.
+// are unknown. The service radius then refuses nothing. The drive limit between stops
+// (findSlots): in the US an unknown ZIP is refused up front and a stop at an unknown ZIP blocks
+// the times next to it; elsewhere a client code that can't be placed skips the drive limit
+// (driveRuleApplies), while for a client code that can be placed, a stop that can't still blocks.
 
 export type Point = { lat: number; lng: number; city: string | null };
 

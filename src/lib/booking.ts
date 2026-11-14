@@ -2,7 +2,7 @@ import "server-only";
 import { sql } from "./db";
 import { addDaysYmd, dayRangeUtc, dayLabel, timeLabel, todayYmd, weekdayOf, zonedToUtc } from "./format";
 import { areaCovers, milesIn, postalPoints } from "./geo/postal";
-import { driveMinutesBetween, NEAR_DRIVE_MINUTES, slotWithinDrive } from "./geo/drive";
+import { driveMinutesBetween, driveRuleApplies, NEAR_DRIVE_MINUTES, slotWithinDrive, type Stop } from "./geo/drive";
 import { postalOk, regionOf, type Region } from "./region";
 import { closedDays } from "./data/closed";
 import { billingOn } from "./billing";
@@ -15,7 +15,8 @@ import { billingOn } from "./billing";
 //    with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. the estimated drive from the stop before and to the stop after (when there is one) is at most
-//    `max_drive_minutes` each way (slotWithinDrive); a stop at an unknown ZIP blocks.
+//    `max_drive_minutes` each way (slotWithinDrive); a stop at an unknown ZIP blocks. Outside the
+//    US, a client postal code that can't be placed skips this rule (driveRuleApplies).
 // Days when the van is already close by (NEAR_DRIVE_MINUTES) are marked, and on them the times right
 // before or after the nearby visit are marked "best", so clients pick what keeps the route short.
 // Requests hold their time slot until the owner accepts or declines them.
@@ -133,6 +134,9 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
   const buffer = b.buffer_minutes * 60_000;
   const length = Math.max(durationMin, 15) * 60_000;
+  const withinDrive = driveRuleApplies(points, zip, b.country)
+    ? (stops: Stop[], t: number) => slotWithinDrive(points, zip, stops, t, t + length, b.max_drive_minutes)
+    : () => true;
   const step = b.slot_minutes * 60_000;
   const result: DaySlots[] = [];
 
@@ -158,7 +162,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     const starts = new Set<number>();
     for (const anchor of anchors) {
       for (let t = anchor; t + length <= close && !clashes(t); t += step) {
-        if (t >= earliest && slotWithinDrive(points, zip, sameDay, t, t + length, b.max_drive_minutes)) starts.add(t);
+        if (t >= earliest && withinDrive(sameDay, t)) starts.add(t);
       }
     }
     const sorted = [...starts].sort((x, y) => x - y);

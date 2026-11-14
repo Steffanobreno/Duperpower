@@ -1,4 +1,4 @@
-import { milesIn, type Point } from "./postal";
+import { milesIn, normPostal, type Point } from "./postal";
 
 // The free drive-time estimate: straight-line miles between ZIP centers, stretched for roads
 // and divided by an average speed. Conservative on purpose (no traffic data). Change the
@@ -23,6 +23,16 @@ export function driveMinutesBetween(
 ): number | null {
   const miles = milesIn(points, a, b);
   return miles == null ? null : driveMinutes(miles);
+}
+
+/**
+ * Whether the drive rule (slotWithinDrive) applies to a client at `zip`. In the US always: an
+ * unknown ZIP is refused before this (zipProblem), and unknown values block. Elsewhere a postal
+ * code may be fine but impossible to place (no Google key, not in postal_points); then there is
+ * nothing to measure from, and the rule is skipped rather than closing every day with a visit.
+ */
+export function driveRuleApplies(points: Map<string, Point | null>, zip: string, country: string) {
+  return country === "US" || points.get(normPostal(zip)) != null;
 }
 
 /** A visit already on the day, as a stop on the van's route. */
