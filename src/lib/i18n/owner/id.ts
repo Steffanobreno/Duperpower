@@ -1784,4 +1784,7 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Perjanjian ini berlaku selama 12 bulan sejak ditandatangani.",
 "Dengan memesan, Anda menyetujui ketentuan ini.",
 "Lihat teks perjanjian (versi {version})",
-"Ditandatangani sebelum {app} menyimpan setiap versi; teksnya mungkin sudah berubah sejak itu."];
+"Ditandatangani sebelum {app} menyimpan setiap versi; teksnya mungkin sudah berubah sejak itu.",
+"Waktu mengemudi antar klien: 10 sampai 90 menit.",
+"Maksimum menit mengemudi antar klien",
+"Perkiraan tanpa lalu lintas, dari jarak antar kode pos."];

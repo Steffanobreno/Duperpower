@@ -1786,5 +1786,8 @@ export const OWNER_KEYS: string[] = [
  "This agreement is valid for 12 months from signing.",
  "By booking you agree to these terms.",
  "See the agreement text (version {version})",
- "Signed before {app} kept each version; the text may have changed since."
+ "Signed before {app} kept each version; the text may have changed since.",
+ "Drive time between clients: 10 to 90 minutes.",
+ "Maximum drive minutes between clients",
+ "An estimate without traffic, from the distance between ZIP codes."
 ];

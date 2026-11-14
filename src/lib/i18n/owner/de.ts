@@ -1784,4 +1784,7 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Diese Vereinbarung gilt 12 Monate ab der Unterzeichnung.",
 "Mit der Buchung stimmen Sie diesen Bedingungen zu.",
 "Vertragstext ansehen (Version {version})",
-"Unterschrieben, bevor {app} jede Version aufbewahrt hat; der Text kann sich seitdem geändert haben."];
+"Unterschrieben, bevor {app} jede Version aufbewahrt hat; der Text kann sich seitdem geändert haben.",
+"Fahrzeit zwischen Kunden: 10 bis 90 Minuten.",
+"Maximale Fahrminuten zwischen Kunden",
+"Eine Schätzung ohne Verkehr, anhand der Entfernung zwischen Postleitzahlen."];

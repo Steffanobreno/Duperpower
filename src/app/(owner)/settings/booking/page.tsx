@@ -22,7 +22,7 @@ export default async function BookingSettingsPage() {
   const staff = await requirePermission("settings");
   const rg = staff.region;
   const [b] = await sql`
-    select online_booking_enabled, buffer_minutes, max_cluster_miles::float8 as max_cluster_miles,
+    select online_booking_enabled, buffer_minutes, max_drive_minutes,
            service_radius_miles::float8 as service_radius_miles, min_notice_hours, booking_days_ahead,
            cancellation_hours, start_zip, slot_minutes, auto_accept, name
     from businesses where id = ${staff.businessId}`;
@@ -76,8 +76,8 @@ export default async function BookingSettingsPage() {
               {t("Clients can request appointments online")}
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <Field label={rg.km ? t("Max km between a day's stops") : t("Max miles between a day's stops")} hint={t("New requests must be this close to the other visits that day.")}>
-                <Input name="max_cluster_miles" inputMode="decimal" defaultValue={distanceOut(b.max_cluster_miles, rg)} />
+              <Field label={t("Maximum drive minutes between clients")} hint={t("An estimate without traffic, from the distance between ZIP codes.")}>
+                <Input name="max_drive_minutes" type="number" inputMode="numeric" min={10} max={90} step={5} defaultValue={b.max_drive_minutes} />
               </Field>
               <Field label={t("Driving time between visits (min)")} hint={t("Kept free before and after each visit.")}>
                 <Input name="buffer_minutes" inputMode="numeric" defaultValue={b.buffer_minutes} />

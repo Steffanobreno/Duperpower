@@ -32,6 +32,7 @@ export type PublicBusiness = {
   email: string | null;
   buffer_minutes: number;
   max_cluster_miles: number;
+  max_drive_minutes: number;
   booking_days_ahead: number;
   min_notice_hours: number;
   slot_minutes: number;
@@ -49,7 +50,7 @@ export async function getPublicBusiness(slug?: string | null) {
   const key = typeof slug === "string" && /^[a-z0-9-]{2,60}$/.test(slug) ? slug : null;
   const [b] = await sql<PublicBusiness[]>`
     select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit, b.website_url, b.email, b.buffer_minutes,
-           b.max_cluster_miles::float8 as max_cluster_miles, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
+           b.max_cluster_miles::float8 as max_cluster_miles, b.max_drive_minutes, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles,
            -- A business whose trial ended unpaid (with billing on) has its booking page paused.
            b.online_booking_enabled and (${!billingOn()} or b.plan_status in ('active', 'free', 'past_due')

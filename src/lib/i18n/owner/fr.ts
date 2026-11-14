@@ -1784,4 +1784,7 @@ export const fr: string[] = ["Réservation abandonnée",
 "Ce contrat est valable 12 mois à compter de la signature.",
 "En réservant, vous acceptez ces conditions.",
 "Voir le texte du contrat (version {version})",
-"Signé avant que {app} ne conserve chaque version ; le texte a pu changer depuis."];
+"Signé avant que {app} ne conserve chaque version ; le texte a pu changer depuis.",
+"Temps de trajet entre clients : de 10 à 90 minutes.",
+"Minutes de trajet maximum entre clients",
+"Une estimation sans circulation, d'après la distance entre codes postaux."];

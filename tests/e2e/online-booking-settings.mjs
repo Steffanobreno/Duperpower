@@ -46,6 +46,18 @@ await page.getByText("Book clients I already know right away").click();
 await page.locator("form", { hasText: "When a client books online" }).getByRole("button", { name: "Save" }).click();
 await page.getByText("Saved.").first().waitFor();
 
+// Maximum drive minutes between clients: saved to max_drive_minutes.
+await page.getByLabel("Maximum drive minutes between clients").fill("30");
+const settingsForm = page.locator("form", { hasText: "Clients can request appointments online" });
+await settingsForm.getByRole("button", { name: "Save" }).click();
+let driveMax;
+for (let i = 0; i < 20 && driveMax !== 30; i++) {
+  await page.waitForTimeout(250);
+  [{ max_drive_minutes: driveMax }] = await db`select b.max_drive_minutes from businesses b join staff s on s.business_id = b.id join users u on u.id = s.user_id where u.email = 'owner@example.com'`;
+}
+if (driveMax !== 30) fail(`max_drive_minutes should be 30, is ${driveMax}`);
+step("the maximum drive minutes between clients saves (30)");
+
 const client = await newPage();
 const button = (name) => client.getByRole("button", { name, exact: true });
 await client.goto(`${BASE}/book`);

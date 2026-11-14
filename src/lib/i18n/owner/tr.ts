@@ -1784,4 +1784,7 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Bu sözleşme imza tarihinden itibaren 12 ay geçerlidir.",
 "Randevu alarak bu koşulları kabul etmiş olursunuz.",
 "Sözleşme metnini gör (sürüm {version})",
-"{app} her sürümü saklamaya başlamadan önce imzalandı; metin o zamandan beri değişmiş olabilir."];
+"{app} her sürümü saklamaya başlamadan önce imzalandı; metin o zamandan beri değişmiş olabilir.",
+"Müşteriler arası sürüş süresi: 10 ile 90 dakika.",
+"Müşteriler arası en fazla sürüş dakikası",
+"Trafik olmadan, posta kodları arasındaki mesafeden bir tahmin."];

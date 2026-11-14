@@ -1784,4 +1784,7 @@ export const tl: string[] = ["Naiwang booking",
 "May bisa ang kasunduang ito sa loob ng 12 buwan mula sa pagpirma.",
 "Sa pag-book, sumasang-ayon ka sa mga tuntuning ito.",
 "Tingnan ang teksto ng kasunduan (bersyon {version})",
-"Napirmahan bago itinago ng {app} ang bawat bersyon; maaaring nagbago na ang teksto mula noon."];
+"Napirmahan bago itinago ng {app} ang bawat bersyon; maaaring nagbago na ang teksto mula noon.",
+"Oras ng pagmamaneho sa pagitan ng mga kliyente: 10 hanggang 90 minuto.",
+"Pinakamataas na minuto ng pagmamaneho sa pagitan ng mga kliyente",
+"Isang pagtatantya na walang trapiko, mula sa layo ng mga ZIP code."];

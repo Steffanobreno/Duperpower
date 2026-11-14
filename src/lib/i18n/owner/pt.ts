@@ -1784,4 +1784,7 @@ export const pt: string[] = ["Agendamento abandonado",
 "Este contrato vale por 12 meses a partir da assinatura.",
 "Ao agendar, você concorda com estes termos.",
 "Ver o texto do contrato (versão {version})",
-"Assinado antes de o {app} guardar cada versão; o texto pode ter mudado desde então."];
+"Assinado antes de o {app} guardar cada versão; o texto pode ter mudado desde então.",
+"Tempo de carro entre clientes: de 10 a 90 minutos.",
+"Minutos máximos de carro entre clientes",
+"Uma estimativa sem trânsito, a partir da distância entre CEPs."];
