@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { TabBar } from "@/components/tab-bar";
 import { SideMenu } from "@/components/side-menu";
 import { AppLock } from "@/components/app-lock";
+import { NavDepth } from "@/components/back-button";
 import { OfflineSupport } from "@/components/offline-support";
 import { I18nProvider } from "@/components/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
@@ -36,6 +37,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
       {planNote && staff.role === "owner" && (
         <a href="/billing" className="block bg-[#fdf3d7] px-4 py-2 text-center text-sm font-semibold text-[#7a5b0c]">{planNote} {t("Choose a plan")} ›</a>
       )}
+      <NavDepth />
       <OfflineSupport />
       {children}
       <TabBar can={staff.can} />
