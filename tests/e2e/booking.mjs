@@ -54,9 +54,7 @@ async function requestVisit({ pet, size, zip, city, phone, pickDay, photo }) {
     await page.getByAltText("Your pet").waitFor();
   }
   await button(`Confirm info for ${pet}`).click();
-  const none = page.getByText("No open times in your area right now.");
-  await page.getByRole("heading", { name: "Select a time" }).or(none).waitFor();
-  if (pickDay === null && (await none.isVisible())) return [];
+  await page.getByRole("heading", { name: "Select a time" }).waitFor();
   const days = await page.locator("button[aria-label*='open time']:not([disabled])").evaluateAll((els) => els.map((e) => e.getAttribute("aria-label").split(",").slice(0, 2).join(",")));
   if (pickDay === null) return days;
   const chosenDay = (await page.locator("button[aria-pressed='true'][aria-label*='open time']").getAttribute("aria-label")).split(",").slice(0, 2).join(",");

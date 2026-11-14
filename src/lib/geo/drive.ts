@@ -41,9 +41,9 @@ export function neighborStops<S extends Stop>(stops: S[], start: number, end: nu
 
 /**
  * Whether a visit at `zip` from `start` to `end` (ms) keeps both drives within `limit` minutes:
- * from the stop before it (or the van's `startZip` when it's the day's first) and to the stop after it.
- * An unknown ZIP on either side fails; the one exception is a business that never set its start ZIP.
- * `points` must hold `zip`, `startZip` and every stop's ZIP (postalPoints).
+ * from the stop before it and to the stop after it. A side with no stop has nothing to check (the
+ * van's distance from home is the service radius's job). A stop at an unknown ZIP fails.
+ * `points` must hold `zip` and every stop's ZIP (postalPoints).
  */
 export function slotWithinDrive(
   points: Map<string, Point | null>,
@@ -51,7 +51,6 @@ export function slotWithinDrive(
   stops: Stop[],
   start: number,
   end: number,
-  startZip: string | null,
   limit: number,
 ): boolean {
   const { prev, next } = neighborStops(stops, start, end);
@@ -59,6 +58,5 @@ export function slotWithinDrive(
     const m = driveMinutesBetween(points, zip, other);
     return m != null && m <= limit;
   };
-  if (prev ? !fits(prev.zip) : startZip != null && !fits(startZip)) return false;
-  return !next || fits(next.zip);
+  return (!prev || fits(prev.zip)) && (!next || fits(next.zip));
 }

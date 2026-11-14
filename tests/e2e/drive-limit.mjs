@@ -1,15 +1,15 @@
 // The drive limit on the booking page, end to end. Run after slice.mjs, with DATABASE_URL.
-// A time is offered only when the drive from the stop before it (or the van's start ZIP) and to
-// the stop after it are both within the business's drive-minute limit (35 here). The van starts
-// in Redwood City (94063). Estimates: 94063↔94611 (Piedmont) ~61 min, 94063↔94402 (San Mateo)
-// ~19 min, 94402↔94611 ~51 min.
-//   (a) D1 has a visit 09:00–11:00 at 94063: a 94611 client gets no time that day, a 94402 client does.
-//       With no start ZIP set, that side passes (Review Focus 1): 94611 then sees other days, still not D1.
+// A time is offered only when the drive from the stop before it and to the stop after it (when
+// there is one) are both within the business's drive-minute limit (35 here). The van's start ZIP
+// is not a stop: distance from home is the service radius's job. Estimates: 94063 (Redwood City)
+// ↔ 94611 (Piedmont) ~61 min, 94063↔94402 (San Mateo) ~19 min, 94402↔94611 ~51 min.
+//   (a) D1 has a visit 09:00–11:00 at 94063: a 94611 client gets no time that day (every time is
+//       next to that visit), a 94402 client does. On an empty working day (D4) 94611 gets times.
 //   (b) D1 also gets a visit 14:00–16:00 at 94611: a 94402 client gets nothing between 11:00 and 14:00
 //       (the next stop is too far) nor after 16:00, but still the times before 09:00 (Review Focus 3).
 //   (c) A cancelled visit at 94611 on D2 does not block a 94402 client (Review Focus 2).
 //   (d) A visit at an unknown ZIP (99999) on D3 blocks the times around it for any client.
-// The business's start ZIP and limit are restored at the end, and this test's rows removed.
+// The business's limit is restored at the end, and this test's rows removed.
 // Usage: node tests/e2e/drive-limit.mjs [baseUrl]
 import { chromium } from "playwright";
 import postgres from "postgres";
@@ -21,14 +21,14 @@ const fail = (msg) => {
   throw new Error(msg);
 };
 
-const [{ biz, owner, start_zip: oldStartZip, max_drive_minutes: oldLimit }] = await db`
-  select b.id as biz, s.id as owner, b.start_zip, b.max_drive_minutes from businesses b join staff s on s.business_id = b.id
+const [{ biz, owner, max_drive_minutes: oldLimit }] = await db`
+  select b.id as biz, s.id as owner, b.max_drive_minutes from businesses b join staff s on s.business_id = b.id
   where b.booking_slug = 'woofers' and s.role = 'owner' limit 1`;
 const TZ = "America/Los_Angeles";
 const la = (k) => new Date(Date.now() + k * 86_400_000).toLocaleDateString("en-CA", { timeZone: TZ });
 const weekday = (d) => new Date(`${d}T12:00:00Z`).getUTCDay();
 const at = (date, time) => db`select (${date}::date + ${time}::time) at time zone ${TZ} as t`.then(([r]) => r.t);
-const PHONES = ["6505550171", "6505550172", "6505550173", "6505550174"];
+const PHONES = ["6505550171", "6505550172", "6505550173"];
 
 const cleanUp = async () => {
   const ids = (await db`select id from clients where business_id = ${biz} and last_name = 'Drivelimit'`).map((r) => r.id);
@@ -38,9 +38,9 @@ const cleanUp = async () => {
 };
 await cleanUp();
 
-// Three free working days 10+ days ahead (seed hours: Sunday off): no visit, block or closed date.
+// Four free working days 10+ days ahead (seed hours: Sunday off): no visit, block or closed date.
 const free = [];
-for (let n = 10; free.length < 3; n++) {
+for (let n = 10; free.length < 4; n++) {
   const d = la(n);
   if (weekday(d) === 0) continue;
   const { start, end } = { start: await at(d, "00:00"), end: await at(d, "23:59") };
@@ -51,7 +51,7 @@ for (let n = 10; free.length < 3; n++) {
    or exists (select 1 from closed_dates where business_id = ${biz} and ${d}::date between start_date and end_date) as busy`;
   if (!busy) free.push(d);
 }
-const [D1, D2, D3] = free;
+const [D1, D2, D3, D4] = free;
 
 const [{ id: stopClient }] = await db`insert into clients (business_id, first_name, last_name, phone, zip)
   values (${biz}, 'Stop', 'Drivelimit', '+16505550175', '94063') returning id`;
@@ -127,15 +127,21 @@ const PIEDMONT = { zip: "94611", city: "Piedmont" };
 const SAN_MATEO = { zip: "94402", city: "San Mateo" };
 
 try {
-  await db`update businesses set start_zip = '94063', max_drive_minutes = 35 where id = ${biz}`;
+  await db`update businesses set max_drive_minutes = 35 where id = ${biz}`;
   await visit(D1, "09:00", "11:00", "confirmed", "94063");
   await visit(D2, "11:00", "13:00", "cancelled", "94611");
   await visit(D3, "11:00", "13:00", "confirmed", "99999");
 
-  // (a) Piedmont is ~61 min from both the Redwood City visit and the van's start.
-  const piedmont = await timesFor({ ...PIEDMONT, phone: PHONES[0] }, [D1]);
-  if (piedmont && piedmont[D1].length) fail(`94611 was offered ${D1} (${hhmm(piedmont[D1])}), which has a Redwood City visit`);
+  // (a) Piedmont is ~61 min from the Redwood City visit; an empty day is open to it.
+  const piedmont = await timesFor({ ...PIEDMONT, phone: PHONES[0] }, [D1, D2, D3, D4]);
+  if (!piedmont) fail("94611 should see open times on days without a far stop");
+  if (piedmont[D1].length) fail(`94611 was offered ${D1} (${hhmm(piedmont[D1])}), which has a Redwood City visit`);
   step(`(a) 94611 client: nothing on ${D1} (Redwood City visit 9–11)`);
+  if (!piedmont[D4].length) fail(`94611 should see times on the empty day ${D4}`);
+  step(`(a) 94611 client: the empty day ${D4} offers ${hhmm(piedmont[D4])}`);
+  if (!piedmont[D2].includes(11 * 60)) fail(`a cancelled 94611 visit is not a stop: 94611 should get 11:00 on ${D2}, got ${hhmm(piedmont[D2])}`);
+  if (piedmont[D3].length) fail(`(d) the unknown ZIP must block 94611 too on ${D3}, got ${hhmm(piedmont[D3])}`);
+  step(`(c) 94611 is offered ${D2} like an empty day; (d) nothing on ${D3}`);
 
   // (a), (c), (d) for San Mateo, ~19 min from Redwood City.
   const sm = await timesFor({ ...SAN_MATEO, phone: PHONES[1] }, [D1, D2, D3]);
@@ -147,19 +153,9 @@ try {
   if (sm[D3].length) fail(`a visit at an unknown ZIP must block the times around it on ${D3}, got ${hhmm(sm[D3])}`);
   step(`(d) visit at unknown ZIP 99999 on ${D3}: no times for 94402`);
 
-  // (a) with no start ZIP (Review Focus 1): only the Redwood City visit keeps Piedmont off D1.
-  await db`update businesses set start_zip = null where id = ${biz}`;
-  const noStart = await timesFor({ ...PIEDMONT, phone: PHONES[2] }, [D1, D2, D3]);
-  if (!noStart) fail("with no start ZIP, 94611 should see some days");
-  if (noStart[D1].length) fail(`94611 was offered ${D1} (${hhmm(noStart[D1])}) with no start ZIP`);
-  if (!noStart[D2].length) fail(`with no start ZIP, 94611 should see ${D2}`);
-  if (noStart[D3].length) fail(`(d) the unknown ZIP must block 94611 too on ${D3}, got ${hhmm(noStart[D3])}`);
-  step(`(a) no start ZIP: 94611 sees ${D2} (${hhmm(noStart[D2])}) but not ${D1}; (d) nor ${D3}`);
-  await db`update businesses set start_zip = '94063' where id = ${biz}`;
-
   // (b) A Piedmont visit 14–16 the same day: San Mateo can't sit between Redwood City and Piedmont.
   await visit(D1, "14:00", "16:00", "confirmed", "94611");
-  const between = await timesFor({ ...SAN_MATEO, phone: PHONES[3] }, [D1]);
+  const between = await timesFor({ ...SAN_MATEO, phone: PHONES[2] }, [D1]);
   const d1 = between?.[D1] ?? [];
   if (d1.some((m) => m >= 11 * 60 && m < 14 * 60)) fail(`94402 was offered a time between 11:00 and 14:00 on ${D1}: ${hhmm(d1)}`);
   if (d1.some((m) => m >= 16 * 60)) fail(`94402 was offered a time after the Piedmont visit on ${D1}: ${hhmm(d1)}`);
@@ -168,7 +164,7 @@ try {
 
   if (errors.length) fail(`page errors: ${errors.join(" | ")}`);
 } finally {
-  await db`update businesses set start_zip = ${oldStartZip}, max_drive_minutes = ${oldLimit} where id = ${biz}`;
+  await db`update businesses set max_drive_minutes = ${oldLimit} where id = ${biz}`;
   await cleanUp();
   await browser.close();
   await db.end();

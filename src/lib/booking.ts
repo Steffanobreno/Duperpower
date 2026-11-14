@@ -14,8 +14,8 @@ import { billingOn } from "./billing";
 //    set, a weekday the client's area is served; inside working hours,
 //    with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
-// 4. the estimated drive from the stop before (or the van's start ZIP, for the day's first) and to
-//    the stop after is at most `max_drive_minutes` each way (slotWithinDrive); unknown ZIPs block.
+// 4. the estimated drive from the stop before and to the stop after (when there is one) is at most
+//    `max_drive_minutes` each way (slotWithinDrive); a stop at an unknown ZIP blocks.
 // Days when the van is already close by (NEAR_DRIVE_MINUTES) are marked, and on them the times right
 // before or after the nearby visit are marked "best", so clients pick what keeps the route short.
 // Requests hold their time slot until the owner accepts or declines them.
@@ -128,7 +128,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   ]);
   // With service areas, only the weekdays the client's area is served.
   const areaDays = areas.length ? new Set(areas.filter((a) => areaCovers(a.zip_codes, zip)).flatMap((a) => a.weekdays)) : null;
-  const points = await postalPoints([zip, b.start_zip, ...busy.map((a) => a.zip)], b.country);
+  const points = await postalPoints([zip, ...busy.map((a) => a.zip)], b.country);
 
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
   const buffer = b.buffer_minutes * 60_000;
@@ -158,7 +158,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     const starts = new Set<number>();
     for (const anchor of anchors) {
       for (let t = anchor; t + length <= close && !clashes(t); t += step) {
-        if (t >= earliest && slotWithinDrive(points, zip, sameDay, t, t + length, b.start_zip, b.max_drive_minutes)) starts.add(t);
+        if (t >= earliest && slotWithinDrive(points, zip, sameDay, t, t + length, b.max_drive_minutes)) starts.add(t);
       }
     }
     const sorted = [...starts].sort((x, y) => x - y);
