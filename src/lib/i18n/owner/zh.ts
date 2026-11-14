@@ -1790,4 +1790,6 @@ export const zh: string[] = ["未完成的预约",
 "不含路况的估算,根据邮政编码之间的距离得出。",
 "约 {minutes} 分钟，",
 "约 {n} 分钟",
-"距 {time} 的预约车程约 {minutes} 分钟（{city}）"];
+"距 {time} 的预约车程约 {minutes} 分钟（{city}）",
+"距 {time} 的预约车程约 {minutes} 分钟",
+"无法估算距 {client} 的预约的车程（其邮政编码没有地图位置）"];

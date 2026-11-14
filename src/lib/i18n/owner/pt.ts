@@ -1790,4 +1790,6 @@ export const pt: string[] = ["Agendamento abandonado",
 "Uma estimativa sem trânsito, a partir da distância entre CEPs.",
 "~{minutes} min de",
 "~{n} min",
-"~{minutes} min de carro da visita das {time} ({city})"];
+"~{minutes} min de carro da visita das {time} ({city})",
+"~{minutes} min de carro da visita das {time}",
+"Não dá para estimar o trajeto da visita de {client} (o CEP não tem posição no mapa)"];

@@ -49,6 +49,37 @@ export function neighborStops<S extends Stop>(stops: S[], start: number, end: nu
   return { prev, next };
 }
 
+export type FarFromNeighbors<S extends Stop> =
+  | { kind: "far"; minutes: number; stop: S }
+  | { kind: "unknown"; stop: S };
+
+/**
+ * How a visit at `zip` from `start` to `end` (ms) sits against the stop before it and the stop
+ * after it (a side with no stop has nothing to check). "far": the worse side is over `limit`
+ * minutes (wins over unknown). "unknown": no side is over, but a neighbor's ZIP can't be placed
+ * (unknown values block). Null: both sides are measured and within the limit.
+ * `points` must hold `zip` and every stop's ZIP (postalPoints).
+ */
+export function farFromNeighbors<S extends Stop>(
+  points: Map<string, Point | null>,
+  zip: string,
+  stops: S[],
+  start: number,
+  end: number,
+  limit: number,
+): FarFromNeighbors<S> | null {
+  const { prev, next } = neighborStops(stops, start, end);
+  let far: { minutes: number; stop: S } | null = null;
+  let unknown: S | null = null;
+  for (const stop of [prev, next]) {
+    if (!stop) continue;
+    const minutes = driveMinutesBetween(points, zip, stop.zip);
+    if (minutes == null) unknown ??= stop;
+    else if (minutes > limit && (!far || minutes > far.minutes)) far = { minutes, stop };
+  }
+  return far ? { kind: "far", ...far } : unknown ? { kind: "unknown", stop: unknown } : null;
+}
+
 /**
  * Whether a visit at `zip` from `start` to `end` (ms) keeps both drives within `limit` minutes:
  * from the stop before it and to the stop after it. A side with no stop has nothing to check (the
@@ -63,10 +94,5 @@ export function slotWithinDrive(
   end: number,
   limit: number,
 ): boolean {
-  const { prev, next } = neighborStops(stops, start, end);
-  const fits = (other: string | null) => {
-    const m = driveMinutesBetween(points, zip, other);
-    return m != null && m <= limit;
-  };
-  return (!prev || fits(prev.zip)) && (!next || fits(next.zip));
+  return farFromNeighbors(points, zip, stops, start, end, limit) == null;
 }

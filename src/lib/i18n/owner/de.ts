@@ -1790,4 +1790,6 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Eine Schätzung ohne Verkehr, anhand der Entfernung zwischen Postleitzahlen.",
 "~{minutes} Min. von",
 "~{n} Min.",
-"~{minutes} Min. Fahrt vom Termin um {time} ({city})"];
+"~{minutes} Min. Fahrt vom Termin um {time} ({city})",
+"~{minutes} Min. Fahrt vom Termin um {time}",
+"Die Fahrt vom Termin von {client} lässt sich nicht schätzen (keine Kartenposition für die Postleitzahl)"];

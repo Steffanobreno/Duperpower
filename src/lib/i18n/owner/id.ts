@@ -1790,4 +1790,6 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Perkiraan tanpa lalu lintas, dari jarak antar kode pos.",
 "~{minutes} menit dari",
 "~{n} menit",
-"~{minutes} menit berkendara dari kunjungan pukul {time} ({city})"];
+"~{minutes} menit berkendara dari kunjungan pukul {time} ({city})",
+"~{minutes} menit berkendara dari kunjungan pukul {time}",
+"Tidak bisa memperkirakan perjalanan dari kunjungan {client} (kode posnya tidak punya posisi di peta)"];

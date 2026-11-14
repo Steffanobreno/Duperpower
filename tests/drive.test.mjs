@@ -1,7 +1,7 @@
 // driveMinutes: the free drive-time estimate from straight-line miles.
 // Usage: npx tsx --conditions=react-server tests/drive.test.mjs  (drive.ts wraps postal.ts, which is server-only)
 import assert from "node:assert/strict";
-import { driveMinutes, driveMinutesBetween, driveRuleApplies, NEAR_DRIVE_MINUTES, slotWithinDrive } from "../src/lib/geo/drive.ts";
+import { driveMinutes, driveMinutesBetween, driveRuleApplies, farFromNeighbors, NEAR_DRIVE_MINUTES, slotWithinDrive } from "../src/lib/geo/drive.ts";
 
 assert.equal(driveMinutes(25.3), 61);
 assert.equal(driveMinutes(19.7), 47);
@@ -48,6 +48,22 @@ assert.equal(slotWithinDrive(pts, "94611", [], h(7), h(8), 35), true, "an empty 
 assert.equal(slotWithinDrive(pts, "94402", [stop(9, 11, "99999")], h(7), h(8), 35), false);
 assert.equal(slotWithinDrive(pts, "94402", [stop(9, 11, null)], h(11), h(12), 35), false);
 console.log("✓ an empty day is open; a stop at an unknown ZIP blocks");
+
+// farFromNeighbors: far, unknown, far beats unknown, null.
+const farOne = farFromNeighbors(pts, "94611", [rwc], h(11), h(12), 35);
+assert.equal(farOne?.kind, "far");
+assert.equal(farOne?.stop, rwc);
+assert.ok(farOne.minutes > 35);
+const unk = stop(13, 14, "99999");
+const u = farFromNeighbors(pts, "94402", [rwc, unk], h(11), h(12), 35);
+assert.equal(u?.kind, "unknown");
+assert.equal(u?.stop, unk);
+const both = farFromNeighbors(pts, "94611", [rwc, unk], h(11), h(12), 35);
+assert.equal(both?.kind, "far", "far wins over unknown");
+assert.equal(both?.stop, rwc);
+assert.equal(farFromNeighbors(pts, "94402", [rwc], h(11), h(12), 35), null);
+assert.equal(farFromNeighbors(pts, "94611", [], h(11), h(12), 35), null, "no neighbor, nothing to check");
+console.log("✓ farFromNeighbors: far, unknown, far beats unknown, null");
 
 // driveRuleApplies: outside the US, a client code that can't be placed skips the drive rule.
 const br = new Map([["01310100", { lat: -23.56, lng: -46.65, city: "São Paulo" }], ["99999999", null]]);

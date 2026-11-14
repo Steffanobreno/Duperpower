@@ -1790,4 +1790,6 @@ export const es: string[] = ["Reserva abandonada",
 "Una estimación sin tráfico, a partir de la distancia entre códigos postales.",
 "~{minutes} min de",
 "~{n} min",
-"~{minutes} min en coche desde la visita de las {time} ({city})"];
+"~{minutes} min en coche desde la visita de las {time} ({city})",
+"~{minutes} min en coche desde la visita de las {time}",
+"No se puede estimar el trayecto desde la visita de {client} (su código postal no tiene posición en el mapa)"];

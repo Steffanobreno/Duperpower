@@ -1790,4 +1790,6 @@ export const tl: string[] = ["Naiwang booking",
 "Isang pagtatantya na walang trapiko, mula sa layo ng mga ZIP code.",
 "~{minutes} min mula kay",
 "~{n} min",
-"~{minutes} min na biyahe mula sa bisita ng {time} ({city})"];
+"~{minutes} min na biyahe mula sa bisita ng {time} ({city})",
+"~{minutes} min na biyahe mula sa bisita ng {time}",
+"Hindi matantya ang biyahe mula sa bisita ni {client} (walang posisyon sa mapa ang postal code)"];

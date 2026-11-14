@@ -1790,4 +1790,6 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Trafik olmadan, posta kodları arasındaki mesafeden bir tahmin.",
 "~{minutes} dk,",
 "~{n} dk",
-"{time} ziyaretinden ~{minutes} dk sürüş ({city})"];
+"{time} ziyaretinden ~{minutes} dk sürüş ({city})",
+"{time} ziyaretinden ~{minutes} dk sürüş",
+"{client} ziyaretinden sürüş tahmin edilemiyor (posta kodunun haritada konumu yok)"];

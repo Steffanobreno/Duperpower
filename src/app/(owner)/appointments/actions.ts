@@ -57,9 +57,13 @@ async function overlapWarning(staff: StaffContext, start: Date, end: Date, exclu
   return block ? `This overlaps blocked time${block.reason ? ` (${block.reason})` : ""} at ${timeLabel(block.start_at, staff.timezone, staff.region)}.` : null;
 }
 
+// Plain English like the other warnings here: the action warnings have no owner translation path.
 async function distanceWarning(staff: StaffContext, date: string, zip: string | null, slot: { start: Date; end: Date }, excludeId?: string) {
-  const far = await tooFarFromDay(staff, date, zip, excludeId, slot);
-  return far ? `About ${far.minutes} min drive from ${far.client}'s visit (limit ${far.limit} min).` : null;
+  const w = await tooFarFromDay(staff, date, zip, excludeId, slot);
+  if (!w) return null;
+  return w.kind === "far"
+    ? `About ${w.minutes} min drive from ${w.client}'s visit (limit ${w.limit} min).`
+    : `Can't estimate the drive from ${w.client}'s visit (no map position for its postal code).`;
 }
 
 export async function createAppointmentAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {

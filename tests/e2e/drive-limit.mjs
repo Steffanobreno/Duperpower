@@ -187,11 +187,11 @@ try {
   await page.fill('input[name="password"]', "correct horse battery");
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/today/);
-  const warningOn = async (id) => {
+  const warningOn = async (id, re = /min drive from the/) => {
     await page.goto(`${BASE}/requests`);
     const card = page.locator(`a[href="/appointments/${id}"]`).locator("xpath=..").locator("xpath=..");
     await card.waitFor();
-    const w = card.getByText(/min drive from the/);
+    const w = card.getByText(re);
     return (await w.count()) ? await w.innerText() : null;
   };
   const farWarning = await warningOn(far);
@@ -200,6 +200,12 @@ try {
   const nearWarning = await warningOn(near);
   if (nearWarning) fail(`94402 request should have no warning, got ${nearWarning}`);
   step("(e) 94402 request: no warning");
+
+  // A neighbor whose ZIP can't be placed (99999 on D3) is not waved through: the card says so.
+  const unknown = await request(D3, "14:00", "16:00", "94402");
+  const unknownWarning = await warningOn(unknown, /Can't estimate the drive from Stop's visit/);
+  if (!unknownWarning) fail("a request next to a visit at an unknown ZIP should say the drive can't be estimated");
+  step(`(e) request next to the unknown-ZIP visit: "${unknownWarning}"`);
 
   // Metric business: still minutes. The postal codes must be known for Brazil, so seed them for the test.
   await db`update businesses set country = 'BR' where id = ${biz}`;

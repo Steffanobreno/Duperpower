@@ -2,8 +2,8 @@ import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
 import { dayRangeUtc, addDaysYmd, hm, isUuid, ymd } from "../format";
-import { driveMinutesBetween, driveRuleApplies, neighborStops } from "../geo/drive";
-import { normPostal, postalPoints } from "../geo/postal";
+import { driveMinutesBetween, driveRuleApplies, farFromNeighbors, type Stop } from "../geo/drive";
+import { normPostal, postalPoints, type Point } from "../geo/postal";
 
 export type AppointmentListItem = {
   id: string;
@@ -156,40 +156,60 @@ export async function workingHoursFor(staff: StaffContext, weekday: number) {
 /** The visits that hold the groomer's time on a day, for the drive rule. */
 const ROUTE_STATUSES = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
 
+/** A stop on a day's route, with who it is (for the warning). */
+export type RouteStop = Stop & { client: string; city: string | null; staff_id: string };
+
+/** Why a visit sits badly on the route: too far from a neighbor, or a neighbor that can't be measured. */
+export type DriveWarning =
+  | { kind: "far"; minutes: number; client: string; limit: number; at: Date; city: string | null }
+  | { kind: "unknown"; client: string; limit: number; at: Date; city: string | null };
+
+/** The same rule as the booking page (farFromNeighbors), shaped for a warning. */
+export function driveWarningFor(
+  points: Map<string, Point | null>, zip: string | null, country: string, stops: RouteStop[],
+  slot: { start: Date; end: Date }, limit: number,
+): DriveWarning | null {
+  if (!zip || !stops.length || !driveRuleApplies(points, zip, country)) return null;
+  const r = farFromNeighbors(points, zip, stops, slot.start.getTime(), slot.end.getTime(), limit);
+  if (!r) return null;
+  const { stop } = r;
+  const who = { client: stop.client, limit, at: stop.start_at, city: stop.city ?? points.get(normPostal(stop.zip))?.city ?? null };
+  return r.kind === "far" ? { kind: "far", minutes: r.minutes, ...who } : { kind: "unknown", ...who };
+}
+
+/** The stops of the given groomers on the given days (each a [staffId, "yyyy-mm-dd"] pair), one query. */
+export async function routeStops(staff: StaffContext, days: { staffId: string; date: string }[], excludeIds: string[] = []) {
+  if (!days.length) return [];
+  const ranges = days.map((d) => ({ staffId: d.staffId, ...dayRangeUtc(d.date, staff.timezone) }));
+  const from = new Date(Math.min(...ranges.map((r) => r.start.getTime())));
+  const to = new Date(Math.max(...ranges.map((r) => r.end.getTime())));
+  const rows = await sql<RouteStop[]>`
+    select a.start_at, a.end_at, a.zip, a.staff_id, c.first_name as client, c.city
+    from appointments a join clients c on c.id = a.client_id
+    where a.business_id = ${staff.businessId} and a.staff_id = any(${[...new Set(days.map((d) => d.staffId))]})
+      and a.start_at >= ${from} and a.start_at < ${to} and a.status = any(${ROUTE_STATUSES})
+      and a.id <> all(${excludeIds}::uuid[])`;
+  // Only the stops that fall on one of the asked days of their groomer.
+  return rows.filter((r) => ranges.some((g) => g.staffId === r.staff_id && r.start_at >= g.start && r.start_at < g.end));
+}
+
 /**
- * The drive to the other stops that day from this ZIP, when it is beyond the business limit
- * (`max_drive_minutes`, an estimate without traffic: the same one the booking page uses). With
- * `slot` (the visit's start and end), only the stop right before and the one right after count,
- * and the worse of the two is returned; without it, the closest stop. Null when the day is fine,
- * when there is no other stop, or when a place can't be measured (outside the US, with a postal
- * code that can't be placed, the rule is not applied). `at` and `city` say which visit it is.
+ * Whether a visit at this ZIP on `date`, from `slot.start` to `slot.end`, is too far (over
+ * `max_drive_minutes`, an estimate without traffic, the same one the booking page uses) from the
+ * stop right before or after it, or has a neighbor that can't be measured. Null when the day is
+ * fine, has no other stop, or (outside the US, with a postal code that can't be placed) the rule
+ * is not applied.
  */
 export async function tooFarFromDay(
-  staff: StaffContext, date: string, zip: string | null, excludeId?: string, slot?: { start: Date; end: Date },
-) {
+  staff: StaffContext, date: string, zip: string | null, excludeId: string | undefined, slot: { start: Date; end: Date },
+): Promise<DriveWarning | null> {
   if (!zip) return null;
-  const { start, end } = dayRangeUtc(date, staff.timezone);
-  const [biz] = await sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`;
-  const limit = biz?.max_drive_minutes ?? 35;
-  const others = await sql<{ start_at: Date; end_at: Date; zip: string | null; client: string; city: string | null }[]>`
-    select a.start_at, a.end_at, a.zip, c.first_name as client, c.city from appointments a join clients c on c.id = a.client_id
-    where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId} and a.start_at >= ${start} and a.start_at < ${end}
-      and a.status = any(${ROUTE_STATUSES})
-      and (${excludeId ?? null}::uuid is null or a.id <> ${excludeId ?? null})`;
-  if (!others.length) return null;
-  const points = await postalPoints([zip, ...others.map((o) => o.zip)], staff.region.country);
-  if (!driveRuleApplies(points, zip, staff.region.country)) return null;
-  const candidates = slot
-    ? Object.values(neighborStops(others, slot.start.getTime(), slot.end.getTime())).filter((s) => s != null)
-    : others;
-  const measured = candidates
-    .map((o) => ({ minutes: driveMinutesBetween(points, zip, o.zip), client: o.client, at: o.start_at, city: o.city ?? points.get(normPostal(o.zip))?.city ?? null }))
-    .filter((m): m is typeof m & { minutes: number } => m.minutes != null);
-  if (!measured.length) return null;
-  const pick = slot
-    ? measured.reduce((w, m) => (m.minutes > w.minutes ? m : w))
-    : measured.reduce((c, m) => (m.minutes < c.minutes ? m : c));
-  return pick.minutes > limit ? { ...pick, limit } : null;
+  const [biz, stops] = await Promise.all([
+    sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`,
+    routeStops(staff, [{ staffId: staff.staffId, date }], excludeId ? [excludeId] : []),
+  ]);
+  const points = await postalPoints([zip, ...stops.map((s) => s.zip)], staff.region.country);
+  return driveWarningFor(points, zip, staff.region.country, stops, slot, biz[0]?.max_drive_minutes ?? 35);
 }
 
 /**

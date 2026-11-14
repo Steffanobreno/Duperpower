@@ -5,7 +5,8 @@ import { GoldBanner } from "@/components/gold-banner";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { dayLabel, money, phoneLabel, timeLabel, ymd } from "@/lib/format";
-import { tooFarFromDay } from "@/lib/data/appointments";
+import { driveWarningFor, routeStops } from "@/lib/data/appointments";
+import { postalPoints } from "@/lib/geo/postal";
 import { Button, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setStatusAction } from "../appointments/actions";
 import { listDrafts } from "@/lib/data/abandoned";
@@ -43,11 +44,19 @@ export default async function RequestsPage() {
   // Started booking online and haven't booked yet (whether or not they got the message).
   const waiting = drafts.filter((d) => d.status !== "recovered").length;
   const tz = staff.timezone;
-  // Beyond the drive limit from the visit before or after it, so the groomer sees it before accepting.
-  const far = new Map(await Promise.all(rows.map(async (r) => [
+  // Too far from the visit before or after it (or one we can't measure), so the groomer sees it before accepting.
+  // Loaded once for all the cards: the limit, the stops of those days, and every postal code.
+  const [[biz], stops] = await Promise.all([
+    sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`,
+    routeStops(staff, rows.map((r) => ({ staffId: r.staff_id, date: ymd(r.start_at, tz) })), rows.map((r) => r.id)),
+  ]);
+  const points = await postalPoints([...rows.map((r) => r.zip), ...stops.map((s) => s.zip)], staff.region.country);
+  const warnings = new Map(rows.map((r) => [
     r.id,
-    await tooFarFromDay({ ...staff, staffId: r.staff_id }, ymd(r.start_at, tz), r.zip, r.id, { start: r.start_at, end: r.end_at }),
-  ] as const)));
+    driveWarningFor(points, r.zip, staff.region.country,
+      stops.filter((s) => s.staff_id === r.staff_id && ymd(s.start_at, tz) === ymd(r.start_at, tz)),
+      { start: r.start_at, end: r.end_at }, biz?.max_drive_minutes ?? 35),
+  ] as const));
   return (
     <>
       <PageHeader title={t("Booking requests")} back="/today" />
@@ -86,12 +95,15 @@ export default async function RequestsPage() {
               </p>
               {r.notes && <p className="whitespace-pre-line rounded-xl bg-bg p-2 text-sm">{r.notes}</p>}
               {(() => {
-                const f = far.get(r.id);
-                return f && (
-                  <p className="rounded-xl bg-danger-soft p-2 text-sm font-semibold text-danger">
-                    {t("~{minutes} min drive from the {time} visit ({city})", { minutes: f.minutes, time: timeLabel(f.at, tz), city: f.city ?? f.client })}
-                  </p>
-                );
+                const w = warnings.get(r.id);
+                if (!w) return null;
+                const time = timeLabel(w.at, tz);
+                const text = w.kind === "far"
+                  ? (w.city
+                    ? t("~{minutes} min drive from the {time} visit ({city})", { minutes: w.minutes, time, city: w.city })
+                    : t("~{minutes} min drive from the {time} visit", { minutes: w.minutes, time }))
+                  : t("Can't estimate the drive from {client}'s visit (no map position for its postal code)", { client: w.client });
+                return <p className="rounded-xl bg-danger-soft p-2 text-sm font-semibold text-danger">{text}</p>;
               })()}
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <form action={setStatusAction.bind(null, r.id, "declined")}>

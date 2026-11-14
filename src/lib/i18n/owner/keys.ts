@@ -1792,5 +1792,7 @@ export const OWNER_KEYS: string[] = [
  "An estimate without traffic, from the distance between ZIP codes.",
  "~{minutes} min from",
  "~{n} min",
- "~{minutes} min drive from the {time} visit ({city})"
+ "~{minutes} min drive from the {time} visit ({city})",
+ "~{minutes} min drive from the {time} visit",
+ "Can't estimate the drive from {client}'s visit (no map position for its postal code)"
 ];

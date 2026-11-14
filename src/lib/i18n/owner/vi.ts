@@ -1790,4 +1790,6 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Ước tính không tính kẹt xe, dựa trên khoảng cách giữa các mã bưu chính.",
 "~{minutes} phút từ",
 "~{n} phút",
-"~{minutes} phút lái xe từ lịch hẹn lúc {time} ({city})"];
+"~{minutes} phút lái xe từ lịch hẹn lúc {time} ({city})",
+"~{minutes} phút lái xe từ lịch hẹn lúc {time}",
+"Không thể ước tính quãng đường từ lịch hẹn của {client} (mã bưu chính không có vị trí trên bản đồ)"];
