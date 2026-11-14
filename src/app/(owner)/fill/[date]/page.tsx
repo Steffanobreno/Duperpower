@@ -27,7 +27,6 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
   // Phone numbers (in the WhatsApp and text links) only for those allowed to see them.
   const canSend = staff.can.client_contact;
   const offer = canSend && gaps.length ? await gapOfferText(staff, date, gaps[0].start) : null;
-  const distance = (n: number) => (staff.region.km ? t("{n} km", { n }) : t("{n} mi", { n }));
 
   return (
     <>
@@ -74,7 +73,7 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
                         </span>
                       </Link>
                       <span className="shrink-0 text-sm text-muted">
-                        {c.distance != null ? distance(c.distance) : t("No address on the map")}
+                        {c.driveMinutes != null ? t("~{n} min", { n: c.driveMinutes }) : t("No address on the map")}
                       </span>
                     </div>
                     {c.offeredToday && (

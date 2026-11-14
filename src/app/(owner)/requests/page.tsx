@@ -4,7 +4,8 @@ import Link from "next/link";
 import { GoldBanner } from "@/components/gold-banner";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { dayLabel, money, phoneLabel, timeLabel } from "@/lib/format";
+import { dayLabel, money, phoneLabel, timeLabel, ymd } from "@/lib/format";
+import { tooFarFromDay } from "@/lib/data/appointments";
 import { Button, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setStatusAction } from "../appointments/actions";
 import { listDrafts } from "@/lib/data/abandoned";
@@ -18,10 +19,10 @@ export default async function RequestsPage() {
   const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const [rows, reschedules, drafts] = await Promise.all([sql<
-    { id: string; start_at: Date; client: string; phone: string; address_line: string | null; notes: string | null;
-      pets: string | null; total_cents: number; created_at: Date; new_client: boolean }[]
+    { id: string; start_at: Date; end_at: Date; zip: string | null; staff_id: string; client: string; phone: string;
+      address_line: string | null; notes: string | null; pets: string | null; total_cents: number; created_at: Date; new_client: boolean }[]
   >`
-    select a.id, a.start_at, a.address_line, a.notes, a.created_at, trim(c.first_name || ' ' || c.last_name) as client, c.phone,
+    select a.id, a.start_at, a.end_at, a.zip, a.staff_id, a.address_line, a.notes, a.created_at, trim(c.first_name || ' ' || c.last_name) as client, c.phone,
       (c.source = 'online' and c.created_at > a.created_at - interval '1 minute') as new_client,
       (select string_agg(p.name || ' (' || coalesce((select string_agg(s.name, ', ') from appointment_services s
                                                       where s.appointment_pet_id = ap.id), '') || ')', ' · ')
@@ -42,6 +43,11 @@ export default async function RequestsPage() {
   // Started booking online and haven't booked yet (whether or not they got the message).
   const waiting = drafts.filter((d) => d.status !== "recovered").length;
   const tz = staff.timezone;
+  // Beyond the drive limit from the visit before or after it, so the groomer sees it before accepting.
+  const far = new Map(await Promise.all(rows.map(async (r) => [
+    r.id,
+    await tooFarFromDay({ ...staff, staffId: r.staff_id }, ymd(r.start_at, tz), r.zip, r.id, { start: r.start_at, end: r.end_at }),
+  ] as const)));
   return (
     <>
       <PageHeader title={t("Booking requests")} back="/today" />
@@ -79,6 +85,14 @@ export default async function RequestsPage() {
                 {phoneLabel(r.phone)} · {money(r.total_cents)}
               </p>
               {r.notes && <p className="whitespace-pre-line rounded-xl bg-bg p-2 text-sm">{r.notes}</p>}
+              {(() => {
+                const f = far.get(r.id);
+                return f && (
+                  <p className="rounded-xl bg-danger-soft p-2 text-sm font-semibold text-danger">
+                    {t("~{minutes} min drive from the {time} visit ({city})", { minutes: f.minutes, time: timeLabel(f.at, tz), city: f.city ?? f.client })}
+                  </p>
+                );
+              })()}
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <form action={setStatusAction.bind(null, r.id, "declined")}>
                   <Button type="submit" kind="danger" className="w-full">{t("Decline")}</Button>

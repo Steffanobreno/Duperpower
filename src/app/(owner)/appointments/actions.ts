@@ -1,6 +1,5 @@
 "use server";
 import { inBackground } from "@/lib/background";
-import { distanceOut } from "@/lib/region";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext, requirePermission } from "@/lib/auth";
@@ -58,13 +57,9 @@ async function overlapWarning(staff: StaffContext, start: Date, end: Date, exclu
   return block ? `This overlaps blocked time${block.reason ? ` (${block.reason})` : ""} at ${timeLabel(block.start_at, staff.timezone, staff.region)}.` : null;
 }
 
-async function distanceWarning(staff: StaffContext, date: string, zip: string | null, excludeId?: string) {
-  const far = await tooFarFromDay(staff, date, zip, excludeId);
-  return far
-    ? staff.region.km
-      ? `This address is about ${distanceOut(far.miles, staff.region)} km from ${far.client}'s stop that day (your limit is ${distanceOut(far.limit, staff.region)}).`
-      : `This address is about ${Math.round(far.miles)} miles from ${far.client}'s stop that day (your limit is ${far.limit}).`
-    : null;
+async function distanceWarning(staff: StaffContext, date: string, zip: string | null, slot: { start: Date; end: Date }, excludeId?: string) {
+  const far = await tooFarFromDay(staff, date, zip, excludeId, slot);
+  return far ? `About ${far.minutes} min drive from ${far.client}'s visit (limit ${far.limit} min).` : null;
 }
 
 export async function createAppointmentAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {
@@ -112,7 +107,7 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
     const warning =
       (await outsideHours(staff, date, time, endAt)) ??
       (await overlapWarning(staff, startAt, endAt)) ??
-      (await distanceWarning(staff, date, client.zip));
+      (await distanceWarning(staff, date, client.zip, { start: startAt, end: endAt }));
     if (warning) return { warning };
   }
 
@@ -208,7 +203,7 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
     const warning =
       (await outsideHours(staff, date, time, endAt)) ??
       (await overlapWarning(staff, startAt, endAt, appointmentId)) ??
-      (await distanceWarning(staff, date, appt.zip, appointmentId));
+      (await distanceWarning(staff, date, appt.zip, { start: startAt, end: endAt }, appointmentId));
     if (warning) return { warning };
   }
   try {

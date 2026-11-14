@@ -1787,4 +1787,7 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Ditandatangani sebelum {app} menyimpan setiap versi; teksnya mungkin sudah berubah sejak itu.",
 "Waktu mengemudi antar klien: 10 sampai 90 menit.",
 "Maksimum menit mengemudi antar klien",
-"Perkiraan tanpa lalu lintas, dari jarak antar kode pos."];
+"Perkiraan tanpa lalu lintas, dari jarak antar kode pos.",
+"~{minutes} menit dari",
+"~{n} menit",
+"~{minutes} menit berkendara dari kunjungan pukul {time} ({city})"];

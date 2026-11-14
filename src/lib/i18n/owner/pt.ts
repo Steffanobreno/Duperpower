@@ -1787,4 +1787,7 @@ export const pt: string[] = ["Agendamento abandonado",
 "Assinado antes de o {app} guardar cada versão; o texto pode ter mudado desde então.",
 "Tempo de carro entre clientes: de 10 a 90 minutos.",
 "Minutos máximos de carro entre clientes",
-"Uma estimativa sem trânsito, a partir da distância entre CEPs."];
+"Uma estimativa sem trânsito, a partir da distância entre CEPs.",
+"~{minutes} min de",
+"~{n} min",
+"~{minutes} min de carro da visita das {time} ({city})"];

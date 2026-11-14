@@ -4,9 +4,10 @@ import { sql } from "../db";
 import { addDaysYmd, dayRangeUtc, hm, longDayLabel, phoneLabel, timeLabel, todayYmd, weekdayOf, zonedToUtc } from "../format";
 import { freeGaps, type Gap } from "../gaps";
 import { normPostal, postalPoints, type Point } from "../geo/postal";
+import { driveMinutes } from "../geo/drive";
 import { milesBetween } from "../geo/zip";
 import { bookingUrl, manualTemplateBody, render } from "../messaging";
-import { distanceOut, messageRegion } from "../region";
+import { messageRegion } from "../region";
 import { workingHoursFor } from "./appointments";
 import { closedDays } from "./closed";
 
@@ -109,8 +110,8 @@ export type Candidate = {
   pets: string;
   reason: "waitlist" | "due";
   daysOverdue: number | null;
-  /** To the closest stop that day (else the van's start), in the business's unit; null: not on the map. */
-  distance: number | null;
+  /** Estimated drive minutes to the closest stop that day (else the van's start); null: not on the map. */
+  driveMinutes: number | null;
   offeredToday: boolean;
 };
 
@@ -152,14 +153,14 @@ export async function fillCandidates(staff: StaffContext, date: string, limit = 
     const home = at(r.lat, r.lng, r.zip);
     return home && from.length ? Math.min(...from.map((p) => milesBetween(home, p))) : null;
   };
-  const shown = (miles: number | null) =>
-    miles == null ? null : staff.region.km ? distanceOut(miles, staff.region) : Math.round(miles * 10) / 10;
 
+  // Shown as estimated minutes; ordered by the miles behind them, so the 5-minute floor doesn't make ties.
   const miles = new Map(rows.map((r) => [r.id, milesTo(r)]));
+  const minutes = (id: string) => { const m = miles.get(id); return m == null ? null : driveMinutes(m); };
   const list = rows.map((r): Candidate => ({
     clientId: r.id, name: r.name, firstName: r.first_name, phone: r.phone, smsOk: r.sms_ok, pets: r.pets ?? "",
     reason: r.waitlist ? "waitlist" : "due", daysOverdue: r.waitlist ? null : r.days_overdue,
-    distance: shown(miles.get(r.id) ?? null), offeredToday: r.offered,
+    driveMinutes: minutes(r.id), offeredToday: r.offered,
   }));
   list.sort((a, b) =>
     Number(b.reason === "waitlist") - Number(a.reason === "waitlist")

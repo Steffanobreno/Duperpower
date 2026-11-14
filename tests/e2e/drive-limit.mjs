@@ -9,7 +9,10 @@
 //       (the next stop is too far) nor after 16:00, but still the times before 09:00 (Review Focus 3).
 //   (c) A cancelled visit at 94611 on D2 does not block a 94402 client (Review Focus 2).
 //   (d) A visit at an unknown ZIP (99999) on D3 blocks the times around it for any client.
-// The business's limit is restored at the end, and this test's rows removed.
+//   (e) Booking requests (owner side): a pending request at 94611 on a day with the 94063 visit shows
+//       "~61 min drive from the 9:00 AM visit (...)"; one at 94402 shows no warning. On a business in
+//       Brazil (metric) the warning still says minutes, never km or miles.
+// The business's limit (and country) is restored at the end, and this test's rows removed.
 // Usage: node tests/e2e/drive-limit.mjs [baseUrl]
 import { chromium } from "playwright";
 import postgres from "postgres";
@@ -21,8 +24,8 @@ const fail = (msg) => {
   throw new Error(msg);
 };
 
-const [{ biz, owner, max_drive_minutes: oldLimit }] = await db`
-  select b.id as biz, s.id as owner, b.max_drive_minutes from businesses b join staff s on s.business_id = b.id
+const [{ biz, owner, max_drive_minutes: oldLimit, country: oldCountry }] = await db`
+  select b.id as biz, s.id as owner, b.max_drive_minutes, b.country from businesses b join staff s on s.business_id = b.id
   where b.booking_slug = 'woofers' and s.role = 'owner' limit 1`;
 const TZ = "America/Los_Angeles";
 const la = (k) => new Date(Date.now() + k * 86_400_000).toLocaleDateString("en-CA", { timeZone: TZ });
@@ -35,6 +38,8 @@ const cleanUp = async () => {
   await db`delete from appointments where client_id = any(${ids})`;
   await db`delete from clients where id = any(${ids})`;
   await db`delete from booking_drafts where business_id = ${biz} and right(phone, 10) = any(${PHONES})`;
+  await db`delete from postal_points where country = 'BR' and code in ('94611', '94063')`;
+  await db`update businesses set country = ${oldCountry} where id = ${biz}`;
 };
 await cleanUp();
 
@@ -161,6 +166,49 @@ try {
   if (d1.some((m) => m >= 16 * 60)) fail(`94402 was offered a time after the Piedmont visit on ${D1}: ${hhmm(d1)}`);
   if (!d1.some((m) => m < 9 * 60)) fail(`94402 should still see the times before 9:00 on ${D1}, got ${hhmm(d1)}`);
   step(`(b) between Redwood City (9–11) and Piedmont (14–16): 94402 only gets ${hhmm(d1)}`);
+
+  // (e) The request card on the owner's Requests screen.
+  const request = async (date, from, to, zip) => {
+    const [{ id }] = await db`insert into appointments (business_id, client_id, staff_id, start_at, end_at, status, zip)
+      values (${biz}, ${stopClient}, ${owner}, ${await at(date, from)}, ${await at(date, to)}, 'requested', ${zip}) returning id`;
+    return id;
+  };
+  await visit(D2, "09:00", "11:00", "confirmed", "94063");
+  const far = await request(D2, "13:00", "15:00", "94611");
+  await visit(D4, "09:00", "11:00", "confirmed", "94063");
+  const near = await request(D4, "13:00", "15:00", "94402");
+
+  await page?.context().close();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  page = await ctx.newPage();
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(`${BASE}/login`);
+  await page.fill('input[name="email"]', "owner@example.com");
+  await page.fill('input[name="password"]', "correct horse battery");
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/today/);
+  const warningOn = async (id) => {
+    await page.goto(`${BASE}/requests`);
+    const card = page.locator(`a[href="/appointments/${id}"]`).locator("xpath=..").locator("xpath=..");
+    await card.waitFor();
+    const w = card.getByText(/min drive from the/);
+    return (await w.count()) ? await w.innerText() : null;
+  };
+  const farWarning = await warningOn(far);
+  if (!farWarning || !/~61 min drive from the 9:00 AM visit \(Redwood City\)/.test(farWarning)) fail(`94611 request: expected the 61 min warning, got ${farWarning}`);
+  step(`(e) 94611 request next to the Redwood City visit: "${farWarning}"`);
+  const nearWarning = await warningOn(near);
+  if (nearWarning) fail(`94402 request should have no warning, got ${nearWarning}`);
+  step("(e) 94402 request: no warning");
+
+  // Metric business: still minutes. The postal codes must be known for Brazil, so seed them for the test.
+  await db`update businesses set country = 'BR' where id = ${biz}`;
+  await db`insert into postal_points (country, code, lat, lng, city) values
+    ('BR', '94611', 37.8471, -122.2223, 'Oakland'), ('BR', '94063', 37.4815, -122.2091, 'Redwood City')
+    on conflict (country, code) do nothing`;
+  const brWarning = await warningOn(far);
+  if (!brWarning || !/61 min/.test(brWarning) || /\b(km|mi|miles)\b/i.test(brWarning)) fail(`metric business: expected minutes only, got ${brWarning}`);
+  step(`(e) metric business: "${brWarning}"`);
 
   if (errors.length) fail(`page errors: ${errors.join(" | ")}`);
 } finally {

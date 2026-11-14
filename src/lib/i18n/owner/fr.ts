@@ -1787,4 +1787,7 @@ export const fr: string[] = ["Réservation abandonnée",
 "Signé avant que {app} ne conserve chaque version ; le texte a pu changer depuis.",
 "Temps de trajet entre clients : de 10 à 90 minutes.",
 "Minutes de trajet maximum entre clients",
-"Une estimation sans circulation, d'après la distance entre codes postaux."];
+"Une estimation sans circulation, d'après la distance entre codes postaux.",
+"~{minutes} min de",
+"~{n} min",
+"~{minutes} min de route depuis la visite de {time} ({city})"];

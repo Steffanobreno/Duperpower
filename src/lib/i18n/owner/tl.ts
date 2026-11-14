@@ -1787,4 +1787,7 @@ export const tl: string[] = ["Naiwang booking",
 "Napirmahan bago itinago ng {app} ang bawat bersyon; maaaring nagbago na ang teksto mula noon.",
 "Oras ng pagmamaneho sa pagitan ng mga kliyente: 10 hanggang 90 minuto.",
 "Pinakamataas na minuto ng pagmamaneho sa pagitan ng mga kliyente",
-"Isang pagtatantya na walang trapiko, mula sa layo ng mga ZIP code."];
+"Isang pagtatantya na walang trapiko, mula sa layo ng mga ZIP code.",
+"~{minutes} min mula kay",
+"~{n} min",
+"~{minutes} min na biyahe mula sa bisita ng {time} ({city})"];

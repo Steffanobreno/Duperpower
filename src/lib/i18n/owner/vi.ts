@@ -1787,4 +1787,7 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Đã ký trước khi {app} lưu từng phiên bản; nội dung có thể đã thay đổi kể từ đó.",
 "Thời gian lái xe giữa các khách: 10 đến 90 phút.",
 "Số phút lái xe tối đa giữa các khách",
-"Ước tính không tính kẹt xe, dựa trên khoảng cách giữa các mã bưu chính."];
+"Ước tính không tính kẹt xe, dựa trên khoảng cách giữa các mã bưu chính.",
+"~{minutes} phút từ",
+"~{n} phút",
+"~{minutes} phút lái xe từ lịch hẹn lúc {time} ({city})"];

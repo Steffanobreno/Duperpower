@@ -1787,4 +1787,7 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Unterschrieben, bevor {app} jede Version aufbewahrt hat; der Text kann sich seitdem geändert haben.",
 "Fahrzeit zwischen Kunden: 10 bis 90 Minuten.",
 "Maximale Fahrminuten zwischen Kunden",
-"Eine Schätzung ohne Verkehr, anhand der Entfernung zwischen Postleitzahlen."];
+"Eine Schätzung ohne Verkehr, anhand der Entfernung zwischen Postleitzahlen.",
+"~{minutes} Min. von",
+"~{n} Min.",
+"~{minutes} Min. Fahrt vom Termin um {time} ({city})"];

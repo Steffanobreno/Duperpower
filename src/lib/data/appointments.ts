@@ -2,7 +2,8 @@ import "server-only";
 import type { StaffContext } from "../auth";
 import { sql } from "../db";
 import { dayRangeUtc, addDaysYmd, hm, isUuid, ymd } from "../format";
-import { milesIn, postalPoints } from "../geo/postal";
+import { driveMinutesBetween, driveRuleApplies, neighborStops } from "../geo/drive";
+import { normPostal, postalPoints } from "../geo/postal";
 
 export type AppointmentListItem = {
   id: string;
@@ -152,50 +153,70 @@ export async function workingHoursFor(staff: StaffContext, weekday: number) {
   return row ?? null;
 }
 
+/** The visits that hold the groomer's time on a day, for the drive rule. */
+const ROUTE_STATUSES = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
+
 /**
- * The farthest other stop that day from this ZIP, when it is beyond the business limit
- * (25 miles by default). Null when the day is fine or distances are unknown.
+ * The drive to the other stops that day from this ZIP, when it is beyond the business limit
+ * (`max_drive_minutes`, an estimate without traffic: the same one the booking page uses). With
+ * `slot` (the visit's start and end), only the stop right before and the one right after count,
+ * and the worse of the two is returned; without it, the closest stop. Null when the day is fine,
+ * when there is no other stop, or when a place can't be measured (outside the US, with a postal
+ * code that can't be placed, the rule is not applied). `at` and `city` say which visit it is.
  */
-export async function tooFarFromDay(staff: StaffContext, date: string, zip: string | null, excludeId?: string) {
+export async function tooFarFromDay(
+  staff: StaffContext, date: string, zip: string | null, excludeId?: string, slot?: { start: Date; end: Date },
+) {
   if (!zip) return null;
   const { start, end } = dayRangeUtc(date, staff.timezone);
-  const [biz] = await sql<{ max_cluster_miles: string }[]>`select max_cluster_miles from businesses where id = ${staff.businessId}`;
-  const limit = Number(biz?.max_cluster_miles ?? 25);
-  const others = await sql<{ zip: string | null; client: string }[]>`
-    select a.zip, c.first_name as client from appointments a join clients c on c.id = a.client_id
+  const [biz] = await sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`;
+  const limit = biz?.max_drive_minutes ?? 35;
+  const others = await sql<{ start_at: Date; end_at: Date; zip: string | null; client: string; city: string | null }[]>`
+    select a.start_at, a.end_at, a.zip, c.first_name as client, c.city from appointments a join clients c on c.id = a.client_id
     where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId} and a.start_at >= ${start} and a.start_at < ${end}
-      and a.status in ('requested', 'unconfirmed', 'confirmed', 'en_route', 'in_progress', 'completed')
+      and a.status = any(${ROUTE_STATUSES})
       and (${excludeId ?? null}::uuid is null or a.id <> ${excludeId ?? null})`;
-  let worst: { miles: number; client: string } | null = null;
+  if (!others.length) return null;
   const points = await postalPoints([zip, ...others.map((o) => o.zip)], staff.region.country);
-  for (const o of others) {
-    const miles = milesIn(points, zip, o.zip);
-    if (miles != null && miles > limit && (!worst || miles > worst.miles)) worst = { miles, client: o.client };
-  }
-  return worst ? { ...worst, limit } : null;
+  if (!driveRuleApplies(points, zip, staff.region.country)) return null;
+  const candidates = slot
+    ? Object.values(neighborStops(others, slot.start.getTime(), slot.end.getTime())).filter((s) => s != null)
+    : others;
+  const measured = candidates
+    .map((o) => ({ minutes: driveMinutesBetween(points, zip, o.zip), client: o.client, at: o.start_at, city: o.city ?? points.get(normPostal(o.zip))?.city ?? null }))
+    .filter((m): m is typeof m & { minutes: number } => m.minutes != null);
+  if (!measured.length) return null;
+  const pick = slot
+    ? measured.reduce((w, m) => (m.minutes > w.minutes ? m : w))
+    : measured.reduce((c, m) => (m.minutes < c.minutes ? m : c));
+  return pick.minutes > limit ? { ...pick, limit } : null;
 }
 
 /**
- * The coming days when this groomer already has a visit close to `zip`, closest first:
- * where to put a new visit so the route stays short. `after` is when the nearby visit ends,
- * rounded up to the next quarter hour.
+ * The coming days when this groomer already has a visit close to `zip` (within the drive limit),
+ * closest first: where to put a new visit so the route stays short. `after` is when the nearby
+ * visit ends, rounded up to the next quarter hour.
  */
 export async function nearbyDays(staff: StaffContext, zip: string | null, limit = 4) {
   if (!zip) return [];
-  const rows = await sql<{ start_at: Date; end_at: Date; zip: string | null; first_name: string }[]>`
-    select a.start_at, a.end_at, a.zip, c.first_name from appointments a join clients c on c.id = a.client_id
-    where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId}
-      and a.start_at > now() and a.start_at < now() + interval '45 days' and a.zip is not null
-      and a.status in ('requested', 'unconfirmed', 'confirmed')`;
-  const best = new Map<string, { date: string; miles: number; name: string; after: string }>();
+  const [rows, [biz]] = await Promise.all([
+    sql<{ start_at: Date; end_at: Date; zip: string | null; first_name: string }[]>`
+      select a.start_at, a.end_at, a.zip, c.first_name from appointments a join clients c on c.id = a.client_id
+      where a.business_id = ${staff.businessId} and a.staff_id = ${staff.staffId}
+        and a.start_at > now() and a.start_at < now() + interval '45 days' and a.zip is not null
+        and a.status in ('requested', 'unconfirmed', 'confirmed')`,
+    sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`,
+  ]);
+  const max = biz?.max_drive_minutes ?? 35;
+  const best = new Map<string, { date: string; minutes: number; name: string; after: string }>();
   const points = await postalPoints([zip, ...rows.map((r) => r.zip)], staff.region.country);
   for (const r of rows) {
-    const miles = milesIn(points, zip, r.zip);
-    if (miles == null || miles > 25) continue;
+    const minutes = driveMinutesBetween(points, zip, r.zip);
+    if (minutes == null || minutes > max) continue;
     const date = ymd(r.start_at, staff.timezone);
     const end = hm(new Date(Math.ceil(r.end_at.getTime() / 900_000) * 900_000), staff.timezone);
     const prev = best.get(date);
-    if (!prev || miles < prev.miles) best.set(date, { date, miles, name: r.first_name, after: end });
+    if (!prev || minutes < prev.minutes) best.set(date, { date, minutes, name: r.first_name, after: end });
   }
-  return [...best.values()].sort((a, b) => a.miles - b.miles || a.date.localeCompare(b.date)).slice(0, limit);
+  return [...best.values()].sort((a, b) => a.minutes - b.minutes || a.date.localeCompare(b.date)).slice(0, limit);
 }

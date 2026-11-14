@@ -1789,5 +1789,8 @@ export const OWNER_KEYS: string[] = [
  "Signed before {app} kept each version; the text may have changed since.",
  "Drive time between clients: 10 to 90 minutes.",
  "Maximum drive minutes between clients",
- "An estimate without traffic, from the distance between ZIP codes."
+ "An estimate without traffic, from the distance between ZIP codes.",
+ "~{minutes} min from",
+ "~{n} min",
+ "~{minutes} min drive from the {time} visit ({city})"
 ];
