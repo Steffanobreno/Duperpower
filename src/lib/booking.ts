@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "./db";
 import { addDaysYmd, dayRangeUtc, dayLabel, timeLabel, todayYmd, weekdayOf, zonedToUtc } from "./format";
 import { areaCovers, milesIn, postalPoints } from "./geo/postal";
+import { driveMinutesBetween, NEAR_DRIVE_MINUTES, slotWithinDrive } from "./geo/drive";
 import { postalOk, regionOf, type Region } from "./region";
 import { closedDays } from "./data/closed";
 import { billingOn } from "./billing";
@@ -13,8 +14,9 @@ import { billingOn } from "./billing";
 //    set, a weekday the client's area is served; inside working hours,
 //    with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
-// 4. on a day that already has visits, every one of them is within `max_cluster_miles`.
-// Days when the van is already close by (NEAR_MILES) are marked, and on them the times right
+// 4. the estimated drive from the stop before (or the van's start ZIP, for the day's first) and to
+//    the stop after is at most `max_drive_minutes` each way (slotWithinDrive); unknown ZIPs block.
+// Days when the van is already close by (NEAR_DRIVE_MINUTES) are marked, and on them the times right
 // before or after the nearby visit are marked "best", so clients pick what keeps the route short.
 // Requests hold their time slot until the owner accepts or declines them.
 
@@ -95,12 +97,10 @@ export async function zipProblem(b: PublicBusiness, zip: string) {
 
 const ACTIVE = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
 
-export const NEAR_MILES = 5;
-
 export type DaySlots = {
   date: string;
   label: string;
-  near: boolean; // another visit that day is within NEAR_MILES
+  near: boolean; // another visit that day is within NEAR_DRIVE_MINUTES
   times: { value: string; label: string; best?: boolean }[];
 };
 
@@ -128,8 +128,7 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   ]);
   // With service areas, only the weekdays the client's area is served.
   const areaDays = areas.length ? new Set(areas.filter((a) => areaCovers(a.zip_codes, zip)).flatMap((a) => a.weekdays)) : null;
-  const points = await postalPoints([zip, ...busy.map((a) => a.zip)], b.country);
-  const zipMiles = (x: string | null, y: string | null) => milesIn(points, x, y);
+  const points = await postalPoints([zip, b.start_zip, ...busy.map((a) => a.zip)], b.country);
 
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
   const buffer = b.buffer_minutes * 60_000;
@@ -144,8 +143,6 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     if (!h) continue;
     const { start: dayStart, end: dayEnd } = dayRangeUtc(date, tz);
     const sameDay = busy.filter((a) => a.start_at < dayEnd && a.end_at > dayStart);
-    // Rule 4: keep the day's stops close together.
-    if (sameDay.some((a) => { const m = zipMiles(zip, a.zip); return m != null && m > b.max_cluster_miles; })) continue;
 
     const open = zonedToUtc(date, h.start, tz).getTime();
     const close = zonedToUtc(date, h.end, tz).getTime();
@@ -161,14 +158,14 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     const starts = new Set<number>();
     for (const anchor of anchors) {
       for (let t = anchor; t + length <= close && !clashes(t); t += step) {
-        if (t >= earliest) starts.add(t);
+        if (t >= earliest && slotWithinDrive(points, zip, sameDay, t, t + length, b.start_zip, b.max_drive_minutes)) starts.add(t);
       }
     }
     const sorted = [...starts].sort((x, y) => x - y);
     // The closest visit that day; the first start after it and the last one that ends before it.
     const closest = sameDay
-      .map((a) => ({ a, m: zipMiles(zip, a.zip) }))
-      .filter((x): x is { a: (typeof sameDay)[number]; m: number } => x.m != null && x.m <= NEAR_MILES)
+      .map((a) => ({ a, m: driveMinutesBetween(points, zip, a.zip) }))
+      .filter((x): x is { a: (typeof sameDay)[number]; m: number } => x.m != null && x.m <= NEAR_DRIVE_MINUTES)
       .sort((x, y) => x.m - y.m)[0]?.a;
     const best = new Set<number>();
     if (closest) {

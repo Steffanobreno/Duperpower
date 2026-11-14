@@ -1,7 +1,7 @@
 // driveMinutes: the free drive-time estimate from straight-line miles.
 // Usage: npx tsx --conditions=react-server tests/drive.test.mjs  (drive.ts wraps postal.ts, which is server-only)
 import assert from "node:assert/strict";
-import { driveMinutes, driveMinutesBetween, NEAR_DRIVE_MINUTES } from "../src/lib/geo/drive.ts";
+import { driveMinutes, driveMinutesBetween, NEAR_DRIVE_MINUTES, slotWithinDrive } from "../src/lib/geo/drive.ts";
 
 assert.equal(driveMinutes(25.3), 61);
 assert.equal(driveMinutes(19.7), 47);
@@ -25,4 +25,23 @@ assert.equal(driveMinutesBetween(pts, null, "94611"), null);
 assert.equal(driveMinutesBetween(pts, "94063", undefined), null);
 console.log("✓ unknown ZIP codes give null, never a number");
 assert.equal(NEAR_DRIVE_MINUTES, 10);
+
+// slotWithinDrive: the stop before (or the start ZIP) and the stop after, each within the limit.
+pts.set("94402", { lat: 37.55, lng: -122.3, city: "San Mateo" });
+const h = (n) => Date.UTC(2026, 10, 24, n);
+const stop = (from, to, zip) => ({ start_at: new Date(h(from)), end_at: new Date(h(to)), zip });
+const rwc = stop(9, 11, "94063");
+const pied = stop(14, 16, "94611");
+assert.equal(slotWithinDrive(pts, "94402", [rwc], h(11), h(12), "94063", 35), true);
+assert.equal(slotWithinDrive(pts, "94611", [rwc], h(11), h(12), "94063", 35), false);
+assert.equal(slotWithinDrive(pts, "94611", [rwc], h(7), h(8), null, 35), false, "the next stop is too far");
+assert.equal(slotWithinDrive(pts, "94402", [rwc, pied], h(11), h(12), "94063", 35), false, "between two far stops");
+assert.equal(slotWithinDrive(pts, "94402", [rwc, pied], h(7), h(8), "94063", 35), true);
+console.log("✓ a time needs both the stop before and the stop after within the limit");
+assert.equal(slotWithinDrive(pts, "94611", [], h(7), h(8), "94063", 35), false, "the start ZIP is the first stop");
+assert.equal(slotWithinDrive(pts, "94611", [], h(7), h(8), null, 35), true, "no start ZIP set: that side passes");
+assert.equal(slotWithinDrive(pts, "94611", [], h(7), h(8), "99999", 35), false, "an unknown start ZIP blocks");
+assert.equal(slotWithinDrive(pts, "94402", [stop(9, 11, "99999")], h(7), h(8), null, 35), false);
+assert.equal(slotWithinDrive(pts, "94402", [stop(9, 11, null)], h(11), h(12), null, 35), false);
+console.log("✓ unknown ZIP codes block; only a start ZIP never set lets that side pass");
 console.log("All good.");

@@ -54,7 +54,7 @@ if ((await chip.getAttribute("aria-pressed")) !== "true") fail("the nearby day s
 const times = page.getByRole("group", { name: "Open times" });
 await times.getByText("Best times").waitFor();
 const starred = await times.locator("button", { hasText: "⭐" }).allInnerTexts();
-if (!starred.some((t) => /11:00 am|11:15 am|11:30 am/.test(t))) fail(`⭐ should be right after the 9–11 visit, got ${starred.join(", ")}`);
+if (!starred.some((t) => /11:00 am|11:15 am|11:30 am/i.test(t))) fail(`⭐ should be right after the 9–11 visit, got ${starred.join(", ")}`);
 await page.screenshot({ path: "/tmp/nearby-book.png", fullPage: true }).catch(() => {});
 step(`client in 94402: "in your area" with ${label(NEAR_DATE)} picked first, ⭐ ${starred.join(" ")}`);
 

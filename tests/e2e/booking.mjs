@@ -54,7 +54,9 @@ async function requestVisit({ pet, size, zip, city, phone, pickDay, photo }) {
     await page.getByAltText("Your pet").waitFor();
   }
   await button(`Confirm info for ${pet}`).click();
-  await page.getByRole("heading", { name: "Select a time" }).waitFor();
+  const none = page.getByText("No open times in your area right now.");
+  await page.getByRole("heading", { name: "Select a time" }).or(none).waitFor();
+  if (pickDay === null && (await none.isVisible())) return [];
   const days = await page.locator("button[aria-label*='open time']:not([disabled])").evaluateAll((els) => els.map((e) => e.getAttribute("aria-label").split(",").slice(0, 2).join(",")));
   if (pickDay === null) return days;
   const chosenDay = (await page.locator("button[aria-pressed='true'][aria-label*='open time']").getAttribute("aria-label")).split(",").slice(0, 2).join(",");
@@ -104,7 +106,7 @@ const day = await requestVisit({ pet: "Luna", size: "Small", zip: "94401", city:
 await shot("S38-book-sent");
 step(`client requested a Small bath on ${day}`);
 
-// A ZIP ~40 miles away must not be offered that same day (25-mile rule).
+// A ZIP ~40 miles away (~94 min estimated drive) must not be offered that same day (drive limit).
 const farDays = await requestVisit({ pet: "Max", size: "Small", zip: "95060", city: "Santa Cruz", phone: "(831) 555-0100", pickDay: null });
 if (farDays.includes(day)) fail(`Santa Cruz was offered ${day}, which already has a San Mateo stop`);
 step("a stop 40 miles away is not offered that day");
