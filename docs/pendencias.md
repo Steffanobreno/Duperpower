@@ -1,6 +1,53 @@
 # Pendências do Fino
 
-Atualizado em 2026-11-08 (Onda 1 e correções jurídicas prontas na branch `claude/clever-clarke-3ukcxg`; a master continua em `ddeda90`). Marque com [x] o que for feito.
+Atualizado em 2026-11-15. Tudo foi publicado na master no dia 2026-11-15: a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar. Marque com [x] o que for feito.
+
+## ⭐ Roteiro do dono, passo a passo (faça na ordem, quando puder)
+
+**Passo 1: agora, leva uns 15 minutos**
+1. [ ] **Netlify** (app.netlify.com → site woofersdogspa → Deploys): confirme que o último deploy terminou **verde**.
+2. [ ] **Netlify → Site configuration → Environment variables → Add a variable**. Crie estas:
+   - `ADMIN_EMAILS` = o seu e-mail;
+   - `SUPPORT_EMAIL` = um e-mail de suporte; por enquanto pode ser um Gmail criado só para o Fino;
+   - `CRON_SECRET` = um texto aleatório de 40 letras e números, gerado num gerador de senhas. Guarde esse texto e não mande para ninguém;
+   - `APP_URL` = `https://woofersdogspa.netlify.app`. Troque quando tiver o domínio.
+
+   Depois clique em **Deploys → Trigger deploy → Deploy site**. Os Termos e a Privacidade só mostram o e-mail de suporte depois de um novo deploy.
+3. [ ] **GitHub → Steffanobreno/Duperpower → Settings → Secrets and variables → Actions → New repository secret.** Crie estes:
+   - `APP_URL`, com o mesmo valor do Netlify;
+   - `CRON_SECRET`, com **o mesmo texto** do Netlify.
+
+   Teste em **Actions → messages → Run workflow**. Deve ficar verde. Se ficar vermelho, o `CRON_SECRET` está diferente nos dois lugares.
+4. [ ] **Em Ajustes → Agendamento online,** confira o campo **"Minutos máximos de carro entre clientes"**. O padrão é 35. É uma estimativa sem trânsito, feita pela distância entre os CEPs.
+5. [ ] **Pedidos pendentes:** abra Pedidos. Os cartões longe demais mostram "~N min de carro". O da Carla Newell (Piedmont) deve aparecer com o aviso. Recuse ou remarque.
+6. [ ] **Clientes sem CEP:** visitas sem CEP mostram "Sem CEP: o agendamento online fica fechado perto desta visita". Para resolver, coloque o CEP no endereço do cliente.
+
+**Passo 2: abrir a empresa**
+7. [ ] Leve ao contador as perguntas da seção "Perguntas para o advogado e o contador", mais abaixo. A principal é LLC americana ou empresa brasileira.
+8. [ ] Abra a empresa e crie um e-mail no domínio, por exemplo suporte@finogroom.com.
+9. [ ] Compre o domínio **finogroom.com**. Troque `APP_URL` no Netlify e no GitHub.
+
+**Passo 3: com a empresa aberta**
+10. [ ] Mande ao Claude o nome jurídico, o endereço, o foro, o encarregado de dados e o e-mail de suporte. Ele preenche `src/lib/legal.ts`. Hoje os Termos mostram [NOME DA EMPRESA], [ENDEREÇO], [FORO E LEI APLICÁVEL] e [ENCARREGADO / DPO].
+11. [ ] Crie a conta no Stripe em nome da empresa. Mande primeiro as **chaves de teste**, para rodar os testes de cobrança. Depois:
+    - coloque `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET` no Netlify;
+    - crie o webhook, com os eventos descritos em "Configurações suas", logo abaixo.
+
+    **Não** coloque `FAKE_PAYMENTS=1` no site no ar.
+12. [ ] Peça a um advogado para revisar os Termos e a Privacidade. O relatório jurídico e as perguntas estão nesta página.
+13. [ ] Peça a alguém nativo para conferir as traduções em português e espanhol.
+
+**Passo 4: lançamento**
+14. [ ] Google Search Console e Bing: verificar o domínio e enviar o `/sitemap.xml`.
+15. [ ] Crie um código de lançamento em /admin → Códigos, por exemplo LANCAMENTO50.
+16. [ ] Cadastre o Fino no Capterra, no G2 e no GetApp.
+17. [ ] Traga os 10 primeiros groomers e peça depoimentos, com autorização.
+
+**Decisões que o Claude espera de você (sem pressa)**
+- [ ] **Respostas de e-mail:** as respostas dos clientes aos e-mails do groomer ainda vão para o e-mail do Fino. Recomendação: fazer as respostas irem para o e-mail da empresa do groomer.
+- [ ] **Barra A–Z da lista de clientes:** os botões são pequenos demais para o dedo e reprovam na checagem de acessibilidade. A correção é rápida.
+- [ ] **Troca de plano no portal do Stripe:** deve exigir aceitar os Termos de novo? Recomendação: não.
+- [ ] **Visual novo do app e do site,** no estilo do MoeGo: áreas desenhadas no mapa, áreas por data e Ajustes em lista agrupada. Mande 2 ou 3 sites de referência e o que mais sente falta de informação.
 
 ## Configurações suas (sem código)
 - [ ] **Netlify:** confirmar que o deploy do `ddeda90` terminou verde.
