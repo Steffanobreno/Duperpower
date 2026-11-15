@@ -4,7 +4,8 @@
 // the day); E is due but blocked from online booking; D is on the waitlist for the day.
 // /fill/<day> shows the free time and D, A, B in that order (not C), with the gap offer ready to send;
 // tapping WhatsApp records the invite (once). A groomer without "See client phone numbers"
-// sees the list but no send links.
+// sees the list but no send links. On a second day (Redwood City 9–11, Piedmont 14–16) an Oakland
+// client is over the drive limit for the 11:00 offer: marked, dimmed, and after those who fit.
 // Usage: node tests/e2e/fill-gap.mjs [baseUrl] [screenshotDir]
 import { chromium } from "playwright";
 import postgres from "postgres";
@@ -171,6 +172,35 @@ step("tapping WhatsApp opens it and records the invite once; A shows Invited tod
   step("a groomer without client contact sees the list but no WhatsApp/Text links");
 }
 
+// The drive limit for the time offered. Another working day: Redwood City 9–11, Piedmont 14–16, so the
+// first gap (the offer) is 11:00–14:00. An Oakland client (~55 min from Redwood City) is over the
+// 35-minute limit for it: dimmed, marked, and after those who fit (San Lorenzo is ~34 / ~30 min).
+{
+  let n2 = n + 1;
+  const dayBusy = async (k) => (await db`select 1 from appointments where staff_id = ${owner}
+      and start_at >= ${await at(k, "00:00")} and start_at < ${await at(k, "23:59")} and status <> 'cancelled'`).length > 0;
+  while (weekday(la(n2)) === 0 || (await db`select 1 from closed_dates where business_id = ${biz} and ${la(n2)}::date between start_date and end_date`).length
+    || (await dayBusy(n2))) n2++;
+  const DAY2 = la(n2);
+  await db`insert into time_off (staff_id, start_at, end_at, reason) values (${owner}, ${await at(n2, "07:00")}, ${await at(n2, "09:00")}, 'Gapfill')`;
+  await visit(stop, n2, "09:00", "11:00", "confirmed", "94063");
+  await visit(stop, n2, "14:00", "16:00", "confirmed", "94611");
+  const O = await client("Olive", "94610");
+  const L = await client("Lou", "94580");
+  for (const id of [O, L]) await visit(id, -50, "10:00", "12:00", "completed", null);
+  await page.goto(`${BASE}/fill/${DAY2}`);
+  const gaps2 = await page.locator('section[aria-label="Free time"] li').allTextContents();
+  if (!/^11:00/.test(gaps2[0] ?? "")) fail(`the offered gap on ${DAY2} should start at 11:00, got ${gaps2.join(", ")}`);
+  await row(O).getByText("~55 min — over your limit").waitFor({ timeout: 8000 }).catch(() => fail("Olive (Oakland) should be marked over the limit for the 11:00 offer"));
+  if ((await row(O).getAttribute("data-over-limit")) == null) fail("Olive's row should be dimmed as over the limit");
+  if ((await row(L).getAttribute("data-over-limit")) != null) fail("Lou (San Lorenzo) fits the gap and should not be marked");
+  const order = await page.locator("li[data-client]").evaluateAll((els) => els.map((e) => [e.getAttribute("data-client"), e.hasAttribute("data-over-limit")]));
+  const firstOver = order.findIndex(([, over]) => over);
+  if (firstOver >= 0 && order.slice(firstOver).some(([, over]) => !over)) fail("every client who fits should come before those over the limit");
+  if (order.findIndex(([id]) => id === L) > order.findIndex(([id]) => id === O)) fail("Lou (fits) should come before Olive (over the limit)");
+  step(`${DAY2}, 11:00 offer between Redwood City and Piedmont: Olive (Oakland) "~55 min — over your limit", after those who fit`);
+}
+
 await page.goto(`${BASE}/fill/${SUNDAY}`);
 await page.getByText("No free time this day.").waitFor();
 step("a Sunday (day off) has no free time");
@@ -204,7 +234,7 @@ const mapGap = await page.evaluate(() =>
   document.querySelector('nav[aria-label="Main"]').getBoundingClientRect().top - document.querySelector('[aria-label="Visits"]').getBoundingClientRect().bottom);
 if (mapGap < 0) fail(`the cards are ${-mapGap}px under the tab bar`);
 step("map mode with free time: the chip is shown and the visit cards stay above the tab bar");
-const [{ id: stopVisit }] = await db`select id from appointments where client_id = ${stop} and status = 'confirmed'`;
+const [{ id: stopVisit }] = await db`select id from appointments where client_id = ${stop} and status = 'confirmed' order by start_at limit 1`;
 await page.goto(`${BASE}/appointments/${stopVisit}`);
 if (await page.getByRole("link", { name: /Fill this time/ }).count()) fail("a confirmed visit should not offer Fill this time");
 await db`update appointments set status = 'cancelled' where id = ${stopVisit}`;

@@ -23,7 +23,9 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
   const at = (time: string) => timeLabel(zonedToUtc(date, time, tz), tz);
   // A day that has passed has nothing to fill, and nobody to invite.
   const past = date < todayYmd(tz);
-  const [gaps, candidates] = past ? [[], []] : await Promise.all([dayGaps(staff, date), fillCandidates(staff, date)]);
+  const gaps = past ? [] : await dayGaps(staff, date);
+  // Ranked for the time offered (the first gap): who fits it within the drive limit first.
+  const candidates = gaps.length ? await fillCandidates(staff, date, 30, gaps[0]) : [];
   // Phone numbers (in the WhatsApp and text links) only for those allowed to see them.
   const canSend = staff.can.client_contact;
   const offer = canSend && gaps.length ? await gapOfferText(staff, date, gaps[0].start) : null;
@@ -61,7 +63,8 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
             ) : (
               <ul className="space-y-2">
                 {candidates.map((c) => (
-                  <li key={c.clientId} className="card space-y-3 p-4" data-client={c.clientId}>
+                  <li key={c.clientId} className={`card space-y-3 p-4 ${c.overLimit != null ? "opacity-60" : ""}`} data-client={c.clientId}
+                    data-over-limit={c.overLimit != null ? "" : undefined}>
                     <div className="flex items-start justify-between gap-2">
                       <Link href={`/clients/${c.clientId}`} className="min-w-0">
                         <span className="block font-bold">{c.name}</span>
@@ -72,9 +75,13 @@ export default async function FillGapPage({ params }: PageProps<"/fill/[date]">)
                           ].filter(Boolean).join(" · ")}
                         </span>
                       </Link>
-                      <span className="shrink-0 text-sm text-muted">
-                        {c.driveMinutes != null ? t("~{n} min", { n: c.driveMinutes }) : t("No address on the map")}
-                      </span>
+                      {c.overLimit != null ? (
+                        <span className="shrink-0 text-sm font-semibold text-danger">{t("~{n} min — over your limit", { n: c.overLimit })}</span>
+                      ) : (
+                        <span className="shrink-0 text-sm text-muted">
+                          {c.driveMinutes != null ? t("~{n} min", { n: c.driveMinutes }) : t("No address on the map")}
+                        </span>
+                      )}
                     </div>
                     {c.offeredToday && (
                       <p className="text-sm font-semibold text-success">{t("Invited today")}</p>

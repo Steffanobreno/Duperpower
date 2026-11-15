@@ -4,7 +4,7 @@ import { sql } from "../db";
 import { addDaysYmd, dayRangeUtc, hm, longDayLabel, phoneLabel, timeLabel, todayYmd, weekdayOf, zonedToUtc } from "../format";
 import { freeGaps, type Gap } from "../gaps";
 import { normPostal, postalPoints, type Point } from "../geo/postal";
-import { driveMinutes } from "../geo/drive";
+import { driveMinutes, driveRuleApplies, farFromNeighbors } from "../geo/drive";
 import { milesBetween } from "../geo/zip";
 import { bookingUrl, manualTemplateBody, render } from "../messaging";
 import { messageRegion } from "../region";
@@ -112,10 +112,21 @@ export type Candidate = {
   daysOverdue: number | null;
   /** Estimated drive minutes to the closest stop that day (else the van's start); null: not on the map. */
   driveMinutes: number | null;
+  /**
+   * For the offered gap: whether a visit there keeps the drive from the stop before it and to the stop
+   * after it within the limit (the booking page's rule). False also when it can't be measured.
+   */
+  fits: boolean;
+  /** The worse of those two drives, in estimated minutes, when it is over the limit. */
+  overLimit: number | null;
   offeredToday: boolean;
 };
 
-export async function fillCandidates(staff: StaffContext, date: string, limit = 30): Promise<Candidate[]> {
+/**
+ * Who to invite on that day. With `gap` (the time being offered), those who fit it within the drive
+ * limit come first; the others follow, with how far over the limit they are.
+ */
+export async function fillCandidates(staff: StaffContext, date: string, limit = 30, gap?: Gap): Promise<Candidate[]> {
   const todayStart = dayRangeUtc(todayYmd(staff.timezone), staff.timezone).start;
   const [rows, stops, [biz]] = await Promise.all([
     sql<{ id: string; first_name: string; name: string; phone: string | null; sms_ok: boolean; pets: string | null;
@@ -138,7 +149,8 @@ export async function fillCandidates(staff: StaffContext, date: string, limit = 
         and not c.online_booking_blocked
         and ${invitable(staff, date)}`,
     dayStops(staff, date),
-    sql<{ start_zip: string | null }[]>`select start_zip from businesses where id = ${staff.businessId}`,
+    sql<{ start_zip: string | null; max_drive_minutes: number }[]>`
+      select start_zip, max_drive_minutes from businesses where id = ${staff.businessId}`,
   ]);
 
   // Where the van is that day: its stops, else where it starts from.
@@ -154,16 +166,29 @@ export async function fillCandidates(staff: StaffContext, date: string, limit = 
     return home && from.length ? Math.min(...from.map((p) => milesBetween(home, p))) : null;
   };
 
+  // The offered gap, checked like the booking page checks a time: the client's ZIP against the stop
+  // right before the gap and the one right after it.
+  const gapStart = gap && zonedToUtc(date, gap.start, staff.timezone).getTime();
+  const gapEnd = gap && zonedToUtc(date, gap.end, staff.timezone).getTime();
+  const limitMin = biz?.max_drive_minutes ?? 35;
+  const check = (r: (typeof rows)[number]): { fits: boolean; overLimit: number | null } => {
+    if (gapStart == null || gapEnd == null) return { fits: true, overLimit: null };
+    if (r.zip && !driveRuleApplies(points, r.zip, country)) return { fits: true, overLimit: null };
+    const far = farFromNeighbors(points, r.zip ?? "", stops, gapStart, gapEnd, limitMin);
+    return { fits: !far, overLimit: far?.kind === "far" ? far.minutes : null };
+  };
+
   // Shown as estimated minutes; ordered by the miles behind them, so the 5-minute floor doesn't make ties.
   const miles = new Map(rows.map((r) => [r.id, milesTo(r)]));
   const minutes = (id: string) => { const m = miles.get(id); return m == null ? null : driveMinutes(m); };
   const list = rows.map((r): Candidate => ({
     clientId: r.id, name: r.name, firstName: r.first_name, phone: r.phone, smsOk: r.sms_ok, pets: r.pets ?? "",
     reason: r.waitlist ? "waitlist" : "due", daysOverdue: r.waitlist ? null : r.days_overdue,
-    driveMinutes: minutes(r.id), offeredToday: r.offered,
+    driveMinutes: minutes(r.id), offeredToday: r.offered, ...check(r),
   }));
   list.sort((a, b) =>
-    Number(b.reason === "waitlist") - Number(a.reason === "waitlist")
+    Number(b.fits) - Number(a.fits)
+    || Number(b.reason === "waitlist") - Number(a.reason === "waitlist")
     || (miles.get(a.clientId) ?? Infinity) - (miles.get(b.clientId) ?? Infinity)
     || a.name.localeCompare(b.name));
   return list.slice(0, limit);
