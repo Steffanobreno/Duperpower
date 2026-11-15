@@ -15,7 +15,8 @@ import { billingOn } from "./billing";
 //    with at least `min_notice_hours` notice, on the start-time grid (see below);
 // 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
 // 4. the estimated drive from the stop before and to the stop after (when there is one) is at most
-//    `max_drive_minutes` each way (slotWithinDrive); a stop at an unknown ZIP blocks. Outside the
+//    `max_drive_minutes` each way (slotWithinDrive); a stop with no ZIP is placed by its coordinates, and
+//    a stop that can't be placed (unknown ZIP, or neither ZIP nor coordinates) blocks. Outside the
 //    US, a client postal code that can't be placed skips this rule (driveRuleApplies).
 // Days when the van is already close by (NEAR_DRIVE_MINUTES) are marked, and on them the times right
 // before or after the nearby visit are marked "best", so clients pick what keeps the route short.
@@ -34,7 +35,6 @@ export type PublicBusiness = {
   website_url: string | null;
   email: string | null;
   buffer_minutes: number;
-  max_cluster_miles: number;
   max_drive_minutes: number;
   booking_days_ahead: number;
   min_notice_hours: number;
@@ -53,7 +53,7 @@ export async function getPublicBusiness(slug?: string | null) {
   const key = typeof slug === "string" && /^[a-z0-9-]{2,60}$/.test(slug) ? slug : null;
   const [b] = await sql<PublicBusiness[]>`
     select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit, b.website_url, b.email, b.buffer_minutes,
-           b.max_cluster_miles::float8 as max_cluster_miles, b.max_drive_minutes, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
+           b.max_drive_minutes, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles,
            -- A business whose trial ended unpaid (with billing on) has its booking page paused.
            b.online_booking_enabled and (${!billingOn()} or b.plan_status in ('active', 'free', 'past_due')
@@ -118,8 +118,8 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     sql<{ weekday: number; start: string; end: string }[]>`
       select weekday, to_char(start_time, 'HH24:MI') as start, to_char(end_time, 'HH24:MI') as end
       from working_hours where staff_id = ${b.staff_id}`,
-    sql<{ start_at: Date; end_at: Date; zip: string | null }[]>`
-      select start_at, end_at, zip from appointments
+    sql<Stop[]>`
+      select start_at, end_at, zip, lat, lng from appointments
       where business_id = ${b.id} and staff_id = ${b.staff_id} and status = any(${ACTIVE})
         and start_at < ${rangeEnd} and end_at > ${rangeStart}`,
     sql<{ start_at: Date; end_at: Date }[]>`

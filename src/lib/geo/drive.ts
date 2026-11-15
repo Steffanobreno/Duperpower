@@ -1,4 +1,5 @@
 import { milesIn, normPostal, type Point } from "./postal";
+import { milesBetween } from "./zip";
 
 // The free drive-time estimate: straight-line miles between ZIP centers, stretched for roads
 // and divided by an average speed. Conservative on purpose (no traffic data). Change the
@@ -35,8 +36,18 @@ export function driveRuleApplies(points: Map<string, Point | null>, zip: string,
   return country === "US" || points.get(normPostal(zip)) != null;
 }
 
-/** A visit already on the day, as a stop on the van's route. */
-export type Stop = { start_at: Date; end_at: Date; zip: string | null };
+/**
+ * A visit already on the day, as a stop on the van's route. A visit with no ZIP is placed by its
+ * own coordinates (from its address) when it has them; with neither it can't be placed.
+ */
+export type Stop = { start_at: Date; end_at: Date; zip: string | null; lat?: number | null; lng?: number | null };
+
+/** Estimated drive minutes from the client's postal code to a stop (null when either can't be placed). */
+function minutesToStop(points: Map<string, Point | null>, zip: string, stop: Stop): number | null {
+  if (normPostal(stop.zip)) return driveMinutesBetween(points, zip, stop.zip);
+  const from = points.get(normPostal(zip));
+  return from && stop.lat != null && stop.lng != null ? driveMinutes(milesBetween(from, { lat: stop.lat, lng: stop.lng })) : null;
+}
 
 /** The stop right before a visit from `start` to `end` (ms) and the one right after it, that day. */
 export function neighborStops<S extends Stop>(stops: S[], start: number, end: number) {
@@ -56,8 +67,8 @@ export type FarFromNeighbors<S extends Stop> =
 /**
  * How a visit at `zip` from `start` to `end` (ms) sits against the stop before it and the stop
  * after it (a side with no stop has nothing to check). "far": the worse side is over `limit`
- * minutes (wins over unknown). "unknown": no side is over, but a neighbor's ZIP can't be placed
- * (unknown values block). Null: both sides are measured and within the limit.
+ * minutes (wins over unknown). "unknown": no side is over, but a neighbor can't be placed (its ZIP
+ * is unknown, or it has no ZIP and no coordinates; unknown values block). Null: both sides are measured and within the limit.
  * `points` must hold `zip` and every stop's ZIP (postalPoints).
  */
 export function farFromNeighbors<S extends Stop>(
@@ -73,7 +84,7 @@ export function farFromNeighbors<S extends Stop>(
   let unknown: S | null = null;
   for (const stop of [prev, next]) {
     if (!stop) continue;
-    const minutes = driveMinutesBetween(points, zip, stop.zip);
+    const minutes = minutesToStop(points, zip, stop);
     if (minutes == null) unknown ??= stop;
     else if (minutes > limit && (!far || minutes > far.minutes)) far = { minutes, stop };
   }
@@ -83,7 +94,7 @@ export function farFromNeighbors<S extends Stop>(
 /**
  * Whether a visit at `zip` from `start` to `end` (ms) keeps both drives within `limit` minutes:
  * from the stop before it and to the stop after it. A side with no stop has nothing to check (the
- * van's distance from home is the service radius's job). A stop at an unknown ZIP fails.
+ * van's distance from home is the service radius's job). A stop that can't be placed fails.
  * `points` must hold `zip` and every stop's ZIP (postalPoints).
  */
 export function slotWithinDrive(

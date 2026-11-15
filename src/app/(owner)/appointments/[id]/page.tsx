@@ -7,7 +7,7 @@ import { clientTagsFor, petCodesFor } from "@/lib/data/options";
 import { PetCodeChips, TagChips } from "@/components/chips";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
-import { getAppointment } from "@/lib/data/appointments";
+import { closesOnlineBooking, getAppointment } from "@/lib/data/appointments";
 import { getInvoiceForAppointment } from "@/lib/data/invoices";
 import { smsTextFor } from "@/lib/messaging";
 import { sql } from "@/lib/db";
@@ -355,6 +355,11 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
               </AddressLink>
             ) : (
               <div className="flex items-center gap-3 px-4 py-3 text-muted"><Pin size={18} /> {" "}{t("No address on file")}</div>
+            )}
+            {closesOnlineBooking(appt) && (
+              <div className="px-4 py-3">
+                <Notice kind="warn">{t("No ZIP code: online booking is closed around this visit. Add the ZIP to the client's address.")}</Notice>
+              </div>
             )}
             {c.access_notes && <div className="px-4 py-3"><Notice kind="info">{c.access_notes}</Notice></div>}
           </div>

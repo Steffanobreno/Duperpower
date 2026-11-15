@@ -1792,4 +1792,6 @@ export const es: string[] = ["Reserva abandonada",
 "~{n} min",
 "~{minutes} min en coche desde la visita de las {time} ({city})",
 "~{minutes} min en coche desde la visita de las {time}",
-"No se puede estimar el trayecto desde la visita de {client} (su código postal no tiene posición en el mapa)"];
+"No se puede estimar el trayecto desde la visita de {client} (su código postal no tiene posición en el mapa)",
+"Sin código postal: la reserva en línea está cerrada alrededor de esta visita. Agrega el código postal a la dirección del cliente.",
+"~{n} min — por encima de tu límite"];

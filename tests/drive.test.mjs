@@ -48,6 +48,16 @@ assert.equal(slotWithinDrive(pts, "94611", [], h(7), h(8), 35), true, "an empty 
 assert.equal(slotWithinDrive(pts, "94402", [stop(9, 11, "99999")], h(7), h(8), 35), false);
 assert.equal(slotWithinDrive(pts, "94402", [stop(9, 11, null)], h(11), h(12), 35), false);
 console.log("✓ an empty day is open; a stop at an unknown ZIP blocks");
+// A visit with no ZIP but with coordinates (from its address) is placed by them.
+const noZip = (from, to, lat, lng) => ({ start_at: new Date(h(from)), end_at: new Date(h(to)), zip: null, lat, lng });
+assert.equal(slotWithinDrive(pts, "94402", [noZip(9, 11, 37.48, -122.2)], h(11), h(12), 35), true, "no ZIP, coordinates in Redwood City");
+const farNoZip = farFromNeighbors(pts, "94611", [noZip(9, 11, 37.48, -122.2)], h(11), h(12), 35);
+assert.equal(farNoZip?.kind, "far", "no ZIP, coordinates far away");
+assert.ok(farNoZip.minutes > 35);
+assert.equal(slotWithinDrive(pts, "94402", [noZip(9, 11, null, null)], h(11), h(12), 35), false, "no ZIP, no coordinates: blocks");
+assert.equal(slotWithinDrive(pts, "94402", [{ ...noZip(9, 11, 37.48, -122.2), zip: "" }], h(11), h(12), 35), true, "an empty ZIP is no ZIP");
+assert.equal(slotWithinDrive(pts, "94402", [{ ...noZip(9, 11, 37.48, -122.2), zip: "99999" }], h(11), h(12), 35), false, "a ZIP that can't be placed still blocks");
+console.log("✓ a stop with no ZIP is placed by its coordinates; with neither it blocks");
 
 // farFromNeighbors: far, unknown, far beats unknown, null.
 const farOne = farFromNeighbors(pts, "94611", [rwc], h(11), h(12), 35);

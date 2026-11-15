@@ -1792,4 +1792,6 @@ export const tr: string[] = ["Yarım kalan randevu",
 "~{n} dk",
 "{time} ziyaretinden ~{minutes} dk sürüş ({city})",
 "{time} ziyaretinden ~{minutes} dk sürüş",
-"{client} ziyaretinden sürüş tahmin edilemiyor (posta kodunun haritada konumu yok)"];
+"{client} ziyaretinden sürüş tahmin edilemiyor (posta kodunun haritada konumu yok)",
+"Posta kodu yok: bu ziyaretin çevresinde online randevu kapalı. Müşterinin adresine posta kodunu ekleyin.",
+"~{n} dk — sınırınızın üstünde"];

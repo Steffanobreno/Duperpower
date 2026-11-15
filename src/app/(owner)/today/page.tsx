@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Toast } from "@/components/toast";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { listDay, listRange } from "@/lib/data/appointments";
+import { closesOnlineBooking, listDay, listRange } from "@/lib/data/appointments";
 import { directionsUrl, routeUrl } from "@/lib/directions";
 import { addDaysYmd, isYmd, longDayLabel, minutesLabel, money, timeLabel, todayYmd, ymd, zonedToUtc } from "@/lib/format";
 import { ButtonLink, Empty, Notice, Page, PageHeader, StatusBadge } from "@/components/ui";
@@ -152,6 +152,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     for (const [k, v] of [...params]) if (!v) params.delete(k);
     return `/today?${params}`;
   };
+  const noZip = t("No ZIP code: online booking is closed around this visit. Add the ZIP to the client's address.");
   const cards: DayStop[] = stops.map((s, i) => {
     const next = s.paid ? null : NEXT[s.status] ?? null;
     return {
@@ -169,6 +170,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       drive: driveTo(i) != null ? `🚐 ${t("{duration} drive", { duration: t(minutesLabel(driveTo(i)!)) })}` : null,
       codes: s.pets.flatMap((p) => codes.get(p.id) ?? []).map((c) => ({ label: c.label, color: c.color })),
       alerts: s.pets.flatMap((p) => vaccines.filter((v) => v.pet_id === p.id).map((v) => `💉 ${p.name}: ${alertText(v)}`)),
+      warning: closesOnlineBooking(s) ? noZip : null,
     };
   });
   const tiles = kpis && (
@@ -396,6 +398,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                           💉 {p.name}: {alertText(v)}
                         </div>
                       )))}
+                      {closesOnlineBooking(s) && <div className="text-xs font-semibold text-warn">{noZip}</div>}
                     </div>
                   </Link>
                   <div className="grid grid-cols-3 divide-x divide-line border-t border-line text-sm font-semibold text-brand">

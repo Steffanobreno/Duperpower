@@ -66,6 +66,11 @@ async function distanceWarning(staff: StaffContext, date: string, zip: string | 
     : `Can't estimate the drive from ${w.client}'s visit (no map position for its postal code).`;
 }
 
+/** Every warning at once, so one "Book anyway" covers everything the owner was shown. */
+function allWarnings(list: (string | null)[]) {
+  return list.filter(Boolean).join(" ") || null;
+}
+
 export async function createAppointmentAction(clientId: string, _: FormState, form: FormData): Promise<FormState> {
   const me = await requireStaff();
   // The groomer who does the visit (their hours, blocks and route); the owner by default.
@@ -108,10 +113,11 @@ export async function createAppointmentAction(clientId: string, _: FormState, fo
   const endAt = new Date(startAt.getTime() + Math.max(totalMin, 15) * 60_000);
 
   if (!override) {
-    const warning =
-      (await outsideHours(staff, date, time, endAt)) ??
-      (await overlapWarning(staff, startAt, endAt)) ??
-      (await distanceWarning(staff, date, client.zip, { start: startAt, end: endAt }));
+    const warning = allWarnings(await Promise.all([
+      outsideHours(staff, date, time, endAt),
+      overlapWarning(staff, startAt, endAt),
+      distanceWarning(staff, date, client.zip, { start: startAt, end: endAt }),
+    ]));
     if (warning) return { warning };
   }
 
@@ -204,10 +210,11 @@ export async function rescheduleAction(appointmentId: string, _: FormState, form
   const startAt = zonedToUtc(date, time, staff.timezone);
   const endAt = new Date(startAt.getTime() + (appt.end_at.getTime() - appt.start_at.getTime()));
   if (form.get("override") !== "on") {
-    const warning =
-      (await outsideHours(staff, date, time, endAt)) ??
-      (await overlapWarning(staff, startAt, endAt, appointmentId)) ??
-      (await distanceWarning(staff, date, appt.zip, { start: startAt, end: endAt }, appointmentId));
+    const warning = allWarnings(await Promise.all([
+      outsideHours(staff, date, time, endAt),
+      overlapWarning(staff, startAt, endAt, appointmentId),
+      distanceWarning(staff, date, appt.zip, { start: startAt, end: endAt }, appointmentId),
+    ]));
     if (warning) return { warning };
   }
   try {

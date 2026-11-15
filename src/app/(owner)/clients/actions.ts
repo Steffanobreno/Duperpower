@@ -105,6 +105,16 @@ export async function updateClientAction(clientId: string, _: FormState, form: F
       returning id`;
     if (rows.length === 0) return { error: "Client not found." };
     await saveTags(clientId, v.tags);
+    // Upcoming visits booked without a ZIP take the new one, so online booking can measure the
+    // drive around them again (a visit with no ZIP and no coordinates closes the times next to it).
+    const zip = v.zip ?? geo?.zip ?? null;
+    if (zip) {
+      await sql`update appointments set zip = ${zip},
+          lat = case when lat is null or lng is null then ${geo?.lat ?? null} else lat end,
+          lng = case when lat is null or lng is null then ${geo?.lng ?? null} else lng end
+        where client_id = ${clientId} and business_id = ${staff.businessId} and coalesce(zip, '') = ''
+          and start_at > now() and status in ('requested', 'unconfirmed', 'confirmed')`;
+    }
   } catch (e) {
     if (isUniqueViolation(e)) return { error: "Another client already has this phone number." };
     throw e;

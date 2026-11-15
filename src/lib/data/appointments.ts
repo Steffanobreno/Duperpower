@@ -156,8 +156,19 @@ export async function workingHoursFor(staff: StaffContext, weekday: number) {
 /** The visits that hold the groomer's time on a day, for the drive rule. */
 const ROUTE_STATUSES = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress", "completed"];
 
+/** Visits still ahead of the groomer, which hold time that online booking works around. */
+const OPEN_STATUSES = ["requested", "unconfirmed", "confirmed", "en_route", "in_progress"];
+
+/**
+ * A visit online booking can't measure from: no ZIP and no coordinates. It closes the online times
+ * next to it (unknown values block), so the owner is told to add the ZIP.
+ */
+export function closesOnlineBooking(a: { status: string; zip: string | null; lat: number | null; lng: number | null }) {
+  return OPEN_STATUSES.includes(a.status) && !normPostal(a.zip) && (a.lat == null || a.lng == null);
+}
+
 /** A stop on a day's route, with who it is (for the warning). */
-export type RouteStop = Stop & { client: string; city: string | null; staff_id: string };
+export type RouteStop = Stop & { id: string; client: string; city: string | null; staff_id: string };
 
 /** Why a visit sits badly on the route: too far from a neighbor, or a neighbor that can't be measured. */
 export type DriveWarning =
@@ -184,7 +195,7 @@ export async function routeStops(staff: StaffContext, days: { staffId: string; d
   const from = new Date(Math.min(...ranges.map((r) => r.start.getTime())));
   const to = new Date(Math.max(...ranges.map((r) => r.end.getTime())));
   const rows = await sql<RouteStop[]>`
-    select a.start_at, a.end_at, a.zip, a.staff_id, c.first_name as client, c.city
+    select a.id, a.start_at, a.end_at, a.zip, a.lat, a.lng, a.staff_id, c.first_name as client, c.city
     from appointments a join clients c on c.id = a.client_id
     where a.business_id = ${staff.businessId} and a.staff_id = any(${[...new Set(days.map((d) => d.staffId))]})
       and a.start_at >= ${from} and a.start_at < ${to} and a.status = any(${ROUTE_STATUSES})
@@ -212,10 +223,14 @@ export async function tooFarFromDay(
   return driveWarningFor(points, zip, staff.region.country, stops, slot, biz[0]?.max_drive_minutes ?? 35);
 }
 
+/** The visit length nearbyDays assumes for its suggestion (the services aren't picked yet). */
+const SUGGESTED_MINUTES = 60;
+
 /**
  * The coming days when this groomer already has a visit close to `zip` (within the drive limit),
  * closest first: where to put a new visit so the route stays short. `after` is when the nearby
- * visit ends, rounded up to the next quarter hour.
+ * visit ends, rounded up to the next quarter hour; a day is suggested only when a visit there,
+ * from `after` for an hour, is also within the limit of the stop after it (farFromNeighbors).
  */
 export async function nearbyDays(staff: StaffContext, zip: string | null, limit = 4) {
   if (!zip) return [];
@@ -228,15 +243,22 @@ export async function nearbyDays(staff: StaffContext, zip: string | null, limit 
     sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`,
   ]);
   const max = biz?.max_drive_minutes ?? 35;
+  const dates = [...new Set(rows.map((r) => ymd(r.start_at, staff.timezone)))];
+  const stops = await routeStops(staff, dates.map((date) => ({ staffId: staff.staffId, date })));
+  const points = await postalPoints([zip, ...rows.map((r) => r.zip), ...stops.map((s) => s.zip)], staff.region.country);
+  const near = rows
+    .map((r) => ({ r, minutes: driveMinutesBetween(points, zip, r.zip) }))
+    .filter((x): x is { r: (typeof rows)[number]; minutes: number } => x.minutes != null && x.minutes <= max)
+    .sort((a, b) => a.minutes - b.minutes);
   const best = new Map<string, { date: string; minutes: number; name: string; after: string }>();
-  const points = await postalPoints([zip, ...rows.map((r) => r.zip)], staff.region.country);
-  for (const r of rows) {
-    const minutes = driveMinutesBetween(points, zip, r.zip);
-    if (minutes == null || minutes > max) continue;
+  for (const { r, minutes } of near) {
     const date = ymd(r.start_at, staff.timezone);
-    const end = hm(new Date(Math.ceil(r.end_at.getTime() / 900_000) * 900_000), staff.timezone);
-    const prev = best.get(date);
-    if (!prev || minutes < prev.minutes) best.set(date, { date, minutes, name: r.first_name, after: end });
+    if (best.has(date)) continue;
+    const start = Math.ceil(r.end_at.getTime() / 900_000) * 900_000;
+    const sameDay = stops.filter((s) => ymd(s.start_at, staff.timezone) === date);
+    // The stop after the suggested time must be within the limit too (and be measurable).
+    if (farFromNeighbors(points, zip, sameDay, start, start + SUGGESTED_MINUTES * 60_000, max)) continue;
+    best.set(date, { date, minutes, name: r.first_name, after: hm(new Date(start), staff.timezone) });
   }
   return [...best.values()].sort((a, b) => a.minutes - b.minutes || a.date.localeCompare(b.date)).slice(0, limit);
 }

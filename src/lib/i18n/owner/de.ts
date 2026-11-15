@@ -1792,4 +1792,6 @@ export const de: string[] = ["Abgebrochene Buchung",
 "~{n} Min.",
 "~{minutes} Min. Fahrt vom Termin um {time} ({city})",
 "~{minutes} Min. Fahrt vom Termin um {time}",
-"Die Fahrt vom Termin von {client} lässt sich nicht schätzen (keine Kartenposition für die Postleitzahl)"];
+"Die Fahrt vom Termin von {client} lässt sich nicht schätzen (keine Kartenposition für die Postleitzahl)",
+"Keine Postleitzahl: Online-Buchung ist rund um diesen Termin gesperrt. Füge die PLZ zur Adresse des Kunden hinzu.",
+"~{n} Min. — über deinem Limit"];

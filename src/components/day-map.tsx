@@ -28,6 +28,8 @@ export type DayStop = {
   drive: string | null; // "🚐 12min drive" to this stop
   codes: { label: string; color: string }[]; // the pets' codes (Matted, Biter…)
   alerts: string[]; // "💉 Biscuit: Rabies expired Oct 29"
+  /** A longer warning about the visit, shown in full (e.g. no ZIP code). */
+  warning?: string | null;
 };
 
 export function DayMap({ stops, path, route, compact = false, overlay }: {
@@ -160,6 +162,7 @@ function Card({ s, active }: { s: DayStop; active: boolean }) {
             </span>
           )}
           {s.alerts.map((a) => <span key={a} className="block truncate text-xs font-semibold text-danger">{a}</span>)}
+          {s.warning && <span className="block text-xs font-semibold text-warn">{s.warning}</span>}
           {s.drive && <span className="block truncate text-xs text-muted">{s.drive}</span>}
         </span>
       </Link>

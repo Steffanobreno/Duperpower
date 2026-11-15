@@ -11,7 +11,13 @@
 //   (d) A visit at an unknown ZIP (99999) on D3 blocks the times around it for any client.
 //   (e) Booking requests (owner side): a pending request at 94611 on a day with the 94063 visit shows
 //       "~61 min drive from the 9:00 AM visit (...)"; one at 94402 shows no warning. On a business in
-//       Brazil (metric) the warning still says minutes, never km or miles.
+//       Brazil (metric) the warning still says minutes, never km or miles. Two pending requests that
+//       would sit side by side (94063 9–11, 94611 15:45 on D5) each warn about the other.
+//   (f) Manual booking (owner): a 94611 client at 15:45 on D6, with a 94063 visit 9–11, gets "About 61 min
+//       drive …"; "Book anyway" saves it. At 18:30 the outside-hours warning and the drive warning show together.
+//       "You're already near" skips a day whose stop after the suggested time is too far (D1), keeps D4.
+//   (g) A visit with no ZIP and no coordinates on D7: its visit page and its Today card say online booking is
+//       closed around it; once the client's ZIP is added, the warning is gone.
 // The business's limit (and country) is restored at the end, and this test's rows removed.
 // Usage: node tests/e2e/drive-limit.mjs [baseUrl]
 import { chromium } from "playwright";
@@ -36,6 +42,7 @@ const PHONES = ["6505550171", "6505550172", "6505550173"];
 const cleanUp = async () => {
   const ids = (await db`select id from clients where business_id = ${biz} and last_name = 'Drivelimit'`).map((r) => r.id);
   await db`delete from appointments where client_id = any(${ids})`;
+  await db`delete from pets where client_id = any(${ids})`;
   await db`delete from clients where id = any(${ids})`;
   await db`delete from booking_drafts where business_id = ${biz} and right(phone, 10) = any(${PHONES})`;
   await db`delete from postal_points where country = 'BR' and code in ('94611', '94063')`;
@@ -43,9 +50,9 @@ const cleanUp = async () => {
 };
 await cleanUp();
 
-// Four free working days 10+ days ahead (seed hours: Sunday off): no visit, block or closed date.
+// Seven free working days 10+ days ahead (seed hours: Sunday off): no visit, block or closed date.
 const free = [];
-for (let n = 10; free.length < 4; n++) {
+for (let n = 10; free.length < 7; n++) {
   const d = la(n);
   if (weekday(d) === 0) continue;
   const { start, end } = { start: await at(d, "00:00"), end: await at(d, "23:59") };
@@ -56,7 +63,7 @@ for (let n = 10; free.length < 4; n++) {
    or exists (select 1 from closed_dates where business_id = ${biz} and ${d}::date between start_date and end_date) as busy`;
   if (!busy) free.push(d);
 }
-const [D1, D2, D3, D4] = free;
+const [D1, D2, D3, D4, D5, D6, D7] = free;
 
 const [{ id: stopClient }] = await db`insert into clients (business_id, first_name, last_name, phone, zip)
   values (${biz}, 'Stop', 'Drivelimit', '+16505550175', '94063') returning id`;
@@ -206,6 +213,80 @@ try {
   const unknownWarning = await warningOn(unknown, /Can't estimate the drive from Stop's visit/);
   if (!unknownWarning) fail("a request next to a visit at an unknown ZIP should say the drive can't be estimated");
   step(`(e) request next to the unknown-ZIP visit: "${unknownWarning}"`);
+
+  // Two pending requests next to each other: each card counts the other as its neighbor.
+  const reqA = await request(D5, "09:00", "11:00", "94063");
+  const reqB = await request(D5, "15:45", "17:45", "94611");
+  const wA = await warningOn(reqA);
+  if (!wA || !/~61 min drive from the 3:45 PM visit/.test(wA)) fail(`the 94063 request should warn about the 94611 request at 3:45 PM, got ${wA}`);
+  const wB = await warningOn(reqB);
+  if (!wB || !/~61 min drive from the 9:00 AM visit/.test(wB)) fail(`the 94611 request should warn about the 94063 request at 9:00 AM, got ${wB}`);
+  step(`(e) two pending requests side by side both warn: "${wA}" / "${wB}"`);
+
+  // (f) Manual booking: the drive warning, together with any other warning; "Book anyway" saves.
+  const [{ id: farClient }] = await db`insert into clients (business_id, first_name, last_name, phone, zip, city)
+    values (${biz}, 'Far', 'Drivelimit', '+16505550186', '94611', 'Piedmont') returning id`;
+  await db`insert into pets (client_id, name, size_class) values (${farClient}, 'Fardog', 'small')`;
+  await visit(D6, "09:00", "11:00", "confirmed", "94063");
+  const book = async (time) => {
+    await page.goto(`${BASE}/appointments/new?client=${farClient}&date=${D6}&time=${time}`);
+    const pet = page.locator('input[name="pet"]');
+    if (!(await pet.isChecked())) await pet.check();
+    const svc = page.locator('select[name^="svc:"]');
+    await svc.selectOption({ index: 1 });
+    await page.getByRole("button", { name: "Book appointment" }).click();
+    const dialog = page.getByRole("alertdialog");
+    await dialog.waitFor();
+    return dialog.innerText();
+  };
+  const both = await book("18:30");
+  if (!/outside working hours/.test(both) || !/About 61 min drive from Stop's visit \(limit 35 min\)/.test(both)) {
+    fail(`at 18:30 the outside-hours and the drive warnings should show together, got: ${both}`);
+  }
+  step("(f) manual booking at 6:30 PM: outside hours and the drive warning, together");
+  const drive = await book("15:45");
+  if (!/About 61 min drive from Stop's visit \(limit 35 min\)/.test(drive)) fail(`manual booking at 15:45 should warn about the drive, got: ${drive}`);
+  await page.getByRole("button", { name: "Book anyway" }).click();
+  await page.waitForURL(/\?booked=1/);
+  const [{ n: booked }] = await db`select count(*)::int as n from appointments where client_id = ${farClient}`;
+  if (booked !== 1) fail(`Book anyway should save the visit, found ${booked}`);
+  step(`(f) manual booking at 3:45 PM: "${drive.match(/About[^.]*\./)?.[0]}"; Book anyway saves it`);
+
+  // (f) "You're already near" on the owner's booking form: a day is suggested only when the visit after
+  // the suggested time is within the limit too. D1: Redwood City 9–11 (~19 min from 94402), then Piedmont
+  // 14–16 (~51 min): not suggested. D4: Redwood City 9–11, then a 94402 request at 13:00: suggested.
+  const [{ id: midClient }] = await db`insert into clients (business_id, first_name, last_name, phone, zip, city)
+    values (${biz}, 'Mid', 'Drivelimit', '+16505550189', '94402', 'San Mateo') returning id`;
+  await db`insert into pets (client_id, name, size_class) values (${midClient}, 'Middog', 'small')`;
+  await page.goto(`${BASE}/appointments/new?client=${midClient}`);
+  const nearBox = page.locator("section", { has: page.getByRole("heading", { name: /You're already near Mid on/ }) });
+  await nearBox.waitFor({ timeout: 8000 }).catch(() => fail("the booking form should list days near Mid"));
+  if (!(await nearBox.locator(`a[href*="date=${D4}&"]`).count())) fail(`${D4} (Redwood City, then a 94402 request) should be suggested`);
+  if (await nearBox.locator(`a[href*="date=${D1}&"]`).count()) fail(`${D1} should not be suggested: Piedmont 14–16 is too far from the time after 11:00`);
+  step(`(f) "already near" suggests ${D4} but not ${D1} (the stop after the suggested time is too far)`);
+
+  // (g) A visit with no ZIP and no coordinates blocks online times around it; the owner is told why.
+  const [{ id: noZipClient }] = await db`insert into clients (business_id, first_name, last_name, phone)
+    values (${biz}, 'Nozip', 'Drivelimit', '+16505550187') returning id`;
+  const [{ id: noZipVisit }] = await db`insert into appointments (business_id, client_id, staff_id, start_at, end_at, status, zip)
+    values (${biz}, ${noZipClient}, ${owner}, ${await at(D7, "10:00")}, ${await at(D7, "12:00")}, 'confirmed', null) returning id`;
+  const NO_ZIP = "No ZIP code: online booking is closed around this visit. Add the ZIP to the client's address.";
+  await page.goto(`${BASE}/appointments/${noZipVisit}`);
+  await page.getByText(NO_ZIP).first().waitFor({ timeout: 8000 }).catch(() => fail("the visit page should say the visit has no ZIP"));
+  await page.goto(`${BASE}/today?date=${D7}`);
+  await page.locator(`a[href="/appointments/${noZipVisit}"]`).first().waitFor();
+  await page.getByText(NO_ZIP).first().waitFor({ timeout: 8000 }).catch(() => fail("the Today card should say the visit has no ZIP"));
+  step("(g) a visit with no ZIP: its visit page and Today card say online booking is closed around it");
+  await page.goto(`${BASE}/clients/${noZipClient}/edit`);
+  await page.locator('input[name="zip"]').fill("94402");
+  await page.locator('form button[type="submit"]').first().click();
+  await page.waitForURL((u) => u.pathname === `/clients/${noZipClient}`);
+  await page.goto(`${BASE}/appointments/${noZipVisit}`);
+  await page.getByRole("heading").first().waitFor();
+  if (await page.getByText(NO_ZIP).count()) fail("after adding the client's ZIP, the visit should no longer warn");
+  const [{ zip: visitZip }] = await db`select zip from appointments where id = ${noZipVisit}`;
+  if (visitZip !== "94402") fail(`the upcoming visit should take the client's new ZIP, got ${visitZip}`);
+  step("(g) adding the client's ZIP fills it on the upcoming visit; the warning is gone");
 
   // Metric business: still minutes. The postal codes must be known for Brazil, so seed them for the test.
   await db`update businesses set country = 'BR' where id = ${biz}`;

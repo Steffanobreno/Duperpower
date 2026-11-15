@@ -48,13 +48,14 @@ export default async function RequestsPage() {
   // Loaded once for all the cards: the limit, the stops of those days, and every postal code.
   const [[biz], stops] = await Promise.all([
     sql<{ max_drive_minutes: number }[]>`select max_drive_minutes from businesses where id = ${staff.businessId}`,
-    routeStops(staff, rows.map((r) => ({ staffId: r.staff_id, date: ymd(r.start_at, tz) })), rows.map((r) => r.id)),
+    routeStops(staff, rows.map((r) => ({ staffId: r.staff_id, date: ymd(r.start_at, tz) }))),
   ]);
   const points = await postalPoints([...rows.map((r) => r.zip), ...stops.map((s) => s.zip)], staff.region.country);
   const warnings = new Map(rows.map((r) => [
     r.id,
     driveWarningFor(points, r.zip, staff.region.country,
-      stops.filter((s) => s.staff_id === r.staff_id && ymd(s.start_at, tz) === ymd(r.start_at, tz)),
+      // Every other stop that day counts, other pending requests too: accepting both would put them side by side.
+      stops.filter((s) => s.id !== r.id && s.staff_id === r.staff_id && ymd(s.start_at, tz) === ymd(r.start_at, tz)),
       { start: r.start_at, end: r.end_at }, biz?.max_drive_minutes ?? 35),
   ] as const));
   return (

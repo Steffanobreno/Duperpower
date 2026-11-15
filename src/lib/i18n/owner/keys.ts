@@ -1794,5 +1794,7 @@ export const OWNER_KEYS: string[] = [
  "~{n} min",
  "~{minutes} min drive from the {time} visit ({city})",
  "~{minutes} min drive from the {time} visit",
- "Can't estimate the drive from {client}'s visit (no map position for its postal code)"
+ "Can't estimate the drive from {client}'s visit (no map position for its postal code)",
+ "No ZIP code: online booking is closed around this visit. Add the ZIP to the client's address.",
+ "~{n} min — over your limit"
 ];
