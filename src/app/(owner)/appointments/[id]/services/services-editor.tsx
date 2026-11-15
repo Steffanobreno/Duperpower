@@ -75,7 +75,8 @@ export function ServicesEditor({
         router.refresh();
         return;
       }
-      router.push(`/appointments/${appointmentId}`);
+      // A replace: Back from the visit goes where the owner came from, not to this editor again.
+      router.replace(`/appointments/${appointmentId}`);
     });
 
   return (

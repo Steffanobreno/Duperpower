@@ -1,6 +1,6 @@
 "use server";
 import { randomUUID } from "node:crypto";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -51,7 +51,7 @@ export async function createBlockAction(_: FormState, form: FormData): Promise<F
     }
   });
   revalidatePath("/calendar");
-  redirect(`/calendar?date=${b.date}`);
+  redirect(`/calendar?date=${b.date}`, RedirectType.replace);
 }
 
 export async function updateBlockAction(id: string, _: FormState, form: FormData): Promise<FormState> {
@@ -62,7 +62,7 @@ export async function updateBlockAction(id: string, _: FormState, form: FormData
   await sql`update time_off set start_at = ${s}, end_at = ${e}, reason = ${b.reason}, updated_at = now()
             where id = ${id} and staff_id in (select id from staff where business_id = ${staff.businessId})`;
   revalidatePath("/calendar");
-  redirect(`/calendar?date=${b.date}`);
+  redirect(`/calendar?date=${b.date}`, RedirectType.replace);
 }
 
 /** Removes one block, or (scope "following") this one and the later ones of its series. */

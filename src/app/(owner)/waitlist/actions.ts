@@ -1,5 +1,5 @@
 "use server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -18,7 +18,7 @@ export async function addToWaitlistAction(clientId: string, _: FormState, form: 
   await sql`insert into waitlist (business_id, client_id, from_date, to_date, note)
             values (${staff.businessId}, ${clientId}, ${from}, ${to}, ${note})`;
   revalidatePath("/waitlist");
-  redirect("/waitlist?added=1");
+  redirect("/waitlist?added=1", RedirectType.replace);
 }
 
 export async function removeFromWaitlistAction(id: string) {

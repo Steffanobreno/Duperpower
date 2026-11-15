@@ -1,5 +1,5 @@
 "use server";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -68,7 +68,7 @@ export async function createReceiptAction(input: NewReceipt): Promise<{ error?: 
   const emailed = input.email ? await emailReceipt(staff.businessId, id) : null;
   revalidatePath("/receipts");
   revalidatePath("/reports");
-  redirect(`/receipts/${id}${emailed ? `?receipt=${emailed}` : ""}`);
+  redirect(`/receipts/${id}${emailed ? `?receipt=${emailed}` : ""}`, RedirectType.replace);
 }
 
 /** "Email receipt" for a receipt from the generator. */

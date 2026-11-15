@@ -1,6 +1,6 @@
 "use server";
 import { emailLogo } from "@/lib/business-logo";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -31,7 +31,7 @@ export async function createCampaignAction(templateKey: string) {
     values (${staff.businessId}, ${t.name}, ${t.key}, ${t.subject}, ${t.preheader}, ${t.banner}, ${t.headline}, ${t.body}, ${t.button},
             ${sql.json(cleanFilters(t.filters))})
     returning id`;
-  redirect(`/marketing/${c.id}`);
+  redirect(`/marketing/${c.id}`, RedirectType.replace);
 }
 
 export async function saveCampaignAction(id: string, _: CampaignState, form: FormData): Promise<CampaignState> {

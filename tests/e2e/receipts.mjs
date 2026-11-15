@@ -99,8 +99,10 @@ await page.getByRole("button", { name: "Email again" }).click();
 await page.getByText("Receipt emailed.").waitFor();
 step("Email again sends it once more");
 
-// The receipt generator.
-await page.goto(`${BASE}/receipts/new`);
+// The receipt generator, opened from the receipts list.
+await page.goto(`${BASE}/receipts`);
+await page.getByRole("link", { name: "New receipt" }).click();
+await page.waitForURL((u) => u.pathname === "/receipts/new");
 await page.getByLabel("Search clients").fill("mar");
 await page.getByRole("button", { name: "Maria Lopez" }).click();
 const add = page.getByLabel("Add a service for Biscuit");
@@ -117,6 +119,11 @@ await page.getByText("Zelle").first().waitFor();
 await page.getByText("$110.00").first().waitFor();
 await shot("R03-generated");
 step("the receipt generator made a paid receipt ($100 + $10 tip, Zelle) and emailed it");
+// Saving replaced the form's history entry: Back goes to the list, not to a blank New receipt form.
+await page.getByRole("button", { name: "Back", exact: true }).click();
+await page.waitForURL((u) => u.pathname === "/receipts", { timeout: 8000 })
+  .catch(() => fail(`Back after making a receipt should reach /receipts, at ${new URL(page.url()).pathname}`));
+step("Back after making a receipt returns to the receipts list, not the blank form");
 
 // The receipts list and one PDF with all of them.
 await page.goto(`${BASE}/receipts?from=2020-01-01&to=2030-12-31`);

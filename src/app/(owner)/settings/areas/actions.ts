@@ -63,5 +63,5 @@ export async function deleteAreaAction(id: string) {
   const staff = await requirePermission("settings");
   await sql`delete from service_areas where id = ${id} and business_id = ${staff.businessId}`;
   revalidatePath("/settings/areas");
-  redirect("/settings/areas");
+  redirect("/settings/areas", RedirectType.replace);
 }

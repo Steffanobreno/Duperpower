@@ -230,7 +230,7 @@ export async function setPetPassedAction(clientId: string, petId: string, passed
   await sql`update pets p set deceased_at = ${passed ? new Date() : null}
             from clients c where c.id = p.client_id and p.id = ${petId} and c.business_id = ${staff.businessId}`;
   revalidatePath(`/clients/${clientId}`);
-  redirect(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}`, RedirectType.replace);
 }
 
 export async function deleteNoteAction(clientId: string, noteId: string) {
