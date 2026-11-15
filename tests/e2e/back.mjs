@@ -49,8 +49,8 @@ await back();
 await expectPath(`/clients/${client.id}`, "Back from edit");
 step("Client → Edit → Back returns to the client");
 
-// 3. After a save that redirects (edit → client, a replace), Back skips the form. The redirect replaced the form's entry, so the entry before it is the
-// earlier client page (the same page again), and one more Back reaches the list.
+// 3. After a save that redirects (edit → client, a replace), ONE Back reaches the list: the save left
+// the client page twice in a row in history (before and instead of the form), and Back skips the copy.
 await page.goto(`${BASE}/clients`);
 await page.getByRole("link", { name: /Lopez/ }).first().click();
 await expectPath(`/clients/${client.id}`, "client from list");
@@ -59,12 +59,10 @@ await expectPath(`/clients/${client.id}/edit`, "edit again");
 await page.locator('form button[type="submit"]').first().click();
 await expectPath(`/clients/${client.id}`, "after save");
 await back();
-await expectPath(`/clients/${client.id}`, "Back after save lands on the client page, not on the form");
+await expectPath("/clients", "one Back after save reaches the list");
 await page.waitForTimeout(800);
-if (path().endsWith("/edit")) fail("Back after save returned to the edit form");
-await back();
-await expectPath("/clients", "second Back reaches the list");
-step("Client → Edit → Save → Back never returns to the edit form; the next Back reaches the list");
+if (path() !== "/clients") fail(`Back after save should stay on the list, at ${path()}`);
+step("Client → Edit → Save → one Back reaches the list (never the form, never the same client page)");
 
 // 4. A fresh context (no history) opening /requests: Back falls back to /today, inside the app.
 const fresh = await browser.newContext({ viewport: { width: 390, height: 800 }, storageState: await context.storageState() });
@@ -120,6 +118,19 @@ await expectPath(`/clients/${client.id}`, "Back over a query-only entry");
 await back();
 await expectPath("/clients", "Back past the query-only entry");
 step("query-only change then Back, then Back again");
+
+// 9. The Back button, then the browser's Forward, then Back again: the position follows Forward.
+await page.goto(`${BASE}/settings`);
+await page.getByRole("button", { name: "Open menu" }).click();
+await page.getByRole("navigation", { name: "Menu" }).getByRole("link", { name: /Booking requests/ }).click();
+await expectPath("/requests", "menu → requests (forward test)");
+await back();
+await expectPath("/settings", "Back to settings");
+await page.goForward();
+await expectPath("/requests", "forward to requests");
+await back();
+await expectPath("/settings", "Back after Forward returns to Settings (not the /today fallback)");
+step("Back button, Forward, Back again returns to the same previous screen");
 
 if (errors.length) fail(`page errors: ${errors.join(" | ")}`);
 await browser.close();
