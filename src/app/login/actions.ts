@@ -1,13 +1,15 @@
 "use server";
 import { redirect } from "next/navigation";
 import { createOwner, hasAnyUser, login, loginLocked, logout } from "@/lib/auth";
+import { tooManyFromHere } from "@/lib/rate-limit";
 
 export type FormState = { error?: string } | undefined;
 
 export async function loginAction(_: FormState, form: FormData): Promise<FormState> {
   const email = String(form.get("email") ?? "");
   const password = String(form.get("password") ?? "");
-  if (await loginLocked(email)) return { error: "Too many wrong tries. Wait 15 minutes and try again." };
+  // Per email (loginLocked) and per visitor: one IP trying many accounts is stopped too.
+  if ((await tooManyFromHere("login", 30, 15 * 60_000)) || (await loginLocked(email))) return { error: "Too many wrong tries. Wait 15 minutes and try again." };
   if (!(await login(email, password))) return { error: "That email and password don't match." };
   redirect("/today");
 }

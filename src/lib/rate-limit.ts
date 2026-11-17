@@ -1,8 +1,10 @@
 import "server-only";
 import { headers } from "next/headers";
+import { sql } from "./db";
 
-// Best effort, per server instance: slows down one visitor hammering a public action.
-// Not a hard guarantee (each serverless instance counts on its own).
+// Tries per visitor and action, counted in the database so every server instance sees the same
+// count (serverless instances come and go). If the database can't be reached, a count kept in
+// this instance's memory is used instead, so a hiccup never locks everyone out.
 
 const hits = new Map<string, number[]>();
 
@@ -19,12 +21,28 @@ export async function clientIp() {
  */
 export async function tooManyFromHere(action: string, limit: number, windowMs: number) {
   const ip = await clientIp();
-  return !LOCAL.test(ip) && tooMany(`${action}:${ip}`, limit, windowMs);
+  if (LOCAL.test(ip)) return false;
+  return tooMany(`${action}:${ip}`, limit, windowMs);
 }
 
 const LOCAL = /^(local|127\.\d+\.\d+\.\d+|::1|::ffff:127\.\d+\.\d+\.\d+)$/;
 
-function tooMany(key: string, limit: number, windowMs: number) {
+/** One more try for `key`; true when there were more than `limit` within `windowMs`. */
+export async function tooMany(key: string, limit: number, windowMs: number) {
+  try {
+    const [{ n }] = await sql<{ n: number }[]>`
+      with added as (insert into rate_hits (key) values (${key}) returning 1)
+      select (select count(*)::int from rate_hits where key = ${key} and at > now() - make_interval(secs => ${windowMs / 1000})) + 1 as n`;
+    // Now and then, sweep rows older than a day (the longest window used).
+    if (Math.random() < 0.02) await sql`delete from rate_hits where at < now() - interval '1 day'`;
+    return n > limit;
+  } catch (e) {
+    console.error("rate limit: database unavailable, counting in memory", e);
+    return tooManyInMemory(key, limit, windowMs);
+  }
+}
+
+function tooManyInMemory(key: string, limit: number, windowMs: number) {
   const now = Date.now();
   const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
   recent.push(now);

@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { runMessagingJobs } from "@/lib/messaging";
 import { runLifecycleEmails } from "@/lib/lifecycle";
 import { runFakeRenewals } from "@/lib/fake-payments";
@@ -6,7 +7,7 @@ import { runFakeRenewals } from "@/lib/fake-payments";
 // Call with header "Authorization: Bearer <CRON_SECRET>".
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || !sameSecret(request.headers.get("authorization") ?? "", `Bearer ${secret}`)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   await runMessagingJobs();
@@ -21,4 +22,10 @@ export async function GET(request: Request) {
     return 0;
   });
   return Response.json({ ok: true, lifecycle, fakeRenewals });
+}
+
+/** Compares in constant time (hashes first, so lengths don't leak either). */
+function sameSecret(a: string, b: string) {
+  const h = (x: string) => createHash("sha256").update(x).digest();
+  return timingSafeEqual(h(a), h(b));
 }

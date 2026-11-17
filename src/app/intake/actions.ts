@@ -4,6 +4,7 @@ import { postalOk } from "@/lib/region";
 import { getPublicBusiness } from "@/lib/booking";
 import { normalizePhone, SIZES } from "@/lib/format";
 import { notifyOwner } from "@/lib/messaging";
+import { tooManyFromHere } from "@/lib/rate-limit";
 
 export type IntakeState = { error?: string; ok?: boolean } | undefined;
 
@@ -17,6 +18,7 @@ export async function submitIntakeAction(_: IntakeState, form: FormData): Promis
   const b = await getPublicBusiness(String(form.get("slug") ?? "") || null);
   if (!b) return { error: "Something went wrong. Please try again." };
   if (text(form, "website")) return { ok: true }; // a bot filled the hidden field
+  if (await tooManyFromHere("intake", 10, 3600_000)) return { error: "Too many tries. Please wait a few minutes or text us." };
   const first = text(form, "first_name", 60);
   const last = text(form, "last_name", 60);
   const phone = normalizePhone(form.get("phone"), b.country);
