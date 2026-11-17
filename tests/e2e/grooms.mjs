@@ -57,7 +57,11 @@ if (g?.blade !== "#7F" || g.style !== "Teddy face" || !g.photo) fail(`the cut sh
 step("the cut on a visit: blade, style, note and photo are saved");
 
 // The next visit shows the last cut, and "Same as last time" fills the form.
-const day = new Date(Date.now() + 20 * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+// About 20 days on, on a weekday (weekends are days off).
+const laDay = (n) => new Date(Date.now() + n * 86_400_000).toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+let ahead = 20;
+while ([0, 6].includes(new Date(`${laDay(ahead)}T12:00:00Z`).getUTCDay())) ahead++;
+const day = laDay(ahead);
 await page.goto(`${BASE}/appointments/new?client=${client}&date=${day}&time=10:00`);
 const sel = page.locator('select[name^="svc:"]');
 await sel.selectOption(await sel.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));

@@ -123,8 +123,8 @@ await page.goto(`${apptUrl}?rs=${visitDay}`);
 await page.getByRole("link", { name: "Open the full day calendar ›" }).click();
 await page.waitForURL(/pick=move/);
 await page.getByText("Moving Maria Lopez's visit (2h)").waitFor();
-await page.getByRole("link", { name: "Back", exact: true }).click();
-await page.waitForURL(apptUrl);
+await page.getByLabel("Back", { exact: true }).first().click();
+await page.waitForURL((u) => u.href.startsWith(apptUrl)); // the visit (Back returns to the screen before)
 step("the full day calendar opens from the planner and its ← goes back to the visit");
 
 // Book again opens the calendar too, and the pick lands on the booking form.
