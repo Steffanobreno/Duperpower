@@ -49,6 +49,28 @@ const gap = await page.evaluate(() =>
 if (gap < 0) fail(`the cards are ${-gap}px under the tab bar`);
 step("Today opens as a map with the week on top and three visit cards, all above the tab bar");
 
+// Something new above the map (on another day, "Find the best order") must not push the cards
+// under the tab bar: the map measures itself again.
+await page.evaluate(() => {
+  const bump = document.createElement("div");
+  bump.id = "bump";
+  bump.style.height = "120px";
+  document.querySelector('[aria-label="Map of the day\'s visits"]').parentElement.parentElement.before(bump);
+});
+await page.waitForFunction(() => document.querySelector('nav[aria-label="Main"]').getBoundingClientRect().top
+  - document.querySelector('[aria-label="Visits"]').getBoundingClientRect().bottom >= 0, null, { timeout: 5000 })
+  .catch(() => fail("after something appears above the map, the cards end up under the tab bar"));
+await page.evaluate(() => document.getElementById("bump").remove());
+step("when something appears above the map, the cards stay above the tab bar");
+
+// The free-slots link and "Route in Google Maps" share the top row without covering each other.
+const fill = page.locator('a[href^="/fill/"]');
+if (await fill.count()) {
+  const [a, r] = [await fill.boundingBox(), await page.getByRole("link", { name: /Route in Google Maps/ }).boundingBox()];
+  if (a.x + a.width > r.x) fail(`the free-slots link covers "Route in Google Maps" (${a.x + a.width} > ${r.x})`);
+  step("the free-slots link and the route button don't overlap");
+}
+
 // Swipe to the second card: its pin is highlighted.
 const pinOf = (n) => page.locator(".route-pin", { hasText: String(n) });
 await page.getByRole("list", { name: "Visits" }).evaluate((el) => el.scrollTo({ left: el.children[1].offsetLeft - 20 }));

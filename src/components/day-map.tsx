@@ -32,6 +32,9 @@ export type DayStop = {
   warning?: string | null;
 };
 
+// The smallest map: still room for a visit card and the "Route in Google Maps" button.
+const MIN_HEIGHT = 300;
+
 export function DayMap({ stops, path, route, compact = false, overlay }: {
   stops: DayStop[]; path?: [number, number][]; route?: string | null;
   /** Smaller, when the whole month is open above it. */
@@ -63,11 +66,31 @@ export function DayMap({ stops, path, route, compact = false, overlay }: {
       const top = el.getBoundingClientRect().top + window.scrollY;
       const nav = document.querySelector<HTMLElement>('nav[aria-label="Main"]');
       const navTop = nav && getComputedStyle(nav).position === "fixed" ? nav.getBoundingClientRect().top : window.innerHeight;
-      setHeight(Math.max(380, Math.floor(navTop - top)));
+      setHeight(Math.max(MIN_HEIGHT, Math.floor(navTop - top)));
     };
     fit();
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
+    // Again whenever anything above moves the map (another day adds "Find the best order", a
+    // banner shows up, the fonts load): the page keeps this map when the day changes.
+    let frame = 0;
+    const soon = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fit);
+    };
+    const sizes = new ResizeObserver(soon);
+    sizes.observe(document.body);
+    // The page's own content (not the map's tiles and pins): a new button or banner above.
+    const page = outer.current?.closest("main") ?? document.body;
+    const added = new MutationObserver((changes) => {
+      if (changes.some((c) => !box.current?.contains(c.target))) soon();
+    });
+    added.observe(page, { childList: true, subtree: true });
+    window.addEventListener("resize", soon);
+    return () => {
+      cancelAnimationFrame(frame);
+      sizes.disconnect();
+      added.disconnect();
+      window.removeEventListener("resize", soon);
+    };
   }, [compact]);
 
   // The map, its pins and the route (Google Maps when its key is set, OpenStreetMap otherwise).
@@ -115,14 +138,19 @@ export function DayMap({ stops, path, route, compact = false, overlay }: {
   return (
     // Fills the screen between the week and the tab bar.
     <div ref={outer} className="relative isolate z-0 overflow-hidden"
-      style={compact ? { height: 330 } : { height: height ?? "calc(100dvh - 18rem - env(safe-area-inset-bottom))", minHeight: 380 }}>
+      style={compact ? { height: 330 } : { height: height ?? "calc(100dvh - 18rem - env(safe-area-inset-bottom))", minHeight: MIN_HEIGHT }}>
       <div ref={box} className="absolute inset-0" role="img" aria-label={t("Map of the day's visits")} />
-      {overlay}
-      {route && (
-        <a href={route} target="_blank" rel="noopener"
-          className="absolute right-3 top-3 z-[500] rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">
-          {t("Route in Google Maps ↗")}
-        </a>
+      {/* One row on top: the overlay (free slots) on the left, cut short if needed; the route on the right. */}
+      {(overlay || route) && (
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-[500] flex items-start justify-between gap-2 [&>*]:pointer-events-auto">
+          {overlay || <span />}
+          {route && (
+            <a href={route} target="_blank" rel="noopener"
+              className="shrink-0 rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">
+              {t("Route in Google Maps ↗")}
+            </a>
+          )}
+        </div>
       )}
       {stops.length > 0 && (
         <div ref={rail} role="list" aria-label={t("Visits")}
