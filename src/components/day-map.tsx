@@ -1,6 +1,6 @@
 "use client";
 import { useT } from "@/components/i18n";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import "leaflet/dist/leaflet.css";
 import { drawDayMap, type MapEngine } from "./map-engines";

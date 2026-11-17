@@ -1,5 +1,5 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
-import Link from "next/link";
+import Link from "@/components/app-link";
 
 /** "All · Steffano · Maria" chips, shown only when the business has more than one groomer. */
 export async function GroomerFilter({ groomers, current, href, allowAll = true }: {

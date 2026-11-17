@@ -1,5 +1,5 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import type { StaffContext } from "@/lib/auth";
 import { listRange } from "@/lib/data/appointments";
 import { listTimeOff } from "@/lib/data/time-off";

@@ -46,24 +46,58 @@ export function OfflineSupport() {
     };
   }, [router]);
 
-  // On Today, save each visit of the day for the road (once the screen has settled).
+  // Back on the app after a few minutes away (phone locked, another app): wake the server and
+  // the database now, while the screen is being looked at, not on the first tap.
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisible = () => {
+      if (document.visibilityState === "hidden") hiddenAt = Date.now();
+      else if (hiddenAt && Date.now() - hiddenAt > 3 * 60_000) void fetch("/api/ping", { cache: "no-store" }).catch(() => null);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+  // On Today, save each visit of the day for the road: only while the groomer isn't using the
+  // app (each fetch keeps a server busy, and a tap shouldn't wait behind them), one at a time,
+  // stopping at the first tap or key, and not again within 30 minutes for the same visits.
   useEffect(() => {
     if (path !== "/today" || !navigator.onLine || !("serviceWorker" in navigator)) return;
+    const stop = new AbortController();
+    const quit = () => stop.abort();
+    for (const ev of ["pointerdown", "keydown", "scroll"]) window.addEventListener(ev, quit, { once: true, passive: true });
     const t = setTimeout(async () => {
-      if (!navigator.serviceWorker.controller) return;
+      if (!navigator.serviceWorker.controller || stop.signal.aborted) return;
       const links = [...new Set([...document.querySelectorAll<HTMLAnchorElement>('a[href^="/appointments/"]')]
         .map((a) => a.getAttribute("href")!)
         .filter((h) => /^\/appointments\/[0-9a-f-]{36}$/.test(h)))].slice(0, 15);
+      const key = "woofers-warmed";
+      const stamp = links.join(",");
+      try {
+        const last = JSON.parse(localStorage.getItem(key) ?? "null") as { stamp: string; at: number } | null;
+        if (last?.stamp === stamp && Date.now() - last.at < 30 * 60_000) return;
+      } catch {}
       const files = new Set<string>();
       for (const href of links) {
-        const res = await fetch(href, { headers: { "x-woofers-warm": "1" }, credentials: "same-origin" }).catch(() => null);
-        const html = res?.ok ? await res.text() : "";
+        if (stop.signal.aborted) return;
+        const res = await fetch(href, { headers: { "x-woofers-warm": "1" }, credentials: "same-origin", signal: stop.signal }).catch(() => null);
+        const html = res?.ok ? await res.text().catch(() => "") : "";
         for (const m of html.matchAll(/\/_next\/static\/[^"'\s)]+/g)) files.add(m[0]);
       }
       // The screens' code too, so a saved screen also works (buttons, menus) without signal.
-      for (const f of files) await fetch(f).catch(() => null);
-    }, 3000);
-    return () => clearTimeout(t);
+      for (const f of files) {
+        if (stop.signal.aborted) return;
+        await fetch(f, { signal: stop.signal }).catch(() => null);
+      }
+      try {
+        localStorage.setItem(key, JSON.stringify({ stamp, at: Date.now() }));
+      } catch {}
+    }, 8000);
+    return () => {
+      clearTimeout(t);
+      quit();
+      for (const ev of ["pointerdown", "keydown", "scroll"]) window.removeEventListener(ev, quit);
+    };
   }, [path]);
 
   if (!notice) return null;

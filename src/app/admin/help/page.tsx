@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { helpQuestions } from "@/lib/data/admin";
 
 const FILTERS = [["all", "Todas"], ["people", "Pediram uma pessoa"], ["unhelpful", "Não ajudou"], ["unanswered", "Sem resposta"]] as const;

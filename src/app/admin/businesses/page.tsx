@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { adminBusinesses, type AdminFilter } from "@/lib/data/admin";
 import { countryName } from "@/lib/countries";
 import { ago, PlanBadge } from "../status";

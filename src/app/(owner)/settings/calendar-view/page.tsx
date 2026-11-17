@@ -1,7 +1,7 @@
 import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { requirePermission } from "@/lib/auth";
 import { calendarView } from "@/lib/data/calendar-view";
 import { Card, Field, Input, Page, PageHeader, Select } from "@/components/ui";

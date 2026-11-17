@@ -1,5 +1,5 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
-import Link from "next/link";
+import Link from "@/components/app-link";
 
 export async function DayNav({
   base,

@@ -3,7 +3,7 @@ import { msg } from "@/lib/i18n";
 import { useT } from "@/components/i18n";
 import { FormPopup } from "@/components/popup";
 import { DateField, MonthPicker } from "@/components/date-field";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useActionState, useState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { Button, Card, Field, Notice, Select } from "@/components/ui";

@@ -1,6 +1,6 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { dayGaps, fillCandidates, gapOfferText } from "@/lib/data/fill-gap";

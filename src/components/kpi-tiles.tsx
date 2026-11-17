@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/app-link";
 import type { Kpi } from "@/lib/data/kpis";
 import { money } from "@/lib/format";
 import { msg, type T } from "@/lib/i18n";

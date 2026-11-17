@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/app-link";
 import type { StaffContext } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { dayLabel, timeLabel } from "@/lib/format";
