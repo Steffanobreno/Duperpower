@@ -325,4 +325,9 @@ export const es: Messages = {
     "Darme de baja",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "El contrato cambió. Léelo de nuevo, por favor.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Tu groomer",
+  "Choose your groomer": "Elige tu groomer",
+  "The open times below are {name}'s.": "Los horarios de abajo son de {name}.",
+  "Groomer": "Groomer",
 };

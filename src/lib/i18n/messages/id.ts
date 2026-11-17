@@ -314,4 +314,9 @@ export const id: Messages = {
     "Berhenti berlangganan",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Perjanjiannya berubah. Silakan baca lagi.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Groomer Anda",
+  "Choose your groomer": "Pilih groomer Anda",
+  "The open times below are {name}'s.": "Waktu kosong di bawah adalah milik {name}.",
+  "Groomer": "Groomer",
 };

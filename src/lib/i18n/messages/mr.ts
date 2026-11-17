@@ -314,4 +314,9 @@ export const mr: Messages = {
     "सदस्यता रद्द करा",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "करार बदलला आहे. कृपया तो पुन्हा वाचा.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "तुमचा ग्रूमर",
+  "Choose your groomer": "तुमचा ग्रूमर निवडा",
+  "The open times below are {name}'s.": "खालील मोकळ्या वेळा {name} यांच्या आहेत.",
+  "Groomer": "ग्रूमर",
 };

@@ -314,4 +314,9 @@ export const ur: Messages = {
     "سبسکرپشن ختم کریں",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "معاہدہ بدل گیا ہے۔ براہ کرم اسے دوبارہ پڑھیں۔",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "آپ کا گرومر",
+  "Choose your groomer": "اپنا گرومر چنیں",
+  "The open times below are {name}'s.": "نیچے دیے گئے خالی اوقات {name} کے ہیں۔",
+  "Groomer": "گرومر",
 };

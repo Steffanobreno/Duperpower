@@ -9,7 +9,7 @@ import type { TeamState } from "./actions";
 export function GroomerForm({ action, colors, initial, isOwner = false, submit }: {
   action: (s: TeamState, f: FormData) => Promise<TeamState>;
   colors: string[];
-  initial?: { name: string; color: string; phone: string; email: string; active: boolean };
+  initial?: { name: string; color: string; phone: string; email: string; active: boolean; onlineBooking: boolean };
   isOwner?: boolean;
   submit: string;
 }) {
@@ -38,6 +38,12 @@ export function GroomerForm({ action, colors, initial, isOwner = false, submit }
         <label className="flex items-center gap-3 text-sm">
           <input type="checkbox" name="active" defaultChecked={initial.active} className="h-5 w-5" />
           {t("Active (shows in the booking form and on the calendar)")}
+        </label>
+      )}
+      {initial && (
+        <label className="flex items-center gap-3 text-sm">
+          <input type="checkbox" name="online_booking" defaultChecked={initial.onlineBooking} className="h-5 w-5" />
+          {t("Takes online bookings (clients see this name and pick their times)")}
         </label>
       )}
       <Button type="submit" disabled={pending} className="w-full">{pending ? t("Saving…") : submit}</Button>

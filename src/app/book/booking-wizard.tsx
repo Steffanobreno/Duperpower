@@ -90,7 +90,10 @@ export function BookingWizard({
   timezone,
   slug = null,
   preferredDate = null,
+  groomers = [],
 }: {
+  /** The groomers clients can book online (the first is picked to start with). */
+  groomers?: { id: string; name: string }[];
   /** The business's booking link (/book/<slug>); null on the plain /book. */
   slug?: string | null;
   initialPhone?: string; // from the "finish booking" link
@@ -119,6 +122,8 @@ export function BookingWizard({
   const [days, setDays] = useState<DaySlots[]>([]);
   const [day, setDay] = useState<string | null>(null);
   const [start, setStart] = useState<string | null>(null);
+  const [groomerId, setGroomerId] = useState<string | null>(groomers[0]?.id ?? null);
+  const groomer = groomers.find((g) => g.id === groomerId) ?? null;
   const [sheet, setSheet] = useState<"time" | "agreement" | null>(null);
   const [consent, setConsent] = useState(false);
   const [signed, setSigned] = useState<{ name: string; drawing: string } | null>(null);
@@ -205,7 +210,8 @@ export function BookingWizard({
     setHistory(rest.at(-1)?.name === "pets" ? rest : [...rest, { name: "pets" }]);
   };
 
-  const findTimes = () =>
+  /** The open times (for the chosen groomer); `again` when only the groomer changed on the times screen. */
+  const findTimes = (gid = groomerId, again = false) =>
     startTransition(async () => {
       setError(null);
       void trackDraftAction({ slug, 
@@ -215,13 +221,16 @@ export function BookingWizard({
           service: byId.get(p.mainId)?.name ?? "", addons: p.extraIds.map((id) => byId.get(id)?.name ?? "").filter(Boolean),
         })),
       });
-      const res = await availabilityAction({ slug, phone, useFileAddress: fileAddress, zip: address.zip, pets: requests });
-      if (res.error) return setError(serverMessage(res.error));
+      const res = await availabilityAction({ slug, phone, useFileAddress: fileAddress, zip: address.zip, pets: requests, groomerId: gid });
+      if (res.error) {
+        if (again) setDays([]);
+        return setError(serverMessage(res.error));
+      }
       setDays(res.days ?? []);
       // Start on a day we're already nearby, when there is one.
       setDay((res.days?.find((d) => d.date === preferredDate) ?? res.days?.find((d) => d.near) ?? res.days?.[0])?.date ?? null);
       setStart(null);
-      go({ name: "time" });
+      if (!again) go({ name: "time" });
     });
 
   const submit = () =>
@@ -230,6 +239,7 @@ export function BookingWizard({
       if (!start) return;
       const res = await requestBookingAction({
         slug,
+        groomerId,
         phone,
         pets: requests,
         start,
@@ -583,6 +593,31 @@ export function BookingWizard({
       return (
         <StepCard>
           {header(t("Select a time"), t("Your visit takes about {duration}. The time is when we arrive.", { duration: minutesLabel(minutes) }))}
+          {groomers.length === 1 && groomer && (
+            <div className="mb-5 flex items-center gap-3 rounded-2xl border border-line p-3">
+              <Initials name={groomer.name} />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t("Your groomer")}</p>
+                <p className="text-lg font-bold">{groomer.name}</p>
+              </div>
+            </div>
+          )}
+          {groomers.length > 1 && (
+            <div className="mb-5" role="radiogroup" aria-label={t("Choose your groomer")}>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wide text-muted">{t("Choose your groomer")}</p>
+              <div className="flex flex-wrap gap-2">
+                {groomers.map((g) => (
+                  <button key={g.id} type="button" role="radio" aria-checked={g.id === groomerId} disabled={pending}
+                    onClick={() => { if (g.id === groomerId) return; setGroomerId(g.id); setDay(null); setStart(null); findTimes(g.id, true); }}
+                    className={`flex items-center gap-2 rounded-full border-2 py-1.5 pl-1.5 pr-4 font-semibold ${g.id === groomerId ? "border-brand bg-brand-soft" : "border-line hover:border-brand"}`}>
+                    <Initials name={g.name} small />
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-muted">{t("The open times below are {name}'s.", { name: groomer?.name ?? "" })}</p>
+            </div>
+          )}
           {days.some((d) => d.near) && (
             <div className="mb-5 rounded-2xl bg-success-soft p-4">
               <p className="font-bold text-success">{t("🚐 We're already in your area on")}</p>
@@ -645,6 +680,7 @@ export function BookingWizard({
             {!known && contact.email && <InfoRow label={t("Email")} value={contact.email} />}
             <InfoRow label={t("Address")}
               value={fileAddress ? (known?.city ? t("Address on file in {city}", { city: known.city }) : t("Address on file")) : `${street}, ${address.city}, CA ${address.zip}`} />
+            {groomer && <InfoRow label={t("Groomer")} value={groomer.name} />}
             <InfoRow label={t("When")}
               value={day && start ? t("{date} at {time}", { date: dayOf(day, true), time: timeOf(start) }) : ""} />
             <div className="px-4 py-3">
@@ -1119,3 +1155,13 @@ const inDays = (t: T, today: string, ymd: string) => {
   const n = Math.round((Date.parse(`${ymd}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
   return n === 0 ? t("today") : n === 1 ? t("tomorrow") : t("in {n} days", { n });
 };
+
+/** A groomer's initials in a circle ("Steffano" → "S", "Ana Lima" → "AL"). */
+function Initials({ name, small = false }: { name: string; small?: boolean }) {
+  const letters = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+  return (
+    <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full bg-brand font-bold text-on-brand ${small ? "h-8 w-8 text-sm" : "h-12 w-12 text-lg"}`}>
+      {letters}
+    </span>
+  );
+}

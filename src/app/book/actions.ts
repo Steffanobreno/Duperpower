@@ -1,7 +1,7 @@
 "use server";
 import { tooManyFromHere } from "@/lib/rate-limit";
 import { isExclusionViolation, sql } from "@/lib/db";
-import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
+import { findSlots, getPublicBusiness, pickGroomer, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
 import { normalizePhone, phoneLabel, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
 import { activeAgreement, currentSignature, recordSignature, signableVersion, signatureImage } from "@/lib/agreement";
@@ -124,8 +124,9 @@ export async function availabilityAction(input: {
   zip: string;
   pets: PetRequest[];
   slug?: string | null; // the business's booking link (/book/<slug>)
+  groomerId?: string | null; // the groomer the client chose (when there are several)
 }): Promise<{ error?: string; days?: DaySlots[] }> {
-  const b = await getPublicBusiness(input.slug);
+  const b = pickGroomer(await getPublicBusiness(input.slug), input.groomerId);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   const zip = await zipFor(b, normalizePhone(input.phone, b?.country), input.useFileAddress, input.zip);
   const problem = await zipProblem(b, zip);
@@ -156,10 +157,11 @@ export type BookingRequest = {
   signatureDrawing?: string; // the signature drawn with a finger, as a PNG data URL
   agreementVersion?: number | null; // the version of the agreement the page showed
   website: string; // honeypot: people never see this field
+  groomerId?: string | null; // the groomer the client chose (when there are several)
 };
 
 export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string; agreementChanged?: boolean }> {
-  const b = await getPublicBusiness(input.slug);
+  const b = pickGroomer(await getPublicBusiness(input.slug), input.groomerId);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
   if (await tooManyFromHere("booking", 15, 3600_000)) return { error: "Too many tries. Please wait a few minutes or text us." };

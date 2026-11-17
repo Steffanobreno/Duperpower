@@ -307,4 +307,9 @@ export const ko: Messages = {
     "구독 취소",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "계약서가 변경되었습니다. 다시 읽어 주세요.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "담당 미용사",
+  "Choose your groomer": "담당 미용사 선택",
+  "The open times below are {name}'s.": "아래 가능한 시간은 {name}님의 시간입니다.",
+  "Groomer": "미용사",
 };

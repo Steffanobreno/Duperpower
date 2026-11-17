@@ -42,7 +42,10 @@ export type PublicBusiness = {
   start_zip: string | null;
   service_radius_miles: number;
   online_booking_enabled: boolean;
+  /** The groomer the times are for: the chosen one (pickGroomer), else the first one. */
   staff_id: string;
+  /** The groomers clients can book online, the owner first. */
+  groomers: { id: string; name: string }[];
 };
 
 /**
@@ -58,10 +61,20 @@ export async function getPublicBusiness(slug?: string | null) {
            -- A business whose trial ended unpaid (with billing on) has its booking page paused.
            b.online_booking_enabled and (${!billingOn()} or b.plan_status in ('active', 'free', 'past_due')
              or (b.plan_status = 'trial' and coalesce(b.trial_ends_at, now() + interval '1 day') > now())) as online_booking_enabled,
-           (select s.id from staff s where s.business_id = b.id and s.active order by (s.role = 'owner') desc, s.created_at limit 1) as staff_id
+           -- The first groomer who takes online bookings (any active person when nobody does).
+           (select s.id from staff s where s.business_id = b.id and s.active
+             order by s.online_booking desc, (s.role = 'owner') desc, s.created_at limit 1) as staff_id,
+           coalesce((select json_agg(json_build_object('id', s.id, 'name', s.name) order by (s.role = 'owner') desc, s.created_at)
+             from staff s where s.business_id = b.id and s.active and s.online_booking), '[]'::json) as groomers
     from businesses b where ${key}::text is null or b.booking_slug = ${key}
     order by b.created_at limit 1`;
   return b ?? null;
+}
+
+/** The business with the times for the groomer the client chose (ignored when not one of its online groomers). */
+export function pickGroomer<T extends PublicBusiness | null>(b: T, groomerId: string | null | undefined): T {
+  if (!b || !groomerId) return b;
+  return b.groomers.some((g) => g.id === groomerId) ? { ...b, staff_id: groomerId } : b;
 }
 
 export async function onlineServices(businessId: string) {

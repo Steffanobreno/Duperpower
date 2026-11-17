@@ -1794,4 +1794,5 @@ export const tl: string[] = ["Naiwang booking",
 "~{minutes} min na biyahe mula sa bisita ng {time}",
 "Hindi matantya ang biyahe mula sa bisita ni {client} (walang posisyon sa mapa ang postal code)",
 "Walang ZIP code: sarado ang online booking sa paligid ng pagbisitang ito. Idagdag ang ZIP sa address ng kliyente.",
-"~{n} min — lampas sa limit mo"];
+"~{n} min — lampas sa limit mo",
+"Tumatanggap ng online booking (makikita ng mga kliyente ang pangalang ito at pipili sila ng oras)"];

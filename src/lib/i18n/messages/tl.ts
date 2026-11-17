@@ -307,4 +307,9 @@ export const tl: Messages = {
     "Mag-unsubscribe",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Nagbago ang kasunduan. Pakibasa itong muli.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Ang iyong groomer",
+  "Choose your groomer": "Piliin ang iyong groomer",
+  "The open times below are {name}'s.": "Ang mga bakanteng oras sa ibaba ay kay {name}.",
+  "Groomer": "Groomer",
 };

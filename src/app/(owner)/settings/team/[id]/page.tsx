@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type Member = {
-  name: string; role: "owner" | "admin" | "groomer"; color: string; phone: string | null; email: string | null; active: boolean;
+  name: string; role: "owner" | "admin" | "groomer"; color: string; phone: string | null; email: string | null; active: boolean; online_booking: boolean;
   login: string | null; commission_pct: number; tips_pct: number; hourly_cents: number;
   van_name: string | null; van_plate: string | null; start_address: string | null; end_address: string | null;
 };
@@ -30,7 +30,7 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const [g] = await sql<Member[]>`
-    select s.name, s.role, s.color, s.phone, s.email, s.active, u.email as login,
+    select s.name, s.role, s.color, s.phone, s.email, s.active, s.online_booking, u.email as login,
            s.commission_pct::float8 as commission_pct, s.tips_pct::float8 as tips_pct, s.hourly_cents,
            s.van_name, s.van_plate, s.start_address, s.end_address
     from staff s left join users u on u.id = s.user_id
@@ -43,7 +43,7 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
       <Page>
         <Card>
           <GroomerForm action={updateGroomerAction.bind(null, id)} colors={GROOMER_COLORS} isOwner={owner} submit={t("Save")}
-            initial={{ name: g.name, color: g.color, phone: g.phone ? phoneLabel(g.phone) : "", email: g.email ?? "", active: g.active }} />
+            initial={{ name: g.name, color: g.color, phone: g.phone ? phoneLabel(g.phone) : "", email: g.email ?? "", active: g.active, onlineBooking: g.online_booking }} />
         </Card>
 
         <section className="space-y-2">

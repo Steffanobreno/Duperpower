@@ -46,7 +46,8 @@ export async function updateGroomerAction(id: string, _: TeamState, form: FormDa
   const [row] = await sql`select role from staff where id = ${id} and business_id = ${staff.businessId}`;
   if (!row) return { error: "Groomer not found." };
   const active = row.role === "owner" || form.get("active") === "on";
-  await sql`update staff set name = ${g.name}, color = ${g.color}, phone = ${g.phone}, email = ${g.email}, active = ${active}
+  await sql`update staff set name = ${g.name}, color = ${g.color}, phone = ${g.phone}, email = ${g.email}, active = ${active},
+                   online_booking = ${form.get("online_booking") === "on"}
             where id = ${id} and business_id = ${staff.businessId}`;
   revalidatePath("/settings/team");
   revalidatePath("/calendar");

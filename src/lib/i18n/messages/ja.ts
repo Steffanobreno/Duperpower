@@ -314,4 +314,9 @@ export const ja: Messages = {
     "配信を停止",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "契約書が変更されました。もう一度お読みください。",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "担当トリマー",
+  "Choose your groomer": "担当トリマーを選ぶ",
+  "The open times below are {name}'s.": "下の空き時間は{name}のものです。",
+  "Groomer": "トリマー",
 };
