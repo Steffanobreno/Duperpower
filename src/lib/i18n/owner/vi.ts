@@ -1795,4 +1795,5 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Không thể ước tính quãng đường từ lịch hẹn của {client} (mã bưu chính không có vị trí trên bản đồ)",
 "Không có mã ZIP: đặt lịch trực tuyến bị đóng quanh lượt hẹn này. Hãy thêm mã ZIP vào địa chỉ của khách.",
 "~{n} phút — vượt giới hạn của bạn",
-"Nhận đặt lịch online (khách thấy tên này và chọn giờ)"];
+"Nhận đặt lịch online (khách thấy tên này và chọn giờ)",
+"Khách thấy ảnh này trên trang đặt lịch khi chọn giờ."];

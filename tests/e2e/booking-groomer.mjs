@@ -116,6 +116,29 @@ await page.getByText("Your groomer").waitFor();
 if (await page.getByRole("radiogroup", { name: "Choose your groomer" }).count()) fail("Luna shouldn't be offered any more");
 step("Team: turning “Takes online bookings” off takes the groomer off the booking page");
 
+// 5. A photo in Team → the booking page shows it instead of the initials; a fake picture is refused.
+await page.goto(`${BASE}/login`);
+await page.fill('input[name="email"]', "owner@example.com");
+await page.fill('input[name="password"]', "correct horse battery");
+await page.click('button[type="submit"]');
+await page.waitForURL(/\/today/);
+const blank = await page.context().newPage();
+await blank.setContent('<div id="p" style="width:300px;height:300px;background:#c90"></div>');
+const png = await blank.locator("#p").screenshot();
+await blank.close();
+await page.goto(`${BASE}/settings/team/${owner.id}`);
+await page.getByLabel(`Photo of ${owner.name}`).setInputFiles({ name: "me.png", mimeType: "image/png", buffer: png });
+await page.getByRole("img", { name: `Photo of ${owner.name}` }).waitFor();
+const [{ n }] = await db`select count(*)::int as n from staff_photos where staff_id = ${owner.id}`;
+if (n !== 1) fail("the photo should be saved");
+await page.context().clearCookies();
+await toTimes("6505550184");
+const pic = page.locator('img[src^="/groomer-photo/"]');
+await pic.waitFor();
+const res = await fetch(new URL(await pic.getAttribute("src"), BASE));
+if (res.status !== 200 || !/^image\//.test(res.headers.get("content-type") ?? "")) fail(`the photo should load: ${res.status}`);
+step("Team: a groomer's photo shows on the booking page instead of the initials");
+
 if (errors.length) fail(`page errors: ${errors.join(" | ")}`);
 await db.end();
 await browser.close();

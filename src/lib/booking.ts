@@ -45,7 +45,7 @@ export type PublicBusiness = {
   /** The groomer the times are for: the chosen one (pickGroomer), else the first one. */
   staff_id: string;
   /** The groomers clients can book online, the owner first. */
-  groomers: { id: string; name: string }[];
+  groomers: { id: string; name: string; photo: string | null }[];
 };
 
 /**
@@ -64,7 +64,9 @@ export async function getPublicBusiness(slug?: string | null) {
            -- The first groomer who takes online bookings (any active person when nobody does).
            (select s.id from staff s where s.business_id = b.id and s.active
              order by s.online_booking desc, (s.role = 'owner') desc, s.created_at limit 1) as staff_id,
-           coalesce((select json_agg(json_build_object('id', s.id, 'name', s.name) order by (s.role = 'owner') desc, s.created_at)
+           coalesce((select json_agg(json_build_object('id', s.id, 'name', s.name,
+               'photo', (select '/groomer-photo/' || s.id || '?v=' || extract(epoch from p.updated_at)::bigint from staff_photos p where p.staff_id = s.id))
+               order by (s.role = 'owner') desc, s.created_at)
              from staff s where s.business_id = b.id and s.active and s.online_booking), '[]'::json) as groomers
     from businesses b where ${key}::text is null or b.booking_slug = ${key}
     order by b.created_at limit 1`;

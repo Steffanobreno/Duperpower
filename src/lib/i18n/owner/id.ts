@@ -1795,4 +1795,5 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Tidak bisa memperkirakan perjalanan dari kunjungan {client} (kode posnya tidak punya posisi di peta)",
 "Tidak ada kode pos: pemesanan online ditutup di sekitar kunjungan ini. Tambahkan kode pos ke alamat klien.",
 "~{n} mnt — melebihi batas Anda",
-"Menerima pemesanan online (klien melihat nama ini dan memilih waktunya)"];
+"Menerima pemesanan online (klien melihat nama ini dan memilih waktunya)",
+"Klien melihatnya di halaman pemesanan saat memilih waktu."];

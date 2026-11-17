@@ -93,7 +93,7 @@ export function BookingWizard({
   groomers = [],
 }: {
   /** The groomers clients can book online (the first is picked to start with). */
-  groomers?: { id: string; name: string }[];
+  groomers?: { id: string; name: string; photo?: string | null }[];
   /** The business's booking link (/book/<slug>); null on the plain /book. */
   slug?: string | null;
   initialPhone?: string; // from the "finish booking" link
@@ -595,7 +595,7 @@ export function BookingWizard({
           {header(t("Select a time"), t("Your visit takes about {duration}. The time is when we arrive.", { duration: minutesLabel(minutes) }))}
           {groomers.length === 1 && groomer && (
             <div className="mb-5 flex items-center gap-3 rounded-2xl border border-line p-3">
-              <Initials name={groomer.name} />
+              <Initials name={groomer.name} photo={groomer.photo} />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t("Your groomer")}</p>
                 <p className="text-lg font-bold">{groomer.name}</p>
@@ -610,7 +610,7 @@ export function BookingWizard({
                   <button key={g.id} type="button" role="radio" aria-checked={g.id === groomerId} disabled={pending}
                     onClick={() => { if (g.id === groomerId) return; setGroomerId(g.id); setDay(null); setStart(null); findTimes(g.id, true); }}
                     className={`flex items-center gap-2 rounded-full border-2 py-1.5 pl-1.5 pr-4 font-semibold ${g.id === groomerId ? "border-brand bg-brand-soft" : "border-line hover:border-brand"}`}>
-                    <Initials name={g.name} small />
+                    <Initials name={g.name} photo={g.photo} small />
                     {g.name}
                   </button>
                 ))}
@@ -1156,8 +1156,14 @@ const inDays = (t: T, today: string, ymd: string) => {
   return n === 0 ? t("today") : n === 1 ? t("tomorrow") : t("in {n} days", { n });
 };
 
-/** A groomer's initials in a circle ("Steffano" → "S", "Ana Lima" → "AL"). */
-function Initials({ name, small = false }: { name: string; small?: boolean }) {
+/** A groomer's photo in a circle, or their initials ("Steffano" → "S", "Ana Lima" → "AL") without one. */
+function Initials({ name, photo, small = false }: { name: string; photo?: string | null; small?: boolean }) {
+  if (photo) {
+    // The name is written next to it, so the photo needs no text of its own.
+    // eslint-disable-next-line @next/next/no-img-element -- small photo from our own route
+    return <img src={photo} alt="" width={small ? 32 : 56} height={small ? 32 : 56}
+      className={`shrink-0 rounded-full object-cover ${small ? "h-8 w-8" : "h-14 w-14"}`} />;
+  }
   const letters = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
   return (
     <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full bg-brand font-bold text-on-brand ${small ? "h-8 w-8 text-sm" : "h-12 w-12 text-lg"}`}>

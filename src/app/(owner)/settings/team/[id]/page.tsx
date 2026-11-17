@@ -12,6 +12,7 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { SimpleForm } from "../../forms";
 import { removeLoginAction, saveLoginAction, savePayAction, saveRoleAction, saveVanAction, updateGroomerAction } from "../actions";
 import { GroomerForm } from "../groomer-form";
+import { StaffPhotoUpload } from "../photo-upload";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -22,6 +23,7 @@ type Member = {
   name: string; role: "owner" | "admin" | "groomer"; color: string; phone: string | null; email: string | null; active: boolean; online_booking: boolean;
   login: string | null; commission_pct: number; tips_pct: number; hourly_cents: number;
   van_name: string | null; van_plate: string | null; start_address: string | null; end_address: string | null;
+  photo_v: string | null;
 };
 
 export default async function GroomerPage({ params }: PageProps<"/settings/team/[id]">) {
@@ -32,7 +34,8 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
   const [g] = await sql<Member[]>`
     select s.name, s.role, s.color, s.phone, s.email, s.active, s.online_booking, u.email as login,
            s.commission_pct::float8 as commission_pct, s.tips_pct::float8 as tips_pct, s.hourly_cents,
-           s.van_name, s.van_plate, s.start_address, s.end_address
+           s.van_name, s.van_plate, s.start_address, s.end_address,
+           (select extract(epoch from p.updated_at)::bigint::text from staff_photos p where p.staff_id = s.id) as photo_v
     from staff s left join users u on u.id = s.user_id
     where s.id = ${id} and s.business_id = ${staff.businessId}`;
   if (!g) notFound();
@@ -41,6 +44,9 @@ export default async function GroomerPage({ params }: PageProps<"/settings/team/
     <>
       <PageHeader title={g.name} back="/settings/team" />
       <Page>
+        <Card>
+          <StaffPhotoUpload id={id} name={g.name} src={g.photo_v ? `/groomer-photo/${id}?v=${g.photo_v}` : null} />
+        </Card>
         <Card>
           <GroomerForm action={updateGroomerAction.bind(null, id)} colors={GROOMER_COLORS} isOwner={owner} submit={t("Save")}
             initial={{ name: g.name, color: g.color, phone: g.phone ? phoneLabel(g.phone) : "", email: g.email ?? "", active: g.active, onlineBooking: g.online_booking }} />
