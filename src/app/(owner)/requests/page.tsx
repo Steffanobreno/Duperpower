@@ -1,6 +1,6 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { GoldBanner } from "@/components/gold-banner";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";

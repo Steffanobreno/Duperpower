@@ -314,4 +314,9 @@ export const fr: Messages = {
     "Se désabonner",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Le contrat a changé. Merci de le relire.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Votre toiletteur",
+  "Choose your groomer": "Choisissez votre toiletteur",
+  "The open times below are {name}'s.": "Les horaires ci-dessous sont ceux de {name}.",
+  "Groomer": "Toiletteur",
 };

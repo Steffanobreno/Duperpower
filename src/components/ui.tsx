@@ -1,5 +1,5 @@
 import { msg } from "@/lib/i18n";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import type { ComponentProps, ReactNode } from "react";
 import { MenuButton } from "./side-menu";
 import { BackButton } from "./back-button";

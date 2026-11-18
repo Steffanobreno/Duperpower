@@ -1,7 +1,7 @@
 "use server";
-import { headers } from "next/headers";
+import { tooManyFromHere } from "@/lib/rate-limit";
 import { isExclusionViolation, sql } from "@/lib/db";
-import { findSlots, getPublicBusiness, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
+import { findSlots, getPublicBusiness, pickGroomer, onlineServices, zipProblem, type DaySlots, type PublicBusiness } from "@/lib/booking";
 import { normalizePhone, phoneLabel, SIZES, ymd, dayLabel, timeLabel } from "@/lib/format";
 import { notifyAppointment, notifyOwner } from "@/lib/messaging";
 import { activeAgreement, currentSignature, recordSignature, signableVersion, signatureImage } from "@/lib/agreement";
@@ -33,18 +33,8 @@ export type KnownClient = {
 };
 export type LookupResult = { error?: string } & (KnownClient | { known: false; mustSign: boolean } | { known?: undefined });
 
-// Best effort, per server instance: slows down anyone trying many numbers.
-const lookups = new Map<string, number[]>();
-async function tooManyLookups() {
-  const h = await headers();
-  // Netlify's own header can't be set by the browser; x-forwarded-for can.
-  const ip = h.get("x-nf-client-connection-ip") ?? ((h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "local");
-  const now = Date.now();
-  const recent = (lookups.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
-  recent.push(now);
-  lookups.set(ip, recent);
-  return recent.length > 20;
-}
+// Slows down anyone trying many phone numbers (shared by every server instance).
+const tooManyLookups = () => tooManyFromHere("lookup", 20, 10 * 60_000);
 
 async function findClient(b: PublicBusiness, phone: string) {
   const [c] = await sql<{ id: string; first_name: string; city: string | null; zip: string | null; address_line: string | null; state: string | null;
@@ -134,8 +124,9 @@ export async function availabilityAction(input: {
   zip: string;
   pets: PetRequest[];
   slug?: string | null; // the business's booking link (/book/<slug>)
+  groomerId?: string | null; // the groomer the client chose (when there are several)
 }): Promise<{ error?: string; days?: DaySlots[] }> {
-  const b = await getPublicBusiness(input.slug);
+  const b = pickGroomer(await getPublicBusiness(input.slug), input.groomerId);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   const zip = await zipFor(b, normalizePhone(input.phone, b?.country), input.useFileAddress, input.zip);
   const problem = await zipProblem(b, zip);
@@ -166,12 +157,14 @@ export type BookingRequest = {
   signatureDrawing?: string; // the signature drawn with a finger, as a PNG data URL
   agreementVersion?: number | null; // the version of the agreement the page showed
   website: string; // honeypot: people never see this field
+  groomerId?: string | null; // the groomer the client chose (when there are several)
 };
 
 export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string; agreementChanged?: boolean }> {
-  const b = await getPublicBusiness(input.slug);
+  const b = pickGroomer(await getPublicBusiness(input.slug), input.groomerId);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
   if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
+  if (await tooManyFromHere("booking", 15, 3600_000)) return { error: "Too many tries. Please wait a few minutes or text us." };
 
   const phone = normalizePhone(input.phone, b?.country);
   if (!phone) return b.country === "US" ? { error: "Please enter a 10-digit mobile number." } : { error: "Please check your mobile number." };

@@ -314,4 +314,9 @@ export const ta: Messages = {
     "சந்தாவை நிறுத்து",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "ஒப்பந்தம் மாறிவிட்டது. தயவுசெய்து மீண்டும் படியுங்கள்.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "உங்கள் க்ரூமர்",
+  "Choose your groomer": "உங்கள் க்ரூமரைத் தேர்ந்தெடுக்கவும்",
+  "The open times below are {name}'s.": "கீழே உள்ள காலியான நேரங்கள் {name} உடையவை.",
+  "Groomer": "க்ரூமர்",
 };

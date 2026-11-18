@@ -307,4 +307,9 @@ export const vi: Messages = {
     "Hủy đăng ký",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Thỏa thuận đã thay đổi. Vui lòng đọc lại.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Thợ chăm sóc của bạn",
+  "Choose your groomer": "Chọn thợ chăm sóc",
+  "The open times below are {name}'s.": "Các giờ trống bên dưới là của {name}.",
+  "Groomer": "Thợ chăm sóc",
 };

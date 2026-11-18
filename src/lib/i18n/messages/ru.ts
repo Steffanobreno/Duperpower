@@ -314,4 +314,9 @@ export const ru: Messages = {
     "Отписаться",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Договор изменился. Пожалуйста, прочитайте его снова.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Ваш грумер",
+  "Choose your groomer": "Выберите грумера",
+  "The open times below are {name}'s.": "Свободное время ниже — у {name}.",
+  "Groomer": "Грумер",
 };

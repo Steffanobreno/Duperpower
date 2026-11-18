@@ -65,6 +65,13 @@ textarea {
   font-size: 16px;
 }
 
+/* The top bar while a tapped screen loads (NavProgress). */
+@keyframes nav-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+.nav-progress { animation: nav-progress 0.9s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

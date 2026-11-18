@@ -1,6 +1,6 @@
 "use client";
 import { useT } from "@/components/i18n";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useState } from "react";
 
 export type SettingsGroup = { title: string; links: { href: string; title: string; text: string }[] };

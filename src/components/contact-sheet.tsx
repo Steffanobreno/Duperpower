@@ -1,6 +1,6 @@
 "use client";
 import { useT } from "@/components/i18n";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useState, type ReactNode } from "react";
 
 // Tapping a phone number or an address opens a small menu, like on the iPhone:

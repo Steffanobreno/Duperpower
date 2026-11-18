@@ -2,7 +2,7 @@ import { getOwnerI18n } from "@/lib/i18n/server";
 import type { T } from "@/lib/i18n";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { requirePermission } from "@/lib/auth";
 import { report, type Group } from "@/lib/data/reports";
 import { monthKpis } from "@/lib/data/kpis";

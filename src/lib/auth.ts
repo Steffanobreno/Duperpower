@@ -37,6 +37,8 @@ async function startSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000);
   await sql`insert into sessions (user_id, token_hash, expires_at)
             values (${userId}, ${hashToken(token)}, ${expires})`;
+  // Expired logins are useless; don't keep them around.
+  await sql`delete from sessions where user_id = ${userId} and expires_at < now()`;
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

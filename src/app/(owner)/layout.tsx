@@ -5,6 +5,8 @@ import { SideMenu } from "@/components/side-menu";
 import { AppLock } from "@/components/app-lock";
 import { NavDepth } from "@/components/back-button";
 import { OfflineSupport } from "@/components/offline-support";
+import { NavProgress } from "@/components/nav-progress";
+import { Suspense } from "react";
 import { I18nProvider } from "@/components/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { redirect } from "next/navigation";
@@ -14,7 +16,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   const staff = await requireStaff();
   const { lang, messages, dir, t } = await getOwnerI18n();
   // One trip: the requests badge, whether the app lock is on, and the logo's version.
-  const [{ requests, lock, logo, plan_status, trial_ends_at }] = await sql<{ requests: number; lock: boolean; logo: string | null; plan_status: string; trial_ends_at: Date | null }[]>`
+  const [[{ requests, lock, logo, plan_status, trial_ends_at }], admin] = await Promise.all([sql<{ requests: number; lock: boolean; logo: string | null; plan_status: string; trial_ends_at: Date | null }[]>`
     select (select count(*)::int from appointments
             where business_id = ${staff.businessId}
               and ((status = 'requested' and start_at > now())
@@ -22,7 +24,9 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
            (select pin_hash is not null from staff where id = ${staff.staffId}) as lock,
            (select extract(epoch from updated_at)::bigint::text from business_logos where business_id = ${staff.businessId}) as logo,
            (select plan_status from businesses where id = ${staff.businessId}) as plan_status,
-           (select trial_ends_at from businesses where id = ${staff.businessId}) as trial_ends_at`;
+           (select trial_ends_at from businesses where id = ${staff.businessId}) as trial_ends_at`,
+    // Alongside, not after: one wait for both.
+    isAdmin(staff.staffId)]);
   // The plan: once the trial is over (or the plan cancelled), only the billing page opens.
   const access = accessOf({ plan_status, trial_ends_at });
   if (billingOn() && access.locked) redirect("/billing");
@@ -39,10 +43,11 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
       )}
       <NavDepth />
       <OfflineSupport />
+      <Suspense fallback={null}><NavProgress /></Suspense>
       {children}
       <TabBar can={staff.can} />
       <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} role={staff.role} can={staff.can}
-        logo={logo ? `/logo/${staff.businessId}?v=${logo}` : null} admin={await isAdmin(staff.staffId)} />
+        logo={logo ? `/logo/${staff.businessId}?v=${logo}` : null} admin={admin} />
      </div>
     </I18nProvider>
   );

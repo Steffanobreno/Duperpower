@@ -1,8 +1,9 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useT } from "./i18n";
 import { msg } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const TABS = [
   { href: "/today", label: msg("Today"), icon: "M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" },
@@ -15,6 +16,13 @@ const TABS = [
 export function TabBar({ can }: { can: Record<string, boolean> }) {
   const path = usePathname();
   const { t: tr } = useT();
+  // The tabs are fetched ahead (so they open at once), but only a few seconds after a screen
+  // opens: the first taps after opening the app don't wait behind those fetches.
+  const [ahead, setAhead] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAhead(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <ul className="mx-auto flex max-w-3xl">
@@ -24,6 +32,7 @@ export function TabBar({ can }: { can: Record<string, boolean> }) {
             <li key={t.href} className="flex-1">
               <Link
                 href={t.href}
+                prefetch={ahead ? null : false}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 py-2 text-xs ${active ? "font-bold text-navy" : "font-medium text-muted"}`}
               >

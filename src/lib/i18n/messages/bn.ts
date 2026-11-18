@@ -314,4 +314,9 @@ export const bn: Messages = {
     "সাবস্ক্রিপশন বাতিল করুন",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "চুক্তিটি বদলেছে। অনুগ্রহ করে আবার পড়ুন।",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "আপনার গ্রুমার",
+  "Choose your groomer": "আপনার গ্রুমার বেছে নিন",
+  "The open times below are {name}'s.": "নিচের খালি সময়গুলো {name}-এর।",
+  "Groomer": "গ্রুমার",
 };

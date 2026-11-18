@@ -7,6 +7,7 @@ import { ALL_PERMISSIONS } from "@/lib/permissions";
 import { sql } from "@/lib/db";
 import { isYmd, normalizePhone, parseMoney, zonedToUtc } from "@/lib/format";
 import { GROOMER_COLORS } from "@/lib/data/staff";
+import { saveStaffPhoto } from "@/lib/staff-photo";
 
 export type TeamState = { error?: string; saved?: boolean } | undefined;
 
@@ -46,7 +47,8 @@ export async function updateGroomerAction(id: string, _: TeamState, form: FormDa
   const [row] = await sql`select role from staff where id = ${id} and business_id = ${staff.businessId}`;
   if (!row) return { error: "Groomer not found." };
   const active = row.role === "owner" || form.get("active") === "on";
-  await sql`update staff set name = ${g.name}, color = ${g.color}, phone = ${g.phone}, email = ${g.email}, active = ${active}
+  await sql`update staff set name = ${g.name}, color = ${g.color}, phone = ${g.phone}, email = ${g.email}, active = ${active},
+                   online_booking = ${form.get("online_booking") === "on"}
             where id = ${id} and business_id = ${staff.businessId}`;
   revalidatePath("/settings/team");
   revalidatePath("/calendar");
@@ -143,4 +145,26 @@ export async function saveVanAction(id: string, _: TeamState, form: FormData): P
   revalidatePath(`/settings/team/${id}`);
   revalidatePath("/today");
   return { saved: true };
+}
+
+/** A team member's photo (clients see it on the booking page). */
+export async function saveStaffPhotoAction(id: string, form: FormData): Promise<{ error?: string }> {
+  const staff = await requirePermission("settings");
+  const [row] = await sql`select 1 from staff where id = ${id} and business_id = ${staff.businessId}`;
+  if (!row) return { error: "Groomer not found." };
+  const file = form.get("photo");
+  if (!(file instanceof Blob)) return { error: "Pick a picture." };
+  const error = await saveStaffPhoto(id, new Uint8Array(await file.arrayBuffer()));
+  if (error) return { error };
+  revalidatePath(`/settings/team/${id}`);
+  revalidatePath("/settings/team");
+  return {};
+}
+
+export async function removeStaffPhotoAction(id: string) {
+  const staff = await requirePermission("settings");
+  await sql`delete from staff_photos where staff_id = ${id}
+            and staff_id in (select id from staff where business_id = ${staff.businessId})`;
+  revalidatePath(`/settings/team/${id}`);
+  revalidatePath("/settings/team");
 }

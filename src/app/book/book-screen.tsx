@@ -38,6 +38,7 @@ export async function BookScreen({ slug, query }: { slug: string | null; query: 
             agreement={agreement?.required_online ? <AgreementText title={agreement.title} body={agreement.body} noShowFee={noShowFeeText(agreement.no_show_fee_cents, agreement.language)} /> : null}
             agreementVersion={agreement?.version ?? null}
             slug={slug}
+            groomers={b.groomers}
             preferredDate={isYmd(preferredDate) ? preferredDate : null}
             initialPhone={typeof resumePhone !== "string" ? "" : b.country === "US" ? resumePhone.replace(/\D/g, "").slice(-10) : resumePhone.replace(/[^\d+]/g, "").slice(0, 16)}
           />

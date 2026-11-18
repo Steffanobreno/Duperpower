@@ -314,4 +314,9 @@ export const pt: Messages = {
     "Cancelar inscrição",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "O contrato mudou. Leia de novo, por favor.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Seu groomer",
+  "Choose your groomer": "Escolha seu groomer",
+  "The open times below are {name}'s.": "Os horários abaixo são do(a) {name}.",
+  "Groomer": "Groomer",
 };

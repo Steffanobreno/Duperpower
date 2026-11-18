@@ -1,6 +1,6 @@
 "use client";
 import { hasBuiltInArtwork, initialsOf } from "@/lib/product";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { useT } from "./i18n";
 import { msg } from "@/lib/i18n";
 import { usePathname } from "next/navigation";

@@ -314,4 +314,9 @@ export const ar: Messages = {
     "إلغاء الاشتراك",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "تغيّرت الاتفاقية. يُرجى قراءتها مرة أخرى.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "مُصفّف كلبك",
+  "Choose your groomer": "اختر مُصفّف كلبك",
+  "The open times below are {name}'s.": "المواعيد المتاحة أدناه خاصة بـ {name}.",
+  "Groomer": "المُصفّف",
 };

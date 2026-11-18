@@ -314,4 +314,9 @@ export const tr: Messages = {
     "Abonelikten çık",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "Sözleşme değişti. Lütfen yeniden okuyun.",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "Kuaförünüz",
+  "Choose your groomer": "Kuaförünüzü seçin",
+  "The open times below are {name}'s.": "Aşağıdaki boş saatler {name} için.",
+  "Groomer": "Kuaför",
 };

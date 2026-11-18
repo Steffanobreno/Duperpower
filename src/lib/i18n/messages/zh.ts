@@ -307,4 +307,9 @@ export const zh: Messages = {
     "取消订阅",
   // The service agreement changed (with "sign again") while the client was reading it.
   "The agreement changed. Please read it again.": "协议已更新。请重新阅读。",
+  // The groomer on the booking page (chosen when there are several).
+  "Your groomer": "您的美容师",
+  "Choose your groomer": "选择美容师",
+  "The open times below are {name}'s.": "下方的空闲时间是 {name} 的。",
+  "Groomer": "美容师",
 };

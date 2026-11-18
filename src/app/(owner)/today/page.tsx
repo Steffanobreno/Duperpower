@@ -1,7 +1,7 @@
 import { msg } from "@/lib/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { Toast } from "@/components/toast";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -337,7 +337,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           <>
             <div className="-mx-4 -mb-24">
               <DayMap stops={cards} path={road?.path} route={route} compact={monthOpen}
-                overlay={fillLink && <Link href={`/fill/${date}`} className="absolute left-3 top-3 z-[500] rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">{fillLink} ›</Link>} />
+                overlay={fillLink && <Link href={`/fill/${date}`} className="min-w-0 truncate rounded-full bg-surface px-3 py-2 text-sm font-bold text-brand shadow-lg">{fillLink} ›</Link>} />
             </div>
             {/* Below the map, a scroll away: the map's -mb-24 would put them over the visit cards, hence mt-28. */}
             {tiles && <div className="mt-28">{tiles}</div>}

@@ -1,6 +1,6 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { requirePermission } from "@/lib/auth";
 import { groupByCategory, listServices } from "@/lib/data/services";
 import { minutesLabel, money } from "@/lib/format";

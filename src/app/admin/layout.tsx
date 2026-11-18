@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { requireAdmin } from "@/lib/auth";
 import { paymentsMode } from "@/lib/billing";
 import { TestModeBanner } from "@/components/test-mode-banner";

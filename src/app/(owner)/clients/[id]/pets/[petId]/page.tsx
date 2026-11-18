@@ -7,7 +7,7 @@ import { Card, Page, PageHeader } from "@/components/ui";
 import { addVaccineAction, deletePetPriceAction, deleteVaccineAction, savePetAction, savePetPriceAction, setPetCodesAction, setPetPassedAction } from "../../../actions";
 import { allOptions, listPetCodes, petCodesFor } from "@/lib/data/options";
 import { petOptions } from "../../../options";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { listServices } from "@/lib/data/services";
 import { petPrices } from "@/lib/data/pet-prices";
 import { PetPriceForm } from "./price-form";

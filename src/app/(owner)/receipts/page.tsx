@@ -1,7 +1,7 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { DateField } from "@/components/date-field";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { requirePermission } from "@/lib/auth";
 import { listReceipts } from "@/lib/data/receipts";
 import { addDaysYmd, dayLabel, isYmd, money, todayYmd, zonedToUtc } from "@/lib/format";

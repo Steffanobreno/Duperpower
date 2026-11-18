@@ -1,8 +1,9 @@
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { adminOverview } from "@/lib/data/admin";
 import { money } from "@/lib/format";
 import { regionOf } from "@/lib/region";
 import { countryName } from "@/lib/countries";
+import { speedCheck } from "@/lib/speed";
 
 const n = (v: number) => v.toLocaleString("pt-BR");
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
@@ -22,7 +23,7 @@ function Stat({ label, value, hint, href, tone }: { label: string; value: string
 }
 
 export default async function AdminHome() {
-  const o = await adminOverview();
+  const [o, speed] = await Promise.all([adminOverview(), speedCheck()]);
   const maxWeek = Math.max(1, ...o.weekly.map((w) => w.signups));
   const growth = o.prevMonth ? Math.round(((o.month - o.prevMonth) / o.prevMonth) * 100) : null;
   return (
@@ -45,6 +46,22 @@ export default async function AdminHome() {
         <Stat label="Novos em 30 dias" value={n(o.month)}
           hint={growth == null ? "sem mês anterior para comparar" : `${growth >= 0 ? "+" : ""}${growth}% vs. 30 dias antes`}
           tone={growth != null && growth < 0 ? "bad" : undefined} />
+      </section>
+
+      <section aria-labelledby="speed" className="card space-y-2 p-4">
+        <h2 id="speed" className="font-bold">Velocidade do servidor</h2>
+        <p className="text-sm">
+          Servidor (Netlify): <b>{speed.serverRegion ?? "desconhecido"}</b> · Banco (Neon): <b>{speed.dbRegion ?? "desconhecido"}</b>
+          {speed.serverRegion && speed.dbRegion && (speed.serverRegion === speed.dbRegion
+            ? <span className="text-success"> · mesma região ✓</span>
+            : <span className="text-danger"> · regiões diferentes: cada ida ao banco atravessa o país</span>)}
+        </p>
+        <p className="text-sm">
+          Uma ida ao banco agora: <b className={speed.tripMs > 25 ? "text-danger" : "text-success"}>{speed.tripMs} ms</b>
+          {" "}(a primeira: {speed.firstMs} ms{speed.firstMs > 300 ? ", o banco estava dormindo ou a conexão era nova" : ""}).
+          Uma tela faz de 5 a 15 idas em sequência. Este servidor está acordado há {speed.warmForMin} min.
+        </p>
+        <p className="text-xs text-muted">Bom: até ~5 ms por ida (mesma região). Acima de 25 ms, o banco está longe do servidor.</p>
       </section>
 
       <section aria-labelledby="funnel" className="card space-y-3 p-4">

@@ -1,6 +1,6 @@
 import { getOwnerI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/app-link";
 import { requireStaff } from "@/lib/auth";
 import { helpArticles, TOPICS, topicName } from "@/lib/help/articles";
 import { assistantOn } from "@/lib/help/assistant";

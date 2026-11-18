@@ -1794,4 +1794,6 @@ export const pt: string[] = ["Agendamento abandonado",
 "~{minutes} min de carro da visita das {time}",
 "Não dá para estimar o trajeto da visita de {client} (o CEP não tem posição no mapa)",
 "Sem CEP: o agendamento online está fechado em volta desta visita. Adicione o CEP ao endereço do cliente.",
-"~{n} min — acima do seu limite"];
+"~{n} min — acima do seu limite",
+"Recebe agendamentos online (os clientes veem este nome e escolhem os horários)",
+"Os clientes veem a foto na página de agendamento, na hora de escolher o horário."];
