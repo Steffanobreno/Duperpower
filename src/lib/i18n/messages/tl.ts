@@ -316,4 +316,8 @@ export const tl: Messages = {
   "Please sign the service agreement first.": "Pumirma muna sa kasunduan sa serbisyo.",
   "Required before you submit": "Kailangan bago ipadala",
   "To sign: tick the box, type your full name and draw your signature.": "Para pumirma: i-tsek ang kahon, i-type ang buong pangalan, at iguhit ang pirma.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "Karamihan ng {breeds} ay Malaki o Napakalaki.",
+  "Smaller (mini or toy)": "Mas maliit (mini o toy)",
+  "We check the size at the visit and adjust the price if it's different.": "Sinusuri namin ang laki sa pagbisita at inaayos ang presyo kung iba.",
 };

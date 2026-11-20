@@ -323,4 +323,8 @@ export const ar: Messages = {
   "Please sign the service agreement first.": "يرجى توقيع اتفاقية الخدمة أولاً.",
   "Required before you submit": "مطلوب قبل الإرسال",
   "To sign: tick the box, type your full name and draw your signature.": "للتوقيع: ضع علامة في المربع، واكتب اسمك الكامل، وارسم توقيعك.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "معظم كلاب {breeds} كبيرة أو كبيرة جدًا.",
+  "Smaller (mini or toy)": "أصغر (ميني أو توي)",
+  "We check the size at the visit and adjust the price if it's different.": "نتحقق من الحجم أثناء الزيارة ونعدّل السعر إذا كان مختلفًا.",
 };

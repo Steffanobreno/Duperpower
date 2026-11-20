@@ -323,4 +323,8 @@ export const ru: Messages = {
   "Please sign the service agreement first.": "Сначала подпишите договор об услугах.",
   "Required before you submit": "Обязательно перед отправкой",
   "To sign: tick the box, type your full name and draw your signature.": "Чтобы подписать: отметьте поле, введите полное имя и нарисуйте подпись.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "Большинство {breeds} — Большой или Очень большой.",
+  "Smaller (mini or toy)": "Меньше (мини или той)",
+  "We check the size at the visit and adjust the price if it's different.": "Мы проверяем размер на визите и меняем цену, если он другой.",
 };

@@ -323,4 +323,8 @@ export const id: Messages = {
   "Please sign the service agreement first.": "Tanda tangani perjanjian layanan terlebih dahulu.",
   "Required before you submit": "Wajib sebelum mengirim",
   "To sign: tick the box, type your full name and draw your signature.": "Untuk menandatangani: centang kotak, ketik nama lengkap, dan gambar tanda tangan Anda.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "Sebagian besar {breeds} berukuran Besar atau Sangat besar.",
+  "Smaller (mini or toy)": "Lebih kecil (mini atau toy)",
+  "We check the size at the visit and adjust the price if it's different.": "Kami memeriksa ukuran saat kunjungan dan menyesuaikan harga jika berbeda.",
 };
