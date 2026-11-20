@@ -4,7 +4,6 @@ import { useT } from "@/components/i18n";
 import { ActionForm } from "@/components/action-form";
 import { FormPopup } from "@/components/popup";
 import { Button, Card } from "@/components/ui";
-import { markContactedAction } from "../actions";
 import { sendAllAction } from "../send-actions";
 
 /**
@@ -21,12 +20,10 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
 
   if (state?.texts) {
     const next = state.texts.find((x) => !sent.includes(x.id));
-    const open = (x: (typeof state.texts)[number]) => {
-      setSent((s) => [...s, x.id]);
-      void markContactedAction(x.id);
-      // "?&body=" works on iPhone and Android alike.
-      window.location.href = `sms:${x.phone}?&body=${encodeURIComponent(x.body)}`;
-    };
+    // A real link to Messages ("?&body=" works on iPhone and Android alike): the phone opens it
+    // most reliably from a tap. (Everyone was already marked contacted when the message went out.)
+    const smsHref = (x: (typeof state.texts)[number]) => `sms:${x.phone}?&body=${encodeURIComponent(x.body)}`;
+    const opened = (id: string) => setSent((s) => (s.includes(id) ? s : [...s, id]));
     return (
       <div className="space-y-4">
         <Card className="space-y-1">
@@ -36,9 +33,10 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
           </p>
         </Card>
         {next ? (
-          <Button className="w-full" onClick={() => open(next)}>
+          <a href={smsHref(next)} onClick={() => opened(next.id)}
+            className="block w-full rounded-full bg-brand px-6 py-4 text-center text-lg font-semibold text-on-brand">
             {t("Text {name} ({done} of {total})", { name: next.name, done: sent.length + 1, total: state.texts.length })}
-          </Button>
+          </a>
         ) : (
           <p role="status" className="card p-4 text-center font-bold text-success">{t("All {n} texts opened. Done!", { n: state.texts.length })}</p>
         )}
@@ -49,10 +47,10 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
                 <span className="block truncate font-semibold">{x.name}</span>
                 <span className="block truncate text-xs text-muted">{x.body}</span>
               </span>
-              <button type="button" onClick={() => open(x)}
+              <a href={smsHref(x)} onClick={() => opened(x.id)}
                 className={`shrink-0 rounded-xl border px-3 py-2 text-sm font-semibold ${sent.includes(x.id) ? "border-success text-success" : "border-line text-brand"}`}>
                 {sent.includes(x.id) ? t("Opened ✓") : t("Text")}
-              </button>
+              </a>
             </li>
           ))}
         </ul>
