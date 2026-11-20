@@ -312,4 +312,8 @@ export const ko: Messages = {
   "Choose your groomer": "담당 미용사 선택",
   "The open times below are {name}'s.": "아래 가능한 시간은 {name}님의 시간입니다.",
   "Groomer": "미용사",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "먼저 서비스 동의서에 서명해 주세요.",
+  "Required before you submit": "보내기 전에 필요합니다",
+  "To sign: tick the box, type your full name and draw your signature.": "서명하려면: 상자에 체크하고, 이름을 입력한 뒤 서명을 그려 주세요.",
 };

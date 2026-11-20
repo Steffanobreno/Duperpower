@@ -319,4 +319,8 @@ export const ja: Messages = {
   "Choose your groomer": "担当トリマーを選ぶ",
   "The open times below are {name}'s.": "下の空き時間は{name}のものです。",
   "Groomer": "トリマー",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "先にサービス同意書に署名してください。",
+  "Required before you submit": "送信前に必要です",
+  "To sign: tick the box, type your full name and draw your signature.": "署名するには：チェックを入れ、氏名を入力し、署名を書いてください。",
 };

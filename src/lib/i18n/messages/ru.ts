@@ -319,4 +319,8 @@ export const ru: Messages = {
   "Choose your groomer": "Выберите грумера",
   "The open times below are {name}'s.": "Свободное время ниже — у {name}.",
   "Groomer": "Грумер",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Сначала подпишите договор об услугах.",
+  "Required before you submit": "Обязательно перед отправкой",
+  "To sign: tick the box, type your full name and draw your signature.": "Чтобы подписать: отметьте поле, введите полное имя и нарисуйте подпись.",
 };

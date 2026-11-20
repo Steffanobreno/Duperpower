@@ -319,4 +319,8 @@ export const mr: Messages = {
   "Choose your groomer": "तुमचा ग्रूमर निवडा",
   "The open times below are {name}'s.": "खालील मोकळ्या वेळा {name} यांच्या आहेत.",
   "Groomer": "ग्रूमर",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "कृपया आधी सेवा करारावर सही करा.",
+  "Required before you submit": "पाठवण्यापूर्वी आवश्यक",
+  "To sign: tick the box, type your full name and draw your signature.": "सही करण्यासाठी: बॉक्सवर खूण करा, पूर्ण नाव लिहा आणि सही काढा.",
 };

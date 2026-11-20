@@ -312,4 +312,8 @@ export const zh: Messages = {
   "Choose your groomer": "选择美容师",
   "The open times below are {name}'s.": "下方的空闲时间是 {name} 的。",
   "Groomer": "美容师",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "请先签署服务协议。",
+  "Required before you submit": "提交前必填",
+  "To sign: tick the box, type your full name and draw your signature.": "签署方法：勾选方框，输入全名并画出签名。",
 };

@@ -319,4 +319,8 @@ export const te: Messages = {
   "Choose your groomer": "మీ గ్రూమర్‌ను ఎంచుకోండి",
   "The open times below are {name}'s.": "కింద ఉన్న ఖాళీ సమయాలు {name} గారివి.",
   "Groomer": "గ్రూమర్",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "ముందుగా సేవా ఒప్పందంపై సంతకం చేయండి.",
+  "Required before you submit": "పంపే ముందు అవసరం",
+  "To sign: tick the box, type your full name and draw your signature.": "సంతకం చేయడానికి: బాక్స్ టిక్ చేసి, పూర్తి పేరు రాసి, సంతకం గీయండి.",
 };

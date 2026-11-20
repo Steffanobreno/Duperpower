@@ -319,4 +319,8 @@ export const ta: Messages = {
   "Choose your groomer": "உங்கள் க்ரூமரைத் தேர்ந்தெடுக்கவும்",
   "The open times below are {name}'s.": "கீழே உள்ள காலியான நேரங்கள் {name} உடையவை.",
   "Groomer": "க்ரூமர்",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "முதலில் சேவை ஒப்பந்தத்தில் கையொப்பமிடுங்கள்.",
+  "Required before you submit": "அனுப்புவதற்கு முன் தேவை",
+  "To sign: tick the box, type your full name and draw your signature.": "கையொப்பமிட: பெட்டியைத் தேர்வுசெய்து, முழுப் பெயரை எழுதி, கையொப்பம் வரையுங்கள்.",
 };

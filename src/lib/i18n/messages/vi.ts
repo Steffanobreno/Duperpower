@@ -312,4 +312,8 @@ export const vi: Messages = {
   "Choose your groomer": "Chọn thợ chăm sóc",
   "The open times below are {name}'s.": "Các giờ trống bên dưới là của {name}.",
   "Groomer": "Thợ chăm sóc",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Vui lòng ký thỏa thuận dịch vụ trước.",
+  "Required before you submit": "Bắt buộc trước khi gửi",
+  "To sign: tick the box, type your full name and draw your signature.": "Để ký: đánh dấu ô, nhập họ tên đầy đủ và vẽ chữ ký.",
 };

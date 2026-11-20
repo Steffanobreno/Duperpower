@@ -319,4 +319,8 @@ export const id: Messages = {
   "Choose your groomer": "Pilih groomer Anda",
   "The open times below are {name}'s.": "Waktu kosong di bawah adalah milik {name}.",
   "Groomer": "Groomer",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Tanda tangani perjanjian layanan terlebih dahulu.",
+  "Required before you submit": "Wajib sebelum mengirim",
+  "To sign: tick the box, type your full name and draw your signature.": "Untuk menandatangani: centang kotak, ketik nama lengkap, dan gambar tanda tangan Anda.",
 };
