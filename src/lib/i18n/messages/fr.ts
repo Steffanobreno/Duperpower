@@ -319,4 +319,8 @@ export const fr: Messages = {
   "Choose your groomer": "Choisissez votre toiletteur",
   "The open times below are {name}'s.": "Les horaires ci-dessous sont ceux de {name}.",
   "Groomer": "Toiletteur",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Veuillez d'abord signer le contrat de service.",
+  "Required before you submit": "Obligatoire avant l'envoi",
+  "To sign: tick the box, type your full name and draw your signature.": "Pour signer : cochez la case, écrivez votre nom complet et dessinez votre signature.",
 };

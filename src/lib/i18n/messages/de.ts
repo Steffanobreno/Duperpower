@@ -319,4 +319,8 @@ export const de: Messages = {
   "Choose your groomer": "Wählen Sie Ihren Hundefriseur",
   "The open times below are {name}'s.": "Die freien Zeiten unten sind die von {name}.",
   "Groomer": "Hundefriseur",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Bitte unterschreiben Sie zuerst den Servicevertrag.",
+  "Required before you submit": "Vor dem Absenden erforderlich",
+  "To sign: tick the box, type your full name and draw your signature.": "Zum Unterschreiben: Kästchen ankreuzen, vollständigen Namen eingeben und Unterschrift zeichnen.",
 };

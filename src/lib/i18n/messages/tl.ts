@@ -312,4 +312,8 @@ export const tl: Messages = {
   "Choose your groomer": "Piliin ang iyong groomer",
   "The open times below are {name}'s.": "Ang mga bakanteng oras sa ibaba ay kay {name}.",
   "Groomer": "Groomer",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Pumirma muna sa kasunduan sa serbisyo.",
+  "Required before you submit": "Kailangan bago ipadala",
+  "To sign: tick the box, type your full name and draw your signature.": "Para pumirma: i-tsek ang kahon, i-type ang buong pangalan, at iguhit ang pirma.",
 };

@@ -1,6 +1,7 @@
 "use client";
 import { hasBuiltInArtwork } from "@/lib/product";
-import { useState, useTransition, type ReactNode } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { StepCard } from "@/components/client-shell";
 import { DOG_BREEDS } from "@/lib/breeds";
@@ -740,12 +741,22 @@ export function BookingWizard({
                   <span className={`block text-sm font-medium ${signed ? "text-success" : "text-brand"}`}>
                     {signed ? t("Signed by {name}", { name: signed.name }) : t("Read and sign")}
                   </span>
+                  {!signed && <span className="block text-xs font-semibold text-danger">{t("Required before you submit")}</span>}
                 </span>
               </button>
             </>
           )}
           {errorBox}
-          <BigButton className="mt-8" disabled={pending || (mustSign && !signed)} onClick={submit}>
+          <BigButton className="mt-8" disabled={pending}
+            onClick={() => {
+              // Not signed yet: say so and open the agreement, instead of a button that does nothing.
+              if (mustSign && !signed) {
+                setError(t("Please sign the service agreement first."));
+                setSheet("agreement");
+                return;
+              }
+              submit();
+            }}>
             {pending ? t("Sending…") : t("Submit booking request")}
           </BigButton>
           <p className="mt-3 text-center text-xs text-muted">
@@ -753,7 +764,7 @@ export function BookingWizard({
           </p>
           {sheet === "agreement" && agreement && (
             <AgreementSheet agreement={agreement} title={agreementTitle ?? t("Service agreement")}
-              onClose={() => setSheet(null)} onSigned={(s) => { setSigned(s); setSheet(null); }} />
+              onClose={() => setSheet(null)} onSigned={(s) => { setSigned(s); setSheet(null); setError(null); }} />
           )}
         </StepCard>
       );
@@ -766,9 +777,37 @@ const inputClass =
   "block w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10";
 const labelClass = "mb-2 block font-semibold";
 
-function BigButton({ className = "", ...props }: React.ComponentProps<"button">) {
+/**
+ * The page's main buttons (Continue, Sign agreement, Submit booking request). A safety net for
+ * phones: a short tap that touched down and lifted on the button without moving counts even
+ * if the browser drops its click (it can, right after another touch such as a signature). The
+ * click, when it does come, cancels the net, so the button never acts twice.
+ */
+function BigButton({ className = "", onClick, onPointerDown, onPointerUp, ...props }: React.ComponentProps<"button">) {
+  const tap = useRef<{ x: number; y: number; at: number } | null>(null);
+  const net = useRef<ReturnType<typeof setTimeout> | null>(null);
   return (
     <button
+      onPointerDown={(e) => {
+        onPointerDown?.(e);
+        tap.current = e.pointerType === "touch" ? { x: e.clientX, y: e.clientY, at: Date.now() } : null;
+      }}
+      onPointerUp={(e) => {
+        onPointerUp?.(e);
+        const t = tap.current;
+        tap.current = null;
+        if (!t || !onClick || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 10 || Date.now() - t.at > 800) return;
+        const button = e.currentTarget;
+        net.current = setTimeout(() => {
+          net.current = null;
+          if (!button.disabled && button.isConnected) button.click();
+        }, 400);
+      }}
+      onClick={(e) => {
+        if (net.current) clearTimeout(net.current);
+        net.current = null;
+        onClick?.(e);
+      }}
       type="button"
       className={`block w-full rounded-full bg-brand px-6 py-4 text-lg font-semibold text-on-brand shadow-[0_6px_16px_rgb(11_31_58/0.3)] transition hover:bg-brand-strong active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-brand/35 disabled:shadow-none ${className}`}
       {...props}
@@ -1011,8 +1050,9 @@ function PhotoPicker({ name, photo, onPhoto }: { name: string; photo?: string; o
 
 function Sheet({ title, sub, onClose, children }: { title: string; sub?: string; onClose: () => void; children: ReactNode }) {
   const { t } = useT();
-  return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-navy/50 animate-fade sm:items-center" onClick={onClose}>
+  // Drawn at the end of the page (a portal), so no header or card can cover its top or bottom.
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-navy/50 animate-fade sm:items-center" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
@@ -1031,7 +1071,8 @@ function Sheet({ title, sub, onClose, children }: { title: string; sub?: string;
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1094,10 +1135,16 @@ function AgreementSheet({
         <span className={labelClass}>{t("Signature")}</span>
         <SignaturePad onChange={setDrawing} />
       </div>
-      <BigButton className="mt-6" disabled={!agreed || name.trim().length < 3 || !drawing}
-        onClick={() => drawing && onSigned({ name: name.trim(), drawing })}>
-        {t("Sign agreement")}
-      </BigButton>
+      <div className="sticky -mx-6 -mb-[max(1.5rem,env(safe-area-inset-bottom))] mt-4 border-t border-line bg-surface px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 [bottom:calc(-1*max(1.5rem,env(safe-area-inset-bottom)))]">
+        {/* Keeps its room once everything is done, so the button doesn't jump under the finger. */}
+        <p className={`mb-2 text-center text-sm text-muted ${!agreed || name.trim().length < 3 || !drawing ? "" : "invisible"}`}>
+          {t("To sign: tick the box, type your full name and draw your signature.")}
+        </p>
+        <BigButton disabled={!agreed || name.trim().length < 3 || !drawing}
+          onClick={() => drawing && onSigned({ name: name.trim(), drawing })}>
+          {t("Sign agreement")}
+        </BigButton>
+      </div>
     </Sheet>
   );
 }

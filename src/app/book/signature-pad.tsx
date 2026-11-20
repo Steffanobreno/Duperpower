@@ -29,7 +29,7 @@ export function SignaturePad({ onChange }: { onChange: (png: string | null) => v
   };
 
   return (
-    <div className="space-y-1">
+    <div className="scroll-mb-40 space-y-1">
       <div className="relative">
         <canvas
           ref={canvas}

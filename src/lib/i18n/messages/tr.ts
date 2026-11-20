@@ -319,4 +319,8 @@ export const tr: Messages = {
   "Choose your groomer": "Kuaförünüzü seçin",
   "The open times below are {name}'s.": "Aşağıdaki boş saatler {name} için.",
   "Groomer": "Kuaför",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Lütfen önce hizmet sözleşmesini imzalayın.",
+  "Required before you submit": "Göndermeden önce gerekli",
+  "To sign: tick the box, type your full name and draw your signature.": "İmzalamak için: kutuyu işaretleyin, tam adınızı yazın ve imzanızı çizin.",
 };

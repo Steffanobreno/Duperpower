@@ -319,4 +319,8 @@ export const ur: Messages = {
   "Choose your groomer": "اپنا گرومر چنیں",
   "The open times below are {name}'s.": "نیچے دیے گئے خالی اوقات {name} کے ہیں۔",
   "Groomer": "گرومر",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "براہ کرم پہلے سروس معاہدے پر دستخط کریں۔",
+  "Required before you submit": "بھیجنے سے پہلے ضروری",
+  "To sign: tick the box, type your full name and draw your signature.": "دستخط کے لیے: خانے پر نشان لگائیں، پورا نام لکھیں اور دستخط بنائیں۔",
 };

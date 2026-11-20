@@ -319,4 +319,8 @@ export const bn: Messages = {
   "Choose your groomer": "আপনার গ্রুমার বেছে নিন",
   "The open times below are {name}'s.": "নিচের খালি সময়গুলো {name}-এর।",
   "Groomer": "গ্রুমার",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "আগে সার্ভিস চুক্তিতে স্বাক্ষর করুন।",
+  "Required before you submit": "পাঠানোর আগে প্রয়োজন",
+  "To sign: tick the box, type your full name and draw your signature.": "স্বাক্ষর করতে: বক্সে টিক দিন, পুরো নাম লিখুন এবং স্বাক্ষর আঁকুন।",
 };

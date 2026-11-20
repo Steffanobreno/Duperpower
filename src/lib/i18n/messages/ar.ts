@@ -319,4 +319,8 @@ export const ar: Messages = {
   "Choose your groomer": "اختر مُصفّف كلبك",
   "The open times below are {name}'s.": "المواعيد المتاحة أدناه خاصة بـ {name}.",
   "Groomer": "المُصفّف",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "يرجى توقيع اتفاقية الخدمة أولاً.",
+  "Required before you submit": "مطلوب قبل الإرسال",
+  "To sign: tick the box, type your full name and draw your signature.": "للتوقيع: ضع علامة في المربع، واكتب اسمك الكامل، وارسم توقيعك.",
 };

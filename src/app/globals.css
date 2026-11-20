@@ -52,6 +52,12 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Taps on buttons, links and form controls act at once: no waiting to see if it's a double tap
+   (which would zoom), so a quick tap right after another touch (signing, scrolling) isn't lost. */
+a, button, input, label, select, textarea, summary, [role="button"], [role="radio"] {
+  touch-action: manipulation;
+}
+
 /* Visible focus for keyboard users everywhere. */
 :focus-visible {
   outline: 3px solid var(--color-brand);
@@ -113,6 +119,13 @@ textarea {
     outline: 1px solid rgb(212 175 55 / 0.8);
     outline-offset: -1px;
   }
+}
+/* A turned-off brand button must look turned off: without this the gradient above hides the
+   lighter "disabled" color, and a client taps a button that looks ready and nothing happens. */
+button.bg-brand:disabled {
+  background-image: none;
+  outline: none;
+  opacity: 0.55;
 }
 /* On the navy header, the main button is gold with navy text (outside the layers, so it wins
    over the button's own text color). */

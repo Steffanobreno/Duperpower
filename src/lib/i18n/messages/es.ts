@@ -330,4 +330,8 @@ export const es: Messages = {
   "Choose your groomer": "Elige tu groomer",
   "The open times below are {name}'s.": "Los horarios de abajo son de {name}.",
   "Groomer": "Groomer",
+  // The agreement on the booking page: required before submitting.
+  "Please sign the service agreement first.": "Primero firma el contrato de servicio.",
+  "Required before you submit": "Obligatorio antes de enviar",
+  "To sign: tick the box, type your full name and draw your signature.": "Para firmar: marca la casilla, escribe tu nombre completo y dibuja tu firma.",
 };
