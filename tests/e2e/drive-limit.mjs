@@ -116,8 +116,14 @@ async function timesFor({ zip, city, phone }, dates) {
   const out = {};
   for (const date of dates) {
     const month = new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+    // Forward or back to that month (the calendar may already be past it, near a month's end).
+    const want = date.slice(0, 7);
     for (let i = 0; i < 13 && (await page.getByRole("heading", { name: month, exact: true }).count()) === 0; i++) {
-      await button("Next month").click();
+      const shown = await page.getByRole("heading", { name: /^[A-Z][a-z]+ \d{4}$/ }).first().textContent();
+      const [name, year] = shown.trim().split(" ");
+      const m = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].indexOf(name) + 1;
+      const showing = `${year}-${String(m).padStart(2, "0")}`;
+      await button(showing < want ? "Next month" : "Previous month").click();
     }
     const label = new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
     const cell = page.locator(`button[aria-label^="${label}, "]`);
