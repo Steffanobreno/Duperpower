@@ -127,6 +127,9 @@ await blank.setContent('<div id="p" style="width:300px;height:300px;background:#
 const png = await blank.locator("#p").screenshot();
 await blank.close();
 await page.goto(`${BASE}/settings/team/${owner.id}`);
+// The upload button works once the page's code has loaded (a person can't tap it sooner).
+await page.waitForLoadState("networkidle");
+await page.getByRole("button", { name: "Add photo" }).waitFor();
 await page.getByLabel(`Photo of ${owner.name}`).setInputFiles({ name: "me.png", mimeType: "image/png", buffer: png });
 await page.getByRole("img", { name: `Photo of ${owner.name}` }).waitFor();
 const [{ n }] = await db`select count(*)::int as n from staff_photos where staff_id = ${owner.id}`;
