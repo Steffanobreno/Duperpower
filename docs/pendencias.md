@@ -21,6 +21,12 @@ Atualizado em 2026-11-15. Tudo foi publicado na master no dia 2026-11-15: a Onda
 4. [ ] **Em Ajustes → Agendamento online,** confira o campo **"Minutos máximos de carro entre clientes"**. O padrão é 35. É uma estimativa sem trânsito, feita pela distância entre os CEPs.
 5. [ ] **Pedidos pendentes:** abra Pedidos. Os cartões longe demais mostram "~N min de carro". O da Carla Newell (Piedmont) deve aparecer com o aviso. Recuse ou remarque.
 6. [ ] **Clientes sem CEP:** visitas sem CEP mostram "Sem CEP: o agendamento online fica fechado perto desta visita". Para resolver, coloque o CEP no endereço do cliente.
+6b. [ ] **Cópia semanal do banco (5 minutos):**
+   1. Neon → projeto Fino → branch principal → **Connect** → desligue **Connection pooling** → copie a conexão (o endereço **não** pode ter `-pooler`). Não cole no chat.
+   2. Num gerador de senhas, crie uma senha longa (40+ letras e números). Guarde no gerenciador de senhas: sem ela a cópia não abre.
+   3. GitHub → Duperpower → **Settings → Secrets and variables → Actions → New repository secret**: crie `BACKUP_DATABASE_URL` (a conexão do item 1) e `BACKUP_PASSPHRASE` (a senha do item 2).
+   4. **Actions → backup → Run workflow.** Deve ficar verde em uns 2 minutos; dentro, em **Artifacts**, aparece `fino-backup-<data>`. Depois disso roda sozinho todo domingo.
+   5. Neon → **Settings → History retention**: anote quantos dias o plano guarda.
 
 **Passo 2: abrir a empresa**
 7. [ ] Leve ao contador as perguntas da seção "Perguntas para o advogado e o contador", mais abaixo. A principal é LLC americana ou empresa brasileira.
