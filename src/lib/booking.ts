@@ -13,7 +13,8 @@ import { billingOn } from "./billing";
 // 2. on a day the business is open (not a closed date or holiday) and, when service areas are
 //    set, a weekday the client's area is served; inside working hours,
 //    with at least `min_notice_hours` notice, on the start-time grid (see below);
-// 3. not overlapping another visit, keeping `buffer_minutes` free before and after for driving;
+// 3. not overlapping another visit: a visit may start the moment the one before ends (no driving time
+//    is added; owners asked for it, since a 2-hour gap must fit a 2-hour visit);
 // 4. the estimated drive from the stop before and to the stop after (when there is one) is at most
 //    `max_drive_minutes` each way (slotWithinDrive); a stop with no ZIP is placed by its coordinates, and
 //    a stop that can't be placed (unknown ZIP, or neither ZIP nor coordinates) blocks. Outside the
@@ -34,7 +35,6 @@ export type PublicBusiness = {
   weight_unit: string | null;
   website_url: string | null;
   email: string | null;
-  buffer_minutes: number;
   max_drive_minutes: number;
   booking_days_ahead: number;
   min_notice_hours: number;
@@ -55,7 +55,7 @@ export type PublicBusiness = {
 export async function getPublicBusiness(slug?: string | null) {
   const key = typeof slug === "string" && /^[a-z0-9-]{2,60}$/.test(slug) ? slug : null;
   const [b] = await sql<PublicBusiness[]>`
-    select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit, b.website_url, b.email, b.buffer_minutes,
+    select b.id, b.name, b.phone, b.timezone, b.country, b.currency, b.size_by, b.length_unit, b.weight_unit, b.website_url, b.email,
            b.max_drive_minutes, b.booking_days_ahead, b.min_notice_hours, b.slot_minutes,
            b.start_zip, b.service_radius_miles::float8 as service_radius_miles,
            -- A business whose trial ended unpaid (with billing on) has its booking page paused.
@@ -147,7 +147,6 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
   const points = await postalPoints([zip, ...busy.map((a) => a.zip)], b.country);
 
   const earliest = Date.now() + b.min_notice_hours * 3600_000;
-  const buffer = b.buffer_minutes * 60_000;
   const length = Math.max(durationMin, 15) * 60_000;
   const withinDrive = driveRuleApplies(points, zip, b.country)
     ? (stops: Stop[], t: number) => slotWithinDrive(points, zip, stops, t, t + length, b.max_drive_minutes)
@@ -170,9 +169,9 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
     // as long as the whole visit fits before the next booking and closing time. Long visits
     // use the same grid: 6 hours can start at 7, 9, 11 or 1 when the day closes at 7.
     const clashes = (t: number) =>
-      sameDay.some((a) => t < a.end_at.getTime() + buffer && t + length + buffer > a.start_at.getTime()) ||
+      sameDay.some((a) => t < a.end_at.getTime() && t + length > a.start_at.getTime()) ||
       timeOff.some((o) => t < o.end_at.getTime() && t + length > o.start_at.getTime());
-    const anchors = [open, ...sameDay.map((a) => a.end_at.getTime() + buffer), ...timeOff.map((o) => o.end_at.getTime())]
+    const anchors = [open, ...sameDay.map((a) => a.end_at.getTime()), ...timeOff.map((o) => o.end_at.getTime())]
       .filter((t) => t >= open && t < close);
     const starts = new Set<number>();
     for (const anchor of anchors) {
@@ -188,8 +187,8 @@ export async function findSlots(b: PublicBusiness, zip: string, durationMin: num
       .sort((x, y) => x.m - y.m)[0]?.a;
     const best = new Set<number>();
     if (closest) {
-      const after = sorted.find((t) => t >= closest.end_at.getTime() + buffer);
-      const before = sorted.filter((t) => t + length + buffer <= closest.start_at.getTime()).at(-1);
+      const after = sorted.find((t) => t >= closest.end_at.getTime());
+      const before = sorted.filter((t) => t + length <= closest.start_at.getTime()).at(-1);
       if (after != null) best.add(after);
       if (before != null) best.add(before);
     }

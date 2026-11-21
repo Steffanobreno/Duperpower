@@ -22,7 +22,7 @@ export default async function BookingSettingsPage() {
   const staff = await requirePermission("settings");
   const rg = staff.region;
   const [b] = await sql`
-    select online_booking_enabled, buffer_minutes, max_drive_minutes,
+    select online_booking_enabled, max_drive_minutes,
            service_radius_miles::float8 as service_radius_miles, min_notice_hours, booking_days_ahead,
            cancellation_hours, start_zip, slot_minutes, auto_accept, name
     from businesses where id = ${staff.businessId}`;
@@ -78,9 +78,6 @@ export default async function BookingSettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("Maximum drive minutes between clients")} hint={t("An estimate without traffic, from the distance between ZIP codes.")}>
                 <Input name="max_drive_minutes" type="number" inputMode="numeric" min={10} max={90} step={5} defaultValue={b.max_drive_minutes} />
-              </Field>
-              <Field label={t("Driving time between visits (min)")} hint={t("Kept free before and after each visit.")}>
-                <Input name="buffer_minutes" inputMode="numeric" defaultValue={b.buffer_minutes} />
               </Field>
               <Field label={rg.country === "US" ? t("Van's home ZIP") : t("Van's home postal code")} hint={t("Private. Used to check the service area.")}>
                 <Input name="start_zip" inputMode={rg.country === "US" ? "numeric" : "text"} maxLength={10} defaultValue={b.start_zip ?? ""} />
