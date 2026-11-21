@@ -1,6 +1,36 @@
 # Pendências do Fino
 
-Atualizado em 2026-11-15. Tudo foi publicado na master no dia 2026-11-15: a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar. Marque com [x] o que for feito.
+Atualizado em 2026-11-21. Última publicação na master: 2026-11-21 (PR #5, sem tempo de deslocamento). Antes: 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
+
+## 🆕 Publicado em 2026-11-20 e 2026-11-21
+
+**PR #3 (2026-11-20): agendamento no celular, isolamento entre empresas e cópia semanal**
+- O botão "Submit booking request" sempre responde no celular. Sem o contrato assinado, abre o contrato com o aviso "Please sign the service agreement first". O contrato fica por cima de tudo, e um toque nunca se perde.
+- O banco recusa qualquer ligação entre dados de duas empresas diferentes (15 travas).
+- Cópia semanal do banco, testada e criptografada, aos domingos (GitHub Actions → backup). Os segredos `BACKUP_DATABASE_URL` e `BACKUP_PASSPHRASE` já estão no GitHub.
+
+**PR #4 (2026-11-21): Abandonados → "Send to all", e tamanhos das raças grandes**
+- Na tela **Abandonados**, o botão **Send to all** manda uma mensagem para todos que começaram a agendar e não terminaram (últimos 30 dias, sem agendamento depois). Há dois textos prontos e editáveis: "Finish your booking" e **"Sorry, it's fixed"** (o problema no último passo foi corrigido, com o link para terminar). Os e-mails saem na hora. Os SMS ficam numa fila, um toque em cada. Todos ficam marcados como contatados.
+- No agendamento, raças grandes (doodles, retrievers, pastores…) veem Large e X-Large primeiro. Os tamanhos menores continuam disponíveis, e todo cliente lê que o tamanho é conferido na visita e o preço ajustado.
+
+O que precisa de você:
+- [ ] **Netlify → Deploys:** confirmar que o deploy do `909c681` (PR #4) terminou **verde**.
+- [ ] **Abandonados → Send to all:** escolher "Sorry, it's fixed", conferir o texto e mandar para quem não conseguiu terminar o agendamento.
+- [ ] Abrir o agendamento online com uma raça grande (ex.: Goldendoodle) e ver Large/X-Large primeiro.
+
+## 🆕 Publicado em 2026-11-21 (PR #5): sem tempo de deslocamento entre visitas
+
+Problema relatado: cada cliente leva 2 a 3 horas, e o sistema guardava 45 minutos de deslocamento antes **e** depois de cada visita. Um buraco de 2 horas entre duas visitas precisava de 2h45, e o cliente não conseguia agendar.
+- O agendamento online não soma mais tempo de deslocamento: uma visita pode começar no minuto em que a anterior termina. Um buraco de 2h aceita uma visita de 2h.
+- Saiu de Ajustes → Agendamento online o campo **"Driving time between visits"**. Ao salvar os Ajustes, o valor antigo vira 0.
+- **Continua valendo** o limite **"Minutos máximos de carro entre clientes"** (padrão 35): ele não soma tempo, só não oferece um horário colado em uma visita longe demais.
+- Teste novo: `tests/e2e/no-travel-buffer.mjs` (com 45 min ainda guardados no banco, um banho de 2h aparece às 11:00 entre visitas de 9–11 e 13–15). Passaram também: booking, booking-phone, booking-groomer, booking-sizes, drive-limit, online-booking-settings, settings-basic, typecheck e lint.
+- [ ] **Netlify → Deploys:** confirmar que o deploy do PR #5 terminou **verde**.
+- [ ] Abrir o agendamento online num dia com duas visitas separadas por 2h e ver o horário do meio aparecer.
+
+Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
+- [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
+- [ ] `fill-gap.mjs`: "Lou (San Lorenzo) fits the gap and should not be marked".
 
 ## ⭐ Roteiro do dono, passo a passo (faça na ordem, quando puder)
 

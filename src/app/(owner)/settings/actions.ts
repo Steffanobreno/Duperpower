@@ -153,7 +153,6 @@ export async function removeLogoAction() {
 export async function saveBookingSettingsAction(_: FormState, form: FormData): Promise<FormState> {
   const staff = await requirePermission("settings");
   const num = (k: string) => Number(String(form.get(k) ?? "").trim());
-  const buffer = num("buffer_minutes");
   const rg = staff.region;
   const driveMax = num("max_drive_minutes");
   const radius = distanceIn(num("service_radius_miles"), rg);
@@ -162,8 +161,7 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
   const cancelHours = num("cancellation_hours");
   const slot = num("slot_minutes");
   const startZip = String(form.get("start_zip") ?? "").trim();
-  if (![buffer, driveMax, radius, notice, ahead, cancelHours, slot].every(Number.isFinite)) return { error: "Use numbers only." };
-  if (buffer < 0 || buffer > 180) return { error: "Driving time between visits: 0 to 180 minutes." };
+  if (![driveMax, radius, notice, ahead, cancelHours, slot].every(Number.isFinite)) return { error: "Use numbers only." };
   if (!Number.isInteger(driveMax) || driveMax < 10 || driveMax > 90) return { error: "Drive time between clients: 10 to 90 minutes." };
   if (radius < 0.6 || radius > 300) return { error: rg.km ? "Distances must be between 1 and 320 km." : "Distances must be between 1 and 200 miles." };
   if (notice < 0 || notice > 336) return { error: "Notice: 0 to 336 hours." };
@@ -173,7 +171,7 @@ export async function saveBookingSettingsAction(_: FormState, form: FormData): P
   if (startZip && !postalOk(startZip, rg.country)) return { error: rg.country === "US" ? "The van's ZIP code has 5 digits." : msg("Check the postal code.") };
   await sql`
     update businesses set online_booking_enabled = ${form.get("online_booking_enabled") === "on"},
-      buffer_minutes = ${buffer}, max_drive_minutes = ${driveMax}, service_radius_miles = ${radius},
+      buffer_minutes = 0, max_drive_minutes = ${driveMax}, service_radius_miles = ${radius},
       min_notice_hours = ${notice}, booking_days_ahead = ${ahead}, cancellation_hours = ${cancelHours},
       slot_minutes = ${slot}, start_zip = ${startZip || null}
     where id = ${staff.businessId}`;
