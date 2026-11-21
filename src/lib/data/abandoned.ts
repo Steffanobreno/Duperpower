@@ -68,3 +68,8 @@ export const STEP_NAMES: Record<string, string> = {
   times: msg("Select time"),
   review: msg("Review and sign"),
 };
+
+/** The people a "send to all" message goes to: not booked since, last 30 days, newest first. */
+export async function draftsToMessage(staff: StaffContext) {
+  return (await listDrafts(staff, null, 30)).filter((d) => d.status !== "recovered");
+}

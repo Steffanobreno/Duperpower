@@ -304,3 +304,22 @@ export const DOG_BREEDS = [
   "Yorkipoo",
   "Yorkshire Terrier"
 ];
+
+// Breeds that are almost always Large or X-Large (doodles, retrievers, shepherds, mountain dogs…).
+// The booking page shows those two sizes first for them, so a big dog isn't booked as a small one.
+// A "mini", "toy", "petite" or "teacup" version keeps the plain choice.
+const BIG_BREEDS = [
+  "golden retriever", "labrador retriever", "german shepherd", "bernese mountain dog", "great pyrenees", "newfoundland",
+  "great dane", "old english sheepdog", "saint bernard", "st. bernard", "siberian husky", "alaskan malamute", "doberman",
+  "rottweiler", "leonberger", "standard poodle", "giant schnauzer", "bouvier", "afghan hound",
+  "akita", "anatolian shepherd", "belgian malinois", "belgian tervuren", "briard", "collie", "samoyed", "weimaraner",
+  "irish wolfhound", "greater swiss mountain dog", "chinook", "flat-coated retriever", "curly-coated retriever",
+  "chesapeake bay retriever", "great swiss", "komondor", "kuvasz", "tibetan mastiff", "mastiff", "newfypoo",
+];
+
+/** True when this breed is typically Large or X-Large (doodles included, minis and toys not). */
+export function isBigBreed(breed: string | null | undefined) {
+  const b = (breed ?? "").trim().toLowerCase();
+  if (!b || /\b(mini|miniature|toy|petite|teacup|micro)\b/.test(b)) return false;
+  return /doodle/.test(b) || BIG_BREEDS.some((x) => b.includes(x));
+}

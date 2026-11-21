@@ -316,4 +316,8 @@ export const ko: Messages = {
   "Please sign the service agreement first.": "먼저 서비스 동의서에 서명해 주세요.",
   "Required before you submit": "보내기 전에 필요합니다",
   "To sign: tick the box, type your full name and draw your signature.": "서명하려면: 상자에 체크하고, 이름을 입력한 뒤 서명을 그려 주세요.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "대부분의 {breeds}는 대형 또는 초대형입니다.",
+  "Smaller (mini or toy)": "더 작은 크기 (미니 또는 토이)",
+  "We check the size at the visit and adjust the price if it's different.": "방문 시 크기를 확인하고 다르면 가격을 조정합니다.",
 };

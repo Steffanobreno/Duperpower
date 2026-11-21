@@ -316,4 +316,8 @@ export const zh: Messages = {
   "Please sign the service agreement first.": "请先签署服务协议。",
   "Required before you submit": "提交前必填",
   "To sign: tick the box, type your full name and draw your signature.": "签署方法：勾选方框，输入全名并画出签名。",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "大多数{breeds}是大型或特大型。",
+  "Smaller (mini or toy)": "更小（迷你或玩具）",
+  "We check the size at the visit and adjust the price if it's different.": "我们会在上门时核对体型，不符时调整价格。",
 };

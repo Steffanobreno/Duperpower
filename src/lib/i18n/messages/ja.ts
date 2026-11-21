@@ -323,4 +323,8 @@ export const ja: Messages = {
   "Please sign the service agreement first.": "先にサービス同意書に署名してください。",
   "Required before you submit": "送信前に必要です",
   "To sign: tick the box, type your full name and draw your signature.": "署名するには：チェックを入れ、氏名を入力し、署名を書いてください。",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "{breeds}の多くは大型または特大です。",
+  "Smaller (mini or toy)": "小さめ（ミニ・トイ）",
+  "We check the size at the visit and adjust the price if it's different.": "サイズは訪問時に確認し、違う場合は料金を調整します。",
 };

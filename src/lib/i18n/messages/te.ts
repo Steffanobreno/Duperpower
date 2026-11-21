@@ -323,4 +323,8 @@ export const te: Messages = {
   "Please sign the service agreement first.": "ముందుగా సేవా ఒప్పందంపై సంతకం చేయండి.",
   "Required before you submit": "పంపే ముందు అవసరం",
   "To sign: tick the box, type your full name and draw your signature.": "సంతకం చేయడానికి: బాక్స్ టిక్ చేసి, పూర్తి పేరు రాసి, సంతకం గీయండి.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "చాలా {breeds} పెద్దది లేదా చాలా పెద్దది ఉంటాయి.",
+  "Smaller (mini or toy)": "చిన్నది (మినీ లేదా టాయ్)",
+  "We check the size at the visit and adjust the price if it's different.": "విజిట్‌లో సైజ్ చూసి, వేరేగా ఉంటే ధరను మారుస్తాం.",
 };

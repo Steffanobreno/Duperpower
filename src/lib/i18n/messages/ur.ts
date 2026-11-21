@@ -323,4 +323,8 @@ export const ur: Messages = {
   "Please sign the service agreement first.": "براہ کرم پہلے سروس معاہدے پر دستخط کریں۔",
   "Required before you submit": "بھیجنے سے پہلے ضروری",
   "To sign: tick the box, type your full name and draw your signature.": "دستخط کے لیے: خانے پر نشان لگائیں، پورا نام لکھیں اور دستخط بنائیں۔",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "زیادہ تر {breeds} بڑے یا بہت بڑے ہوتے ہیں۔",
+  "Smaller (mini or toy)": "چھوٹا (منی یا ٹوائے)",
+  "We check the size at the visit and adjust the price if it's different.": "ہم وزٹ پر سائز چیک کرتے ہیں اور مختلف ہونے پر قیمت بدلتے ہیں۔",
 };

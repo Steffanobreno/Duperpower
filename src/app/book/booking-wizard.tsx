@@ -4,7 +4,7 @@ import { useRef, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { StepCard } from "@/components/client-shell";
-import { DOG_BREEDS } from "@/lib/breeds";
+import { DOG_BREEDS, isBigBreed } from "@/lib/breeds";
 import { minutesLabel, sizesFor } from "@/lib/format";
 import { blobToDataUrl, resizeImage } from "@/lib/resize-image";
 import type { DaySlots } from "@/lib/booking";
@@ -480,7 +480,7 @@ export function BookingWizard({
               <input aria-label={t("Pet's name")} autoComplete="off" placeholder={t("Your pet's name")} className={inputClass}
                 value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </label>
-            <SizePicker value={draft.size} onChange={(size) => setDraft({ ...draft, size, mainId: "" })} />
+            <SizePicker breed={draft.breed} value={draft.size} onChange={(size) => setDraft({ ...draft, size, mainId: "" })} />
           </div>
           {errorBox}
           <BigButton className="mt-8" disabled={!draft.name.trim() || !draft.size} onClick={saveDraft}>
@@ -498,7 +498,7 @@ export function BookingWizard({
           <PetTabs pets={chosen} current={step.i} hint={t("Select service")} />
           {!pet.sizeKnown && (
             <div className="mb-6">
-              <SizePicker value={pet.size} onChange={(size) => updatePet(pet.key, { size, mainId: "" })} />
+              <SizePicker breed={pet.breed} value={pet.size} onChange={(size) => updatePet(pet.key, { size, mainId: "" })} />
             </div>
           )}
           {pet.size ? (
@@ -875,9 +875,31 @@ function PetTabs({ pets, current, hint }: { pets: Pet[]; current: number; hint: 
   );
 }
 
-function SizePicker({ value, onChange }: { value: string; onChange: (size: string) => void }) {
+/** "Goldendoodle" → "Goldendoodles", "Doodle Mix" → "Doodle Mixes" (English; other languages keep the name). */
+const pluralBreed = (b: string) => (/(s|x|sh|ch)$/i.test(b) ? `${b}es` : `${b}s`);
+
+function SizePicker({ breed, value, onChange }: { breed?: string; value: string; onChange: (size: string) => void }) {
   const { t } = useT();
   const region = useRegion();
+  // A breed that's almost always big (doodles, retrievers…): Large and X-Large come first, the
+  // smaller sizes are still there (minis exist) but below, and the client is told the size is
+  // checked at the visit.
+  const big = isBigBreed(breed);
+  const sizes = sizesFor(region);
+  const option = (s: (typeof sizes)[number], small = false) => {
+    // "Small (up to 9 kg)" → "Small" and "up to 9 kg", both in the client's language when known.
+    const whole = t(s.label);
+    const [en, detail] = (whole !== s.label ? whole : s.label).replace(/\)$/, "").split(" (");
+    const name = whole !== s.label ? en : t(en);
+    return (
+      <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={`${name} (${detail})`}
+        onClick={() => onChange(s.value)}
+        className={`rounded-2xl border-2 text-left ${small ? "px-3 py-2" : "px-3 py-3"} ${value === s.value ? "border-brand bg-brand-soft" : "border-line"}`}>
+        <span className={`block font-bold ${small ? "text-sm" : ""}`}>{name}</span>
+        <span className={`block text-muted ${small ? "text-xs" : "text-sm"}`}>{detail}</span>
+      </button>
+    );
+  };
   return (
     <div>
       <span className="block font-semibold">{t("Size")}</span>
@@ -894,22 +916,17 @@ function SizePicker({ value, onChange }: { value: string; onChange: (size: strin
           {region.metric && <span className="mb-3 block" />}
         </>
       )}
-      <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("Size")}>
-        {sizesFor(region).map((s) => {
-          // "Small (up to 9 kg)" → "Small" and "up to 9 kg", both in the client's language when known.
-          const whole = t(s.label);
-          const [en, detail] = (whole !== s.label ? whole : s.label).replace(/\)$/, "").split(" (");
-          const name = whole !== s.label ? en : t(en);
-          return (
-            <button key={s.value} type="button" role="radio" aria-checked={value === s.value} aria-label={`${name} (${detail})`}
-              onClick={() => onChange(s.value)}
-              className={`rounded-2xl border-2 px-3 py-3 text-left ${value === s.value ? "border-brand bg-brand-soft" : "border-line"}`}>
-              <span className="block font-bold">{name}</span>
-              <span className="block text-sm text-muted">{detail}</span>
-            </button>
-          );
-        })}
-      </div>
+      {big ? (
+        <div role="radiogroup" aria-label={t("Size")}>
+          <p className="mb-2 rounded-2xl bg-brand-soft px-4 py-2 text-sm font-semibold">{t("Most {breeds} are Large or X-Large.", { breeds: pluralBreed(breed!.trim()) })}</p>
+          <div className="grid grid-cols-2 gap-2">{sizes.filter((s) => s.value === "large" || s.value === "xlarge").map((s) => option(s))}</div>
+          <p className="mb-1 mt-3 text-xs font-semibold uppercase tracking-wide text-muted">{t("Smaller (mini or toy)")}</p>
+          <div className="grid grid-cols-2 gap-2">{sizes.filter((s) => s.value === "small" || s.value === "medium").map((s) => option(s, true))}</div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("Size")}>{sizes.map((s) => option(s))}</div>
+      )}
+      <p className="mt-2 text-xs text-muted">{t("We check the size at the visit and adjust the price if it's different.")}</p>
     </div>
   );
 }

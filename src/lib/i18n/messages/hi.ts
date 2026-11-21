@@ -323,4 +323,8 @@ export const hi: Messages = {
   "Please sign the service agreement first.": "कृपया पहले सेवा समझौते पर हस्ताक्षर करें।",
   "Required before you submit": "भेजने से पहले ज़रूरी",
   "To sign: tick the box, type your full name and draw your signature.": "हस्ताक्षर के लिए: बॉक्स पर टिक करें, पूरा नाम लिखें और अपना हस्ताक्षर बनाएं।",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "ज़्यादातर {breeds} बड़े या बहुत बड़े होते हैं।",
+  "Smaller (mini or toy)": "छोटा (मिनी या टॉय)",
+  "We check the size at the visit and adjust the price if it's different.": "हम विज़िट पर साइज़ जाँचते हैं और अलग होने पर कीमत बदलते हैं।",
 };

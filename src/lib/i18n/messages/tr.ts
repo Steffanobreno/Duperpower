@@ -323,4 +323,8 @@ export const tr: Messages = {
   "Please sign the service agreement first.": "Lütfen önce hizmet sözleşmesini imzalayın.",
   "Required before you submit": "Göndermeden önce gerekli",
   "To sign: tick the box, type your full name and draw your signature.": "İmzalamak için: kutuyu işaretleyin, tam adınızı yazın ve imzanızı çizin.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "Çoğu {breeds} Büyük veya Çok büyük boydadır.",
+  "Smaller (mini or toy)": "Daha küçük (mini veya toy)",
+  "We check the size at the visit and adjust the price if it's different.": "Boyutu ziyarette kontrol eder, farklıysa fiyatı ayarlarız.",
 };

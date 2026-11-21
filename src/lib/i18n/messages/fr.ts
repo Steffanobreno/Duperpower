@@ -323,4 +323,8 @@ export const fr: Messages = {
   "Please sign the service agreement first.": "Veuillez d'abord signer le contrat de service.",
   "Required before you submit": "Obligatoire avant l'envoi",
   "To sign: tick the box, type your full name and draw your signature.": "Pour signer : cochez la case, écrivez votre nom complet et dessinez votre signature.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "La plupart des {breeds} sont Grand ou Très grand.",
+  "Smaller (mini or toy)": "Plus petit (mini ou toy)",
+  "We check the size at the visit and adjust the price if it's different.": "Nous vérifions la taille lors de la visite et ajustons le prix si elle est différente.",
 };

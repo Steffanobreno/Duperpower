@@ -67,6 +67,16 @@ export default async function AbandonedPage({ searchParams }: PageProps<"/abando
           </div>
         </Card>
 
+        {stats.abandoned > 0 && (
+          <Link href="/abandoned/send" className="card flex items-center justify-between gap-3 px-4 py-3 font-semibold text-brand hover:bg-bg">
+            <span>
+              <span className="block">{t("Send to all")}</span>
+              <span className="block text-xs font-normal text-muted">{t("One message to everyone who didn't finish booking: emails at once, texts one tap each.")}</span>
+            </span>
+            <span aria-hidden>›</span>
+          </Link>
+        )}
+
         <nav aria-label={t("Filter")} className="-mx-1 flex gap-2 overflow-x-auto px-1">
           {FILTERS.map((f) => (
             <Link key={f.label} href={f.key ? `/abandoned?status=${f.key}` : "/abandoned"} aria-current={f.key === filter ? "true" : undefined}

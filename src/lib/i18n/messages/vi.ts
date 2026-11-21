@@ -316,4 +316,8 @@ export const vi: Messages = {
   "Please sign the service agreement first.": "Vui lòng ký thỏa thuận dịch vụ trước.",
   "Required before you submit": "Bắt buộc trước khi gửi",
   "To sign: tick the box, type your full name and draw your signature.": "Để ký: đánh dấu ô, nhập họ tên đầy đủ và vẽ chữ ký.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "Hầu hết {breeds} có cỡ Lớn hoặc Rất lớn.",
+  "Smaller (mini or toy)": "Nhỏ hơn (mini hoặc toy)",
+  "We check the size at the visit and adjust the price if it's different.": "Chúng tôi kiểm tra kích cỡ khi đến và điều chỉnh giá nếu khác.",
 };

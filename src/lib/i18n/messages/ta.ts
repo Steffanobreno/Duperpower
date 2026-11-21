@@ -323,4 +323,8 @@ export const ta: Messages = {
   "Please sign the service agreement first.": "முதலில் சேவை ஒப்பந்தத்தில் கையொப்பமிடுங்கள்.",
   "Required before you submit": "அனுப்புவதற்கு முன் தேவை",
   "To sign: tick the box, type your full name and draw your signature.": "கையொப்பமிட: பெட்டியைத் தேர்வுசெய்து, முழுப் பெயரை எழுதி, கையொப்பம் வரையுங்கள்.",
+  // Big breeds on the booking page: Large and X-Large first.
+  "Most {breeds} are Large or X-Large.": "பெரும்பாலான {breeds} பெரியது அல்லது மிகப் பெரியது.",
+  "Smaller (mini or toy)": "சிறியது (மினி அல்லது டாய்)",
+  "We check the size at the visit and adjust the price if it's different.": "வருகையின்போது அளவைச் சரிபார்த்து, வேறுபட்டால் விலையை மாற்றுவோம்.",
 };
