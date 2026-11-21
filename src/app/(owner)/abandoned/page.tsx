@@ -8,6 +8,7 @@ import { draftStats, listDrafts, STEP_NAMES, type DraftStatus } from "@/lib/data
 import { dayLabel, money, timeLabel } from "@/lib/format";
 import { Card, Empty, Page, PageHeader } from "@/components/ui";
 import { setRecoveryAction } from "./recovery-actions";
+import { clearRecoveredAction } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -33,9 +34,10 @@ export default async function AbandonedPage({ searchParams }: PageProps<"/abando
   const sp = await searchParams;
   const filter = FILTERS.find((f) => f.key === sp.status)?.key ?? null;
   const tz = staff.timezone;
-  const [stats, list, [tpl]] = await Promise.all([
+  const [stats, list, recovered, [tpl]] = await Promise.all([
     draftStats(staff),
     listDrafts(staff, filter),
+    listDrafts(staff, "recovered"),
     sql<{ enabled: boolean; offset_minutes: number | null }[]>`
       select enabled, offset_minutes from message_templates where business_id = ${staff.businessId} and trigger = 'abandoned_booking'`,
   ]);
@@ -75,6 +77,15 @@ export default async function AbandonedPage({ searchParams }: PageProps<"/abando
             </span>
             <span aria-hidden>›</span>
           </Link>
+        )}
+
+        {recovered.length > 0 && (
+          <form action={clearRecoveredAction} className="card flex items-center justify-between gap-3 px-4 py-3">
+            <span className="text-sm text-muted">{t("Take those who booked since off the list. The numbers above keep counting them.")}</span>
+            <button type="submit" className="shrink-0 rounded-xl border border-line px-3 py-2 text-sm font-semibold text-success">
+              {t("Clear recovered ({n})", { n: recovered.length })}
+            </button>
+          </form>
         )}
 
         <nav aria-label={t("Filter")} className="-mx-1 flex gap-2 overflow-x-auto px-1">

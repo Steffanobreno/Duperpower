@@ -1815,4 +1815,9 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "{client}, {pet} và {booking_url} được điền cho từng người (liên kết mở với số điện thoại của họ).",
 "Gửi cho cả {n} người",
 "Hãy viết tin nhắn trước.",
-"Không có ai để gửi: ai bắt đầu cũng đã đặt."];
+"Không có ai để gửi: ai bắt đầu cũng đã đặt.",
+"Bỏ khỏi danh sách những người đã đặt lịch. Các con số ở trên vẫn tính họ.",
+"Xóa người đã quay lại ({n})",
+"Tin nhắn để bắt đầu",
+"Ngẫu nhiên: mỗi người một tin khác nhau",
+"Mỗi người nhận một trong 20 tin nhắn, chọn ngẫu nhiên."];

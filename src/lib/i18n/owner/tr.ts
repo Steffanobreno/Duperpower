@@ -1815,4 +1815,9 @@ export const tr: string[] = ["Yarım kalan randevu",
 "{client}, {pet} ve {booking_url} her kişi için doldurulur (bağlantı kendi numarasıyla açılır).",
 "{n} kişinin hepsine gönder",
 "Önce mesajı yazın.",
-"Gönderilecek kimse yok: başlayan herkes randevu aldı."];
+"Gönderilecek kimse yok: başlayan herkes randevu aldı.",
+"O zamandan beri randevu alanları listeden çıkarın. Yukarıdaki sayılar onları saymaya devam eder.",
+"Geri kazanılanları temizle ({n})",
+"Başlangıç mesajı",
+"Rastgele: herkese farklı bir mesaj",
+"Herkes 20 mesajdan birini rastgele alır."];

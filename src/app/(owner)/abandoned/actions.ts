@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { SIZES } from "@/lib/format";
-import { getDraft } from "@/lib/data/abandoned";
+import { getDraft, listDrafts } from "@/lib/data/abandoned";
 
 /** Hides an abandoned booking from the list (not interested, a test, a duplicate...). */
 export async function deleteDraftAction(id: string) {
@@ -13,6 +13,14 @@ export async function deleteDraftAction(id: string) {
   revalidatePath("/abandoned");
   revalidatePath("/requests");
   redirect("/abandoned");
+}
+
+/** Takes everyone who booked since off the list; the 30-day numbers keep counting them. */
+export async function clearRecoveredAction() {
+  const staff = await requireStaff();
+  const ids = (await listDrafts(staff, "recovered")).map((d) => d.id);
+  if (ids.length) await sql`update booking_drafts set cleared_at = now() where business_id = ${staff.businessId} and id = any(${ids})`;
+  revalidatePath("/abandoned");
 }
 
 /** Notes that the owner texted or called them from the app. */

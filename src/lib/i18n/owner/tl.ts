@@ -1815,4 +1815,9 @@ export const tl: string[] = ["Naiwang booking",
 "Ang {client}, {pet} at {booking_url} ay pupunan para sa bawat tao (bubukas ang link kasama ang kanilang numero).",
 "Ipadala sa lahat ng {n}",
 "Isulat muna ang mensahe.",
-"Walang mapapadalhan: lahat ng nagsimula ay nakapag-book na."];
+"Walang mapapadalhan: lahat ng nagsimula ay nakapag-book na.",
+"Alisin sa listahan ang mga nag-book na. Patuloy silang binibilang ng mga numero sa itaas.",
+"Alisin ang mga nabawi ({n})",
+"Mensaheng panimula",
+"Random: ibang mensahe para sa bawat tao",
+"Bawat tao ay makakatanggap ng isa sa 20 mensahe, pinili nang random."];

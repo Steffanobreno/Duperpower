@@ -28,6 +28,21 @@ Problema relatado: cada cliente leva 2 a 3 horas, e o sistema guardava 45 minuto
 - [ ] **Netlify → Deploys:** confirmar que o deploy do PR #5 terminou **verde**.
 - [ ] Abrir o agendamento online num dia com duas visitas separadas por 2h e ver o horário do meio aparecer.
 
+## ⏳ Pronto, esperando "pode publicar": Abandonados com 20 mensagens e "Limpar recuperados" (2026-11-21)
+
+Design: `docs/superpowers/specs/2026-11-21-abandonados-modelos-e-limpar-design.md`. Tudo grátis, sem IA.
+- **Menu de mensagens no "Send to all"** (abre e fecha, com a seta). As opções:
+  - **"Aleatória"**: cada pessoa recebe uma das 20, sem repetir no mesmo envio;
+  - a sua "Finish booking";
+  - "Sorry, it's fixed";
+  - **20 mensagens prontas**, em inglês, com o nome do cliente, do pet e o link.
+
+  Escolher uma coloca o texto na caixa, onde ainda dá para editar.
+- **"Clear recovered (N)"** na tela Abandonados: tira da lista quem já agendou, e fica só quem falta recuperar. Os números do topo (Recuperados e Faturamento recuperado) continuam contando.
+- Banco: migração `0059` (coluna nova `cleared_at`; roda sozinha no deploy).
+- Testes: `abandoned-send-all.mjs` (menu, aleatória, limpar), `abandoned.mjs`, i18n-check, typecheck e lint passaram. Traduções nos 19 idiomas.
+- [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
+
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
 - [ ] `fill-gap.mjs`: "Lou (San Lorenzo) fits the gap and should not be marked".
@@ -209,7 +224,7 @@ O que precisa de você:
 
 Problemas antigos encontrados nos testes (já existiam antes da Onda 1, não foram mexidos). Estes cinco testes já falhavam no começo da branch (`614a5b8`), do mesmo jeito:
 - [ ] **Hoje no modo mapa, teste do pino da rota:** o teste `today-map.mjs` falha no passo em que o cartão da 2ª visita deveria destacar o pino 2 (`.route-pin-active`).
-- [ ] **Agendamento abandonado:** `abandoned.mjs` não encontra "Abandoned step: Address" no cartão da cliente (ela aparece como "Contacted").
+- [x] (2026-11-21: passa agora) **Agendamento abandonado:** `abandoned.mjs` não encontra "Abandoned step: Address" no cartão da cliente (ela aparece como "Contacted").
 - [ ] **Clientes por perto:** `nearby.mjs` espera a ⭐ logo depois da visita das 9–11 e recebe "⭐ 7:00 AM, ⭐ 11:00 AM".
 - [ ] **Sem internet:** `offline.mjs` não chega ao /today no login pelo endereço alternativo (127.0.0.1:3099). Parece coisa do ambiente de teste.
 - [ ] **Equipe e backup:** `team-backup.mjs` falha em "Today defaults to your own route (1 stop)".

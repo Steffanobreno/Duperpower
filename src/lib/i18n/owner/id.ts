@@ -1815,4 +1815,9 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "{client}, {pet}, dan {booking_url} diisi untuk tiap orang (tautan terbuka dengan nomor mereka).",
 "Kirim ke semua {n}",
 "Tulis pesannya dulu.",
-"Tidak ada penerima: semua yang mulai memesan sudah memesan."];
+"Tidak ada penerima: semua yang mulai memesan sudah memesan.",
+"Hapus dari daftar mereka yang sudah memesan. Angka di atas tetap menghitung mereka.",
+"Hapus yang kembali ({n})",
+"Pesan untuk memulai",
+"Acak: pesan berbeda untuk setiap orang",
+"Setiap orang menerima salah satu dari 20 pesan, dipilih acak."];

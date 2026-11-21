@@ -1815,4 +1815,9 @@ export const fr: string[] = ["Réservation abandonnée",
 "{client}, {pet} et {booking_url} sont remplis pour chaque personne (le lien s'ouvre avec son numéro).",
 "Envoyer aux {n}",
 "Écrivez d'abord le message.",
-"Personne à qui envoyer : tous ceux qui ont commencé ont réservé depuis."];
+"Personne à qui envoyer : tous ceux qui ont commencé ont réservé depuis.",
+"Retirez de la liste ceux qui ont réservé depuis. Les chiffres ci-dessus continuent de les compter.",
+"Effacer les récupérés ({n})",
+"Message de départ",
+"Aléatoire : un message différent pour chaque personne",
+"Chaque personne reçoit l'un des 20 messages, tiré au hasard."];

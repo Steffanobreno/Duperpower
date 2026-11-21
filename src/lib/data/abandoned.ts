@@ -8,6 +8,7 @@ import { msg } from "@/lib/i18n";
 // 20 minutes. Status: Recovered once that phone has a visit booked after it (online, by text,
 // or by the owner); Contacted once the "finish booking" message went out or the owner texted
 // or called from the app; otherwise Abandoned. Finishing in one go doesn't count as abandoned.
+// "Clear recovered" sets cleared_at: off the list, still in the 30-day numbers.
 
 export type DraftStatus = "abandoned" | "contacted" | "recovered";
 export type DraftPet = { name: string; breed: string; size: string; service: string; addons: string[] };
@@ -18,7 +19,7 @@ export type Draft = {
   contacted_at: Date | null; client_id: string | null; booked_id: string | null; status: DraftStatus; revenue_cents: number;
 };
 
-const drafts = (staff: StaffContext, extra = sql``, limit = 500) => sql<Draft[]>`
+const drafts = (staff: StaffContext, extra = sql``, limit = 500, withCleared = false) => sql<Draft[]>`
   with d as (
     select d.*,
       (select a.id from appointments a join clients c on c.id = a.client_id
@@ -26,7 +27,7 @@ const drafts = (staff: StaffContext, extra = sql``, limit = 500) => sql<Draft[]>
           and a.status not in ('declined', 'cancelled')
         order by a.created_at limit 1) as booked_id
     from booking_drafts d
-    where d.business_id = ${staff.businessId} and d.dismissed_at is null
+    where d.business_id = ${staff.businessId} and d.dismissed_at is null ${withCleared ? sql`` : sql`and d.cleared_at is null`}
       and d.updated_at < now() - interval '20 minutes'
       and not (d.completed_at is not null and d.completed_at < d.updated_at + interval '20 minutes'
                and d.reminded_at is null and d.contacted_at is null))
@@ -56,7 +57,7 @@ export async function getDraft(staff: StaffContext, id: string) {
 
 /** Last 30 days: how many abandoned, how many came back, and what those visits are worth. */
 export async function draftStats(staff: StaffContext) {
-  const rows = await drafts(staff, sql`and d.updated_at > now() - interval '30 days'`);
+  const rows = await drafts(staff, sql`and d.updated_at > now() - interval '30 days'`, 500, true);
   const recovered = rows.filter((r) => r.status === "recovered");
   return { abandoned: rows.length, recovered: recovered.length, revenue: recovered.reduce((s, r) => s + r.revenue_cents, 0) };
 }
