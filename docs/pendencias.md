@@ -1,6 +1,6 @@
 # Pendências do Fino
 
-Atualizado em 2026-11-21. Última publicação na master: 2026-11-21 (PR #5, sem tempo de deslocamento). Antes: 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
+Atualizado em 2026-11-21. Última publicação na master: 2026-11-22 (PR #6: Abandonados com 20 mensagens, Limpar recuperados, aviso de horário estimado, cópia do banco corrigida). Antes: 2026-11-21 (PR #5, sem tempo de deslocamento), 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
 
 ## 🆕 Publicado em 2026-11-20 e 2026-11-21
 
@@ -28,7 +28,7 @@ Problema relatado: cada cliente leva 2 a 3 horas, e o sistema guardava 45 minuto
 - [ ] **Netlify → Deploys:** confirmar que o deploy do PR #5 terminou **verde**.
 - [ ] Abrir o agendamento online num dia com duas visitas separadas por 2h e ver o horário do meio aparecer.
 
-## ⏳ Pronto, esperando "pode publicar": Abandonados com 20 mensagens e "Limpar recuperados" (2026-11-21), aviso de horário estimado (2026-11-22)
+## 🆕 Publicado em 2026-11-22 (PR #6): Abandonados com 20 mensagens e "Limpar recuperados", aviso de horário estimado, cópia do banco corrigida
 
 Design: `docs/superpowers/specs/2026-11-21-abandonados-modelos-e-limpar-design.md`. Tudo grátis, sem IA.
 - **Menu de mensagens no "Send to all"** (abre e fecha, com a seta). As opções:
@@ -49,7 +49,11 @@ Design: `docs/superpowers/specs/2026-11-21-abandonados-modelos-e-limpar-design.m
 
 Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. Se o seu texto já falar em "arrival window" ou "estimate", a frase não é repetida. Testes: `tests/arrival-note.test.mjs` e `online-booking-settings.mjs`.
 **Junto nesta publicação: cópia semanal do banco corrigida (2026-11-22).** A primeira cópia de domingo falhou: o banco no Neon é PostgreSQL 18.7, e a cópia usava a ferramenta da versão 17, que recusa um banco mais novo. Agora a cópia lê a versão do banco e usa a mesma. Testada a partir do branch: verde, com o arquivo `fino-backup-2026-11-22` guardado. A restauração de teste contou 2 negócios, 411 clientes, 289 visitas e 58 migrações. O domingo usa o arquivo do `master`, então a correção só vale depois de publicar.
-- [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
+- [ ] **Netlify → Deploys:** confirmar que o deploy do PR #6 terminou **verde** (a migração 0059 roda no build).
+- [ ] Abandonados → **Send to all**: a Aleatória vem marcada; mandar e conferir que cada cliente recebeu um texto.
+- [ ] Abandonados → **Clear recovered**: tocar e ver que sobram só os não recuperados.
+- [ ] Agendar uma visita de teste e ver o aviso de "arrival window" no fim da mensagem.
+- [ ] **Domingo:** a cópia automática (GitHub → Actions → backup) deve ficar verde.
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
