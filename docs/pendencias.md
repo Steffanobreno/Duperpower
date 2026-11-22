@@ -48,6 +48,7 @@ Design: `docs/superpowers/specs/2026-11-21-abandonados-modelos-e-limpar-design.m
 - **sem janela:** "Please note: the time is an estimate, since the visits before yours can run shorter or longer.".
 
 Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. Se o seu texto já falar em "arrival window" ou "estimate", a frase não é repetida. Testes: `tests/arrival-note.test.mjs` e `online-booking-settings.mjs`.
+**Junto nesta publicação: cópia semanal do banco corrigida (2026-11-22).** A primeira cópia de domingo falhou: o banco no Neon é PostgreSQL 18.7, e a cópia usava a ferramenta da versão 17, que recusa um banco mais novo. Agora a cópia lê a versão do banco e usa a mesma. Testada a partir do branch: verde, com o arquivo `fino-backup-2026-11-22` guardado. A restauração de teste contou 2 negócios, 411 clientes, 289 visitas e 58 migrações. O domingo usa o arquivo do `master`, então a correção só vale depois de publicar.
 - [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
