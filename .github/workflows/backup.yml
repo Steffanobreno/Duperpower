@@ -8,6 +8,8 @@
 # The encrypted file is kept 90 days under Actions → the run → Artifacts. To restore, see
 # docs/fino-backup-restore.md. A failed run (no backup, or a backup that doesn't restore) sends
 # GitHub's failure email to the repository owner.
+# The Postgres tools match the server's major version (read from the database each run): pg_dump
+# refuses a newer server (Neon runs 18; a fixed postgres:17 failed on 2026-11-22).
 name: backup
 on:
   schedule:
@@ -19,15 +21,6 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    services:
-      # An empty database to prove the backup restores.
-      check:
-        image: postgres:17
-        env:
-          POSTGRES_PASSWORD: check
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - name: Secrets set?
         id: ready
@@ -39,12 +32,22 @@ jobs:
           case "$URL" in *-pooler*) echo "::error::BACKUP_DATABASE_URL must be the direct connection (no -pooler in the host)"; exit 1;; esac
           echo "go=yes" >> "$GITHUB_OUTPUT"
 
+      - name: Postgres version of the database
+        if: steps.ready.outputs.go == 'yes'
+        env:
+          URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          NUM=$(docker run --rm -e URL postgres:18 sh -c 'psql "$URL" -Atc "show server_version_num"')
+          PG=$((NUM / 10000))
+          echo "server version $NUM → tools postgres:$PG"
+          echo "PG=$PG" >> "$GITHUB_ENV"
+
       - name: Dump the database
         if: steps.ready.outputs.go == 'yes'
         env:
           URL: ${{ secrets.BACKUP_DATABASE_URL }}
         run: |
-          docker run --rm -e URL postgres:17 sh -c 'pg_dump "$URL" --format=custom --no-owner --no-acl' > fino.dump
+          docker run --rm -e URL postgres:$PG sh -c 'pg_dump "$URL" --format=custom --no-owner --no-acl' > fino.dump
           ls -l fino.dump
           test -s fino.dump
 
@@ -53,9 +56,12 @@ jobs:
         env:
           PGPASSWORD: check
         run: |
-          docker run --rm --network host -e PGPASSWORD -v "$PWD:/b" postgres:17 \
+          # An empty database of the same version, to prove the backup restores.
+          docker run -d --name check -e POSTGRES_PASSWORD=check -p 5432:5432 postgres:$PG
+          for i in $(seq 1 30); do docker exec check pg_isready -U postgres -h 127.0.0.1 && break; sleep 2; done
+          docker run --rm --network host -e PGPASSWORD -v "$PWD:/b" postgres:$PG \
             pg_restore --host=127.0.0.1 --username=postgres --dbname=postgres --no-owner --no-acl --exit-on-error /b/fino.dump
-          docker run --rm --network host -e PGPASSWORD postgres:17 psql -h 127.0.0.1 -U postgres -At -c \
+          docker run --rm --network host -e PGPASSWORD postgres:$PG psql -h 127.0.0.1 -U postgres -At -c \
             "select 'businesses ' || (select count(*) from businesses) || ' · clients ' || (select count(*) from clients) || ' · visits ' || (select count(*) from appointments) || ' · migrations ' || (select count(*) from schema_migrations)" | tee counts.txt
           grep -Eq '^businesses [1-9]' counts.txt || { echo "::error::the restored copy has no businesses"; exit 1; }
 
