@@ -1,7 +1,8 @@
 // Online booking settings, end to end. Run after slice.mjs (Maria Lopez, 650-555-0142, Biscuit),
 // with DATABASE_URL set.
 // QR code poster and image · automation "book clients I know right away": Maria books online and
-// is booked (not a request) · the new client form adds a client and two pets, and is translated.
+// is booked (not a request), and the "booked" message says the time is an arrival window and an
+// estimate (45-minute window set for the test) · the new client form adds a client and two pets, and is translated.
 // Usage: node tests/e2e/online-booking-settings.mjs [baseUrl] [screenshotDir]
 import { chromium } from "playwright";
 import postgres from "postgres";
@@ -22,6 +23,11 @@ const step = (msg) => console.log(`✓ ${msg}`);
 const fail = (msg) => {
   throw new Error(msg);
 };
+
+const [{ arrival_after_min: oldAfter }] = await db`select arrival_after_min from businesses where booking_slug = 'woofers'`;
+await db`update businesses set arrival_after_min = 45 where booking_slug = 'woofers'`;
+const [{ email: oldEmail }] = await db`select email from clients where first_name = 'Maria' and phone like '%6505550142'`;
+await db`update clients set email = 'maria.window@example.com' where first_name = 'Maria' and phone like '%6505550142'`;
 
 const page = await newPage();
 await page.goto(`${BASE}/login`);
@@ -90,9 +96,15 @@ if (await client.getByRole("button", { name: /Read and sign/ }).count()) {
 await button("Submit booking request").click();
 await client.getByRole("heading", { name: /You're booked/ }).waitFor();
 await client.getByText("See you then!").waitFor();
-const [online] = await db`select a.status from appointments a join clients c on c.id = a.client_id
+const [online] = await db`select a.id, a.status from appointments a join clients c on c.id = a.client_id
                           where c.first_name = 'Maria' and a.source = 'online' order by a.created_at desc limit 1`;
 if (online?.status !== "unconfirmed") fail(`online booking should be booked, is ${online?.status}`);
+const told = await db`select body from messages where appointment_id = ${online.id} and template_trigger = 'booked'`;
+if (!told.length) fail("a booked message should be queued for Maria");
+if (!told.every((m) => /arrival window/.test(m.body) && /estimate/.test(m.body))) fail(`the booked message should say it's an arrival window and an estimate: ${told[0].body}`);
+await db`update businesses set arrival_after_min = ${oldAfter} where booking_slug = 'woofers'`;
+await db`update clients set email = ${oldEmail} where first_name = 'Maria' and phone like '%6505550142'`;
+step("the booked message says the time is an arrival window and an estimate");
 if (SHOTS) await client.screenshot({ path: `${SHOTS}/B02-booked-right-away.png`, fullPage: true });
 step("a client on file books online and is booked right away (“You're booked”)");
 

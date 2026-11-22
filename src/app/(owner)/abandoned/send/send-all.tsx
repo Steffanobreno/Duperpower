@@ -17,7 +17,7 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
 }) {
   const { t } = useT();
   const [state, action, pending] = useActionState(sendAllAction, undefined);
-  const [choice, setChoice] = useState("finish");
+  const [choice, setChoice] = useState("random");
   const [body, setBody] = useState(finish);
   const textFor = (c: string) => (c === "finish" ? finish : c === "sorry" ? sorry : ABANDONED_TEMPLATES[Number(c)] ?? "");
   const [sent, setSent] = useState<string[]>([]);

@@ -4,7 +4,7 @@
 // screen counts three → "Sorry, it's fixed" → emails go out at once to the two, each with their
 // own name, pet and link → the texts are a queue: each opens Messages with that person's text
 // (name, pet, link with their phone) → everyone is marked contacted; the one who booked isn't sent.
-// The message menu: Random, "Finish booking", "Sorry, it's fixed" and the 20 ready messages; picking one
+// The message menu (Random picked when it opens): Random, "Finish booking", "Sorry, it's fixed" and the 20 ready messages; picking one
 // fills the box; Random hides the box and each person gets one of the 20 (not all the same, no raw {…}).
 // "Clear recovered (1)" hides the one who booked since, keeps the others, and the 30-day numbers stay.
 // Other drafts already in the database are hidden first, so the counts are this test's own.
@@ -55,6 +55,8 @@ step("the screen counts the three who didn't finish (not the one who booked sinc
 
 // The menu: 3 starting points and the 20 ready messages; picking one fills the box.
 const menu = page.getByLabel("Message to start from");
+if ((await menu.inputValue()) !== "random") fail("Random should be picked when the page opens");
+if (await page.locator('textarea[name="body"]').count()) fail("with Random picked, the message box should be hidden");
 const options = await menu.locator("option").allInnerTexts();
 if (options.length !== 23) fail(`the menu should have 23 options, has ${options.length}`);
 await menu.selectOption({ index: 7 });

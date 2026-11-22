@@ -28,7 +28,7 @@ Problema relatado: cada cliente leva 2 a 3 horas, e o sistema guardava 45 minuto
 - [ ] **Netlify → Deploys:** confirmar que o deploy do PR #5 terminou **verde**.
 - [ ] Abrir o agendamento online num dia com duas visitas separadas por 2h e ver o horário do meio aparecer.
 
-## ⏳ Pronto, esperando "pode publicar": Abandonados com 20 mensagens e "Limpar recuperados" (2026-11-21)
+## ⏳ Pronto, esperando "pode publicar": Abandonados com 20 mensagens e "Limpar recuperados" (2026-11-21), aviso de horário estimado (2026-11-22)
 
 Design: `docs/superpowers/specs/2026-11-21-abandonados-modelos-e-limpar-design.md`. Tudo grátis, sem IA.
 - **Menu de mensagens no "Send to all"** (abre e fecha, com a seta). As opções:
@@ -41,11 +41,19 @@ Design: `docs/superpowers/specs/2026-11-21-abandonados-modelos-e-limpar-design.m
 - **"Clear recovered (N)"** na tela Abandonados: tira da lista quem já agendou, e fica só quem falta recuperar. Os números do topo (Recuperados e Faturamento recuperado) continuam contando.
 - Banco: migração `0059` (coluna nova `cleared_at`; roda sozinha no deploy).
 - Testes: `abandoned-send-all.mjs` (menu, aleatória, limpar), `abandoned.mjs`, i18n-check, typecheck e lint passaram. Traduções nos 19 idiomas.
+- **A "Aleatória" vem marcada** quando a tela "Send to all" abre (pedido de 2026-11-22).
+
+**Junto nesta publicação: aviso de horário estimado (2026-11-22).** As mensagens que o cliente recebe logo depois de agendar ("booked" e "request_received", SMS e e-mail) ganham uma frase no fim:
+- **com janela de chegada:** "Please note: the time above is an arrival window, not an exact time. It's an estimate: we'll get to you within that window, since the visits before yours can run shorter or longer.";
+- **sem janela:** "Please note: the time is an estimate, since the visits before yours can run shorter or longer.".
+
+Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. Se o seu texto já falar em "arrival window" ou "estimate", a frase não é repetida. Testes: `tests/arrival-note.test.mjs` e `online-booking-settings.mjs`.
 - [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
 - [ ] `fill-gap.mjs`: "Lou (San Lorenzo) fits the gap and should not be marked".
+- [ ] `booking.mjs` e `confirmation.mjs` num banco de teste já usado: esperam "Turn automatic messages on" e uma navegação. Falham igual sem as mudanças de 2026-11-22; precisam de banco zerado.
 
 ## ⭐ Roteiro do dono, passo a passo (faça na ordem, quando puder)
 
