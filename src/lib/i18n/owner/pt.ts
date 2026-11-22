@@ -1815,4 +1815,9 @@ export const pt: string[] = ["Agendamento abandonado",
 "{client}, {pet} e {booking_url} são preenchidos para cada pessoa (o link abre com o telefone dela).",
 "Mandar para todos os {n}",
 "Escreva a mensagem primeiro.",
-"Ninguém para enviar: todos que começaram a agendar já agendaram."];
+"Ninguém para enviar: todos que começaram a agendar já agendaram.",
+"Tire da lista quem já agendou. Os números acima continuam contando.",
+"Limpar recuperados ({n})",
+"Mensagem para começar",
+"Aleatória: uma mensagem diferente para cada pessoa",
+"Cada pessoa recebe uma das 20 mensagens, sorteada."];

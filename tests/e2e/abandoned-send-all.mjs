@@ -4,6 +4,10 @@
 // screen counts three → "Sorry, it's fixed" → emails go out at once to the two, each with their
 // own name, pet and link → the texts are a queue: each opens Messages with that person's text
 // (name, pet, link with their phone) → everyone is marked contacted; the one who booked isn't sent.
+// The message menu (Random picked when it opens): Random, "Finish booking", "Sorry, it's fixed" and the 20 ready messages; picking one
+// fills the box; Random hides the box and each person gets one of the 20 (not all the same, no raw {…}).
+// "Clear recovered (1)" hides the one who booked since, keeps the others, and the 30-day numbers stay.
+// Other drafts already in the database are hidden first, so the counts are this test's own.
 // Usage: MAIL_DIR=/path node tests/e2e/abandoned-send-all.mjs [baseUrl]
 import { readdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -22,6 +26,7 @@ const mails = () => readdirSync(MAIL_DIR).sort().map((f) => readFileSync(`${MAIL
   .replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16))));
 
 const [biz] = await db`select id from businesses where booking_slug = 'woofers'`;
+await db`update booking_drafts set dismissed_at = now() where business_id = ${biz.id} and dismissed_at is null`;
 const stuck = [
   { phone: "+16505550301", first: "Ava", pets: "Reese", email: "ava.stuck@example.com" },
   { phone: "+16505550302", first: "Ben", pets: "Milo", email: "ben.stuck@example.com" },
@@ -48,8 +53,19 @@ await page.waitForURL(/\/abandoned\/send/);
 await page.getByText("3 people started booking and didn't finish").waitFor();
 step("the screen counts the three who didn't finish (not the one who booked since)");
 
+// The menu: 3 starting points and the 20 ready messages; picking one fills the box.
+const menu = page.getByLabel("Message to start from");
+if ((await menu.inputValue()) !== "random") fail("Random should be picked when the page opens");
+if (await page.locator('textarea[name="body"]').count()) fail("with Random picked, the message box should be hidden");
+const options = await menu.locator("option").allInnerTexts();
+if (options.length !== 23) fail(`the menu should have 23 options, has ${options.length}`);
+await menu.selectOption({ index: 7 });
+const picked = await page.locator('textarea[name="body"]').inputValue();
+if (!options[7] || !picked.startsWith(options[7].replace(/^\d+\.\s*/, "").replace(/…$/, "").trim())) fail(`picking an option should fill the box: ${options[7]} / ${picked}`);
+step("the menu has Random, Finish booking, Sorry and 20 ready messages; picking one fills the box");
+
 const before = mails().length;
-await page.getByRole("button", { name: "Sorry, it's fixed" }).click();
+await menu.selectOption({ label: "Sorry, it's fixed" });
 if (!(await page.locator('textarea[name="body"]').inputValue()).includes("It's fixed now")) fail("the apology text should be filled in");
 await page.getByRole("button", { name: "Send to all 3" }).click();
 await page.getByText("Emails sent: 2").waitFor();
@@ -78,10 +94,43 @@ const cy = decodeURIComponent(opened.find((u) => u.startsWith("sms:+16505550303"
 if (!/Hi Cy!/.test(cy) || !/Luna's visit/.test(cy) || !/phone=6505550303/.test(cy)) fail(`Cy's text should have his name, pet and link: ${cy}`);
 step("the texts are a queue: each tap opens Messages with that person's own text");
 
-const rows = await db`select phone, contacted_at is not null as contacted from booking_drafts where business_id = ${biz.id} and step = 'review'`;
+const rows = await db`select phone, contacted_at is not null as contacted from booking_drafts where business_id = ${biz.id} and step = 'review' and dismissed_at is null`;
 if (!rows.filter((r) => stuck.some((s) => s.phone === r.phone)).every((r) => r.contacted)) fail("everyone sent to should be marked contacted");
 if (rows.find((r) => r.phone === booked.phone)?.contacted) fail("the one who booked since shouldn't be contacted");
 step("everyone sent to is marked contacted; the one who booked since is left alone");
+
+// Random: each person gets one of the 20, not all the same, with every blank filled in.
+await page.goto(`${BASE}/abandoned/send`);
+await page.evaluate(() => document.addEventListener("click", (e) => {
+  if (e.target.closest?.('a[href^="sms:"]')) e.preventDefault();
+}, true));
+await menu.selectOption({ index: 0 });
+if (await page.locator('textarea[name="body"]').isVisible()) fail("Random should hide the message box");
+await page.getByText("Each person gets one of the 20 messages, picked at random.").waitFor();
+await db`delete from messages where business_id = ${biz.id} and dedupe_key like 'abandoned-all:%'`;
+await page.getByRole("button", { name: "Send to all 3" }).click();
+await page.getByText("Emails sent: 2").waitFor();
+const randomTexts = [];
+for (let i = 1; i <= 3; i++) {
+  const link = page.getByRole("link", { name: new RegExp(`^Text .+ \\(${i} of 3\\)$`) });
+  randomTexts.push(decodeURIComponent((await link.getAttribute("href")).split("body=")[1]));
+  await link.click();
+}
+if (randomTexts.some((t) => /\{\w+\}/.test(t))) fail(`a blank was left unfilled: ${randomTexts.join(" | ")}`);
+const [{ n: kinds }] = await db`select count(distinct body)::int as n from messages where business_id = ${biz.id} and dedupe_key like 'abandoned-all:%'`;
+if (kinds !== 2) fail(`two emails with their own random text expected, got ${kinds} distinct`);
+step("Random: each person gets one of the 20 messages, every blank filled in");
+
+// Clear recovered: hides the one who booked since; the others stay; the numbers don't move.
+await page.goto(`${BASE}/abandoned`);
+const stats = async () => (await page.locator(".grid-cols-3").first().innerText()).replace(/\s+/g, " ");
+const statsBefore = await stats();
+await page.getByRole("button", { name: "Clear recovered (1)" }).click();
+await page.getByRole("link", { name: /Booked/ }).waitFor({ state: "detached" });
+for (const s of stuck) await page.getByRole("link", { name: new RegExp(s.first) }).first().waitFor();
+if ((await stats()) !== statsBefore) fail(`the numbers changed: ${statsBefore} → ${await stats()}`);
+if (await page.getByRole("button", { name: /Clear recovered/ }).count()) fail("with nobody recovered left, the button should be gone");
+step("Clear recovered hides the one who booked since, keeps the others, and the numbers stay");
 
 await db.end();
 await browser.close();

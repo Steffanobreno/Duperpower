@@ -1815,4 +1815,9 @@ export const de: string[] = ["Abgebrochene Buchung",
 "{client}, {pet} und {booking_url} werden für jede Person ausgefüllt (der Link öffnet sich mit ihrer Nummer).",
 "An alle {n} senden",
 "Schreiben Sie zuerst die Nachricht.",
-"Niemand zum Senden: Alle, die begonnen haben, haben inzwischen gebucht."];
+"Niemand zum Senden: Alle, die begonnen haben, haben inzwischen gebucht.",
+"Wer inzwischen gebucht hat, verschwindet aus der Liste. Die Zahlen oben zählen sie weiter.",
+"Zurückgewonnene entfernen ({n})",
+"Nachricht als Vorlage",
+"Zufällig: eine andere Nachricht für jede Person",
+"Jede Person erhält eine der 20 Nachrichten, zufällig ausgewählt."];

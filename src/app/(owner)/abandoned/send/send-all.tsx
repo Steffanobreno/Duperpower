@@ -4,10 +4,12 @@ import { useT } from "@/components/i18n";
 import { ActionForm } from "@/components/action-form";
 import { FormPopup } from "@/components/popup";
 import { Button, Card } from "@/components/ui";
+import { ABANDONED_TEMPLATES, templateLabel } from "@/lib/abandoned-templates";
 import { sendAllAction } from "../send-actions";
 
 /**
- * "Send to all" for abandoned bookings: pick or edit the message → emails go out at once →
+ * "Send to all" for abandoned bookings: pick a message from the menu (or Random: each person gets
+ * one of the 20 ready ones) and edit it → emails go out at once →
  * the texts are a queue, one tap each opens Messages with that person's text filled in.
  */
 export function SendAll({ count, withEmail, finish, sorry, subject }: {
@@ -15,7 +17,9 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
 }) {
   const { t } = useT();
   const [state, action, pending] = useActionState(sendAllAction, undefined);
+  const [choice, setChoice] = useState("random");
   const [body, setBody] = useState(finish);
+  const textFor = (c: string) => (c === "finish" ? finish : c === "sorry" ? sorry : ABANDONED_TEMPLATES[Number(c)] ?? "");
   const [sent, setSent] = useState<string[]>([]);
 
   if (state?.texts) {
@@ -65,22 +69,27 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
         <p className="font-bold">{t("{n} people started booking and didn't finish", { n: count })}</p>
         <p className="text-sm text-muted">{t("Last 30 days, not booked since. {e} left an email (sent at once); the texts go out from your phone, one tap each.", { e: withEmail })}</p>
       </Card>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={t("Start from")}>
-        <button type="button" onClick={() => setBody(finish)} aria-pressed={body === finish}
-          className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${body === finish ? "border-navy bg-navy text-white" : "border-line bg-surface"}`}>
-          {t("Finish your booking")}
-        </button>
-        <button type="button" onClick={() => setBody(sorry)} aria-pressed={body === sorry}
-          className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${body === sorry ? "border-navy bg-navy text-white" : "border-line bg-surface"}`}>
-          {t("Sorry, it's fixed")}
-        </button>
-      </div>
       <label className="block">
-        <span className="mb-1 block text-sm font-semibold">{t("Message")}</span>
-        <textarea name="body" rows={7} value={body} onChange={(e) => setBody(e.target.value)} required
-          className="block w-full rounded-2xl border border-line bg-surface px-4 py-3" />
-        <span className="mt-1 block text-xs text-muted">{t("{client}, {pet} and {booking_url} are filled in for each person (the link opens with their phone number).")}</span>
+        <span className="mb-1 block text-sm font-semibold">{t("Message to start from")}</span>
+        <select value={choice} onChange={(e) => { setChoice(e.target.value); if (e.target.value !== "random") setBody(textFor(e.target.value)); }}
+          className="block w-full rounded-2xl border border-line bg-surface px-4 py-3">
+          <option value="random">{t("Random: a different message for each person")}</option>
+          <option value="finish">{t("Finish your booking")}</option>
+          <option value="sorry">{t("Sorry, it's fixed")}</option>
+          {ABANDONED_TEMPLATES.map((x, i) => <option key={i} value={String(i)}>{templateLabel(x, i + 1)}</option>)}
+        </select>
       </label>
+      <input type="hidden" name="mode" value={choice === "random" ? "random" : "one"} />
+      {choice === "random" ? (
+        <p className="card p-4 text-sm">{t("Each person gets one of the 20 messages, picked at random.")}</p>
+      ) : (
+        <label className="block">
+          <span className="mb-1 block text-sm font-semibold">{t("Message")}</span>
+          <textarea name="body" rows={7} value={body} onChange={(e) => setBody(e.target.value)} required
+            className="block w-full rounded-2xl border border-line bg-surface px-4 py-3" />
+          <span className="mt-1 block text-xs text-muted">{t("{client}, {pet} and {booking_url} are filled in for each person (the link opens with their phone number).")}</span>
+        </label>
+      )}
       <input type="hidden" name="subject" value={subject} />
       <Button type="submit" className="w-full" disabled={pending}>
         {pending ? t("Sending…") : t("Send to all {n}", { n: count })}

@@ -1817,5 +1817,10 @@ export const OWNER_KEYS: string[] = [
  "{client}, {pet} and {booking_url} are filled in for each person (the link opens with their phone number).",
  "Send to all {n}",
  "Write the message first.",
- "Nobody to send to: everyone who started booking has booked since."
+ "Nobody to send to: everyone who started booking has booked since.",
+ "Take those who booked since off the list. The numbers above keep counting them.",
+ "Clear recovered ({n})",
+ "Message to start from",
+ "Random: a different message for each person",
+ "Each person gets one of the 20 messages, picked at random."
 ];

@@ -10,6 +10,7 @@ import { nextDate, suggestions } from "./marketing-templates";
 import { addDaysYmd, dayLabel, dayRangeUtc, hm, longDayLabel, money, phoneLabel, timeLabel, todayYmd, ymd } from "./format";
 import { messageRegion, type Region } from "./region";
 import { ensureReportToken, reportHasContent, reportUrl } from "./data/report-card";
+import { withArrivalNote } from "./arrival-note";
 
 // Every client message goes through here. A message is a row in `messages`:
 // - email rows are sent right away from the business Gmail;
@@ -163,7 +164,7 @@ function varsFor(c: ApptContext, extra: Record<string, string | number> = {}) {
 /** Creates the SMS and email rows for one message (each only if the client can receive it). */
 async function enqueue(c: ApptContext, trigger: Trigger, t: Template, dedupe: string, extra?: Record<string, string | number>) {
   const vars = varsFor(c, extra);
-  const body = render(t.body, vars);
+  const body = withArrivalNote(render(t.body, vars), trigger, c.arrival_before_min ?? 0, c.arrival_after_min ?? 0);
   if (c.sms_ok && t.send_sms) {
     await sql`
       insert into messages (business_id, client_id, appointment_id, direction, channel, to_phone, body,
@@ -207,7 +208,7 @@ export async function smsTextFor(appointmentId: string, trigger: Trigger) {
   const c = await appointmentContext(appointmentId);
   if (!c) return null;
   const t = await template(c.business_id, trigger);
-  return t ? render(t.body, varsFor(c)) : null;
+  return t ? withArrivalNote(render(t.body, varsFor(c)), trigger, c.arrival_before_min ?? 0, c.arrival_after_min ?? 0) : null;
 }
 
 /**

@@ -6,22 +6,25 @@ import { draftsToMessage } from "@/lib/data/abandoned";
 import { render, sendQueuedEmails } from "@/lib/messaging";
 import { emailConfigured } from "@/lib/email";
 import { phoneLabel } from "@/lib/format";
+import { shuffledTemplates } from "@/lib/abandoned-templates";
 
 export type SendAllState = { error?: string; emailed?: number; texts?: { id: string; name: string; phone: string; body: string }[] } | undefined;
 
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 /**
- * "Send to all": the same message, filled in for each person who started booking and didn't
+ * "Send to all": the same message (or, with mode "random", one of the 20 ready messages each,
+ * no repeats), filled in for each person who started booking and didn't
  * finish (last 30 days, not booked since). Emails go out now to those who left one; the texts
  * come back as a list the owner sends one tap at a time from their phone (a phone app can't
  * send texts by itself). Everyone is marked contacted.
  */
 export async function sendAllAction(_: SendAllState, form: FormData): Promise<SendAllState> {
   const staff = await requireStaff();
+  const random = form.get("mode") === "random";
   const text = String(form.get("body") ?? "").trim().slice(0, 1000);
   const subject = String(form.get("subject") ?? "").trim().slice(0, 150) || staff.businessName;
-  if (!text) return { error: "Write the message first." };
+  if (!random && !text) return { error: "Write the message first." };
   const [b] = await sql<{ name: string; phone: string | null; booking_slug: string }[]>`
     select name, phone, booking_slug from businesses where id = ${staff.businessId}`;
   const people = await draftsToMessage(staff);
@@ -29,8 +32,9 @@ export async function sendAllAction(_: SendAllState, form: FormData): Promise<Se
   const stamp = new Date().toISOString().slice(0, 10);
   const texts: NonNullable<SendAllState>["texts"] = [];
   let emailed = 0;
-  for (const d of people) {
-    const body = render(text, {
+  const picks = random ? shuffledTemplates(people.length) : [];
+  for (const [i, d] of people.entries()) {
+    const body = render(random ? picks[i] : text, {
       client: d.first_name ?? "there",
       pet: d.pets ?? "your pup",
       business: b.name,
