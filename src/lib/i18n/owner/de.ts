@@ -1820,4 +1820,12 @@ export const de: string[] = ["Abgebrochene Buchung",
 "Zurückgewonnene entfernen ({n})",
 "Nachricht als Vorlage",
 "Zufällig: eine andere Nachricht für jede Person",
-"Jede Person erhält eine der 20 Nachrichten, zufällig ausgewählt."];
+"Jede Person erhält eine der 20 Nachrichten, zufällig ausgewählt.",
+"Wer es bekommt ({n} von {total})",
+"Alle auswählen",
+"Leeren",
+"Wer es bekommt",
+"E-Mail und SMS",
+"nur SMS",
+"An {n} senden",
+"Wählen Sie mindestens eine Person."];

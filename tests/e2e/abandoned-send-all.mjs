@@ -7,7 +7,7 @@
 // The message menu (Random picked when it opens): Random, "Finish booking", "Sorry, it's fixed" and the 20 ready messages; picking one
 // fills the box; Random hides the box and each person gets one of the 20 (not all the same, no raw {…}).
 // "Clear recovered (1)" hides the one who booked since, keeps the others, and the 30-day numbers stay.
-// Other drafts already in the database are hidden first, so the counts are this test's own.
+// You can pick who gets it (everyone ticked to start). Other drafts already in the database are hidden first, so the counts are this test's own.
 // Usage: MAIL_DIR=/path node tests/e2e/abandoned-send-all.mjs [baseUrl]
 import { readdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -120,6 +120,32 @@ if (randomTexts.some((t) => /\{\w+\}/.test(t))) fail(`a blank was left unfilled:
 const [{ n: kinds }] = await db`select count(distinct body)::int as n from messages where business_id = ${biz.id} and dedupe_key like 'abandoned-all:%'`;
 if (kinds !== 2) fail(`two emails with their own random text expected, got ${kinds} distinct`);
 step("Random: each person gets one of the 20 messages, every blank filled in");
+
+// Picking who gets it: everyone is ticked; unticking Cy sends to the other two only.
+await page.goto(`${BASE}/abandoned/send`);
+await page.evaluate(() => document.addEventListener("click", (e) => {
+  if (e.target.closest?.('a[href^="sms:"]')) e.preventDefault();
+}, true));
+const who = page.getByRole("group", { name: "Who gets it" });
+const boxes = who.getByRole("checkbox");
+if ((await boxes.count()) !== 3) fail(`three people to pick from expected, got ${await boxes.count()}`);
+for (const b of await boxes.all()) if (!(await b.isChecked())) fail("everyone should be ticked when the page opens");
+await who.getByRole("checkbox", { name: /Cy/ }).uncheck();
+await page.getByRole("button", { name: "Clear" }).click();
+if (await page.getByRole("button", { name: /^Send to/ }).isEnabled()) fail("with nobody ticked, sending should be off");
+await page.getByRole("button", { name: "Select all" }).click();
+await who.getByRole("checkbox", { name: /Cy/ }).uncheck();
+await db`delete from messages where business_id = ${biz.id} and dedupe_key like 'abandoned-all:%'`;
+await page.getByRole("button", { name: "Send to 2" }).click();
+await page.getByText("Emails sent: 2").waitFor();
+const picks = [];
+for (let i = 1; i <= 2; i++) {
+  const link = page.getByRole("link", { name: new RegExp(`^Text .+ \\(${i} of 2\\)$`) });
+  picks.push(await link.getAttribute("href"));
+  await link.click();
+}
+if (picks.some((u) => u.startsWith("sms:+16505550303"))) fail("Cy was unticked and shouldn't be in the texts");
+step("you pick who gets it: everyone ticked, Clear and Select all, and the unticked one is left out");
 
 // Clear recovered: hides the one who booked since; the others stay; the numbers don't move.
 await page.goto(`${BASE}/abandoned`);

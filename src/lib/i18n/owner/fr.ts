@@ -1820,4 +1820,12 @@ export const fr: string[] = ["Réservation abandonnée",
 "Effacer les récupérés ({n})",
 "Message de départ",
 "Aléatoire : un message différent pour chaque personne",
-"Chaque personne reçoit l'un des 20 messages, tiré au hasard."];
+"Chaque personne reçoit l'un des 20 messages, tiré au hasard.",
+"Qui le reçoit ({n} sur {total})",
+"Tout cocher",
+"Effacer",
+"Qui le reçoit",
+"e-mail et SMS",
+"SMS seulement",
+"Envoyer à {n}",
+"Choisissez au moins une personne."];

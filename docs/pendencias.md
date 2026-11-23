@@ -1,6 +1,6 @@
 # Pendências do Fino
 
-Atualizado em 2026-11-21. Última publicação na master: 2026-11-22 (PR #6: Abandonados com 20 mensagens, Limpar recuperados, aviso de horário estimado, cópia do banco corrigida). Antes: 2026-11-21 (PR #5, sem tempo de deslocamento), 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
+Atualizado em 2026-11-21. Última publicação na master: 2026-11-23 (PR #7: pedidos online que sumiam, escolher quem recebe no Send to all). Antes: 2026-11-22 (PR #6: Abandonados com 20 mensagens, Limpar recuperados, aviso de horário estimado, cópia do banco corrigida). Antes: 2026-11-21 (PR #5, sem tempo de deslocamento), 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
 
 ## 🆕 Publicado em 2026-11-20 e 2026-11-21
 
@@ -54,6 +54,31 @@ Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. S
 - [ ] Abandonados → **Clear recovered**: tocar e ver que sobram só os não recuperados.
 - [ ] Agendar uma visita de teste e ver o aviso de "arrival window" no fim da mensagem.
 - [ ] **Domingo:** a cópia automática (GitHub → Actions → backup) deve ficar verde.
+
+## 🆕 Publicado em 2026-11-23 (PR #7): pedidos online que sumiam
+**O que aconteceu:** uma cliente viu "Yay! Your booking request was sent". O pedido não chegou e depois apareceu em Abandonados.
+
+**Causa:** a página de agendamento tinha um campo escondido "Website", uma armadilha para robôs. Quando ele vinha preenchido, o servidor respondia "ok" **sem gravar nada**. O preenchimento automático do navegador pode completar esse campo sem a pessoa ver.
+
+**Correção:**
+- A armadilha saiu da página e do servidor.
+- A tela de sucesso só aparece depois que o pedido está gravado.
+- Contra robôs continuam valendo: 15 tentativas por hora por aparelho, 3 pedidos por dia por telefone, telefone válido, CEP na área atendida, horário livre e contrato assinado.
+- Teste novo: `tests/e2e/booking-autofill.mjs`. Falhava antes e passa agora.
+
+**Para conferir:**
+- [ ] Em Abandonados, procure outras pessoas que parecem ter chegado ao fim do agendamento: podem ter sido vítimas do mesmo problema. Mande "Sorry, it's fixed" só para elas.
+
+## 🆕 Publicado em 2026-11-23 (PR #7): escolher quem recebe no "Send to all"
+- Na tela "Send to all", a lista das pessoas aparece com uma caixinha para cada uma. Todas vêm marcadas; desmarque quem não deve receber.
+- Os botões **Select all** e **Clear** marcam e desmarcam todos. O botão de envio mostra quantos vão receber ("Send to 2").
+- Cada pessoa mostra o pet e se recebe "email and text" ou só "text".
+- O servidor só manda para quem foi marcado e ainda pode receber (não agendou depois, últimos 30 dias).
+- Teste: `abandoned-send-all.mjs` (desmarcar uma pessoa e mandar para as outras duas). Typecheck, lint e i18n-check passaram. Traduções nos 19 idiomas.
+- [ ] **Netlify → Deploys:** confirmar que o deploy do PR #7 terminou **verde**.
+- [ ] Fazer um agendamento de teste pelo site e ver o pedido chegar em Pedidos.
+
+**Em conversa: página de fechamento (diária, semanal e mensal)** (visitas que passaram e não foram concluídas, e concluídas sem pagamento, com setas entre semanas). Falta a resposta do dono: a partir de que dia contar as pendências (as visitas importadas do app antigo não têm pagamento registrado aqui).
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".

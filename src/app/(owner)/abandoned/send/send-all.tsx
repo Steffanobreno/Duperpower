@@ -12,9 +12,14 @@ import { sendAllAction } from "../send-actions";
  * one of the 20 ready ones) and edit it → emails go out at once →
  * the texts are a queue, one tap each opens Messages with that person's text filled in.
  */
-export function SendAll({ count, withEmail, finish, sorry, subject }: {
-  count: number; withEmail: number; finish: string; sorry: string; subject: string;
+export type Person = { id: string; name: string; pets: string | null; email: boolean };
+
+export function SendAll({ people, withEmail, finish, sorry, subject }: {
+  people: Person[]; withEmail: number; finish: string; sorry: string; subject: string;
 }) {
+  const count = people.length;
+  const [picked, setPicked] = useState<string[]>(() => people.map((p) => p.id));
+  const toggle = (id: string) => setPicked((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
   const { t } = useT();
   const [state, action, pending] = useActionState(sendAllAction, undefined);
   const [choice, setChoice] = useState("random");
@@ -90,9 +95,31 @@ export function SendAll({ count, withEmail, finish, sorry, subject }: {
           <span className="mt-1 block text-xs text-muted">{t("{client}, {pet} and {booking_url} are filled in for each person (the link opens with their phone number).")}</span>
         </label>
       )}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold">{t("Who gets it ({n} of {total})", { n: picked.length, total: count })}</p>
+          <span className="flex gap-2">
+            <button type="button" onClick={() => setPicked(people.map((p) => p.id))} className="rounded-full border border-line px-3 py-1 text-sm font-semibold">{t("Select all")}</button>
+            <button type="button" onClick={() => setPicked([])} className="rounded-full border border-line px-3 py-1 text-sm font-semibold">{t("Clear")}</button>
+          </span>
+        </div>
+        <ul role="group" aria-label={t("Who gets it")} className="space-y-2">
+          {people.map((p) => (
+            <li key={p.id}>
+              <label className="card flex items-center gap-3 px-4 py-3">
+                <input type="checkbox" name="ids" value={p.id} checked={picked.includes(p.id)} onChange={() => toggle(p.id)} className="h-5 w-5 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{p.name}</span>
+                  <span className="block truncate text-xs text-muted">{[p.pets, p.email ? t("email and text") : t("text only")].filter(Boolean).join(" · ")}</span>
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </div>
       <input type="hidden" name="subject" value={subject} />
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? t("Sending…") : t("Send to all {n}", { n: count })}
+      <Button type="submit" className="w-full" disabled={pending || picked.length === 0}>
+        {pending ? t("Sending…") : picked.length === count ? t("Send to all {n}", { n: count }) : t("Send to {n}", { n: picked.length })}
       </Button>
     </ActionForm>
   );

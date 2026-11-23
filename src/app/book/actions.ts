@@ -156,14 +156,12 @@ export type BookingRequest = {
   signature: string; // full name typed to sign the service agreement
   signatureDrawing?: string; // the signature drawn with a finger, as a PNG data URL
   agreementVersion?: number | null; // the version of the agreement the page showed
-  website: string; // honeypot: people never see this field
   groomerId?: string | null; // the groomer the client chose (when there are several)
 };
 
 export async function requestBookingAction(input: BookingRequest): Promise<{ error?: string; ok?: boolean; accepted?: boolean; when?: string; agreementChanged?: boolean }> {
   const b = pickGroomer(await getPublicBusiness(input.slug), input.groomerId);
   if (!b || !b.online_booking_enabled) return { error: "Online booking is closed right now. Please text us." };
-  if (input.website) return { ok: true }; // a bot filled the hidden field; pretend it worked
   if (await tooManyFromHere("booking", 15, 3600_000)) return { error: "Too many tries. Please wait a few minutes or text us." };
 
   const phone = normalizePhone(input.phone, b?.country);

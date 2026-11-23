@@ -1820,4 +1820,12 @@ export const tr: string[] = ["Yarım kalan randevu",
 "Geri kazanılanları temizle ({n})",
 "Başlangıç mesajı",
 "Rastgele: herkese farklı bir mesaj",
-"Herkes 20 mesajdan birini rastgele alır."];
+"Herkes 20 mesajdan birini rastgele alır.",
+"Kime gidecek ({total} kişiden {n})",
+"Tümünü seç",
+"Temizle",
+"Kime gidecek",
+"e-posta ve SMS",
+"yalnızca SMS",
+"{n} kişiye gönder",
+"En az bir kişi seçin."];

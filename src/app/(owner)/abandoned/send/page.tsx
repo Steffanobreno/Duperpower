@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { draftsToMessage } from "@/lib/data/abandoned";
 import { emailConfigured } from "@/lib/email";
+import { phoneLabel } from "@/lib/format";
 import { Empty, Page, PageHeader } from "@/components/ui";
 import { SendAll } from "./send-all";
 
@@ -32,7 +33,12 @@ export default async function SendAllPage() {
           <Empty title={t("Nobody to send to")}>{t("Everyone who started booking in the last 30 days has booked since.")}</Empty>
         ) : (
           <SendAll
-            count={people.length}
+            people={people.map((p) => ({
+              id: p.id,
+              name: [p.first_name, p.last_name].filter(Boolean).join(" ") || phoneLabel(p.phone),
+              pets: p.pets,
+              email: !!p.email,
+            }))}
             withEmail={emailConfigured() ? people.filter((p) => p.email).length : 0}
             finish={tpl?.body ?? "Hi {client}! Looks like you didn't get to finish booking {pet}'s visit with {business}. Pick a time here: {booking_url} 🐾"}
             sorry={SORRY}
