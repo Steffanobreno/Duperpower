@@ -55,6 +55,20 @@ Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. S
 - [ ] Agendar uma visita de teste e ver o aviso de "arrival window" no fim da mensagem.
 - [ ] **Domingo:** a cópia automática (GitHub → Actions → backup) deve ficar verde.
 
+## 🚨 Pronto, esperando "pode publicar" (URGENTE): pedidos online que sumiam (2026-11-23)
+**O que aconteceu:** uma cliente viu "Yay! Your booking request was sent". O pedido não chegou e depois apareceu em Abandonados.
+
+**Causa:** a página de agendamento tinha um campo escondido "Website", uma armadilha para robôs. Quando ele vinha preenchido, o servidor respondia "ok" **sem gravar nada**. O preenchimento automático do navegador pode completar esse campo sem a pessoa ver.
+
+**Correção:**
+- A armadilha saiu da página e do servidor.
+- A tela de sucesso só aparece depois que o pedido está gravado.
+- Contra robôs continuam valendo: 15 tentativas por hora por aparelho, 3 pedidos por dia por telefone, telefone válido, CEP na área atendida, horário livre e contrato assinado.
+- Teste novo: `tests/e2e/booking-autofill.mjs`. Falhava antes e passa agora.
+
+**Para conferir:**
+- [ ] Em Abandonados, procure outras pessoas que parecem ter chegado ao fim do agendamento: podem ter sido vítimas do mesmo problema. Mande "Sorry, it's fixed" só para elas.
+
 ## ⏳ Pronto, esperando "pode publicar": escolher quem recebe no "Send to all" (2026-11-23)
 - Na tela "Send to all", a lista das pessoas aparece com uma caixinha para cada uma. Todas vêm marcadas; desmarque quem não deve receber.
 - Os botões **Select all** e **Clear** marcam e desmarcam todos. O botão de envio mostra quantos vão receber ("Send to 2").

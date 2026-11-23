@@ -119,7 +119,7 @@ export function BookingWizard({
   const [address, setAddress] = useState({ address: "", unit: "", city: "", zip: "" });
   // The street with the apartment or unit, as saved on the visit and the client.
   const street = address.unit.trim() ? `${address.address.trim()}, ${address.unit.trim()}` : address.address.trim();
-  const [contact, setContact] = useState({ firstName: "", lastName: "", email: "", notes: "", website: "" });
+  const [contact, setContact] = useState({ firstName: "", lastName: "", email: "", notes: "" });
   const [days, setDays] = useState<DaySlots[]>([]);
   const [day, setDay] = useState<string | null>(null);
   const [start, setStart] = useState<string | null>(null);
@@ -707,13 +707,6 @@ export function BookingWizard({
           <textarea aria-label={t("Anything we should know? (optional)")} rows={3} className={inputClass}
             placeholder={t("Gate code, parking, nervous with the dryer…")}
             value={contact.notes} onChange={(e) => setContact({ ...contact, notes: e.target.value })} />
-          {/* Hidden from people; bots fill it in. */}
-          <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-            <label>
-              Website
-              <input tabIndex={-1} autoComplete="off" value={contact.website} onChange={(e) => setContact({ ...contact, website: e.target.value })} />
-            </label>
-          </div>
 
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-bg px-4 py-4">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-5 w-5 accent-[var(--color-brand)]" />
