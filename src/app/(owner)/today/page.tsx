@@ -28,6 +28,7 @@ import { waitlistOpenings } from "@/lib/data/waitlist";
 import { fillSummary } from "@/lib/data/fill-gap";
 import { todayKpis } from "@/lib/data/kpis";
 import { KpiTiles } from "@/components/kpi-tiles";
+import { pendingCount } from "@/lib/data/pending";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getOwnerI18n();
@@ -62,7 +63,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const today = todayYmd(tz);
   const date = isYmd(sp.date) ? sp.date : today;
   // Everything that only needs the date, in one go (each trip to the database costs time).
-  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start], fill, kpis] = await Promise.all([
+  const [day, [{ requests }], groomers, closed, [clock], routeEnds, month, openings, [start], fill, kpis, pending] = await Promise.all([
     listDay(staff, date),
     sql<{ requests: number }[]>`
       select count(*)::int as requests from appointments
@@ -96,6 +97,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     fillSummary(staff, date),
     // The month's revenue, the week's occupancy and overdue clients: on today's date, for those who see Reports.
     staff.can.reports && date === today ? todayKpis(staff, today) : null,
+    staff.can.payments ? pendingCount(staff) : 0,
   ]);
   // A route is one groomer's day: yours unless another one (or all) is picked.
   // Without "see every groomer's visits", only their own route.
@@ -195,6 +197,12 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
               {clock.since ? t("Clock out") : t("Clock in")}
             </button>
           </form>
+        )}
+        {pending > 0 && date === today && (
+          <Link href="/pending" className="card flex items-center justify-between gap-3 px-4 py-3 font-semibold text-danger">
+            <span>{pending === 1 ? t("1 visit to close or collect") : t("{n} visits to close or collect", { n: pending })}</span>
+            <span aria-hidden>›</span>
+          </Link>
         )}
         {sp.denied && <Notice kind="warn">{t("Your role can't open that page. Ask the owner if you need it.")}</Notice>}
         {closed.has(date) && <Notice kind="warn">{t("Closed · {name}. Clients can't book online.", { name: closed.get(date) })}</Notice>}

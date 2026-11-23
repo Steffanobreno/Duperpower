@@ -78,7 +78,17 @@ Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. S
 - [ ] **Netlify → Deploys:** confirmar que o deploy do PR #7 terminou **verde**.
 - [ ] Fazer um agendamento de teste pelo site e ver o pedido chegar em Pedidos.
 
-**Em conversa: página de fechamento (diária, semanal e mensal)** (visitas que passaram e não foram concluídas, e concluídas sem pagamento, com setas entre semanas). Falta a resposta do dono: a partir de que dia contar as pendências (as visitas importadas do app antigo não têm pagamento registrado aqui).
+## ⏳ Pronto, esperando "pode publicar": tela "Pending" (2026-11-23)
+Design: `docs/superpowers/specs/2026-11-23-pendencias-de-fechamento-design.md`.
+- **Menu → Pending**, com o número de pendências. Na tela Hoje aparece o cartão "N visits to close or collect ›".
+- **Day / Week / Month**, com setas ‹ › entre períodos. Abre na semana atual (de segunda a domingo).
+- **To close:** a visita já passou e não foi marcada como concluída. O botão **Mark done** conclui e abre o checkout.
+- **To collect:** a visita está concluída e sem pagamento. O botão **Take payment** abre o checkout.
+- Cada grupo mostra a quantidade e o valor. Se houver pendências antes do período, aparece "N more before this. Go to the oldest ›".
+- **Conta a partir do primeiro pagamento fechado no app**, para que as visitas do app antigo não apareçam como falsas pendências.
+- Precisa da permissão de pagamentos.
+- Teste: `tests/e2e/pending.mjs`. A tela também entrou na checagem de acessibilidade (`a11y.mjs`), sem problemas novos. Typecheck, lint e i18n-check passaram; traduções nos 19 idiomas.
+- [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".

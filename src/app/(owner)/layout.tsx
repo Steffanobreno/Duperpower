@@ -11,6 +11,7 @@ import { I18nProvider } from "@/components/i18n";
 import { getOwnerI18n } from "@/lib/i18n/server";
 import { redirect } from "next/navigation";
 import { accessOf, billingOn } from "@/lib/billing";
+import { pendingCount } from "@/lib/data/pending";
 
 export default async function OwnerLayout({ children }: LayoutProps<"/">) {
   const staff = await requireStaff();
@@ -27,6 +28,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
            (select trial_ends_at from businesses where id = ${staff.businessId}) as trial_ends_at`,
     // Alongside, not after: one wait for both.
     isAdmin(staff.staffId)]);
+  const pending = staff.can.payments ? await pendingCount(staff) : 0;
   // The plan: once the trial is over (or the plan cancelled), only the billing page opens.
   const access = accessOf({ plan_status, trial_ends_at });
   if (billingOn() && access.locked) redirect("/billing");
@@ -46,7 +48,7 @@ export default async function OwnerLayout({ children }: LayoutProps<"/">) {
       <Suspense fallback={null}><NavProgress /></Suspense>
       {children}
       <TabBar can={staff.can} />
-      <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} role={staff.role} can={staff.can}
+      <SideMenu staffName={staff.staffName} businessName={staff.businessName} requests={requests} pending={pending} role={staff.role} can={staff.can}
         logo={logo ? `/logo/${staff.businessId}?v=${logo}` : null} admin={admin} />
      </div>
     </I18nProvider>

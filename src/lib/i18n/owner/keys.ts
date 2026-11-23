@@ -1830,5 +1830,17 @@ export const OWNER_KEYS: string[] = [
  "email and text",
  "text only",
  "Send to {n}",
- "Pick at least one person."
+ "Pick at least one person.",
+ "Pending",
+ "{n} more before this. Go to the oldest ›",
+ "All closed",
+ "Every visit in this period is marked done and paid.",
+ "To close",
+ "Over, but not marked done.",
+ "Mark done",
+ "To collect",
+ "Done, but no payment recorded.",
+ "Counts from the first payment you closed in the app. Older visits came from your previous app.",
+ "1 visit to close or collect",
+ "{n} visits to close or collect"
 ];
