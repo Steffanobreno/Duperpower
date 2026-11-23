@@ -1822,5 +1822,13 @@ export const OWNER_KEYS: string[] = [
  "Clear recovered ({n})",
  "Message to start from",
  "Random: a different message for each person",
- "Each person gets one of the 20 messages, picked at random."
+ "Each person gets one of the 20 messages, picked at random.",
+ "Who gets it ({n} of {total})",
+ "Select all",
+ "Clear",
+ "Who gets it",
+ "email and text",
+ "text only",
+ "Send to {n}",
+ "Pick at least one person."
 ];

@@ -13,7 +13,7 @@ export type SendAllState = { error?: string; emailed?: number; texts?: { id: str
 const appUrl = () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 /**
- * "Send to all": the same message (or, with mode "random", one of the 20 ready messages each,
+ * "Send to all" (to the people ticked): the same message (or, with mode "random", one of the 20 ready messages each,
  * no repeats), filled in for each person who started booking and didn't
  * finish (last 30 days, not booked since). Emails go out now to those who left one; the texts
  * come back as a list the owner sends one tap at a time from their phone (a phone app can't
@@ -27,7 +27,10 @@ export async function sendAllAction(_: SendAllState, form: FormData): Promise<Se
   if (!random && !text) return { error: "Write the message first." };
   const [b] = await sql<{ name: string; phone: string | null; booking_slug: string }[]>`
     select name, phone, booking_slug from businesses where id = ${staff.businessId}`;
-  const people = await draftsToMessage(staff);
+  // Only the people ticked on the page, and only among those who can get it (not booked since, last 30 days).
+  const ids = new Set(form.getAll("ids").map(String));
+  const people = (await draftsToMessage(staff)).filter((d) => ids.has(d.id));
+  if (!ids.size) return { error: "Pick at least one person." };
   if (!people.length) return { error: "Nobody to send to: everyone who started booking has booked since." };
   const stamp = new Date().toISOString().slice(0, 10);
   const texts: NonNullable<SendAllState>["texts"] = [];

@@ -1820,4 +1820,12 @@ export const pt: string[] = ["Agendamento abandonado",
 "Limpar recuperados ({n})",
 "Mensagem para começar",
 "Aleatória: uma mensagem diferente para cada pessoa",
-"Cada pessoa recebe uma das 20 mensagens, sorteada."];
+"Cada pessoa recebe uma das 20 mensagens, sorteada.",
+"Quem recebe ({n} de {total})",
+"Marcar todos",
+"Limpar",
+"Quem recebe",
+"e-mail e SMS",
+"só SMS",
+"Mandar para {n}",
+"Escolha pelo menos uma pessoa."];

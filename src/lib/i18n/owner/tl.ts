@@ -1820,4 +1820,12 @@ export const tl: string[] = ["Naiwang booking",
 "Alisin ang mga nabawi ({n})",
 "Mensaheng panimula",
 "Random: ibang mensahe para sa bawat tao",
-"Bawat tao ay makakatanggap ng isa sa 20 mensahe, pinili nang random."];
+"Bawat tao ay makakatanggap ng isa sa 20 mensahe, pinili nang random.",
+"Sino ang makakatanggap ({n} sa {total})",
+"Piliin lahat",
+"Alisin",
+"Sino ang makakatanggap",
+"email at text",
+"text lang",
+"Ipadala sa {n}",
+"Pumili ng kahit isang tao."];

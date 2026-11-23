@@ -1820,4 +1820,12 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "Hapus yang kembali ({n})",
 "Pesan untuk memulai",
 "Acak: pesan berbeda untuk setiap orang",
-"Setiap orang menerima salah satu dari 20 pesan, dipilih acak."];
+"Setiap orang menerima salah satu dari 20 pesan, dipilih acak.",
+"Siapa yang menerima ({n} dari {total})",
+"Pilih semua",
+"Hapus",
+"Siapa yang menerima",
+"email dan SMS",
+"hanya SMS",
+"Kirim ke {n}",
+"Pilih setidaknya satu orang."];

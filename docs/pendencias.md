@@ -55,6 +55,16 @@ Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. S
 - [ ] Agendar uma visita de teste e ver o aviso de "arrival window" no fim da mensagem.
 - [ ] **Domingo:** a cópia automática (GitHub → Actions → backup) deve ficar verde.
 
+## ⏳ Pronto, esperando "pode publicar": escolher quem recebe no "Send to all" (2026-11-23)
+- Na tela "Send to all", a lista das pessoas aparece com uma caixinha para cada uma. Todas vêm marcadas; desmarque quem não deve receber.
+- Os botões **Select all** e **Clear** marcam e desmarcam todos. O botão de envio mostra quantos vão receber ("Send to 2").
+- Cada pessoa mostra o pet e se recebe "email and text" ou só "text".
+- O servidor só manda para quem foi marcado e ainda pode receber (não agendou depois, últimos 30 dias).
+- Teste: `abandoned-send-all.mjs` (desmarcar uma pessoa e mandar para as outras duas). Typecheck, lint e i18n-check passaram. Traduções nos 19 idiomas.
+- [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
+
+**Em conversa: página semanal de fechamento** (visitas que passaram e não foram concluídas, e concluídas sem pagamento, com setas entre semanas). Falta a resposta do dono: a partir de que dia contar as pendências (as visitas importadas do app antigo não têm pagamento registrado aqui).
+
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
 - [ ] `fill-gap.mjs`: "Lou (San Lorenzo) fits the gap and should not be marked".
