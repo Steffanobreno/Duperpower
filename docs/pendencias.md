@@ -88,6 +88,12 @@ Design: `docs/superpowers/specs/2026-11-23-pendencias-de-fechamento-design.md`.
 - **Conta a partir do primeiro pagamento fechado no app**, para que as visitas do app antigo não apareçam como falsas pendências.
 - Precisa da permissão de pagamentos.
 - Teste: `tests/e2e/pending.mjs`. A tela também entrou na checagem de acessibilidade (`a11y.mjs`), sem problemas novos. Typecheck, lint e i18n-check passaram; traduções nos 19 idiomas.
+- **Teste completo antes de publicar (2026-11-23):**
+  - Bateria inteira, cada teste isolado num banco recém-criado logo depois do `slice`: **55 passaram**.
+  - **8 falharam do mesmo jeito no código de antes desta leva (`673253c`)**, então são problemas antigos ou do ambiente: app-open, edit-services, offline, remove-client, security, settings-basic, today-map, worldwide.
+  - **Não rodaram**, porque precisam de servidores falsos que não estão no repositório: billing, discounts, email-provider, google-maps, marketing, nearby, team-backup, repeat.
+  - Testes unitários, i18n-check, lint e typecheck passaram, e o build de produção também.
+  - No modo de produção (`next start`), pending, booking-autofill, abandoned-send-all, abandoned, no-travel-buffer e online-booking-settings passaram.
 - [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
