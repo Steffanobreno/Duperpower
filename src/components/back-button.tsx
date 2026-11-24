@@ -1,4 +1,5 @@
 "use client";
+import Link from "@/components/app-link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "./i18n";
@@ -63,6 +64,16 @@ export function BackButton({ fallback }: { fallback: string }) {
       }}>
       <span aria-hidden>←</span>
     </button>
+  );
+}
+
+/** A ← that always goes to `href`, replacing this screen in the history (a finished task). */
+export function HomeButton({ href }: { href: string }) {
+  const { t } = useT();
+  return (
+    <Link href={href} replace aria-label={t("Back")} className="-ml-2 rounded-lg p-2 text-white hover:bg-white/10">
+      <span aria-hidden>←</span>
+    </Link>
   );
 }
 

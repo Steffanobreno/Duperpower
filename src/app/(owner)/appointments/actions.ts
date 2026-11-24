@@ -4,10 +4,10 @@ import { redirect, RedirectType } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireStaff, type StaffContext, requirePermission } from "@/lib/auth";
 import { isExclusionViolation, sql } from "@/lib/db";
-import type { TransactionSql } from "postgres";
 import { hm, isYmd, timeLabel, weekdayOf, ymd, zonedToUtc } from "@/lib/format";
 import { tooFarFromDay, workingHoursFor } from "@/lib/data/appointments";
-import { recalcInvoice } from "@/lib/data/invoices";
+import { recalcInvoice, syncInvoiceServices } from "@/lib/data/invoices";
+import { dropPetFromVisit } from "@/lib/data/visit-pets";
 import { notifyAppointment } from "@/lib/messaging";
 import { emailReceipt } from "@/lib/receipt-email";
 import { NEXT_STATUS } from "@/lib/appointment-status";
@@ -259,19 +259,21 @@ async function openInvoice(staff: StaffContext, appointmentId: string) {
  * Puts the visit's services on its bill (again), keeping discounts, charges, taxes and
  * payments. Called when the bill is made and whenever the services or prices change.
  */
-async function syncInvoiceServices(tx: TransactionSql, appointmentId: string, invoiceId: string) {
-  await tx`delete from invoice_items where invoice_id = ${invoiceId} and kind in ('service', 'addon')`;
-  await tx`
-    insert into invoice_items (invoice_id, kind, description, amount_cents)
-    select ${invoiceId}, case when sv.kind = 'addon' then 'addon' else 'service' end, p.name || ': ' || s.name, s.price_cents
-    from appointment_pets ap
-    join pets p on p.id = ap.pet_id
-    join appointment_services s on s.appointment_pet_id = ap.id
-    join services sv on sv.id = s.service_id
-    where ap.appointment_id = ${appointmentId}
-    order by p.name, s.created_at`;
-  await recalcInvoice(tx, invoiceId);
+
+/** "Remove {pet} from this visit": the visit keeps at least one pet. */
+export async function removePetFromVisitAction(appointmentId: string, appointmentPetId: string) {
+  const staff = await requireStaff();
+  const [appt] = await sql`select status, client_id from appointments where id = ${appointmentId} and business_id = ${staff.businessId}`;
+  if (!appt || ["cancelled", "no_show", "declined"].includes(appt.status)) return;
+  const [{ n }] = await sql`select count(*)::int as n from appointment_pets where appointment_id = ${appointmentId}`;
+  if (n < 2) return;
+  await sql.begin((tx) => dropPetFromVisit(tx, appointmentId, appointmentPetId));
+  revalidatePath(`/appointments/${appointmentId}`);
+  revalidatePath(`/clients/${appt.client_id}`);
+  revalidatePath("/today");
+  revalidatePath("/calendar");
 }
+
 
 export async function startCheckoutAction(appointmentId: string) {
   const staff = await requirePermission("payments");
@@ -378,7 +380,17 @@ export async function recordPaymentAction(appointmentId: string, _: FormState, f
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath(`/appointments/${appointmentId}/checkout`);
   revalidatePath("/today");
+  await toPaidWhenClosed(staff, appointmentId);
   return undefined;
+}
+
+/**
+ * Paid in full: the "Payment received" screen, in place of the checkout in the history, so Back
+ * doesn't land on the payment again. A partial payment stays on the checkout.
+ */
+async function toPaidWhenClosed(staff: StaffContext, appointmentId: string) {
+  const [inv] = await sql`select 1 from invoices where appointment_id = ${appointmentId} and business_id = ${staff.businessId} and status = 'closed'`;
+  if (inv) redirect(`/appointments/${appointmentId}/paid`, RedirectType.replace);
 }
 
 /** Once an order is finished (paid in full), the client gets the receipt by email, once (unless turned off). */
@@ -398,6 +410,15 @@ export async function emailReceiptAction(appointmentId: string) {
   redirect(`/appointments/${appointmentId}/checkout?receipt=${result}`);
 }
 
+/** "Email receipt" from the Payment received screen: sends it, and stays there. */
+export async function emailReceiptFromPaidAction(appointmentId: string) {
+  const staff = await requirePermission("payments");
+  const [inv] = await sql`select id from invoices where appointment_id = ${appointmentId} and business_id = ${staff.businessId}`;
+  const result = inv ? await emailReceipt(staff.businessId, inv.id) : "failed";
+  revalidatePath(`/appointments/${appointmentId}/paid`);
+  redirect(`/appointments/${appointmentId}/paid?receipt=${result}`, RedirectType.replace);
+}
+
 /** Finishes the order when nothing is left to collect (a free visit, or paid in full already). */
 export async function closeInvoiceAction(appointmentId: string) {
   const staff = await requirePermission("payments");
@@ -413,6 +434,7 @@ export async function closeInvoiceAction(appointmentId: string) {
   revalidatePath(`/appointments/${appointmentId}`);
   revalidatePath(`/appointments/${appointmentId}/checkout`);
   revalidatePath("/today");
+  await toPaidWhenClosed(staff, appointmentId);
 }
 
 export async function reopenInvoiceAction(appointmentId: string) {

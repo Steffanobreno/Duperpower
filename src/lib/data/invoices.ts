@@ -58,3 +58,18 @@ export async function recalcInvoice(tx: TransactionSql, invoiceId: string) {
     update invoices set total_cents = subtotal_cents - discount_cents + tax_cents + tip_cents
     where id = ${invoiceId}`;
 }
+
+/** Rewrites a bill's service lines from the visit's pets and services, then its totals. */
+export async function syncInvoiceServices(tx: TransactionSql, appointmentId: string, invoiceId: string) {
+  await tx`delete from invoice_items where invoice_id = ${invoiceId} and kind in ('service', 'addon')`;
+  await tx`
+    insert into invoice_items (invoice_id, kind, description, amount_cents)
+    select ${invoiceId}, case when sv.kind = 'addon' then 'addon' else 'service' end, p.name || ': ' || s.name, s.price_cents
+    from appointment_pets ap
+    join pets p on p.id = ap.pet_id
+    join appointment_services s on s.appointment_pet_id = ap.id
+    join services sv on sv.id = s.service_id
+    where ap.appointment_id = ${appointmentId}
+    order by p.name, s.created_at`;
+  await recalcInvoice(tx, invoiceId);
+}

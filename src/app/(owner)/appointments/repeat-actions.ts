@@ -5,8 +5,8 @@ import { isExclusionViolation, sql } from "@/lib/db";
 import { hm, isYmd, ymd, zonedToUtc } from "@/lib/format";
 import { MAX_VISITS, repeatDates, type RepeatRule } from "@/lib/repeat";
 
-// Repeating a visit: books copies of it (same time, pets and services) on every date of the
-// rule. Changing the rule replaces the later copies that are still just booked; visits the
+// Repeating a visit: books copies of it (same pets and services; at its time, or at the time
+// picked for the next visits) on every date of the rule. Changing the rule replaces the later copies that are still just booked; visits the
 // client confirmed, checked in or paid are left alone. A date that is taken is skipped and
 // reported, so the owner can book that one at another time.
 
@@ -67,7 +67,9 @@ export async function saveRepeatAction(appointmentId: string, _: RepeatState, fo
   if (!LIVE.includes(a.status) || a.status === "requested") return { error: "Accept the visit before repeating it." };
 
   const first = ymd(a.start_at, tz);
-  const time = hm(a.start_at, tz);
+  // Every few weeks: the next visits at the time picked (this visit's own time when none).
+  const picked = String(form.get("time") ?? "");
+  const time = rule.freq !== "dates" && /^([01]\d|2[0-3]):[0-5]\d$/.test(picked) ? picked : hm(a.start_at, tz);
   const length = a.end_at.getTime() - a.start_at.getTime();
   const dates = repeatDates(first, rule).slice(1);
   if (dates.length === 0) return { error: "That rule has no dates after this visit." };

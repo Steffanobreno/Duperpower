@@ -33,6 +33,11 @@ export default async function RepeatPage({ params }: PageProps<"/appointments/[i
            to_char(start_at at time zone ${staff.timezone}, 'HH24:MI') as t from appointments
     where series_id = ${a.series_id} and start_at > ${a.start_at} and status not in ('cancelled', 'no_show', 'declined')
     order by start_at` : [];
+  // Every few weeks: the time the next visit of the repeat is at (it may differ from this one's).
+  const [next] = a.freq && a.freq !== "dates" && a.series_id ? await sql<{ t: string }[]>`
+    select to_char(start_at at time zone ${staff.timezone}, 'HH24:MI') as t from appointments
+    where series_id = ${a.series_id} and start_at > ${a.start_at} and status not in ('cancelled', 'no_show', 'declined')
+    order by start_at limit 1` : [];
   const initial: RepeatRule = a.freq === "dates"
     ? { freq: "dates", every: 1, count: null, until: null, dates: later.map((r) => r.d), times: Object.fromEntries(later.map((r) => [r.d, r.t])) }
     : a.freq
@@ -48,6 +53,7 @@ export default async function RepeatPage({ params }: PageProps<"/appointments/[i
           first={ymd(a.start_at, staff.timezone)}
           time={timeLabel(a.start_at, staff.timezone)}
           clock={hm(a.start_at, staff.timezone)}
+          nextClock={next?.t ?? null}
           initial={initial}
           repeating={!!a.series_id}
           save={saveRepeatAction.bind(null, id)}

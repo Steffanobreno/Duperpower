@@ -22,12 +22,13 @@ const label12 = (t: string) => {
 const fmt = (d: string) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric", year: "numeric" });
 
-export function RepeatForm({ appointmentId, clientId, first, time, clock, initial, repeating, save, stop }: {
+export function RepeatForm({ appointmentId, clientId, first, time, clock, nextClock, initial, repeating, save, stop }: {
   appointmentId: string;
   clientId: string;
   first: string; // this visit's date
   time: string; // "10:00 AM"
   clock: string; // the same, "10:00"
+  nextClock?: string | null; // the time the later visits of this repeat are at, when it already repeats
   initial: RepeatRule;
   repeating: boolean;
   save: (state: RepeatState, form: FormData) => Promise<RepeatState>;
@@ -47,6 +48,8 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
   const [ends, setEnds] = useState<"count" | "date">(initial.until ? "date" : "count");
   const [count, setCount] = useState(initial.count ?? 10);
   const [until, setUntil] = useState(initial.until ?? "");
+  // Every few weeks: the time of the next visits (this visit keeps its own).
+  const [ruleClock, setRuleClock] = useState(nextClock ?? clock);
   const rule: RepeatRule = mode === "dates"
     ? { freq: "dates", every: 1, count: null, until: null, dates: picked, times }
     : { freq, every, count: ends === "count" ? count : null, until: ends === "date" ? until || null : null };
@@ -138,7 +141,13 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted">{tr("Starts with this visit, {fmt} at {time}. Same pets, services and time.", { fmt: fmt(first), time: time })}</p>
+          <Field label={tr("Time for the next visits")}>
+            <Select name="time" value={ruleClock} onChange={(e) => setRuleClock(e.target.value)}>
+              {TIMES.includes(ruleClock) ? null : <option value={ruleClock}>{label12(ruleClock)}</option>}
+              {TIMES.map((t) => <option key={t} value={t}>{label12(t)}</option>)}
+            </Select>
+          </Field>
+          <p className="text-sm text-muted">{tr("Starts with this visit, {fmt} at {time}. Same pets and services.", { fmt: fmt(first), time: time })}</p>
         </Card>
         <Card className="space-y-3">
           <Field label={tr("Ends")}>
@@ -176,7 +185,7 @@ export function RepeatForm({ appointmentId, clientId, first, time, clock, initia
             {dates.map((d, i) => (
               <li key={d} className="flex justify-between py-1.5">
                 <span>{i + 1}. {fmt(d)}</span>
-                <span className="text-muted">{i === 0 ? tr("this visit") : mode === "dates" ? label12(timeOf(d)) : time}</span>
+                <span className="text-muted">{i === 0 ? tr("this visit") : mode === "dates" ? label12(timeOf(d)) : label12(ruleClock)}</span>
               </li>
             ))}
           </ol>

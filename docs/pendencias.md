@@ -96,6 +96,18 @@ Design: `docs/superpowers/specs/2026-11-23-pendencias-de-fechamento-design.md`.
   - No modo de produção (`next start`), pending, booking-autofill, abandoned-send-all, abandoned, no-travel-buffer e online-booking-settings passaram.
 - [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
 
+## ⏳ Pronto, esperando "pode publicar": repetir com outro horário, tela "Payment received", pets na visita (2026-11-24)
+Design: `docs/superpowers/specs/2026-11-24-repetir-pagamento-pets-design.md`.
+- **Repeat:** novo campo **Time for the next visits**. As próximas visitas da série ficam nesse horário; esta visita mantém o dela.
+- **Payment received:** depois de pagar por inteiro, abre uma tela com ✓, o valor, a gorjeta, os botões **Book next visit**, **Client history**, **See receipt**, **Back to Today** e **Edit order**, e o envio do recibo.
+- **Seta ←** nessa tela: vai para **Today**, não volta ao checkout.
+- **Pets na visita:**
+  - Tocar no pet abre o perfil dele, onde dá para mudar o nome e marcar "passed away".
+  - **Remove {pet} from this visit** aparece quando a visita tem 2 ou mais pets.
+  - **Passed away:** o pet sai das visitas futuras que têm outros pets. As visitas em que ele é o único pet aparecem para cancelar. Nenhuma mensagem é enviada ao cliente.
+- Testes: `repeat-time.mjs`, `paid-screen.mjs`, `visit-pets.mjs`. Traduções nos 19 idiomas.
+- [ ] Dizer **"pode publicar"** para ir ao ar. Sai junto com a tela "Pending" (15 créditos do Netlify).
+
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
 - [ ] `fill-gap.mjs`: "Lou (San Lorenzo) fits the gap and should not be marked".
