@@ -1,6 +1,6 @@
 # Pendências do Fino
 
-Atualizado em 2026-11-21. Última publicação na master: 2026-11-23 (PR #7: pedidos online que sumiam, escolher quem recebe no Send to all). Antes: 2026-11-22 (PR #6: Abandonados com 20 mensagens, Limpar recuperados, aviso de horário estimado, cópia do banco corrigida). Antes: 2026-11-21 (PR #5, sem tempo de deslocamento), 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
+Atualizado em 2026-11-21. Última publicação na master: 2026-11-25 (PR #8: tela Pending, repetir com outro horário, Payment received, pets na visita). Antes: 2026-11-23 (PR #7: pedidos online que sumiam, escolher quem recebe no Send to all), 2026-11-22 (PR #6: Abandonados com 20 mensagens, Limpar recuperados, aviso de horário estimado, cópia do banco corrigida). Antes: 2026-11-21 (PR #5, sem tempo de deslocamento), 2026-11-21 (PR #4), 2026-11-20 (PR #3) e 2026-11-15 (a Onda 1, o modo de teste dos pagamentos, as correções jurídicas, o limite por tempo de carro e o botão de voltar). Marque com [x] o que for feito.
 
 ## 🆕 Publicado em 2026-11-20 e 2026-11-21
 
@@ -78,7 +78,7 @@ Vale para todos os negócios, sem mexer no texto que você editou nos Ajustes. S
 - [ ] **Netlify → Deploys:** confirmar que o deploy do PR #7 terminou **verde**.
 - [ ] Fazer um agendamento de teste pelo site e ver o pedido chegar em Pedidos.
 
-## ⏳ Pronto, esperando "pode publicar": tela "Pending" (2026-11-23)
+## 🆕 Publicado em 2026-11-25 (PR #8): tela "Pending"
 Design: `docs/superpowers/specs/2026-11-23-pendencias-de-fechamento-design.md`.
 - **Menu → Pending**, com o número de pendências. Na tela Hoje aparece o cartão "N visits to close or collect ›".
 - **Day / Week / Month**, com setas ‹ › entre períodos. Abre na semana atual (de segunda a domingo).
@@ -94,9 +94,9 @@ Design: `docs/superpowers/specs/2026-11-23-pendencias-de-fechamento-design.md`.
   - **Não rodaram**, porque precisam de servidores falsos que não estão no repositório: billing, discounts, email-provider, google-maps, marketing, nearby, team-backup, repeat.
   - Testes unitários, i18n-check, lint e typecheck passaram, e o build de produção também.
   - No modo de produção (`next start`), pending, booking-autofill, abandoned-send-all, abandoned, no-travel-buffer e online-booking-settings passaram.
-- [ ] Dizer **"pode publicar"** para ir ao ar (gasta 15 créditos do Netlify).
+- [ ] Conferir no ar: Pending no menu, com o número; o cartão na tela Hoje.
 
-## ⏳ Pronto, esperando "pode publicar": repetir com outro horário, tela "Payment received", pets na visita (2026-11-24)
+## 🆕 Publicado em 2026-11-25 (PR #8): repetir com outro horário, tela "Payment received", pets na visita
 Design: `docs/superpowers/specs/2026-11-24-repetir-pagamento-pets-design.md`.
 - **Repeat:** novo campo **Time for the next visits**. As próximas visitas da série ficam nesse horário; esta visita mantém o dela.
 - **Payment received:** depois de pagar por inteiro, abre uma tela com ✓, o valor, a gorjeta, os botões **Book next visit**, **Client history**, **See receipt**, **Back to Today** e **Edit order**, e o envio do recibo.
@@ -110,7 +110,15 @@ Design: `docs/superpowers/specs/2026-11-24-repetir-pagamento-pets-design.md`.
   - Bateria inteira, cada teste isolado: todos passaram, menos 7 que falham do mesmo jeito no código que está no ar: app-open, offline, remove-client, security, today-map, worldwide e message-settings. O message-settings depende da data: marca uma visita "daqui a 5 dias" e esbarra num aviso.
   - Os testes de e-mail falharam na primeira rodada porque o receptor de e-mail local tinha parado. Com ele de pé, passaram.
   - O build de produção passou. No modo de produção (`next start`), passaram: repeat-time, paid-screen, visit-pets, pending, booking-autofill, finish-order, receipts e fixes.
-- [ ] Dizer **"pode publicar"** para ir ao ar. Sai junto com a tela "Pending" (15 créditos do Netlify).
+- [ ] **Netlify → Deploys:** confirmar que o deploy do PR #8 terminou **verde**.
+- [ ] Receber um pagamento e ver a tela "Payment received"; a seta ← leva para Today.
+- [ ] Abrir Pending (menu) e conferir as pendências da semana.
+
+## Cliente que viu "not taking online requests" (2026-11-25)
+- A varredura recriou o caso (cliente antigo, Oakland 94611, Baloo X-Large, Bath X-Large + De-shedding, contrato não assinado): o app novo reconhece, mostra horários e grava o pedido. O texto citado não existe no app novo; o mais provável é um link antigo do MoeGo.
+- [ ] Ver em Abandonados se há cartão dele (sem cartão = nunca entrou na nossa página).
+- [ ] Perfil da Woofers no Google: o botão de agendar deve apontar para o link de Ajustes → Agendamento online, não para o MoeGo.
+- [ ] Site: todos os "Book Now" com esse mesmo link.
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
 - [ ] `calendar-pick.mjs`: "no dot for the day with Maria's visit".
