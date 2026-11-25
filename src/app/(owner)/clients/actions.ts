@@ -8,6 +8,7 @@ import { normalizePhone, parseMoney, SIZES, sizeFromWeight, weightIn } from "@/l
 import { geocode } from "@/lib/maps";
 import { savePetPhoto } from "@/lib/pet-photos";
 import { sendEmail } from "@/lib/email";
+import { dropPetFromVisit, upcomingWithPet } from "@/lib/data/visit-pets";
 
 export type FormState = { error?: string } | undefined;
 
@@ -224,13 +225,53 @@ export async function setClientControlAction(
   revalidatePath("/clients");
 }
 
-/** Marks a pet as passed away (or undoes it): hidden from booking, lists and reminders. */
+/**
+ * Marks a pet as passed away (or undoes it): hidden from booking, lists and reminders. It also
+ * comes off its upcoming visits that have other pets; visits with only this pet are listed on
+ * its profile, to cancel (the owner decides, nothing is sent to the client).
+ */
 export async function setPetPassedAction(clientId: string, petId: string, passed: boolean) {
   const staff = await requireStaff();
-  await sql`update pets p set deceased_at = ${passed ? new Date() : null}
-            from clients c where c.id = p.client_id and p.id = ${petId} and c.business_id = ${staff.businessId}`;
+  const [pet] = await sql`update pets p set deceased_at = ${passed ? new Date() : null}
+            from clients c where c.id = p.client_id and p.id = ${petId} and c.business_id = ${staff.businessId}
+            returning p.id`;
+  let removed = 0;
+  let alone = 0;
+  if (pet && passed) {
+    const visits = await upcomingWithPet(staff.businessId, petId);
+    const shared = visits.filter((v) => v.pets > 1);
+    if (shared.length) {
+      await sql.begin(async (tx) => {
+        for (const v of shared) await dropPetFromVisit(tx, v.appointment_id, v.appointment_pet_id);
+      });
+    }
+    removed = shared.length;
+    alone = visits.length - shared.length;
+  }
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/today");
+  revalidatePath("/calendar");
+  // Something to tell or to decide: the pet's profile says what happened to its visits.
+  if (removed || alone) redirect(`/clients/${clientId}/pets/${petId}?removed=${removed}`, RedirectType.replace);
   redirect(`/clients/${clientId}`, RedirectType.replace);
+}
+
+/** "Cancel these visits": the upcoming visits that had only this (passed away) pet. No message is sent. */
+export async function cancelOnlyPetVisitsAction(clientId: string, petId: string) {
+  const staff = await requireStaff();
+  const [pet] = await sql`select p.id from pets p join clients c on c.id = p.client_id
+                          where p.id = ${petId} and c.business_id = ${staff.businessId} and p.deceased_at is not null`;
+  if (pet) {
+    const ids = (await upcomingWithPet(staff.businessId, petId)).filter((v) => v.pets === 1).map((v) => v.appointment_id);
+    if (ids.length) {
+      await sql`update appointments set status = 'cancelled', cancelled_at = now()
+                where id = any(${ids}::uuid[]) and business_id = ${staff.businessId}`;
+    }
+  }
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/today");
+  revalidatePath("/calendar");
+  redirect(`/clients/${clientId}/pets/${petId}`, RedirectType.replace);
 }
 
 export async function deleteNoteAction(clientId: string, noteId: string) {

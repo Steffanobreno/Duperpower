@@ -2,7 +2,7 @@ import { msg } from "@/lib/i18n";
 import Link from "@/components/app-link";
 import type { ComponentProps, ReactNode } from "react";
 import { MenuButton } from "./side-menu";
-import { BackButton } from "./back-button";
+import { BackButton, HomeButton } from "./back-button";
 
 // Small set of shared primitives. Pages compose these instead of styling from scratch.
 
@@ -32,11 +32,17 @@ export function Card({ className = "", ...props }: ComponentProps<"div">) {
   return <div className={`rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-card)] ${className}`} {...props} />;
 }
 
-export function PageHeader({ title, back, action }: { title: string; back?: string; action?: ReactNode }) {
+/**
+ * `back`: the ← goes to the previous screen (or there, when there's none). `home`: the ← always
+ * goes there (a finished task, like a payment, doesn't send you back into it).
+ */
+export function PageHeader({ title, back, home, action }: { title: string; back?: string; home?: string; action?: ReactNode }) {
   return (
     <header className="sticky top-0 z-10 bg-navy text-white shadow-sm">
       <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
-        {back ? (
+        {home ? (
+          <HomeButton href={home} />
+        ) : back ? (
           <BackButton fallback={back} />
         ) : (
           <MenuButton />

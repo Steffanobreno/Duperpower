@@ -53,7 +53,7 @@ for (const width of [390, 1280]) {
   await page.waitForURL(/\/today/);
   for (const path of ["/today", "/today?view=list", "/calendar", "/clients", `/clients/${client.id}`, `/appointments/${visit.id}`,
     `/appointments/${visit.id}/checkout`, "/appointments/new", "/reports", "/settings", "/settings/business", "/settings/services",
-    "/settings/booking", "/settings/messages", "/settings/team", "/help", "/billing", "/marketing", "/waitlist", "/requests", `/fill/${fillDay}`]) {
+    "/settings/booking", "/settings/messages", "/settings/team", "/help", "/billing", "/marketing", "/waitlist", "/requests", "/pending", "/pending?view=month", `/fill/${fillDay}`]) {
     await check(page, path);
   }
   console.log(`✓ ${width}px: every screen checked`);
@@ -74,7 +74,7 @@ for (const width of [390, 1280]) {
   await page.fill('input[name="password"]', "correct horse battery");
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/today/);
-  for (const path of ["/today", "/calendar", "/clients", `/clients/${client.id}`, `/appointments/${visit.id}`, `/appointments/${visit.id}/checkout`,
+  for (const path of ["/today", "/pending", "/calendar", "/clients", `/clients/${client.id}`, `/appointments/${visit.id}`, `/appointments/${visit.id}/checkout`,
     "/appointments/new", "/reports", "/settings", "/settings/hours", "/settings/business", "/settings/booking", "/billing", `/fill/${fillDay}`]) await wide(path);
   console.log("✓ 320px: no screen scrolls sideways");
 }

@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getPet } from "@/lib/data/clients";
-import { Card, Page, PageHeader } from "@/components/ui";
-import { addVaccineAction, deletePetPriceAction, deleteVaccineAction, savePetAction, savePetPriceAction, setPetCodesAction, setPetPassedAction } from "../../../actions";
+import { Card, Notice, Page, PageHeader } from "@/components/ui";
+import { addVaccineAction, cancelOnlyPetVisitsAction, deletePetPriceAction, deleteVaccineAction, savePetAction, savePetPriceAction, setPetCodesAction, setPetPassedAction } from "../../../actions";
 import { allOptions, listPetCodes, petCodesFor } from "@/lib/data/options";
 import { petOptions } from "../../../options";
 import Link from "@/components/app-link";
@@ -12,7 +12,8 @@ import { listServices } from "@/lib/data/services";
 import { petPrices } from "@/lib/data/pet-prices";
 import { PetPriceForm } from "./price-form";
 import { listVaccines, SOON_DAYS } from "@/lib/data/vaccines";
-import { addDaysYmd, dayLabel, minutesLabel, money, todayYmd } from "@/lib/format";
+import { addDaysYmd, dayLabel, minutesLabel, money, timeLabel, todayYmd } from "@/lib/format";
+import { upcomingWithPet } from "@/lib/data/visit-pets";
 import { petGrooms } from "@/lib/data/grooms";
 import { VaccineForm } from "./vaccine-form";
 import { PetPhotoUpload } from "../../../pet-photo-upload";
@@ -24,14 +25,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("Edit pet") };
 }
 
-export default async function EditPetPage({ params }: PageProps<"/clients/[id]/pets/[petId]">) {
+export default async function EditPetPage({ params, searchParams }: PageProps<"/clients/[id]/pets/[petId]">) {
   const { t } = await getOwnerI18n();
   const staff = await requireStaff();
   const { id, petId } = await params;
+  const sp = await searchParams;
   const [pet, vaccines, services, own, lists, codes, petCodes, grooms] = await Promise.all([
     getPet(staff, petId), listVaccines(staff, petId), listServices(staff), petPrices([petId]),
     allOptions(staff.businessId), listPetCodes(staff.businessId), petCodesFor([petId]), petGrooms(staff, petId),
   ]);
+  // Passed away: what happened to its upcoming visits, and the ones it was alone on (to cancel).
+  const alone = pet?.deceased_at ? (await upcomingWithPet(staff.businessId, petId)).filter((v) => v.pets === 1) : [];
+  const removed = Number(sp.removed) || 0;
   const onPet = new Set((petCodes.get(petId) ?? []).map((c) => c.id));
   if (!pet || pet.client_id !== id) notFound();
   const serviceById = new Map(services.map((s) => [s.id, s]));
@@ -46,6 +51,31 @@ export default async function EditPetPage({ params }: PageProps<"/clients/[id]/p
     <>
       <PageHeader title={t("Edit {name}", { name: pet.name })} back={`/clients/${id}`} />
       <Page>
+        {pet.deceased_at && removed > 0 && (
+          <Notice kind="success">
+            {removed === 1 ? t("{name} was taken off 1 upcoming visit with other pets.", { name: pet.name })
+              : t("{name} was taken off {n} upcoming visits with other pets.", { name: pet.name, n: removed })}
+          </Notice>
+        )}
+        {alone.length > 0 && (
+          <section aria-label={t("Upcoming visits with only {name}", { name: pet.name })} className="card space-y-3 p-4">
+            <h2 className="font-bold">{t("Upcoming visits with only {name}", { name: pet.name })}</h2>
+            <ul className="divide-y divide-line">
+              {alone.map((v) => (
+                <li key={v.appointment_id}>
+                  <Link href={`/appointments/${v.appointment_id}`} className="flex justify-between py-2 text-sm font-semibold">
+                    <span>{dayLabel(v.start_at, staff.timezone)} · {timeLabel(v.start_at, staff.timezone)}</span>
+                    <span aria-hidden>›</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <form action={cancelOnlyPetVisitsAction.bind(null, id, petId)}>
+              <button type="submit" className="w-full rounded-xl bg-danger py-3 font-semibold text-white">{t("Cancel these visits")}</button>
+            </form>
+            <p className="text-xs text-muted">{t("No message is sent to the client.")}</p>
+          </section>
+        )}
         <Card className="flex items-center gap-4">
           <PetPhoto petId={petId} version={pet.photo_version} name={pet.name} size={88} />
           <PetPhotoUpload petId={petId} hasPhoto={!!pet.photo_version} />

@@ -17,7 +17,7 @@ import { Button, Card, Notice, Page, PageHeader, statusLabel, Textarea } from "@
 import { Calendar, Card as Card2, Chat, Check, ChevronDown, ChevronRight, Clock, Close, Hourglass, Pencil, Phone, Pin, Plus, Van } from "@/components/icons";
 import { NEXT_STATUS } from "@/lib/appointment-status";
 import { ruleLabel, type RepeatRule } from "@/lib/repeat";
-import { assignGroomerAction, setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
+import { assignGroomerAction, removePetFromVisitAction, setStatusAction, rescheduleAction, startCheckoutAction, updateNotesAction } from "../actions";
 import { listGroomers } from "@/lib/data/staff";
 import { alertText, vaccineAlerts } from "@/lib/data/vaccines";
 import { RescheduleForm } from "../reschedule-form";
@@ -28,6 +28,7 @@ import { ReportCardSection } from "./report-card";
 import { visitGrooms } from "@/lib/data/grooms";
 import { PetPhoto } from "@/components/pet-photo";
 import { ConfirmButton } from "@/components/confirm-button";
+import { RemovePetButton } from "./remove-pet";
 import { AddressLink, PhoneLink } from "@/components/contact-sheet";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -265,13 +266,22 @@ export default async function AppointmentPage({ params, searchParams }: PageProp
           </div>
           {appt.pets.map((p) => (
             <div key={p.appointment_pet_id} className="card divide-y divide-line">
-              <div className="flex items-center gap-3 px-4 py-3">
-                <PetPhoto petId={p.pet_id} version={p.photo_version} name={p.name} />
-                <div className="min-w-0">
-                  <div className="text-lg font-bold">{p.name}</div>
-                  <div className="text-sm text-muted">{[p.breed, t(sizeLabel(p.size_class))].filter(Boolean).join(" · ")}</div>
-                  <PetCodeChips codes={codes.get(p.pet_id)} />
-                </div>
+              <div className="px-4 py-3">
+                {/* The pet's profile: name, notes, vaccines, "passed away". */}
+                <Link href={`/clients/${c.id}/pets/${p.pet_id}`} aria-label={t("{name}: pet profile", { name: p.name })} className="flex items-center gap-3">
+                  <PetPhoto petId={p.pet_id} version={p.photo_version} name={p.name} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg font-bold">{p.name}</div>
+                    <div className="text-sm text-muted">{[p.breed, t(sizeLabel(p.size_class))].filter(Boolean).join(" · ")}</div>
+                    <PetCodeChips codes={codes.get(p.pet_id)} />
+                  </div>
+                  <ChevronRight size={20} className="text-muted" />
+                </Link>
+                {canEditServices && appt.pets.length > 1 && (
+                  <div className="mt-2">
+                    <RemovePetButton name={p.name} remove={removePetFromVisitAction.bind(null, id, p.appointment_pet_id)} />
+                  </div>
+                )}
               </div>
               {vaccines.some((v) => v.pet_id === p.pet_id) && (
                 <div className="space-y-1 px-4 py-3">

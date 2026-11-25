@@ -17,6 +17,7 @@ const ITEMS = [
   { href: "/calendar", label: msg("Appointments"), icon: "M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm-2 7h14v10H5V9Z" },
   { href: "/clients", label: msg("Clients & pets"), icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" },
   { href: "/requests", label: msg("Booking requests"), icon: "M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" },
+  { href: "/pending", perm: "payments", label: msg("Pending"), icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5h-2v6l5 3 1-1.7-4-2.3V7Z" },
   { href: "/waitlist", label: msg("Waitlist"), icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.4l3.5 2.1-1 1.7L11 13.5V7h2Z" },
   { href: "/abandoned", perm: "settings", label: msg("Abandoned bookings"), icon: "M7 4h10l1 3H6l1-3Zm-2 5h14l-1.2 10.2A2 2 0 0 1 15.8 21H8.2a2 2 0 0 1-2-1.8L5 9Zm4 3v6h2v-6H9Zm4 0v6h2v-6h-2Z" },
   { href: "/marketing", perm: "marketing", label: msg("Marketing"), icon: "M3 10v4a1 1 0 0 0 1 1h2l5 4V5L6 9H4a1 1 0 0 0-1 1Zm13.5 2A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4ZM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z" },
@@ -27,8 +28,8 @@ const ITEMS = [
   { href: "/settings", label: msg("Settings"), icon: "M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3h-4l-.4 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1L11 21h4l.4-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2.1-1.6ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" },
 ];
 
-export function SideMenu({ staffName, businessName, requests, role, can, logo, admin = false }: {
-  staffName: string; businessName: string; requests: number; role: string; can: Record<string, boolean>; logo: string | null;
+export function SideMenu({ staffName, businessName, requests, pending = 0, role, can, logo, admin = false }: {
+  staffName: string; businessName: string; requests: number; pending?: number; role: string; can: Record<string, boolean>; logo: string | null;
   /** The app owner: a link to their own dashboard (/admin). */
   admin?: boolean;
 }) {
@@ -66,6 +67,9 @@ export function SideMenu({ staffName, businessName, requests, role, can, logo, a
                   className={`flex items-center gap-4 rounded-xl px-3 py-3.5 text-lg font-semibold ${active ? "bg-white/10 text-sky" : "hover:bg-white/5"}`}>
                   <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="currentColor" aria-hidden><path d={i.icon} /></svg>
                   {t(i.label)}
+                  {i.href === "/pending" && pending > 0 && (
+                    <span className="ml-auto rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">{pending}</span>
+                  )}
                   {i.href === "/requests" && requests > 0 && (
                     <span className="ml-auto rounded-full bg-sky px-2 py-0.5 text-xs font-bold text-navy">{requests}</span>
                   )}
