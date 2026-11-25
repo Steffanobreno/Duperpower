@@ -106,6 +106,10 @@ Design: `docs/superpowers/specs/2026-11-24-repetir-pagamento-pets-design.md`.
   - **Remove {pet} from this visit** aparece quando a visita tem 2 ou mais pets.
   - **Passed away:** o pet sai das visitas futuras que têm outros pets. As visitas em que ele é o único pet aparecem para cancelar. Nenhuma mensagem é enviada ao cliente.
 - Testes: `repeat-time.mjs`, `paid-screen.mjs`, `visit-pets.mjs`. Traduções nos 19 idiomas.
+- **Teste completo (2026-11-25):**
+  - Bateria inteira, cada teste isolado: todos passaram, menos 7 que falham do mesmo jeito no código que está no ar: app-open, offline, remove-client, security, today-map, worldwide e message-settings. O message-settings depende da data: marca uma visita "daqui a 5 dias" e esbarra num aviso.
+  - Os testes de e-mail falharam na primeira rodada porque o receptor de e-mail local tinha parado. Com ele de pé, passaram.
+  - O build de produção passou. No modo de produção (`next start`), passaram: repeat-time, paid-screen, visit-pets, pending, booking-autofill, finish-order, receipts e fixes.
 - [ ] Dizer **"pode publicar"** para ir ao ar. Sai junto com a tela "Pending" (15 créditos do Netlify).
 
 Testes que falham também no código do `master`, sem esta mudança (falha do ambiente de teste ou antiga; não mexidos):
