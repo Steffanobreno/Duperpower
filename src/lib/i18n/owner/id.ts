@@ -1858,4 +1858,7 @@ export const id: string[] = ["Pemesanan yang ditinggalkan",
 "{name} dikeluarkan dari {n} kunjungan mendatang bersama hewan lain.",
 "Kunjungan mendatang hanya dengan {name}",
 "Batalkan kunjungan ini",
-"Tidak ada pesan yang dikirim ke klien."];
+"Tidak ada pesan yang dikirim ke klien.",
+"1 pembayaran untuk kunjungan di periode ini",
+"{n} pembayaran untuk kunjungan di periode ini",
+"Terkumpul menghitung pembayaran yang dicatat saat checkout, pada hari kunjungan (meski dibayar belakangan). Kunjungan dari aplikasi sebelumnya tidak punya pembayaran di sini."];

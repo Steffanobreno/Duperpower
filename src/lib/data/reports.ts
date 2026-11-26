@@ -5,7 +5,8 @@ import { dayRangeUtc } from "../format";
 
 // Money and work for a date range (inclusive, in the business time zone).
 // "Expected" counts the services on visits that weren't cancelled or no-shows;
-// "collected" is what payments recorded at checkout add up to, by the day they came in.
+// "collected" is what payments recorded at checkout add up to, on the day of their visit (a visit
+// closed days later still counts on its own day); a payment with no visit, on the day it came in.
 
 export type Group = "day" | "week" | "month";
 
@@ -42,12 +43,12 @@ export async function report(staff: StaffContext, from: string, to: string, grou
       from a`,
     sql<{ collected: number; tips: number; count: number }[]>`
       select coalesce(sum(p.amount_cents), 0)::int as collected, coalesce(sum(p.tip_cents), 0)::int as tips, count(*)::int as count
-      from payments p join invoices i on i.id = p.invoice_id
-      where i.business_id = ${biz} and p.received_at >= ${start} and p.received_at < ${end}`,
+      from payments p join invoices i on i.id = p.invoice_id left join appointments va on va.id = i.appointment_id
+      where i.business_id = ${biz} and coalesce(va.start_at, p.received_at) >= ${start} and coalesce(va.start_at, p.received_at) < ${end}`,
     sql<{ method: string; amount: number; tips: number }[]>`
       select p.method, sum(p.amount_cents)::int as amount, sum(p.tip_cents)::int as tips
-      from payments p join invoices i on i.id = p.invoice_id
-      where i.business_id = ${biz} and p.received_at >= ${start} and p.received_at < ${end}
+      from payments p join invoices i on i.id = p.invoice_id left join appointments va on va.id = i.appointment_id
+      where i.business_id = ${biz} and coalesce(va.start_at, p.received_at) >= ${start} and coalesce(va.start_at, p.received_at) < ${end}
       group by p.method order by sum(p.amount_cents + p.tip_cents) desc`,
     sql<{ name: string; count: number; revenue: number }[]>`
       select s.name, count(*)::int as count, sum(s.price_cents)::int as revenue
@@ -55,7 +56,7 @@ export async function report(staff: StaffContext, from: string, to: string, grou
       join appointment_services s on s.appointment_pet_id = ap.id
       where a.business_id = ${biz} and a.start_at >= ${start} and a.start_at < ${end} and a.status = any(${LIVE})
       group by s.name order by sum(s.price_cents) desc, count(*) desc limit 15`,
-    // One row per day/week/month: visits and dogs by visit date, money by payment date.
+    // One row per day/week/month: visits, dogs and money by the visit's date.
     sql<{ bucket: string; appts: number; dogs: number; expected: number; collected: number }[]>`
       with v as (
         select to_char(date_trunc(${group}, a.start_at at time zone ${tz}), 'YYYY-MM-DD') as bucket,
@@ -67,10 +68,10 @@ export async function report(staff: StaffContext, from: string, to: string, grou
         where a.business_id = ${biz} and a.start_at >= ${start} and a.start_at < ${end} and a.status = any(${LIVE})
         group by 1),
       m as (
-        select to_char(date_trunc(${group}, p.received_at at time zone ${tz}), 'YYYY-MM-DD') as bucket,
+        select to_char(date_trunc(${group}, coalesce(va.start_at, p.received_at) at time zone ${tz}), 'YYYY-MM-DD') as bucket,
                sum(p.amount_cents + p.tip_cents)::int as collected
-        from payments p join invoices i on i.id = p.invoice_id
-        where i.business_id = ${biz} and p.received_at >= ${start} and p.received_at < ${end}
+        from payments p join invoices i on i.id = p.invoice_id left join appointments va on va.id = i.appointment_id
+        where i.business_id = ${biz} and coalesce(va.start_at, p.received_at) >= ${start} and coalesce(va.start_at, p.received_at) < ${end}
         group by 1)
       select coalesce(v.bucket, m.bucket) as bucket, coalesce(v.appts, 0) as appts, coalesce(v.dogs, 0) as dogs,
              coalesce(v.expected, 0) as expected, coalesce(m.collected, 0) as collected
@@ -80,7 +81,8 @@ export async function report(staff: StaffContext, from: string, to: string, grou
       select c.id, trim(c.first_name || ' ' || c.last_name) as name, count(distinct i.id)::int as visits,
              sum(p.amount_cents + p.tip_cents)::int as spent
       from payments p join invoices i on i.id = p.invoice_id join clients c on c.id = i.client_id
-      where i.business_id = ${biz} and p.received_at >= ${start} and p.received_at < ${end}
+      left join appointments va on va.id = i.appointment_id
+      where i.business_id = ${biz} and coalesce(va.start_at, p.received_at) >= ${start} and coalesce(va.start_at, p.received_at) < ${end}
       group by c.id order by spent desc limit 10`,
     sql<{ n: number }[]>`
       select count(*)::int as n from clients

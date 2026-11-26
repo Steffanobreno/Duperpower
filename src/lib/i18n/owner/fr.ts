@@ -1858,4 +1858,7 @@ export const fr: string[] = ["Réservation abandonnée",
 "{name} a été retiré de {n} visites à venir avec d'autres animaux.",
 "Visites à venir avec seulement {name}",
 "Annuler ces visites",
-"Aucun message n'est envoyé au client."];
+"Aucun message n'est envoyé au client.",
+"1 paiement pour les visites de cette période",
+"{n} paiements pour les visites de cette période",
+"L'encaissé compte les paiements enregistrés au passage en caisse, le jour de la visite (même payés plus tard). Les visites importées de l'ancienne app n'ont pas de paiements ici."];

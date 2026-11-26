@@ -1858,4 +1858,7 @@ export const de: string[] = ["Abgebrochene Buchung",
 "{name} wurde aus {n} kommenden Terminen mit anderen Tieren entfernt.",
 "Kommende Termine nur mit {name}",
 "Diese Termine absagen",
-"Der Kunde erhält keine Nachricht."];
+"Der Kunde erhält keine Nachricht.",
+"1 Zahlung für Termine in diesem Zeitraum",
+"{n} Zahlungen für Termine in diesem Zeitraum",
+"Kassiert zählt die beim Abschluss erfassten Zahlungen am Tag des Termins (auch wenn später bezahlt). Aus der alten App importierte Termine haben hier keine Zahlungen."];

@@ -147,14 +147,14 @@ for (const view of ["day", "week", "month", "agenda"]) {
 }
 step("calendar day, week, month and agenda views show the visit");
 
-// Reports: the Venmo payment ($194 + $38.80 tip) was received today.
-await page.goto(`${BASE}/reports?period=today`);
+// Reports: the Venmo payment ($194 + $38.80 tip) counts on the day of the visit, even though it
+// was received today.
+await page.goto(`${BASE}/reports?from=${date}&to=${date}`);
 await page.getByText("$232.80").first().waitFor();
 await page.getByText("incl. $38.80 tips").waitFor();
-await shot("S40-reports");
-await page.goto(`${BASE}/reports?from=${date}&to=${date}`);
 await page.getByText("Dogs groomed").waitFor();
-step("reports show today's collected money and tips");
+await shot("S40-reports");
+step("reports show the visit's collected money and tips on the day of the visit");
 await page.goto(`${BASE}/settings/services`);
 await shot("S18-services");
 await page.goto(`${BASE}/settings/hours`);

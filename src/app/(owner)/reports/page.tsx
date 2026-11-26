@@ -89,7 +89,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           <h2 className="section-label">{t("Money")}</h2>
           <dl className="card divide-y divide-line">
             <Row label={t("Expected service price")} value={money(r.expected)} hint={t("Services on visits in this period (not cancelled)")} />
-            <Row label={t("Collected (without tips)")} value={money(r.collected)} hint={r.paymentsCount === 1 ? t("1 payment received in this period") : t("{n} payments received in this period", { n: r.paymentsCount })} />
+            <Row label={t("Collected (without tips)")} value={money(r.collected)} hint={r.paymentsCount === 1 ? t("1 payment for visits in this period") : t("{n} payments for visits in this period", { n: r.paymentsCount })} />
             <Row label={t("Tips")} value={money(r.tips)} />
             <Row label={t("Unpaid")} value={money(r.unpaid)} hint={t("Finished visits not checked out yet")} warn={r.unpaid > 0} />
           </dl>
@@ -216,7 +216,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           </section>
         )}
         <p className="text-center text-xs text-muted">
-          {t("Collected counts payments recorded at checkout. Visits imported from the old app have no payments here.")}
+          {t("Collected counts payments recorded at checkout, on the day of the visit (even when paid later). Visits imported from the old app have no payments here.")}
         </p>
       </Page>
     </>

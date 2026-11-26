@@ -4,7 +4,8 @@ import { sql } from "../db";
 import { dayRangeUtc } from "../format";
 
 // The line-by-line detail behind Reports, for the PDF and CSV export: every payment, every visit,
-// the checkouts closed (discounts, tax, tips), and the totals by groomer.
+// the checkouts closed (discounts, tax, tips), and the totals by groomer. Payments count on the
+// day of their visit (as on Reports); one with no visit, on the day it came in.
 
 export async function reportDetails(staff: StaffContext, from: string, to: string) {
   const start = dayRangeUtc(from, staff.timezone).start;
@@ -20,8 +21,8 @@ export async function reportDetails(staff: StaffContext, from: string, to: strin
              p.method, p.reference, p.amount_cents as amount, p.tip_cents as tip, s.name as taken_by
       from payments p join invoices i on i.id = p.invoice_id join clients c on c.id = i.client_id
       left join appointments a on a.id = i.appointment_id left join staff s on s.id = p.staff_id
-      where i.business_id = ${biz} and p.received_at >= ${start} and p.received_at < ${end}
-      order by p.received_at`,
+      where i.business_id = ${biz} and coalesce(a.start_at, p.received_at) >= ${start} and coalesce(a.start_at, p.received_at) < ${end}
+      order by coalesce(a.start_at, p.received_at), p.received_at`,
     sql<{ date: string; time: string; client: string; city: string | null; pets: string; services: string; groomer: string;
           status: string; price: number; invoice: string | null; paid: number }[]>`
       select to_char(a.start_at at time zone ${tz}, 'YYYY-MM-DD') as date, to_char(a.start_at at time zone ${tz}, 'HH24:MI') as time,
@@ -41,7 +42,9 @@ export async function reportDetails(staff: StaffContext, from: string, to: strin
     sql<{ count: number; subtotal: number; discount: number; tax: number; tips: number; total: number }[]>`
       select count(*)::int as count, coalesce(sum(subtotal_cents), 0)::int as subtotal, coalesce(sum(discount_cents), 0)::int as discount,
              coalesce(sum(tax_cents), 0)::int as tax, coalesce(sum(tip_cents), 0)::int as tips, coalesce(sum(total_cents), 0)::int as total
-      from invoices where business_id = ${biz} and status = 'closed' and closed_at >= ${start} and closed_at < ${end}`,
+      from invoices i left join appointments va on va.id = i.appointment_id
+      where i.business_id = ${biz} and i.status = 'closed'
+        and coalesce(va.start_at, i.closed_at) >= ${start} and coalesce(va.start_at, i.closed_at) < ${end}`,
     sql<{ name: string; visits: number; dogs: number; expected: number; collected: number; tips: number }[]>`
       with v as (
         select a.staff_id, count(*)::int as visits,
@@ -55,7 +58,7 @@ export async function reportDetails(staff: StaffContext, from: string, to: strin
       m as (
         select a.staff_id, sum(p.amount_cents)::int as collected, sum(p.tip_cents)::int as tips
         from payments p join invoices i on i.id = p.invoice_id join appointments a on a.id = i.appointment_id
-        where i.business_id = ${biz} and p.received_at >= ${start} and p.received_at < ${end}
+        where i.business_id = ${biz} and a.start_at >= ${start} and a.start_at < ${end}
         group by a.staff_id)
       select s.name, coalesce(v.visits, 0) as visits, coalesce(v.dogs, 0) as dogs, coalesce(v.expected, 0) as expected,
              coalesce(m.collected, 0) as collected, coalesce(m.tips, 0) as tips

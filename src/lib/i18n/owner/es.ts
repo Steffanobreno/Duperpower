@@ -1858,4 +1858,7 @@ export const es: string[] = ["Reserva abandonada",
 "{name} salió de {n} visitas próximas con otras mascotas.",
 "Visitas próximas solo con {name}",
 "Cancelar estas visitas",
-"No se envía ningún mensaje al cliente."];
+"No se envía ningún mensaje al cliente.",
+"1 pago de las visitas de este período",
+"{n} pagos de las visitas de este período",
+"Cobrado cuenta los pagos registrados al cerrar, en el día de la visita (aunque se paguen después). Las visitas importadas de la app anterior no tienen pagos aquí."];

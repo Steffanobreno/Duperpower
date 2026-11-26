@@ -1858,4 +1858,7 @@ export const pt: string[] = ["Agendamento abandonado",
 "{name} saiu de {n} visitas futuras com outros pets.",
 "Visitas futuras só com {name}",
 "Cancelar estas visitas",
-"Nenhuma mensagem é enviada ao cliente."];
+"Nenhuma mensagem é enviada ao cliente.",
+"1 pagamento das visitas deste período",
+"{n} pagamentos das visitas deste período",
+"Recebido conta os pagamentos registrados no checkout, no dia da visita (mesmo quando pagos depois). As visitas importadas do app anterior não têm pagamentos aqui."];

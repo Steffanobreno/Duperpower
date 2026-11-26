@@ -1858,4 +1858,7 @@ export const vi: string[] = ["Lịch đặt bị bỏ dở",
 "Đã bỏ {name} khỏi {n} lượt hẹn sắp tới có thú cưng khác.",
 "Lượt hẹn sắp tới chỉ có {name}",
 "Hủy các lượt hẹn này",
-"Không gửi tin nhắn nào cho khách."];
+"Không gửi tin nhắn nào cho khách.",
+"1 khoản thanh toán cho các lượt trong khoảng này",
+"{n} khoản thanh toán cho các lượt trong khoảng này",
+"Đã thu tính các khoản thanh toán ghi khi tính tiền, vào ngày của lượt hẹn (kể cả khi trả sau). Các lượt nhập từ ứng dụng cũ không có thanh toán ở đây."];

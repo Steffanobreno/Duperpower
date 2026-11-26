@@ -37,7 +37,7 @@ export default async function PayrollPage({ searchParams }: PageProps<"/reports/
                 where a.staff_id = s.id and a.status = 'completed' and a.start_at >= ${start} and a.start_at < ${end}), 0)::int as services_cents,
       coalesce((select sum(p.tip_cents) from payments p join invoices i on i.id = p.invoice_id
                 join appointments a on a.id = i.appointment_id
-                where a.staff_id = s.id and p.received_at >= ${start} and p.received_at < ${end}), 0)::int as tips_cents,
+                where a.staff_id = s.id and a.start_at >= ${start} and a.start_at < ${end}), 0)::int as tips_cents,
       coalesce((select sum(extract(epoch from (e.out_at - e.in_at)) / 60) from clock_entries e
                 where e.staff_id = s.id and e.out_at is not null and e.in_at >= ${start} and e.in_at < ${end}), 0)::float8 as minutes
     from staff s where s.business_id = ${staff.businessId}

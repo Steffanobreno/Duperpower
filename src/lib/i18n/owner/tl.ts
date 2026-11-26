@@ -1858,4 +1858,7 @@ export const tl: string[] = ["Naiwang booking",
 "Inalis si {name} sa {n} paparating na bisita na may ibang alaga.",
 "Mga paparating na bisita na si {name} lang",
 "Kanselahin ang mga bisitang ito",
-"Walang mensaheng ipinapadala sa kliyente."];
+"Walang mensaheng ipinapadala sa kliyente.",
+"1 bayad para sa mga bisita sa panahong ito",
+"{n} bayad para sa mga bisita sa panahong ito",
+"Ang nakolekta ay ang mga bayad na naitala sa checkout, sa araw ng bisita (kahit binayaran pagkatapos). Ang mga bisitang galing sa dating app ay walang bayad dito."];

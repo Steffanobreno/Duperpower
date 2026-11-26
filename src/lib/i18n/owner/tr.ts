@@ -1858,4 +1858,7 @@ export const tr: string[] = ["Yarım kalan randevu",
 "{name}, başka hayvanların olduğu {n} yaklaşan ziyaretten çıkarıldı.",
 "Yalnızca {name} olan yaklaşan ziyaretler",
 "Bu ziyaretleri iptal et",
-"Müşteriye mesaj gönderilmez."];
+"Müşteriye mesaj gönderilmez.",
+"Bu dönemdeki ziyaretler için 1 ödeme",
+"Bu dönemdeki ziyaretler için {n} ödeme",
+"Tahsilat, ödeme ekranında kaydedilen ödemeleri ziyaret gününde sayar (sonradan ödense bile). Önceki uygulamadan aktarılan ziyaretlerin burada ödemesi yoktur."];

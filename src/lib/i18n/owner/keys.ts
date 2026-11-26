@@ -1860,5 +1860,8 @@ export const OWNER_KEYS: string[] = [
  "{name} was taken off {n} upcoming visits with other pets.",
  "Upcoming visits with only {name}",
  "Cancel these visits",
- "No message is sent to the client."
+ "No message is sent to the client.",
+ "1 payment for visits in this period",
+ "{n} payments for visits in this period",
+ "Collected counts payments recorded at checkout, on the day of the visit (even when paid later). Visits imported from the old app have no payments here."
 ];

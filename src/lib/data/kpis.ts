@@ -43,12 +43,13 @@ export function monthWindows(today: string) {
   return { current: { from, to: today }, previous: { from: prevFrom, to: prevTo } };
 }
 
-/** Payments received in the window, tips left out: the "collected" of Reports. */
+/** Payments for visits in the window (no visit: received in it), tips left out: the "collected" of Reports. */
 async function revenue(staff: StaffContext, w: Window) {
   const [{ n }] = await sql<{ n: number }[]>`
     select coalesce(sum(p.amount_cents), 0)::int as n
-    from payments p join invoices i on i.id = p.invoice_id
-    where i.business_id = ${staff.businessId} and p.received_at >= ${w.start} and p.received_at < ${w.end}`;
+    from payments p join invoices i on i.id = p.invoice_id left join appointments va on va.id = i.appointment_id
+    where i.business_id = ${staff.businessId}
+      and coalesce(va.start_at, p.received_at) >= ${w.start} and coalesce(va.start_at, p.received_at) < ${w.end}`;
   return n;
 }
 

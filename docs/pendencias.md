@@ -114,6 +114,18 @@ Design: `docs/superpowers/specs/2026-11-24-repetir-pagamento-pets-design.md`.
 - [ ] Receber um pagamento e ver a tela "Payment received"; a seta ← leva para Today.
 - [ ] Abrir Pending (menu) e conferir as pendências da semana.
 
+## ⏳ Pronto, esperando "pode publicar": relatórios contam o dinheiro no dia da visita (2026-11-26)
+- **Problema:** ao fechar visitas antigas (por exemplo, pela tela Pending), o pagamento entrava no dia em que foi registrado. A terça mostrava $3.005 recebidos com só $943 de visitas, misturando clientes da semana anterior, e a quinta mostrava $803 sem nenhuma visita.
+- **Agora:** o pagamento conta no **dia da visita**, mesmo quando é pago depois. Vale para:
+  - Collected, gorjetas, formas de pagamento, a tabela por dia/semana/mês e o Top clients;
+  - o PDF/Excel exportado;
+  - o painel de indicadores;
+  - as gorjetas da folha de pagamento.
+
+  Um pagamento sem visita, como um recibo avulso, continua no dia em que foi registrado.
+- Teste novo: `reports-by-visit.mjs`. O `slice.mjs` foi ajustado para a regra nova.
+- [ ] Dizer **"pode publicar"** para ir ao ar (15 créditos do Netlify).
+
 ## Cliente que viu "not taking online requests" (2026-11-25)
 - A varredura recriou o caso (cliente antigo, Oakland 94611, Baloo X-Large, Bath X-Large + De-shedding, contrato não assinado): o app novo reconhece, mostra horários e grava o pedido. O texto citado não existe no app novo; o mais provável é um link antigo do MoeGo.
 - [ ] Ver em Abandonados se há cartão dele (sem cartão = nunca entrou na nossa página).
