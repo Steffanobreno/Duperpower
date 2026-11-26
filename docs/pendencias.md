@@ -124,6 +124,11 @@ Design: `docs/superpowers/specs/2026-11-24-repetir-pagamento-pets-design.md`.
 
   Um pagamento sem visita, como um recibo avulso, continua no dia em que foi registrado.
 - Teste novo: `reports-by-visit.mjs`. O `slice.mjs` foi ajustado para a regra nova.
+- **Teste completo (2026-11-26):**
+  - Bateria isolada: 59 passaram. Falham do mesmo jeito que antes: app-open, offline, remove-client, security, today-map e worldwide.
+  - `finish-direct` falhava porque marca "daqui a 3 dias", o que hoje cai num domingo e abre o "Book anyway". O teste agora responde a esse aviso.
+  - `abandoned-send-all` estava instável: conferia a tela antes de ela terminar de aparecer. Agora espera.
+  - O build de produção passou. No modo de produção, passaram: reports-by-visit, report-export, kpis, paid-screen e pending.
 - [ ] Dizer **"pode publicar"** para ir ao ar (15 créditos do Netlify).
 
 ## Cliente que viu "not taking online requests" (2026-11-25)

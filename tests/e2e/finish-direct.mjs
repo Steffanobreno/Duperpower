@@ -31,6 +31,11 @@ const sel = page.locator('select[name^="svc:"]');
 await sel.selectOption(await sel.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));
 await page.getByLabel(/Send the confirmation/).uncheck();
 await page.getByRole("button", { name: "Book appointment" }).click();
+// The day may be outside the hours (a Sunday): the warning window offers "Book anyway".
+await Promise.race([
+  page.waitForURL(/\/appointments\/[0-9a-f-]+\?booked=1/),
+  page.getByRole("button", { name: "Book anyway" }).click(),
+]);
 await page.waitForURL(/\/appointments\/[0-9a-f-]+\?booked=1/);
 const id = page.url().split("/").pop().split("?")[0];
 
@@ -48,6 +53,11 @@ await page.goto(`${BASE}/appointments/new?client=${client}&date=${date}&time=17:
 await sel.selectOption(await sel.locator("option", { hasText: "Bath - Medium" }).getAttribute("value"));
 await page.getByLabel(/Send the confirmation/).uncheck();
 await page.getByRole("button", { name: "Book appointment" }).click();
+// The day may be outside the hours (a Sunday): the warning window offers "Book anyway".
+await Promise.race([
+  page.waitForURL(/\/appointments\/[0-9a-f-]+\?booked=1/),
+  page.getByRole("button", { name: "Book anyway" }).click(),
+]);
 await page.waitForURL(/\/appointments\/[0-9a-f-]+\?booked=1/);
 await page.getByText("Finish order (skip the steps)").waitFor({ state: "attached" });
 step("the status menu has “Finish order (skip the steps)”");

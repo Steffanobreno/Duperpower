@@ -128,6 +128,7 @@ await page.evaluate(() => document.addEventListener("click", (e) => {
 }, true));
 const who = page.getByRole("group", { name: "Who gets it" });
 const boxes = who.getByRole("checkbox");
+await boxes.nth(2).waitFor();
 if ((await boxes.count()) !== 3) fail(`three people to pick from expected, got ${await boxes.count()}`);
 for (const b of await boxes.all()) if (!(await b.isChecked())) fail("everyone should be ticked when the page opens");
 await who.getByRole("checkbox", { name: /Cy/ }).uncheck();
@@ -149,7 +150,9 @@ step("you pick who gets it: everyone ticked, Clear and Select all, and the untic
 
 // Clear recovered: hides the one who booked since; the others stay; the numbers don't move.
 await page.goto(`${BASE}/abandoned`);
-const stats = async () => (await page.locator(".grid-cols-3").first().innerText()).replace(/\s+/g, " ");
+// The numbers only (spacing can differ while the page settles).
+const stats = async () => (await page.locator(".grid-cols-3").first().innerText()).replace(/\s+/g, "");
+await page.getByRole("button", { name: /Clear recovered/ }).waitFor();
 const statsBefore = await stats();
 await page.getByRole("button", { name: "Clear recovered (1)" }).click();
 await page.getByRole("link", { name: /Booked/ }).waitFor({ state: "detached" });
